@@ -60,11 +60,19 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate {
     // delegate is assigned, again once the owner responds to the prompt). Every handler below
     // takes its continuation and nils the stored one out before resuming, so a second callback
     // finds nothing to resume — resume-exactly-once is enforced by construction, not by care.
+    //
+    // Confirmed live: `locationManagerDidChangeAuthorization` fires once immediately after
+    // `requestWhenInUseAuthorization()`, while the status is still `.notDetermined` — before
+    // the owner has answered the system prompt. Resuming on that call would report "denied"
+    // before the prompt is even on screen, so it's treated as a pending re-entrant call and
+    // ignored: the continuation is only consumed once the status has actually resolved.
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         guard let continuation = authorizationContinuation else { return }
+        let status = manager.authorizationStatus
+        guard status != .notDetermined else { return }
         authorizationContinuation = nil
-        continuation.resume(returning: manager.authorizationStatus)
+        continuation.resume(returning: status)
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
