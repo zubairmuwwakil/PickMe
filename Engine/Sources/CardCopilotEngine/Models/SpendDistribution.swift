@@ -70,3 +70,53 @@ public struct SpendDistribution: Equatable, Sendable {
                           })
     }
 }
+
+public extension SpendDistribution {
+
+    /// ⚠️ ASSUMPTION, NOT DATA. No real spend history has been captured yet, so this profile is a
+    /// documented guess at a Canadian single-household year (~$40,200) shaped to exercise every
+    /// category this wallet accelerates. It exists so the keep/cancel layer has something to run
+    /// against — never so the analyzer can assume a distribution. Replace it the moment statement
+    /// imports (v1.5) produce real category totals, and re-read every verdict when you do.
+    ///
+    /// Sensitivity matters more than accuracy here: a verdict that survives a ±50% reshuffle of
+    /// these numbers is a real verdict, and one that doesn't is a question about the owner's
+    /// spending, not about the card.
+    static let placeholderCanadianHousehold = SpendDistribution(
+        profileId: "placeholder-canadian-household-2026",
+        basis: "ASSUMPTION (2026-08-15): no spend history exists yet. Category totals are a "
+             + "documented guess at a ~$40,200 single-household year, not measured data.",
+        buckets: [
+            .init(label: "Groceries", annualCad: 9_000, category: "grocery", mcc: 5411,
+                  merchantBrand: "loblaws"),
+            .init(label: "Restaurants & coffee", annualCad: 4_200, category: "dining", mcc: 5812),
+            .init(label: "Food delivery", annualCad: 900, category: "foodDelivery", mcc: 5814,
+                  channel: "online"),
+            .init(label: "Streaming", annualCad: 600, category: "streaming", mcc: 5968,
+                  channel: "online", recurring: true),
+            .init(label: "Digital media & apps", annualCad: 300, category: "digitalMedia",
+                  mcc: 5815, channel: "online"),
+            .init(label: "Memberships & dues", annualCad: 600, category: "memberships", mcc: 7997,
+                  recurring: true),
+            .init(label: "Phone & internet", annualCad: 1_800, category: "householdUtilities",
+                  mcc: 4814, recurring: true),
+            .init(label: "Insurance premiums", annualCad: 2_400, category: "recurring", mcc: 6300,
+                  recurring: true),
+            .init(label: "Gas", annualCad: 2_400, category: "gasStation", mcc: 5541),
+            .init(label: "Transit & rideshare", annualCad: 1_200, category: "transit", mcc: 4121),
+            .init(label: "Flights", annualCad: 1_800, category: "travel", mcc: 3000,
+                  channel: "online"),
+            .init(label: "Hotels (non-Marriott)", annualCad: 1_200, category: "lodging", mcc: 3501,
+                  channel: "online"),
+            .init(label: "Marriott stays", annualCad: 1_200, category: "marriottDirect", mcc: 3509,
+                  merchantBrand: "marriott"),
+            // Costco takes Mastercard only — the acceptance gate, not the earn rate, decides here.
+            .init(label: "Costco", annualCad: 2_600, category: "wholesaleClub", mcc: 5300,
+                  merchantBrand: "costco", acceptedNetworks: [.mastercard]),
+            .init(label: "Canadian Tire family", annualCad: 1_200, category: "ctFamily", mcc: 5200,
+                  merchantBrand: "canadian-tire"),
+            .init(label: "Foreign currency (USD online)", annualCad: 2_000, category: "other",
+                  currency: "USD", channel: "online"),
+            .init(label: "Everything else", annualCad: 6_800, category: "other"),
+        ])
+}
