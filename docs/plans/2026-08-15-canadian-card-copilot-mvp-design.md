@@ -34,6 +34,11 @@
 | 14 | **Valuation honesty over valuation guessing**: rank by the declared value, but detect when the winner depends on it and disclose the breakeven cents-per-point — in *both* directions | Rejected both single-number extremes: 1.8¢ flatters points cards, floor-only ranking silently punishes them. The app never trusts an assumption it could learn. |
 | 15 | **MR ranks at the 1.0¢ cash floor** (Zubair has never transferred MR, confirmed 2026-08-15); published benchmark 2.2¢ ([Prince of Travel](https://princeoftravel.com/points-valuations/), updated 2026-07-29) stored as `aspirationalCentsPerPoint` — the ceiling for deciding whether an upside breakeven is worth disclosing, never used for ranking | Conservative advice, with the cost of that conservatism stated: *"Above about 1.25¢, Cobalt wins instead."* Raise the declared value only when redemption logging (v1.5) yields a realized rate |
 | 16 | **Behaviour tests pin their valuation**; only the demo walkthrough inherits the live seed | A personal preference change must never re-baseline the executable spec — that pressure would push toward accepting engine output instead of re-deriving the arithmetic |
+| 17 | **Keep/cancel is a marginal question, never a gross one**: a card is worth (portfolio value with it) − (portfolio value with it removed and every purchase re-optimised over the rest) | Gross-rewards-minus-fee is the failure mode this layer exists to prevent. It also forces the corollary: two cards that cover for each other each show ~$0 marginal, so mutually-redundant pairs are detected and reported jointly — otherwise the table reads "cancel both", which is wrong by hundreds a year |
+| 18 | **Benefit honesty extended from points to fees** (the #14 rule applied one level up): a fee card that doesn't earn its fee publishes the annual benefit value it *would* need, never a guessed dollar value for lounges, free nights, elite nights, or insurance | Verdict ladder: `freeToKeep` ($0 fee, nothing to decide) · `keep` (marginal ≥ fee) · `downgrade` (fee unearned, but the wallet's only card in that rewards program — cancelling forfeits the currency) · `cancel` (fee unearned and another card already earns it). The threshold is the deliverable; judging it is the owner's |
+| 19 | **The spend distribution is a parameter, never an assumption baked into the analyzer**; the shipped `placeholderCanadianHousehold` profile is labelled ASSUMPTION and guarded by a test that every category the wallet accelerates is represented | No real spend data exists yet. A verdict is only reported as a verdict once it survives rescaling the profile; ones that don't are flagged as questions about spending, not about the card. An omitted category silently zeroes whichever card earns on it, hence the coverage guard |
+
+**Wallet keep/cancel analysis — ✅ BUILT at engine level (§5a), UI deferred.** `PortfolioAnalyzer` answers "which of these ten cards is worth keeping?" over an annual spend distribution. Surfacing it is a Wallet Report Card descendant, not v1 checkout scope.
 
 **Future features (tabled, Zubair 2026-08-15):** Tangerine category advisor (suggest the optimal 3 selections from logged spend, respecting the 90-day change timing); spending-habit card-acquisition suggestions and best-value-per-category aggregation across the full public catalogue — both fall out of running the existing engine over a spend distribution; Phase 4, where the affiliate-neutrality question (brief §13) must be answered first.
 
@@ -84,7 +89,7 @@ Goal modes · targeted offers · statement credits · insurance/protection valua
 
 **v1.5 candidate:** statement CSV import — auto-match imported rows to predictions by date/amount to automate most of the weekly reconcile. No API or entitlement needed, privacy-clean. (Apple Wallet transaction access was investigated and is closed: FinanceKit covers only Apple Card/Cash/Savings, US-only, as of Jan 2026 — re-check WWDC 2025/26.)
 
-## 5. Engine v1 — ✅ BUILT (branch `engine-v1`, 34 tests green, 2026-08-15)
+## 5. Engine v1 — ✅ BUILT (branch `engine-v1`, 67 tests green, 2026-08-15)
 
 Implemented as a standalone SPM package in `Engine/`: `SeedLoader` → `RuleMatcher` → `CapMath` → `Scorer` → `RecommendationEngine` → `RecommendationExplainer`. Zero dependencies, no UI/MapKit/SwiftData coupling. Run `cd Engine && swift test`; `--filter DemoWalkthroughTests` prints a readable day-of-checkouts walkthrough. The 12-case fixture spec is mutation-checked (perturbing the MR valuation breaks 6 assertions).
 
@@ -115,6 +120,43 @@ Then two gates before recommending:
 - Confidence comes from the prediction source ladder (§6), displayed alongside the result and driving the fork view; it does not modify the score.
 - Cap tracking exists for **measurement hygiene** (a blown Cobalt cap would otherwise create false "arithmetic misses") *and* because the cap-flip is the single highest-value recommendation a human can't make from memory.
 - Valuations are owner state (decision #11), user-editable per program, with floors stored separately.
+
+## 5a. Portfolio layer — ✅ BUILT (keep/cancel, 2026-08-15)
+
+`PortfolioAnalyzer` answers the other half of the wallet question. The checkout engine asks *which card for this purchase*; this asks *which of these cards is worth keeping at all*. It reuses `RecommendationEngine` wholesale — no scoring is reimplemented.
+
+**The measurement (decision #17).** A card's worth is its marginal value:
+
+```text
+marginal value = portfolio value with the card
+               − portfolio value with the card removed and every purchase re-optimised
+net contribution = marginal value − annual fee
+```
+
+Gross rewards minus fee is the wrong answer and the one this layer exists to prevent. On the placeholder profile at the MR cash floor, Cobalt earns **$705** gross and is worth **$27** — because MBNA pays the identical 5× on the same groceries and dining. Subtracting the fee from the gross figure would have said "keep, +$513"; the honest answer is −$164.88.
+
+**How the year is modelled.** Twelve equal monthly slices from `asOf`, with cap progress carried forward on whichever card actually won. Monthly caps reset each month; annual and account-year caps are treated as one full year of room across the window (exact for account-year caps, never double-counting a reset). Cap progress starts at zero — the question is the *next* year, not the remainder of this one. This is not decoration: at $60,000 of dining the fallback for a removed Cobalt is MBNA for ten months and then **Platinum**, because MBNA's $50,000 annual 5× runs out in month eleven. Both cap paths are mutation-checked.
+
+Value is measured at the wallet's optimum rather than the threshold-gated recommendation. The switch threshold (decision #8) models the friction of digging out a second card at one checkout; applied here it would make removing the *default* card raise the wallet total, producing negative marginal values that describe the gate rather than the card.
+
+**The redundancy trap.** Marginal value has a known failure mode: two cards that cover for each other each measure at ~$0, and a naive table reads "cancel both". Cobalt + MBNA are individually worth **$66** combined and **$282** jointly. Mutually-redundant pairs are therefore detected and reported with their joint marginal (only when the overlap is worth ≥10% of the combined fee — below that it is noise that buries the pairs that matter).
+
+**Findings on the placeholder profile (⚠️ assumption, not data — decision #19):**
+
+| Question | Answer |
+|---|---|
+| Does any fee card earn its own fee at the declared 1.0¢? | **No.** Wallet earns $1,406.60/yr against $1,590.88 of fees |
+| Amex Platinum | **$0 marginal** at 1.0¢, **$70.80** at the 2.2¢ benchmark, against $799. Verdict does not move — no plausible MR valuation rescues it. Needs **$728–799/yr** of lounge/credit/insurance value. This is a benefits question at both ends of the range, and "your points might be worth more" is not an answer to it |
+| Amex Cobalt | The one genuinely valuation-dependent verdict: **cancel at 1.0¢, keep at 2.2¢** ($27 → $940 marginal). Its case is entirely whether Zubair ever transfers MR — the same open question as decision #15 |
+| Marriott Bonvoy | Flips the *other* way (downgrade → cancel) as MR rises, because its 5× Bonvoy is fixed while Platinum's 2× MR overtakes it on Marriott stays. Also the only verdict sensitive to the spend guess (cancel if travel is dropped) |
+| Tangerine, Crypto.com | **Free to keep** — $0 fee, so no decision exists. Neither wins any category; Crypto is additionally gated out entirely (Level Up Pro inactive) |
+| Wealthsimple | **Unresolved.** $57.20 marginal against a $240 fee that is waived on assets or direct deposit. Flagged, not guessed — if the waiver is active it is free to keep. This is the highest-value open onboarding question in §9 |
+
+**What is deliberately not computed.** No benefit is priced. The Bonvoy annual free-night award, Platinum's lounge access and credits, elite nights, insurance — each fee card publishes `requiredBenefitValueCad` instead, the annual benefit value the fee needs to be worth. Same rule as `breakevenCentsPerPoint` (decision #14): compute the threshold, disclose it, never guess.
+
+**Known limitation.** Marginal value is computed one card at a time (plus detected pairs). A mutually-redundant *triple* would still under-report. Pairs cover the cases in this wallet; revisit if the catalogue grows.
+
+Report: `swift test --filter PortfolioReportTests`. Behaviour spec: `PortfolioAnalyzerTests` (pinned per decision #16).
 
 ## 6. Category prediction & observation model
 
@@ -168,6 +210,8 @@ Internal boundaries as per brief §10: `MerchantProvider`, `CardRepository`, `Me
 - [x] Brand seed — trimmed to high-confidence priors per dossier §6.3 (no speculative 50-chain table)
 - [ ] **Onboarding owner-state inputs (Zubair):** Tangerine selected categories + third-category status; Rogers eligible service linked? + account anniversary month; Crypto Level Up Pro active? + CRO auto-sell vs hold; Scotia account-year anchor month; current-year cap progress estimates for Cobalt/Scotia/Rogers/Triangle/MBNA
 - [ ] **Owner validation checklist (dossier §7):** one redacted per-transaction reward sample per issuer — required before trusting reconciliation for MBNA, Scotia, Tangerine, CTFS (visibility `unknown`)
+- [ ] **Wealthsimple fee-waiver status (Zubair)** — surfaced by §5a as the single highest-value unknown: it is the difference between a $240 cancel candidate and a free-to-keep default card
+- [ ] **Real spend distribution** — §5a currently runs on a documented placeholder. Every verdict is provisional until statement import (v1.5) replaces it; the analyzer already reports which verdicts are distribution-sensitive
 - [ ] CardPointers 10-card in-app audit (the only way to get a defensible n/10 coverage count)
 - [ ] Per-transaction reward visibility is strong for Amex/Rogers/Wealthsimple/Crypto and unknown for the rest — 30-checkout experiment should weight recommendations toward verifiable cards where ties allow
 
@@ -178,6 +222,7 @@ Internal boundaries as per brief §10: `MerchantProvider`, `CardRepository`, `Me
 | Catalogue-shaped JSON seed | Curated Canadian card catalogue with remote versioned updates |
 | Brand seed table + personal observations | Merchant Truth Graph with anonymous crowdsourced observations |
 | Wallet Report Card | Shareable "audit my wallet" web flow — the demand test |
+| `PortfolioAnalyzer` keep/cancel verdicts (§5a) | "Should I cancel this card?" — the highest-intent question in the category, and the one affiliate-funded comparison sites structurally cannot answer honestly |
 | Fork view confirmations | Community verification loop with corroboration counts |
 | Instant repeats | Exception engine: passive defaults, interrupt only when the default is wrong |
 | Value-recovered counter | North-star metric: verified incremental value per active user |
