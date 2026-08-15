@@ -51,6 +51,7 @@ final class CheckoutServiceTests: XCTestCase {
         XCTAssertEqual(stored.predictedCategory, "grocery")
         XCTAssertEqual(stored.winnerCardId, "amex-cobalt")
         XCTAssertEqual(stored.amountCad ?? .nan, 140, accuracy: 0.005)
+        XCTAssertEqual(stored.defaultCardValueCad ?? .nan, 2.80, accuracy: 0.005)
         XCTAssertEqual(stored.valuationCentsPerPoint ?? .nan, 1.0, accuracy: 0.005,
                        "the valuation in force must be snapshotted with the prediction")
         XCTAssertFalse(stored.headline.isEmpty)
@@ -96,6 +97,10 @@ final class CheckoutServiceTests: XCTestCase {
         XCTAssertEqual(rec.winner.cardId, "rogers-red-we",
                        "brand-known acceptance: Costco takes Mastercard only, so WS/Amex are out")
         XCTAssertTrue(rec.defaultNotAccepted)
+
+        let stored = try XCTUnwrap(try service.log.allPredictions().first)
+        XCTAssertEqual(stored.defaultCardValueCad ?? .nan, stored.winnerValueCad, accuracy: 0.005,
+                       "when the default card is not accepted, value recovered contributes zero")
     }
 
     // MARK: amount estimation

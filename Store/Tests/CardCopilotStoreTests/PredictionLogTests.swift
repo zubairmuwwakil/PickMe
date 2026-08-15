@@ -16,13 +16,16 @@ final class PredictionLogTests: XCTestCase {
         log = PredictionLog(context: ModelContext(container))
     }
 
-    private func samplePrediction() -> StoredPrediction {
+    private func samplePrediction(amountCad: Double? = 140,
+                                  winnerValueCad: Double = 7.00,
+                                  defaultCardValueCad: Double? = 2.80) -> StoredPrediction {
         StoredPrediction(
             merchantName: "Loblaws", merchantIdentifier: "poi-123",
             predictedCategory: "grocery", confidenceSource: .brandPrior,
-            winnerCardId: "amex-cobalt", winnerValueCad: 7.00, winnerRuleId: "cobalt-eats-5x",
+            winnerCardId: "amex-cobalt", winnerValueCad: winnerValueCad,
+            defaultCardValueCad: defaultCardValueCad, winnerRuleId: "cobalt-eats-5x",
             runnerUpCardId: "mbna-rewards-we", runnerUpValueCad: 7.00,
-            amountCad: 140, valuationCentsPerPoint: 1.0,
+            amountCad: amountCad, valuationCentsPerPoint: 1.0,
             headline: "Use American Express Cobalt Card — about $7.00 back on this $140.00 purchase.",
             recordedAt: Date(timeIntervalSince1970: 1_786_000_000))
     }
@@ -95,5 +98,42 @@ final class PredictionLogTests: XCTestCase {
         try log.confirm(a, cardUsed: "x", observedCategory: "other", missClass: .wrongCategory, note: nil)
         try log.confirm(b, cardUsed: "x", observedCategory: "other", missClass: .wrongCategory, note: nil)
         XCTAssertEqual(try log.metrics().missBreakdown[.wrongCategory], 2)
+    }
+
+    func testValueRecoveredCountsOnlyConfirmedPredictionsWithRealAmountsAndCounterfactuals() throws {
+        let confirmed = try log.record(samplePrediction(amountCad: 140,
+                                                        winnerValueCad: 7.00,
+                                                        defaultCardValueCad: 2.80))
+        let unconfirmed = try log.record(samplePrediction(amountCad: 50,
+                                                          winnerValueCad: 2.50,
+                                                          defaultCardValueCad: 1.00))
+        let estimatedAmount = try log.record(samplePrediction(amountCad: nil,
+                                                              winnerValueCad: 3.00,
+                                                              defaultCardValueCad: 1.20))
+        let missingCounterfactual = try log.record(samplePrediction(amountCad: 25,
+                                                                    winnerValueCad: 1.25,
+                                                                    defaultCardValueCad: nil))
+
+        try log.confirm(confirmed, cardUsed: "amex-cobalt", observedCategory: "grocery",
+                        missClass: nil, note: nil)
+        try log.confirm(estimatedAmount, cardUsed: "amex-cobalt", observedCategory: "grocery",
+                        missClass: nil, note: nil)
+        try log.confirm(missingCounterfactual, cardUsed: "amex-cobalt", observedCategory: "grocery",
+                        missClass: nil, note: nil)
+
+        _ = unconfirmed
+        XCTAssertEqual(try log.valueRecovered(), 4.20, accuracy: 0.005)
+    }
+
+    func testDefaultNotAcceptedContributesZeroValueRecovered() throws {
+        // If the habitual default was not accepted, the app did not recover value against a
+        // real card the owner could have tapped. Store the recommendation's zero-advantage
+        // semantics by making the default counterfactual equal to the winner.
+        let costco = try log.record(samplePrediction(amountCad: 220,
+                                                     winnerValueCad: 3.30,
+                                                     defaultCardValueCad: 3.30))
+        try log.confirm(costco, cardUsed: "rogers-red-we", observedCategory: "wholesaleClub",
+                        missClass: nil, note: nil)
+        XCTAssertEqual(try log.valueRecovered(), 0, accuracy: 0.005)
     }
 }

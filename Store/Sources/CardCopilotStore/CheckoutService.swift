@@ -63,6 +63,7 @@ public struct CheckoutService {
     public let log: PredictionLog
     private let context: ModelContext
     private let mrCentsPerPoint: Double
+    private let defaultCardId: String
 
     public init(catalogue: Catalogue, ownerState: OwnerState, context: ModelContext) {
         self.engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
@@ -70,6 +71,7 @@ public struct CheckoutService {
         self.log = PredictionLog(context: context)
         self.context = context
         self.mrCentsPerPoint = ownerState.valuationsCad.amexMembershipRewards.centsPerPoint
+        self.defaultCardId = ownerState.defaultCardId
     }
 
     public func recommend(merchant: NearbyMerchant, amountCad: Double?,
@@ -122,6 +124,7 @@ public struct CheckoutService {
             confidenceSource: prediction.confidenceSource,
             winnerCardId: primary.winner.cardId,
             winnerValueCad: primary.winner.netValueCad,
+            defaultCardValueCad: defaultCardValueCad(for: primary),
             winnerRuleId: primary.winner.appliedRuleId,
             runnerUpCardId: primary.runnerUp?.cardId,
             runnerUpValueCad: primary.runnerUp?.netValueCad,
@@ -135,6 +138,19 @@ public struct CheckoutService {
                               amountWasEstimated: amountCad == nil,
                               categoryWasAmbiguous: ambiguous,
                               storedPredictionId: stored.id)
+    }
+
+    private func defaultCardValueCad(for recommendation: Recommendation) -> Double? {
+        if recommendation.defaultNotAccepted {
+            // Value recovered is defined against the card the owner could otherwise tap.
+            // When the habitual default is not accepted, that baseline is ambiguous, so
+            // decision #7 uses the engine's zero advantage-over-default semantics.
+            return recommendation.winner.netValueCad
+        }
+        if let advantage = recommendation.advantageOverDefaultCad {
+            return recommendation.winner.netValueCad - advantage
+        }
+        return recommendation.allCandidates.first { $0.cardId == defaultCardId }?.netValueCad
     }
 
     public func knownMerchants() throws -> [StoredMerchant] {

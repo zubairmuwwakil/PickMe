@@ -41,6 +41,9 @@ public final class StoredPrediction {
     public private(set) var confidenceSourceRaw: String = ConfidenceSource.fallback.rawValue
     public private(set) var winnerCardId: String = ""
     public private(set) var winnerValueCad: Double = 0
+    /// The value the designated default card would have earned on the same purchase.
+    /// Optional so predictions written before Task 6 are excluded from value-recovered math.
+    public private(set) var defaultCardValueCad: Double?
     public private(set) var winnerRuleId: String?
     public private(set) var runnerUpCardId: String?
     public private(set) var runnerUpValueCad: Double?
@@ -59,7 +62,8 @@ public final class StoredPrediction {
 
     public init(merchantName: String, merchantIdentifier: String? = nil,
                 predictedCategory: String, confidenceSource: ConfidenceSource,
-                winnerCardId: String, winnerValueCad: Double, winnerRuleId: String? = nil,
+                winnerCardId: String, winnerValueCad: Double,
+                defaultCardValueCad: Double? = nil, winnerRuleId: String? = nil,
                 runnerUpCardId: String? = nil, runnerUpValueCad: Double? = nil,
                 amountCad: Double? = nil, valuationCentsPerPoint: Double? = nil,
                 headline: String, recordedAt: Date = Date()) {
@@ -71,6 +75,7 @@ public final class StoredPrediction {
         self.confidenceSourceRaw = confidenceSource.rawValue
         self.winnerCardId = winnerCardId
         self.winnerValueCad = winnerValueCad
+        self.defaultCardValueCad = defaultCardValueCad
         self.winnerRuleId = winnerRuleId
         self.runnerUpCardId = runnerUpCardId
         self.runnerUpValueCad = runnerUpValueCad

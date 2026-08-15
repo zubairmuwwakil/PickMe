@@ -70,4 +70,15 @@ public struct PredictionLog {
                                  missBreakdown: breakdown,
                                  targetCheckouts: Self.targetCheckouts)
     }
+
+    public func valueRecovered() throws -> Double {
+        try allPredictions().reduce(0) { total, prediction in
+            guard prediction.observation != nil,
+                  prediction.amountCad != nil,
+                  let defaultCardValueCad = prediction.defaultCardValueCad else {
+                return total
+            }
+            return total + (prediction.winnerValueCad - defaultCardValueCad)
+        }
+    }
 }
