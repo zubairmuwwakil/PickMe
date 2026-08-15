@@ -1,0 +1,34 @@
+{
+  "ownerStateVersion": "2026-08-15.1",
+  "_note": "Layer 2 of the three-layer model: owner/account state, never product facts. Fields set to null are collected at onboarding — the engine must refuse to score a rule whose ownerCondition is unresolved rather than guess.",
+  "defaultCardId": "wealthsimple-vip",
+  "switchThreshold": {
+    "minAdvantagePercentagePoints": 0.5,
+    "minAdvantageCad": 0.25,
+    "semantics": "both",
+    "_note": "Recommend leaving the default card only when net advantage clears BOTH floors. Dossier §4 said 'or'; 'both' implemented as the safer reading (an 'or' lets a 0.1pp edge trigger a switch on any large purchase) — flagged for Zubair's veto. Acceptance constraints always override (e.g., Mastercard-only Costco)."
+  },
+  "carry": {
+    "drawerCards": ["triangle-we"],
+    "_note": "Drawer ≠ disabled: recommend only for known use-cases (CT-family, qualifying grocery, CT/Petro fuel). Surface a 'drawer card' warning when it wins."
+  },
+  "cardStates": {
+    "amex-cobalt": { "capProgress": { "cobalt-eats-monthly": 0 } },
+    "mbna-rewards-we": { "capProgress": { "mbna-restaurants-annual": 0, "mbna-grocery-annual": 0, "mbna-digital-annual": 0, "mbna-memberships-annual": 0, "mbna-utilities-annual": 0 } },
+    "scotia-momentum-vi-plus": { "scotiaAccountYearAnchorMonth": 4, "capProgress": { "momentum-4pct-accountYear": 12500, "momentum-2pct-accountYear": 0 }, "_note": "Anchor = April per issuer welcome-kit terms (account year = 12 statement periods from opening). Zubair recalls a calendar-year-end reset — VALIDATION FLAG: confirm from one Momentum statement. 4% progress ≈ $12,500 is Zubair's rough estimate 2026-08-15; 2% bucket unknown, assumed 0 — refine from statements." },
+    "tangerine-moneyback-world": { "selectedCategories": ["grocery", "dining", "gasStation", "entertainment", "furniture", "hotelMotel", "drugStore", "recurring", "homeImprovement", "transit", "eGames", "fitness", "foreignCurrency"], "treatAsAllSelected": true, "thirdCategoryUnlocked": null, "nextChangeEffectiveDate": null, "_note": "Zubair's decision 2026-08-15: score Tangerine as 2% across ALL eligible categories; the app suggests which 3 to actually select (category advisor, future feature). Guardrails: 2% can only tie the WS default so this rarely surfaces; if Tangerine IS recommended, explanation must warn 'hypothetical selection'; any Tangerine reconciliation mismatch is classified as an owner-state miss, not a catalogue miss." },
+    "rogers-red-we": { "rogersEligibleServiceLinked": false, "rogersAccountAnniversaryMonth": null, "capProgress": { "rogers-enhanced-accountYear": 0 }, "_note": "No Rogers/Fido/Shaw/Comwave service linked (confirmed 2026-08-15) → base 1.5%. Anniversary month unknown — low urgency at $61k cap." },
+    "triangle-we": { "capProgress": { "triangle-grocery-annual": 0 } },
+    "wealthsimple-vip": { "feeWaiverActive": null },
+    "cryptocom-royal-indigo": { "cryptoLevelUpProActive": false, "croHandling": null, "capProgress": { "crypto-monthly-usd": 0 }, "_note": "Level Up Pro NOT active (confirmed 2026-08-15) → card excluded from all recommendations per dossier decision #3." }
+  },
+  "valuationsCad": {
+    "amexMembershipRewards": { "centsPerPoint": 1.8, "floorCentsPerPoint": 1.0, "basis": "Aeroplan transfer; conservative realized flight value" },
+    "marriottBonvoy": { "centsPerPoint": 0.8, "low": 0.6, "high": 1.0, "basis": "hotel award nights actually used" },
+    "mbnaRewards": { "centsPerPoint": 1.0, "floorCentsPerPoint": 0.833333, "basis": "travel redemption; cash floor" },
+    "ctMoney": { "cadPerUnit": 1.0, "optionalUsabilityFactor": 0.95, "usabilityFactorApplied": true },
+    "cro": { "model": "reward-currency", "faceValueFactorIfAutoSold": 1.0, "defaultHeldRiskFactor": 0.8 },
+    "cashBack": { "cadPerDollar": 1.0 },
+    "rogersEligibleServiceRedemption": { "redemptionFactor": 1.5, "appliedAtCheckout": false }
+  }
+}
