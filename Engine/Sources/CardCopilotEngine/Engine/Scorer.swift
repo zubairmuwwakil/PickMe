@@ -12,6 +12,9 @@ public struct CandidateScore: Equatable, Sendable {
     public let grossRewardCad: Double
     public let fxCostCad: Double
     public let netValueCad: Double
+    /// Net value if points are redeemed at their guaranteed cash floor rather than the
+    /// owner's declared value. Equal to `netValueCad` for cash-back and floorless programs.
+    public let floorNetValueCad: Double
     public let warnings: [Warning]
     public let excluded: Bool
     public let exclusionReason: String?
@@ -28,7 +31,7 @@ public enum Scorer {
                              ownerState: OwnerState, asOf: String) -> CandidateScore {
         func excludedScore(_ warning: Warning, _ reason: String) -> CandidateScore {
             CandidateScore(cardId: card.cardId, appliedRuleId: nil, rewardUnits: 0,
-                           grossRewardCad: 0, fxCostCad: 0, netValueCad: 0,
+                           grossRewardCad: 0, fxCostCad: 0, netValueCad: 0, floorNetValueCad: 0,
                            warnings: [warning], excluded: true, exclusionReason: reason)
         }
 
@@ -64,6 +67,9 @@ public enum Scorer {
             + earnUnits(postCapEarn ?? rule.earn, amountCad: overCapCad)
         let gross = valueCad(units: units, program: card.program.programId,
                              valuations: ownerState.valuationsCad, state: state)
+        let grossFloor = valueCad(units: units, program: card.program.programId,
+                                  valuations: ownerState.valuationsCad, state: state,
+                                  atFloor: true)
 
         var fxCost = 0.0
         if purchase.currency != "CAD", let fx = RuleMatcher.activeFxRule(for: card, asOf: asOf) {
@@ -83,6 +89,7 @@ public enum Scorer {
 
         return CandidateScore(cardId: card.cardId, appliedRuleId: rule.ruleId, rewardUnits: units,
                               grossRewardCad: gross, fxCostCad: fxCost, netValueCad: net,
+                              floorNetValueCad: grossFloor - fxCost,
                               warnings: warnings, excluded: false, exclusionReason: nil)
     }
 
@@ -95,11 +102,15 @@ public enum Scorer {
     }
 
     static func valueCad(units: Double, program: String,
-                         valuations: Valuations, state: CardState) -> Double {
+                         valuations: Valuations, state: CardState,
+                         atFloor: Bool = false) -> Double {
+        func cents(_ v: PointValuation) -> Double {
+            atFloor ? (v.floorCentsPerPoint ?? v.centsPerPoint) : v.centsPerPoint
+        }
         switch program {
-        case "amexMembershipRewards": return units * valuations.amexMembershipRewards.centsPerPoint / 100
-        case "marriottBonvoy": return units * valuations.marriottBonvoy.centsPerPoint / 100
-        case "mbnaRewards": return units * valuations.mbnaRewards.centsPerPoint / 100
+        case "amexMembershipRewards": return units * cents(valuations.amexMembershipRewards) / 100
+        case "marriottBonvoy": return units * cents(valuations.marriottBonvoy) / 100
+        case "mbnaRewards": return units * cents(valuations.mbnaRewards) / 100
         case "ctMoney":
             let v = valuations.ctMoney
             return units * v.cadPerUnit * (v.usabilityFactorApplied ? v.optionalUsabilityFactor : 1)
