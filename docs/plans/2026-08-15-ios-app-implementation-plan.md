@@ -92,13 +92,13 @@ App/
 
 **Files:** Create `Services/RecommendationService.swift`, `Views/MerchantConfirmView.swift`, `Views/RecommendationView.swift`, `Views/AmountCaptureView.swift`
 
-- [ ] Assemble `PurchaseContext` from confirmed merchant + mapped category + captured amount
-- [ ] Call engine, render `Explanation` — headline, why, runner-up, **valuation line**, warnings
-- [ ] Fork view when category confidence is low: show both branches with their winners
-- [ ] Amount capture: preset chips ($10/$25/$50/$100/custom), skippable
-- [ ] Persist the prediction immutably on display
-- [ ] Verify in simulator: launch → confirm merchant → see recommendation
-- [ ] Commit
+- [x] Assemble `PurchaseContext` from confirmed merchant + mapped category + captured amount
+- [x] Call engine, render `Explanation` — headline, why, runner-up, **valuation line**, warnings
+- [x] Fork view when category confidence is low: show both branches with their winners
+- [x] Amount capture: preset chips ($10/$25/$50/$100/custom), skippable
+- [x] Persist the prediction immutably on display
+- [x] Verify in simulator: launch → confirm merchant → see recommendation (nearby, search, amount, single, and fork paths all exercised live)
+- [x] Commit
 
 ### Task 6: Home screen with instant repeats
 
