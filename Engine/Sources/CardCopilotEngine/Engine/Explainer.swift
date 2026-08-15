@@ -4,6 +4,9 @@ public struct Explanation: Equatable, Sendable {
     public let headline: String
     public let why: String
     public let runnerUpLine: String?
+    /// Present only when the winner depends on the owner's declared point valuation.
+    /// Discloses the assumption and the value at which the advice would change.
+    public let valuationLine: String?
     public let warningLines: [String]
 }
 
@@ -42,7 +45,17 @@ public struct RecommendationExplainer {
             runnerUpLine = "Next best: \(displayName(runnerUp.cardId)) (\(money(runnerUp.netValueCad))) — you'd give up \(money(delta))."
         }
 
+        var valuationLine: String?
+        if recommendation.valuationSensitive,
+           let declared = recommendation.declaredCentsPerPoint,
+           let breakeven = recommendation.breakevenCentsPerPoint,
+           let floorWinner = recommendation.floorWinnerCardId {
+            valuationLine = "Assumes your points are worth \(cents(declared)) each. "
+                + "Below about \(cents(breakeven)), \(displayName(floorWinner)) wins instead."
+        }
+
         return Explanation(headline: headline, why: why, runnerUpLine: runnerUpLine,
+                           valuationLine: valuationLine,
                            warningLines: recommendation.winner.warnings.map(line(for:)))
     }
 
@@ -61,4 +74,6 @@ public struct RecommendationExplainer {
     private func displayName(_ cardId: String) -> String { namesById[cardId] ?? cardId }
 
     private func money(_ value: Double) -> String { String(format: "$%.2f", value) }
+
+    private func cents(_ value: Double) -> String { String(format: "%.2f¢", value) }
 }

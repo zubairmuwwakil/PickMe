@@ -29,6 +29,7 @@
 | 9 | Triangle = **drawer card** (recommend only for known use-cases, with a warning); Crypto.com **excluded unless Level Up Pro is active** — card art ≠ reward rate | Owner carry/plan state is a first-class engine input |
 | 10 | **Three-layer architecture**: card product rules (effective-dated, sourced) / owner-account state / merchant evidence | No cloning products per user; no global rule ever silently mutated by a personal observation |
 | 11 | Valuations locked (dossier §3): MR 1.8¢ (floor 1.0), Bonvoy 0.8¢, MBNA 1.0¢ (floor 0.833), CT ×0.95 usability, CRO ×1.0 auto-sold / ×0.8 held, cash 1:1 | Encoded in `Engine/Sources/CardCopilotEngine/Resources/owner-state.json` |
+| 12 | **Valuation honesty over valuation guessing**: rank by the declared value, but detect when the winner depends on it and disclose the breakeven cents-per-point | Rejected both single-number extremes — 1.8¢ flatters points cards, floor-only ranking punishes them; neither is knowable in advance. The app never trusts an assumption it could learn. |
 | 12 | **Tangerine = treat-as-all-selected** (Zubair 2026-08-15): score its 13 eligible categories at a hypothetical 2%; the app later *advises* which 3 to actually select | Harmless at checkout (2% only ever ties the WS default); Tangerine recommendations carry a "hypothetical selection" warning; Tangerine reconciliation mismatches classify as owner-state misses, not catalogue misses |
 | 13 | Owner state confirmed 2026-08-15: Rogers service NOT linked (1.5% base); Level Up Pro NOT active (Crypto card excluded); Scotia anchor April per issuer terms (Zubair recalls year-end — validate from a statement), 4% bucket ≈ $12,500 used | Seeded in owner-state.json with validation flags |
 
@@ -77,6 +78,8 @@ Precondition holding true at design time: no active welcome bonuses or minimum-s
 
 Goal modes · targeted offers · statement credits · insurance/protection valuation · welcome-bonus valuation (no active bonuses; re-add a crude "needs $N by date D" boost when one exists) · uncertainty *penalty* in scoring (confidence is displayed, not scored) · online purchases (physical checkouts only; online coding is a different flow — Phase 3 share extension) · receipt OCR · Live Activities · bank feeds (destroys the privacy posture) · ML anything (the engine's power is its auditability) · accounts, billing, crowdsourcing — all per the brief's exclusions.
 
+**v1.5 candidate:** redemption logging — record points spent and cash value received on each redemption, compute the owner's *realized* cents-per-point, and let it replace the declared guess. This is the valuation analogue of the merchant confirmation loop: learn the number instead of borrowing an opinion from a rewards blog.
+
 **v1.5 candidate:** statement CSV import — auto-match imported rows to predictions by date/amount to automate most of the weekly reconcile. No API or entitlement needed, privacy-clean. (Apple Wallet transaction access was investigated and is closed: FinanceKit covers only Apple Card/Cash/Savings, US-only, as of Jan 2026 — re-check WWDC 2025/26.)
 
 ## 5. Engine v1 — ✅ BUILT (branch `engine-v1`, 34 tests green, 2026-08-15)
@@ -91,6 +94,8 @@ expected net value (CAD)
 − foreign-transaction fee
 − reward-currency risk/spread haircut            (CRO ×0.8 held / ×1.0 auto-sold; CT ×0.95)
 ```
+
+**Valuation-sensitivity layer.** Every card is also scored at its guaranteed cash floor (`floorNetValueCad`). When floor-ranking would pick a different card, the recommendation is flagged `valuationSensitive` and carries a `breakevenCentsPerPoint` — the declared value below which the advice flips — which the explainer surfaces as *"Assumes your points are worth 1.80¢ each. Below about 1.67¢, MBNA wins instead."* The breakeven is computed analytically and cross-validated against bisection over the real engine (`BreakevenCrossValidationTests`), because a disclosed number that disagrees with the engine's own behaviour is worse than no disclosure. The asymmetry is deliberate: the layer fires only when a points card wins *because of* an optimistic assumption, not when the conservative card already wins.
 
 Then two gates before recommending:
 1. **Acceptance gate** — cards whose network the merchant doesn't take are excluded (Costco → Mastercard only); if the default card is gated out, the counterfactual becomes the best accepted habitual card.

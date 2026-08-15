@@ -33,6 +33,7 @@ final class DemoWalkthroughTests: XCTestCase {
                 purchase: purchase)
             print("\n▸ \(label)\n  \(e.headline)\n  \(e.why)")
             if let runnerUp = e.runnerUpLine { print("  \(runnerUp)") }
+            if let valuation = e.valuationLine { print("  ⓘ \(valuation)") }
             for warning in e.warningLines { print("  ⚠ \(warning)") }
         }
 
@@ -46,6 +47,7 @@ final class DemoWalkthroughTests: XCTestCase {
             purchase: capped)
         print("\n▸ Loblaws groceries, $140\n  \(e.headline)\n  \(e.why)")
         if let runnerUp = e.runnerUpLine { print("  \(runnerUp)") }
+        if let valuation = e.valuationLine { print("  ⓘ \(valuation)") }
         print("")
     }
 }
