@@ -84,6 +84,26 @@ final class PredictionLogTests: XCTestCase {
                      "no confirmations means unknown accuracy, not 0% accuracy")
     }
 
+    func testObservationRecordsRewardUnitsPostedOnTheStatement() throws {
+        // Metric #2 is unmeasurable without the units that actually posted. Optional, because
+        // a statement that does not show per-transaction rewards must be recordable as unknown
+        // rather than guessed.
+        let prediction = try log.record(samplePrediction())
+        try log.confirm(prediction, cardUsed: "amex-cobalt", observedCategory: "grocery",
+                        observedRewardUnits: 700, missClass: nil, note: nil)
+
+        let observation = try XCTUnwrap(try log.allPredictions().first?.observation)
+        XCTAssertEqual(observation.observedRewardUnits ?? .nan, 700, accuracy: 0.001)
+    }
+
+    func testObservedRewardUnitsAreOptionalAndDefaultToUnknown() throws {
+        let prediction = try log.record(samplePrediction())
+        try log.confirm(prediction, cardUsed: "amex-cobalt", observedCategory: "grocery",
+                        missClass: nil, note: nil)
+        XCTAssertNil(try log.allPredictions().first?.observation?.observedRewardUnits,
+                     "a statement with no per-transaction reward line is unknown, not zero")
+    }
+
     func testUnconfirmedPredictionsDriveTheReconcileQueue() throws {
         let a = try log.record(samplePrediction())
         _ = try log.record(samplePrediction())

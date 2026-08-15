@@ -64,6 +64,8 @@ public struct CheckoutService {
     private let context: ModelContext
     private let mrCentsPerPoint: Double
     private let defaultCardId: String
+    /// cardId -> the unit its program pays in, snapshotted onto every prediction.
+    private let rewardUnitKinds: [String: String]
 
     public init(catalogue: Catalogue, ownerState: OwnerState, context: ModelContext) {
         self.engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
@@ -72,6 +74,8 @@ public struct CheckoutService {
         self.context = context
         self.mrCentsPerPoint = ownerState.valuationsCad.amexMembershipRewards.centsPerPoint
         self.defaultCardId = ownerState.defaultCardId
+        self.rewardUnitKinds = Dictionary(uniqueKeysWithValues:
+            catalogue.cards.map { ($0.cardId, $0.program.unit) })
     }
 
     public func recommend(merchant: NearbyMerchant, amountCad: Double?,
@@ -124,6 +128,8 @@ public struct CheckoutService {
             confidenceSource: prediction.confidenceSource,
             winnerCardId: primary.winner.cardId,
             winnerValueCad: primary.winner.netValueCad,
+            predictedRewardUnits: primary.winner.rewardUnits,
+            predictedRewardUnitKind: rewardUnitKinds[primary.winner.cardId],
             defaultCardValueCad: defaultCardValueCad(for: primary),
             winnerRuleId: primary.winner.appliedRuleId,
             runnerUpCardId: primary.runnerUp?.cardId,

@@ -41,6 +41,14 @@ public final class StoredPrediction {
     public private(set) var confidenceSourceRaw: String = ConfidenceSource.fallback.rawValue
     public private(set) var winnerCardId: String = ""
     public private(set) var winnerValueCad: Double = 0
+    /// Reward units the engine predicted the winning card would earn — points, cash-back
+    /// dollars, CT Money, whatever the program pays in. Snapshotted so the arithmetic bar can
+    /// be checked against the advice as given; optional so rows written before this field
+    /// existed are excluded from the arithmetic metric rather than guessed at.
+    public private(set) var predictedRewardUnits: Double?
+    /// The winning program's unit ("point", "cad", "ctDollar", "cro") at prediction time.
+    /// Decides the comparison tolerance: points post as integers, cash back posts to the cent.
+    public private(set) var predictedRewardUnitKind: String?
     /// The value the designated default card would have earned on the same purchase.
     /// Optional so predictions written before Task 6 are excluded from value-recovered math.
     public private(set) var defaultCardValueCad: Double?
@@ -63,6 +71,7 @@ public final class StoredPrediction {
     public init(merchantName: String, merchantIdentifier: String? = nil,
                 predictedCategory: String, confidenceSource: ConfidenceSource,
                 winnerCardId: String, winnerValueCad: Double,
+                predictedRewardUnits: Double? = nil, predictedRewardUnitKind: String? = nil,
                 defaultCardValueCad: Double? = nil, winnerRuleId: String? = nil,
                 runnerUpCardId: String? = nil, runnerUpValueCad: Double? = nil,
                 amountCad: Double? = nil, valuationCentsPerPoint: Double? = nil,
@@ -75,6 +84,8 @@ public final class StoredPrediction {
         self.confidenceSourceRaw = confidenceSource.rawValue
         self.winnerCardId = winnerCardId
         self.winnerValueCad = winnerValueCad
+        self.predictedRewardUnits = predictedRewardUnits
+        self.predictedRewardUnitKind = predictedRewardUnitKind
         self.defaultCardValueCad = defaultCardValueCad
         self.winnerRuleId = winnerRuleId
         self.runnerUpCardId = runnerUpCardId
@@ -92,6 +103,11 @@ public final class StoredObservation {
     public private(set) var confirmedAt: Date = Date()
     public private(set) var cardUsed: String = ""
     public private(set) var observedCategory: String = ""
+    /// Reward units the statement actually posted for this transaction — points for a points
+    /// card, dollars for cash back. Optional and never inferred: a statement that shows no
+    /// per-transaction reward line leaves this unknown, which excludes the row from the
+    /// arithmetic bar rather than fabricating evidence for it.
+    public private(set) var observedRewardUnits: Double?
     public private(set) var missClassRaw: String?
     public private(set) var note: String?
     public var prediction: StoredPrediction?
@@ -100,12 +116,14 @@ public final class StoredObservation {
     /// A confirmation with no miss class is a correct prediction.
     public var wasCorrect: Bool { missClassRaw == nil }
 
-    public init(cardUsed: String, observedCategory: String, missClass: MissClass? = nil,
+    public init(cardUsed: String, observedCategory: String, observedRewardUnits: Double? = nil,
+                missClass: MissClass? = nil,
                 note: String? = nil, confirmedAt: Date = Date()) {
         self.id = UUID()
         self.confirmedAt = confirmedAt
         self.cardUsed = cardUsed
         self.observedCategory = observedCategory
+        self.observedRewardUnits = observedRewardUnits
         self.missClassRaw = missClass?.rawValue
         self.note = note
     }

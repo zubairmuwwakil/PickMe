@@ -39,9 +39,11 @@ public struct PredictionLog {
     }
 
     public func confirm(_ prediction: StoredPrediction, cardUsed: String,
-                        observedCategory: String, missClass: MissClass?,
+                        observedCategory: String, observedRewardUnits: Double? = nil,
+                        missClass: MissClass?,
                         note: String?, confirmedAt: Date = Date()) throws {
         let observation = StoredObservation(cardUsed: cardUsed, observedCategory: observedCategory,
+                                            observedRewardUnits: observedRewardUnits,
                                             missClass: missClass, note: note,
                                             confirmedAt: confirmedAt)
         context.insert(observation)

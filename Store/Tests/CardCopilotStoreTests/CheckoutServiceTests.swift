@@ -57,6 +57,33 @@ final class CheckoutServiceTests: XCTestCase {
         XCTAssertFalse(stored.headline.isEmpty)
     }
 
+    func testPredictionSnapshotsWinnerRewardUnitsAndUnitKind() throws {
+        // Metric #2 compares posted units against what the app predicted AT THE TIME. Without
+        // this snapshot the only way to check the arithmetic would be to re-run today's engine
+        // against an old row — which measures today's catalogue, not the advice that was given.
+        let result = try service.recommend(merchant: merchant("Loblaws", poi: "MKPOICategoryFoodMarket"),
+                                           amountCad: 140, asOf: asOf)
+        guard case .single(let rec) = result.outcome else {
+            return XCTFail("expected single outcome, got \(result.outcome)")
+        }
+        let stored = try XCTUnwrap(try service.log.allPredictions().first)
+        XCTAssertEqual(stored.predictedRewardUnits ?? .nan, rec.winner.rewardUnits, accuracy: 0.0001)
+        XCTAssertEqual(stored.predictedRewardUnits ?? .nan, 700, accuracy: 0.0001,
+                       "Cobalt earns 5x on $140 of grocery")
+        XCTAssertEqual(stored.predictedRewardUnitKind, "point",
+                       "the unit decides the comparison tolerance — points post as integers")
+    }
+
+    func testCashBackWinnerSnapshotsDollarUnits() throws {
+        _ = try service.recommend(merchant: merchant("Costco Wholesale", poi: nil),
+                                  amountCad: 220, asOf: asOf)
+        let stored = try XCTUnwrap(try service.log.allPredictions().first)
+        XCTAssertEqual(stored.predictedRewardUnitKind, "cad",
+                       "cash back posts to the cent — a 1.0-unit tolerance would hide a dollar of error")
+        XCTAssertEqual(stored.predictedRewardUnits ?? .nan, stored.winnerValueCad, accuracy: 0.0001,
+                       "a cash-back card's units ARE dollars")
+    }
+
     // MARK: fork behaviour
 
     func testWalmartForkSplitsWhenBranchesDisagree() throws {
