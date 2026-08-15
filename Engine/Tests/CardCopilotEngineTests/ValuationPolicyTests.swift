@@ -11,8 +11,10 @@ final class ValuationPolicyTests: XCTestCase {
 
     override func setUpWithError() throws {
         let catalogue = try SeedLoader.loadCatalogue()
-        engine = RecommendationEngine(catalogue: catalogue,
-                                      ownerState: try SeedLoader.loadOwnerState())
+        // Pinned above the floor: this suite documents behaviour when the owner declares a
+        // value they cannot guarantee, independent of the live seed.
+        let state = try SeedLoader.loadPinnedOwnerState()
+        engine = RecommendationEngine(catalogue: catalogue, ownerState: state)
         explainer = RecommendationExplainer(catalogue: catalogue)
     }
 
@@ -32,7 +34,8 @@ final class ValuationPolicyTests: XCTestCase {
                                  asOf: asOf)
         XCTAssertEqual(r.winner.cardId, "amex-cobalt")
         XCTAssertTrue(r.valuationSensitive)
-        XCTAssertEqual(r.floorWinnerCardId, "wealthsimple-vip")
+        XCTAssertEqual(r.alternateWinnerCardId, "wealthsimple-vip")
+        XCTAssertEqual(r.valuationDirection, .below)
         XCTAssertEqual(r.breakevenCentsPerPoint ?? .nan, 1.2333, accuracy: 0.005)
     }
 
@@ -43,7 +46,8 @@ final class ValuationPolicyTests: XCTestCase {
                                                  recurringIndicator: true), asOf: asOf)
         XCTAssertEqual(r.winner.cardId, "amex-cobalt")
         XCTAssertTrue(r.valuationSensitive)
-        XCTAssertEqual(r.floorWinnerCardId, "mbna-rewards-we")
+        XCTAssertEqual(r.alternateWinnerCardId, "mbna-rewards-we")
+        XCTAssertEqual(r.valuationDirection, .below)
         XCTAssertEqual(r.breakevenCentsPerPoint ?? .nan, 1.6667, accuracy: 0.005)
     }
 
@@ -68,7 +72,7 @@ final class ValuationPolicyTests: XCTestCase {
 
     func testScorerExposesFloorNetValue() throws {
         let catalogue = try SeedLoader.loadCatalogue()
-        let owner = try SeedLoader.loadOwnerState()
+        let owner = try SeedLoader.loadPinnedOwnerState()
         let cobalt = catalogue.cards.first { $0.cardId == "amex-cobalt" }!
         let p = PurchaseContext(amountCad: 100, category: "grocery", mcc: 5411,
                                 merchantBrand: "loblaws")
@@ -99,7 +103,7 @@ final class ValuationPolicyTests: XCTestCase {
 final class BreakevenCrossValidationTests: XCTestCase {
     func testAnalyticBreakevenMatchesBisection() throws {
         let catalogue = try SeedLoader.loadCatalogue()
-        let owner = try SeedLoader.loadOwnerState()
+        let owner = try SeedLoader.loadPinnedOwnerState()
         let mrCards = Set(catalogue.cards
             .filter { $0.program.programId == "amexMembershipRewards" }
             .map(\.cardId))

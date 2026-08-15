@@ -1,7 +1,12 @@
 import XCTest
 @testable import CardCopilotEngine
 
-private struct FixtureFile: Decodable { let cases: [FixtureCase] }
+private struct FixtureFile: Decodable {
+    let cases: [FixtureCase]
+    let pinnedValuations: PinnedValuations
+
+    struct PinnedValuations: Decodable { let amexMembershipRewards: Double }
+}
 
 private struct FixtureCase: Decodable {
     let caseId: String
@@ -38,7 +43,10 @@ final class FixtureHarnessTests: XCTestCase {
         XCTAssertEqual(file.cases.count, 12)
 
         let catalogue = try SeedLoader.loadCatalogue()
-        let baseState = try SeedLoader.loadOwnerState()
+        var baseState = try SeedLoader.loadOwnerState()
+        // Pinned rather than inherited — see pinnedValuations._why in the fixture file.
+        baseState.valuationsCad.amexMembershipRewards.centsPerPoint =
+            file.pinnedValuations.amexMembershipRewards
 
         for fixture in file.cases {
             var state = baseState

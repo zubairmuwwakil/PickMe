@@ -23,7 +23,7 @@
     "cryptocom-royal-indigo": { "cryptoLevelUpProActive": false, "croHandling": null, "capProgress": { "crypto-monthly-usd": 0 }, "_note": "Level Up Pro NOT active (confirmed 2026-08-15) → card excluded from all recommendations per dossier decision #3." }
   },
   "valuationsCad": {
-    "amexMembershipRewards": { "centsPerPoint": 1.8, "floorCentsPerPoint": 1.0, "basis": "Aeroplan transfer; conservative realized flight value" },
+    "amexMembershipRewards": { "centsPerPoint": 1.0, "floorCentsPerPoint": 1.0, "aspirationalCentsPerPoint": 2.2, "basis": "RANKED AT THE CASH FLOOR (statement credit) because Zubair has never transferred MR — confirmed 2026-08-15. A valuation is a forecast of redemption behaviour, and statements can confirm points earned but never dollars realized, so the 30-checkout experiment cannot validate it. aspirationalCentsPerPoint 2.2 is the published Canadian benchmark (Prince of Travel, updated 2026-07-29, reflecting 1:1 Aeroplan plus 7 other transfer partners); it is used ONLY as the plausibility ceiling for disclosing upside breakevens, never for ranking. Raise centsPerPoint once redemption logging (v1.5) produces a realized rate." },
     "marriottBonvoy": { "centsPerPoint": 0.8, "low": 0.6, "high": 1.0, "basis": "hotel award nights actually used" },
     "mbnaRewards": { "centsPerPoint": 1.0, "floorCentsPerPoint": 0.833333, "basis": "travel redemption; cash floor" },
     "ctMoney": { "cadPerUnit": 1.0, "optionalUsabilityFactor": 0.95, "usabilityFactorApplied": true },

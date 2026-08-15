@@ -7,7 +7,7 @@ final class EngineGateTests: XCTestCase {
 
     override func setUpWithError() throws {
         engine = RecommendationEngine(catalogue: try SeedLoader.loadCatalogue(),
-                                      ownerState: try SeedLoader.loadOwnerState())
+                                      ownerState: try SeedLoader.loadPinnedOwnerState())
     }
 
     func testPharmacyHoldsDefault() {

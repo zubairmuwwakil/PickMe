@@ -9,7 +9,7 @@ final class ExplainerTests: XCTestCase {
     override func setUpWithError() throws {
         let catalogue = try SeedLoader.loadCatalogue()
         engine = RecommendationEngine(catalogue: catalogue,
-                                      ownerState: try SeedLoader.loadOwnerState())
+                                      ownerState: try SeedLoader.loadPinnedOwnerState())
         explainer = RecommendationExplainer(catalogue: catalogue)
     }
 

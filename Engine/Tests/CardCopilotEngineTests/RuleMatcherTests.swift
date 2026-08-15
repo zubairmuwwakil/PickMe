@@ -8,7 +8,7 @@ final class RuleMatcherTests: XCTestCase {
 
     override func setUpWithError() throws {
         catalogue = try SeedLoader.loadCatalogue()
-        owner = try SeedLoader.loadOwnerState()
+        owner = try SeedLoader.loadPinnedOwnerState()
     }
 
     private func card(_ id: String) -> CardProduct { catalogue.cards.first { $0.cardId == id }! }

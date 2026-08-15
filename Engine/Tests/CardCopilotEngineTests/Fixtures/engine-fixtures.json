@@ -1,6 +1,10 @@
 {
   "fixturesVersion": "2026-08-15.1",
-  "_note": "Executable spec for RecommendationEngine. Amounts CAD unless stated. Expected values are exact engine outputs (unrounded beyond 4dp); UI rounds to cents at display. Valuations per owner-state.json: MR 1.8¢, MBNA 1.0¢, Bonvoy 0.8¢, cash 1:1, CT ×0.95, CRO ×1.0 auto-sold / ×0.8 held. Default card wealthsimple-vip; threshold both(0.5pp, $0.25). Base owner state per owner-state.json: rogersEligibleServiceLinked=false, cryptoLevelUpProActive=false, Tangerine treatAsAllSelected (2% hypothetical everywhere — can only tie WS, never clears threshold), Scotia 4% cap progress $12,500. Ties rank the default card first.",
+  "_note": "Executable spec for RecommendationEngine. Amounts CAD unless stated. Expected values are exact engine outputs (unrounded beyond 4dp); UI rounds to cents at display. Valuations: MR pinned to 1.8¢ by pinnedValuations below (owner-state.json now ranks at the 1.0¢ floor), MBNA 1.0¢, Bonvoy 0.8¢, cash 1:1, CT ×0.95, CRO ×1.0 auto-sold / ×0.8 held. Default card wealthsimple-vip; threshold both(0.5pp, $0.25). Base owner state per owner-state.json: rogersEligibleServiceLinked=false, cryptoLevelUpProActive=false, Tangerine treatAsAllSelected (2% hypothetical everywhere — can only tie WS, never clears threshold), Scotia 4% cap progress $12,500. Ties rank the default card first.",
+  "pinnedValuations": {
+    "amexMembershipRewards": 1.8,
+    "_why": "These 12 cases document ENGINE BEHAVIOUR and are pinned to an above-floor MR value so they exercise points-vs-cash ranking. They deliberately do NOT track owner-state.json, whose live setting is the 1.0¢ cash floor — otherwise every valuation change would re-baseline the whole spec and the temptation would be to accept engine output rather than re-derive the arithmetic."
+  },
   "cases": [
     {
       "caseId": "grocery-standalone-100",
