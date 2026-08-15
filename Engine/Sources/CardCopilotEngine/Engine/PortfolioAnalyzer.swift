@@ -102,6 +102,10 @@ public struct PortfolioRun: Equatable, Sendable {
 /// - Cap progress starts at zero: this is a forward-looking year, not the remainder of the current
 ///   one. (The seeded Scotia progress is flagged suspect in owner-state.json regardless.)
 public struct PortfolioAnalyzer {
+    /// How much of the pair's combined annual fee the overlap must be worth before the pair is
+    /// reported. A display threshold, not a fact about the cards — stated so it isn't invisible.
+    static let redundancyMaterialityFraction = 0.1
+
     let catalogue: Catalogue
     let ownerState: OwnerState
 
@@ -289,7 +293,10 @@ public struct PortfolioAnalyzer {
     }
 
     /// A pair is redundant when removing both costs materially more than removing each alone —
-    /// the signature of two cards covering the same categories at the same rate.
+    /// the signature of two cards covering the same categories at the same rate. Almost any two
+    /// cards overlap by a few dollars, so the overlap has to be worth at least
+    /// `redundancyMaterialityFraction` of the fees at stake before it is worth the owner's
+    /// attention; below that it buries the pairs that actually change a decision.
     private func redundantPairs(_ distribution: SpendDistribution, asOf: String,
                                 full: PortfolioRun,
                                 contributions: [CardContribution]) -> [RedundantPair] {
@@ -302,11 +309,13 @@ public struct PortfolioAnalyzer {
                 let joint = full.totalValueCad
                     - run(distribution, excluding: [a.cardId, b.cardId], asOf: asOf).totalValueCad
                 let individually = a.marginalValueCad + b.marginalValueCad
-                guard joint > individually + 0.01 else { continue }
+                let combinedFee = a.annualFeeCad + b.annualFeeCad
+                guard joint - individually >= Self.redundancyMaterialityFraction * combinedFee,
+                      joint > individually + 0.01 else { continue }
                 pairs.append(RedundantPair(cardIds: [a.cardId, b.cardId].sorted(),
                                            jointMarginalCad: joint,
                                            sumOfIndividualMarginalsCad: individually,
-                                           combinedAnnualFeeCad: a.annualFeeCad + b.annualFeeCad))
+                                           combinedAnnualFeeCad: combinedFee))
             }
         }
         return pairs.sorted { $0.jointMarginalCad > $1.jointMarginalCad }
