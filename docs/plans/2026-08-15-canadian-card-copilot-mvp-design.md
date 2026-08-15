@@ -79,7 +79,10 @@ Goal modes · targeted offers · statement credits · insurance/protection valua
 
 **v1.5 candidate:** statement CSV import — auto-match imported rows to predictions by date/amount to automate most of the weekly reconcile. No API or entitlement needed, privacy-clean. (Apple Wallet transaction access was investigated and is closed: FinanceKit covers only Apple Card/Cash/Savings, US-only, as of Jan 2026 — re-check WWDC 2025/26.)
 
-## 5. Engine v1
+## 5. Engine v1 — ✅ BUILT (branch `engine-v1`, 34 tests green, 2026-08-15)
+
+Implemented as a standalone SPM package in `Engine/`: `SeedLoader` → `RuleMatcher` → `CapMath` → `Scorer` → `RecommendationEngine` → `RecommendationExplainer`. Zero dependencies, no UI/MapKit/SwiftData coupling. Run `cd Engine && swift test`; `--filter DemoWalkthroughTests` prints a readable day-of-checkouts walkthrough. The 12-case fixture spec is mutation-checked (perturbing the MR valuation breaks 6 assertions).
+
 
 ```text
 expected net value (CAD)
