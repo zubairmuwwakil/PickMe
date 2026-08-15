@@ -19,7 +19,7 @@ final class BreakevenValuationTests: XCTestCase {
 
     func testPrintRecommendationBreakevens() throws {
         let catalogue = try SeedLoader.loadCatalogue()
-        let owner = try SeedLoader.loadOwnerState()
+        let owner = try SeedLoader.loadPinnedOwnerState()
         let names = Dictionary(uniqueKeysWithValues: catalogue.cards.map { ($0.cardId, $0.officialName) })
         let mrCards = Set(catalogue.cards
             .filter { $0.program.programId == "amexMembershipRewards" }

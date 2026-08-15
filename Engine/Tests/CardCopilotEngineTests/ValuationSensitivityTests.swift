@@ -14,7 +14,7 @@ final class ValuationSensitivityTests: XCTestCase {
 
     func testPrintValuationSensitivity() throws {
         let catalogue = try SeedLoader.loadCatalogue()
-        let base = try SeedLoader.loadOwnerState()
+        let base = try SeedLoader.loadPinnedOwnerState()
         let optimistic = RecommendationEngine(catalogue: catalogue,
                                               ownerState: state(base, mrCentsPerPoint: 1.8))
         let floor = RecommendationEngine(catalogue: catalogue,

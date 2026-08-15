@@ -15,6 +15,8 @@ public struct CandidateScore: Equatable, Sendable {
     /// Net value if points are redeemed at their guaranteed cash floor rather than the
     /// owner's declared value. Equal to `netValueCad` for cash-back and floorless programs.
     public let floorNetValueCad: Double
+    /// Net value at the program's published benchmark valuation, when one is set.
+    public let aspirationalNetValueCad: Double
     public let warnings: [Warning]
     public let excluded: Bool
     public let exclusionReason: String?
@@ -32,6 +34,7 @@ public enum Scorer {
         func excludedScore(_ warning: Warning, _ reason: String) -> CandidateScore {
             CandidateScore(cardId: card.cardId, appliedRuleId: nil, rewardUnits: 0,
                            grossRewardCad: 0, fxCostCad: 0, netValueCad: 0, floorNetValueCad: 0,
+                           aspirationalNetValueCad: 0,
                            warnings: [warning], excluded: true, exclusionReason: reason)
         }
 
@@ -69,7 +72,10 @@ public enum Scorer {
                              valuations: ownerState.valuationsCad, state: state)
         let grossFloor = valueCad(units: units, program: card.program.programId,
                                   valuations: ownerState.valuationsCad, state: state,
-                                  atFloor: true)
+                                  band: .floor)
+        let grossAspirational = valueCad(units: units, program: card.program.programId,
+                                         valuations: ownerState.valuationsCad, state: state,
+                                         band: .aspirational)
 
         var fxCost = 0.0
         if purchase.currency != "CAD", let fx = RuleMatcher.activeFxRule(for: card, asOf: asOf) {
@@ -90,6 +96,7 @@ public enum Scorer {
         return CandidateScore(cardId: card.cardId, appliedRuleId: rule.ruleId, rewardUnits: units,
                               grossRewardCad: gross, fxCostCad: fxCost, netValueCad: net,
                               floorNetValueCad: grossFloor - fxCost,
+                              aspirationalNetValueCad: grossAspirational - fxCost,
                               warnings: warnings, excluded: false, exclusionReason: nil)
     }
 
@@ -101,11 +108,19 @@ public enum Scorer {
         }
     }
 
+    /// Which point of a program's plausible valuation range to use.
+    enum ValuationBand { case declared, floor, aspirational }
+
     static func valueCad(units: Double, program: String,
                          valuations: Valuations, state: CardState,
-                         atFloor: Bool = false) -> Double {
+                         band: ValuationBand = .declared) -> Double {
         func cents(_ v: PointValuation) -> Double {
-            atFloor ? (v.floorCentsPerPoint ?? v.centsPerPoint) : v.centsPerPoint
+            switch band {
+            case .declared: return v.centsPerPoint
+            case .floor: return v.floorCentsPerPoint ?? v.centsPerPoint
+            case .aspirational: return max(v.aspirationalCentsPerPoint ?? v.centsPerPoint,
+                                           v.centsPerPoint)
+            }
         }
         switch program {
         case "amexMembershipRewards": return units * cents(valuations.amexMembershipRewards) / 100

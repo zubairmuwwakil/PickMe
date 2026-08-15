@@ -31,6 +31,9 @@ public struct CardState: Codable, Equatable, Sendable {
 public struct PointValuation: Codable, Equatable, Sendable {
     public var centsPerPoint: Double
     public var floorCentsPerPoint: Double?
+    /// Published benchmark value for this currency. Used only as a plausibility ceiling when
+    /// deciding whether an upside breakeven is worth disclosing — never for ranking.
+    public var aspirationalCentsPerPoint: Double?
     public var low: Double?
     public var high: Double?
     public var basis: String?

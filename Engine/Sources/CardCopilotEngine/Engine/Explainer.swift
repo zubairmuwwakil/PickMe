@@ -49,9 +49,11 @@ public struct RecommendationExplainer {
         if recommendation.valuationSensitive,
            let declared = recommendation.declaredCentsPerPoint,
            let breakeven = recommendation.breakevenCentsPerPoint,
-           let floorWinner = recommendation.floorWinnerCardId {
+           let alternate = recommendation.alternateWinnerCardId,
+           let direction = recommendation.valuationDirection {
+            let side = direction == .below ? "Below" : "Above"
             valuationLine = "Assumes your points are worth \(cents(declared)) each. "
-                + "Below about \(cents(breakeven)), \(displayName(floorWinner)) wins instead."
+                + "\(side) about \(cents(breakeven)), \(displayName(alternate)) wins instead."
         }
 
         return Explanation(headline: headline, why: why, runnerUpLine: runnerUpLine,

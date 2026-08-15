@@ -8,17 +8,22 @@ public struct Recommendation: Equatable, Sendable {
     public let defaultNotAccepted: Bool
     /// A card that beat the default but not by enough to be worth digging out the wallet.
     public let suppressedBetterCard: CandidateScore?
-    /// True when the winner depends on the owner's declared point valuation: ranking by the
-    /// guaranteed cash floor instead would pick a different card.
+    /// True when the winner depends on the owner's declared point valuation — valuing points
+    /// lower (or higher) would pick a different card.
     public let valuationSensitive: Bool
-    /// The card that wins under floor valuation, when that differs from the winner.
-    public let floorWinnerCardId: String?
-    /// The declared cents-per-point below which the recommendation flips to the floor winner.
+    /// Which way the declared valuation would have to move to change the advice.
+    public let valuationDirection: ValuationDirection?
+    /// The card that wins on the other side of the breakeven.
+    public let alternateWinnerCardId: String?
+    /// The cents-per-point at which the recommendation flips to `alternateWinnerCardId`.
     public let breakevenCentsPerPoint: Double?
     /// The declared cents-per-point the winning score assumed, when valuation-sensitive.
     public let declaredCentsPerPoint: Double?
     public let allCandidates: [CandidateScore]
 }
+
+/// Which direction the point valuation would have to move for the advice to change.
+public enum ValuationDirection: Sendable, Equatable { case below, above }
 
 public struct RecommendationEngine {
     let catalogue: Catalogue
@@ -47,20 +52,49 @@ public struct RecommendationEngine {
 
         let declared = rank(scores, purchase: purchase, value: { $0.netValueCad })
         let floor = rank(scores, purchase: purchase, value: { $0.floorNetValueCad })
+        let aspirational = rank(scores, purchase: purchase, value: { $0.aspirationalNetValueCad })
 
         var sensitive = false
-        var floorWinnerId: String?
+        var direction: ValuationDirection?
+        var alternateId: String?
         var breakeven: Double?
         var declaredCents: Double?
-        // Sensitivity exists only when the declared-value winner is a floor-distinct points
-        // card and floor-ranking would pick someone else.
+
+        // Downside: the winner is a points card that only wins because points are declared
+        // above their guaranteed floor.
         if declared.winner.cardId != floor.winner.cardId,
            abs(declared.winner.floorNetValueCad - declared.winner.netValueCad) > 0.0001,
            declared.winner.rewardUnits > 0 {
             sensitive = true
-            floorWinnerId = floor.winner.cardId
-            breakeven = breakevenCents(for: declared, floorWinner: floor.winner, purchase: purchase)
-            declaredCents = (declared.winner.grossRewardCad / declared.winner.rewardUnits) * 100
+            direction = .below
+            alternateId = floor.winner.cardId
+            breakeven = breakevenCents(pointsCard: declared.winner,
+                                       incumbent: floor.winner,
+                                       ranked: declared.ranked, purchase: purchase)
+            declaredCents = centsPerUnit(declared.winner)
+        }
+        // Upside: a points card would overtake the winner if points were worth more. Only
+        // disclosed when the flip happens within the published benchmark — past that it is
+        // noise, not information.
+        else if aspirational.winner.cardId != declared.winner.cardId,
+                aspirational.winner.rewardUnits > 0,
+                abs(aspirational.winner.aspirationalNetValueCad
+                    - aspirational.winner.netValueCad) > 0.0001,
+                let challenger = declared.ranked.first(where: { $0.cardId == aspirational.winner.cardId }) {
+            let flip = breakevenCents(pointsCard: challenger,
+                                      incumbent: declared.winner,
+                                      ranked: declared.ranked, purchase: purchase)
+            let benchmarkCents = (challenger.aspirationalNetValueCad + challenger.fxCostCad)
+                * 100 / challenger.rewardUnits
+            if flip <= benchmarkCents + 0.0001 {
+                sensitive = true
+                direction = .above
+                alternateId = challenger.cardId
+                breakeven = flip
+                // The disclosed value is the challenger's currency — that is the number the
+                // owner would be revising, not the cash-back winner's notional "unit" value.
+                declaredCents = centsPerUnit(challenger)
+            }
         }
 
         return Recommendation(winner: declared.winner,
@@ -70,17 +104,22 @@ public struct RecommendationEngine {
                               defaultNotAccepted: declared.defaultNotAccepted,
                               suppressedBetterCard: declared.suppressed,
                               valuationSensitive: sensitive,
-                              floorWinnerCardId: floorWinnerId,
+                              valuationDirection: direction,
+                              alternateWinnerCardId: alternateId,
                               breakevenCentsPerPoint: breakeven,
                               declaredCentsPerPoint: declaredCents,
                               allCandidates: declared.ranked)
     }
 
-    /// The declared cents-per-point at which the winner's net value stops beating both the
-    /// floor winner and (with the switch threshold applied) the default card. Verified against
-    /// bisection over the full engine in BreakevenValuationTests.
-    private func breakevenCents(for declared: Verdict, floorWinner: CandidateScore,
-                                purchase: PurchaseContext) -> Double {
+    private func centsPerUnit(_ score: CandidateScore) -> Double {
+        score.rewardUnits > 0 ? (score.grossRewardCad / score.rewardUnits) * 100 : 0
+    }
+
+    /// The cents-per-point at which `pointsCard` and `incumbent` swap places, accounting for
+    /// the switch threshold that applies against the default card. Cross-validated against
+    /// bisection over the full engine in BreakevenCrossValidationTests.
+    private func breakevenCents(pointsCard: CandidateScore, incumbent: CandidateScore,
+                                ranked: [CandidateScore], purchase: PurchaseContext) -> Double {
         let t = ownerState.switchThreshold
         let ppFloorCad = t.minAdvantagePercentagePoints * purchase.amountCad / 100
         let requiredAdvantage = t.semantics == "either"
@@ -88,13 +127,14 @@ public struct RecommendationEngine {
             : max(t.minAdvantageCad, ppFloorCad)
         let defaultId = ownerState.defaultCardId
 
-        var needed = floorWinner.netValueCad
-            + (floorWinner.cardId == defaultId ? requiredAdvantage : 0)
-        if floorWinner.cardId != defaultId,
-           let defaultScore = declared.ranked.first(where: { $0.cardId == defaultId }) {
+        // The points card must clear the incumbent, plus the switch threshold over the default.
+        var needed = incumbent.netValueCad
+            + (incumbent.cardId == defaultId ? requiredAdvantage : 0)
+        if incumbent.cardId != defaultId, pointsCard.cardId != defaultId,
+           let defaultScore = ranked.first(where: { $0.cardId == defaultId }) {
             needed = max(needed, defaultScore.netValueCad + requiredAdvantage)
         }
-        return (needed + declared.winner.fxCostCad) * 100 / declared.winner.rewardUnits
+        return (needed + pointsCard.fxCostCad) * 100 / pointsCard.rewardUnits
     }
 
     private func rank(_ scores: [CandidateScore], purchase: PurchaseContext,

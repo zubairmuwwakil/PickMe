@@ -22,7 +22,12 @@ final class SeedLoaderTests: XCTestCase {
         let state = try SeedLoader.loadOwnerState()
         XCTAssertEqual(state.defaultCardId, "wealthsimple-vip")
         XCTAssertEqual(state.switchThreshold.semantics, "both")
-        XCTAssertEqual(state.valuationsCad.amexMembershipRewards.centsPerPoint, 1.8, accuracy: 0.005)
+        let mr = state.valuationsCad.amexMembershipRewards
+        XCTAssertEqual(mr.centsPerPoint, 1.0, accuracy: 0.005,
+                       "MR ranks at the guaranteed cash floor — no redemption history to justify more")
+        XCTAssertEqual(mr.floorCentsPerPoint ?? .nan, 1.0, accuracy: 0.005)
+        XCTAssertEqual(mr.aspirationalCentsPerPoint ?? .nan, 2.2, accuracy: 0.005,
+                       "published benchmark; used only as the disclosure ceiling, never for ranking")
         XCTAssertTrue(state.carry.drawerCards.contains("triangle-we"))
         XCTAssertEqual(state.cardStates["rogers-red-we"]?.rogersEligibleServiceLinked, false)
         XCTAssertEqual(state.cardStates["cryptocom-royal-indigo"]?.cryptoLevelUpProActive, false)
