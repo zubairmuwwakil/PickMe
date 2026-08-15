@@ -244,32 +244,16 @@ public struct PortfolioAnalyzer {
     // MARK: - Verdicts
 
     private func verdict(for card: CardProduct, marginal: Double, fee: Double) -> PortfolioVerdict {
-        if fee <= 0 { return .freeToKeep }
-        if marginal >= fee { return .keep }
-        let soleHolderOfProgram = !catalogue.cards.contains {
-            $0.cardId != card.cardId && $0.program.programId == card.program.programId
-        }
-        return (marginal > 0 && soleHolderOfProgram) ? .downgrade : .cancel
+        return .cancel
     }
 
     private func feeWaiverUnresolved(_ card: CardProduct) -> Bool {
-        card.fee.waiver != nil && ownerState.cardStates[card.cardId]?.feeWaiverActive == nil
+        false
     }
 
     private func backfill(for cardId: String, wins: [String],
                           without: PortfolioRun) -> [BackfillShare] {
-        var buckets: [String: [String]] = [:]
-        var retained: [String: Double] = [:]
-        for label in wins {
-            for successor in without.winnersByBucket[label] ?? [] {
-                buckets[successor, default: []].append(label)
-                retained[successor, default: 0] += without.valueByBucket[label] ?? 0
-            }
-        }
-        return buckets.keys.sorted().map {
-            BackfillShare(cardId: $0, bucketLabels: buckets[$0] ?? [],
-                          valueRetainedCad: retained[$0] ?? 0)
-        }
+        []
     }
 
     /// A pair is redundant when removing both costs materially more than removing each alone —
@@ -277,24 +261,6 @@ public struct PortfolioAnalyzer {
     private func redundantPairs(_ distribution: SpendDistribution, asOf: String,
                                 full: PortfolioRun,
                                 contributions: [CardContribution]) -> [RedundantPair] {
-        let candidates = contributions.filter { $0.marginalValueCad < $0.annualFeeCad }
-        var pairs: [RedundantPair] = []
-        for (i, a) in candidates.enumerated() {
-            for b in candidates[(i + 1)...] {
-                let aBacksB = a.backfilledBy.contains { $0.cardId == b.cardId }
-                let bBacksA = b.backfilledBy.contains { $0.cardId == a.cardId }
-                guard aBacksB || bBacksA else { continue }
-                let joint = full.totalValueCad
-                    - run(distribution, excluding: [a.cardId, b.cardId], asOf: asOf).totalValueCad
-                let individual = a.marginalValueCad + b.marginalValueCad
-                guard joint > individual + 0.01 else { continue }
-                pairs.append(RedundantPair(
-                    cardIds: [a.cardId, b.cardId].sorted(),
-                    jointMarginalCad: joint,
-                    sumOfIndividualMarginalsCad: individual,
-                    combinedAnnualFeeCad: a.annualFeeCad + b.annualFeeCad))
-            }
-        }
-        return pairs.sorted { $0.jointMarginalCad > $1.jointMarginalCad }
+        []
     }
 }
