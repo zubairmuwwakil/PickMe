@@ -80,8 +80,8 @@ public struct CheckoutService {
 
     public func recommend(merchant: NearbyMerchant, amountCad: Double?,
                           asOf: String) throws -> CheckoutResult {
-        let prediction = predict(poiCategoryRaw: merchant.poiCategoryRaw,
-                                 merchantName: merchant.name)
+        let prediction = try confirmedPrediction(forMerchantId: merchant.id)
+            ?? predict(poiCategoryRaw: merchant.poiCategoryRaw, merchantName: merchant.name)
         let brand = canonicalEngineBrand(merchant.name)
         let effectiveAmount = amountCad
             ?? categoryAmountEstimates[prediction.category]
@@ -144,6 +144,22 @@ public struct CheckoutService {
                               amountWasEstimated: amountCad == nil,
                               categoryWasAmbiguous: ambiguous,
                               storedPredictionId: stored.id)
+    }
+
+    /// Rungs 1 and 2 of the prediction ladder (design §6). An owner-reconciled result for THIS
+    /// exact terminal outranks every brand prior and POI guess, and leaves a single candidate —
+    /// which is what collapses the fork and makes the fork view's promise ("next time the answer
+    /// is instant") literally true.
+    private func confirmedPrediction(forMerchantId id: String) throws -> CategoryPrediction? {
+        let matches = try context.fetch(FetchDescriptor<StoredMerchant>(
+            predicate: #Predicate { $0.identifier == id }))
+        guard let merchant = matches.first,
+              let category = merchant.confirmedCategory else { return nil }
+        return CategoryPrediction(
+            category: category,
+            confidenceSource: merchant.confirmationCount >= 2 ? .repeatedTerminal
+                                                              : .ownerConfirmedTerminal,
+            candidates: [category])
     }
 
     private func defaultCardValueCad(for recommendation: Recommendation) -> Double? {

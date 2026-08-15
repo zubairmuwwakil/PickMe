@@ -111,7 +111,27 @@ public struct PredictionLog {
                                             confirmedAt: confirmedAt)
         context.insert(observation)
         observation.prediction = prediction
+        try promoteMerchant(for: prediction, observedCategory: observedCategory)
         try context.save()
+    }
+
+    /// Terminal-level promotion, never brand-wide. The dossier (§6) is explicit: the owner's
+    /// reconciled outcome is the only source that can promote a merchant to "verified", and it
+    /// promotes THAT location — a confirmation at one Walmart says nothing about another.
+    private func promoteMerchant(for prediction: StoredPrediction,
+                                 observedCategory: String) throws {
+        guard let identifier = prediction.merchantIdentifier else { return }
+        let matches = try context.fetch(FetchDescriptor<StoredMerchant>(
+            predicate: #Predicate { $0.identifier == identifier }))
+        guard let merchant = matches.first else { return }
+
+        // The count is a streak, not a total: it answers "how many times has this same result
+        // repeated here", which is the claim `.repeatedTerminal` makes. A terminal that re-codes
+        // starts over rather than accruing confidence its own evidence contradicts.
+        merchant.confirmationCount = merchant.confirmedCategory == observedCategory
+            ? merchant.confirmationCount + 1
+            : 1
+        merchant.confirmedCategory = observedCategory
     }
 
     public func allPredictions() throws -> [StoredPrediction] {
