@@ -65,7 +65,7 @@ App/
 - [ ] `StoredMerchant`: brand, MapKit id, coordinates, confirmed category, observation count, last seen
 - [ ] Miss-class enum matching design §6 (wrongCategory, capExceeded, staleRule, processorWeirdness, networkNotAccepted)
 - [ ] Test: round-trip each model through an in-memory `ModelContainer`
-- [ ] Commit
+- [x] Commit
 
 ### Task 3: Category mapping with honest confidence
 
@@ -75,18 +75,18 @@ App/
 - [x] High-confidence brand priors only (CT-family, Costco, owner-known recurring) — no speculative 50-chain table
 - [x] Ambiguous POIs (gasStation, generic store) return low confidence and a candidate list, feeding the fork view
 - [x] Test: `foodMarket` → grocery high; `gasStation` → ambiguous with both pump and kiosk candidates; unknown → fallback
-- [ ] Commit
+- [x] Commit
 
 ### Task 4: Merchant detection
 
 **Files:** Create `Services/LocationProvider.swift`, `Services/MerchantProvider.swift`
 
-- [ ] `MerchantProviding` protocol so the engine-facing code never depends on MapKit directly
-- [ ] One-time location fix; graceful denial path straight to manual search
-- [ ] `MKLocalPointsOfInterestRequest` within a small radius, ranked by distance
-- [ ] Manual text search fallback via `MKLocalSearch`
-- [ ] Test with a stub provider; live provider verified in the simulator with a simulated location
-- [ ] Commit
+- [x] `MerchantProviding` protocol so the engine-facing code never depends on MapKit directly
+- [x] One-time location fix; graceful denial path straight to manual search
+- [x] `MKLocalPointsOfInterestRequest` within a small radius, ranked by distance
+- [x] Manual text search fallback via `MKLocalSearch`
+- [x] Test with a stub provider; live provider verified in the simulator with a simulated location
+- [x] Commit
 
 ### Task 5: Recommendation flow end to end
 
