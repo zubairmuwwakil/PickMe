@@ -125,6 +125,8 @@ final class CheckoutServiceTests: XCTestCase {
                                                      id: "poi-loblaws"), amountCad: 30, asOf: asOf)
         let merchants = try service.knownMerchants()
         XCTAssertEqual(merchants.count, 1, "same POI id must upsert, not duplicate")
+        XCTAssertEqual(merchants.first?.poiCategoryRaw, "MKPOICategoryFoodMarket",
+                       "instant repeats must replay the known POI facts without a MapKit call")
         XCTAssertNil(merchants.first?.confirmedCategory,
                      "recommending is not confirming — only reconcile promotes a merchant")
         XCTAssertEqual(merchants.first?.confirmationCount, 0)

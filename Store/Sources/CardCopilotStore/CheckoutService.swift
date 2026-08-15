@@ -164,8 +164,10 @@ public struct CheckoutService {
             predicate: #Predicate { $0.identifier == id }))
         if let found = existing.first {
             found.lastSeenAt = Date()
+            found.poiCategoryRaw = merchant.poiCategoryRaw
         } else {
             context.insert(StoredMerchant(name: merchant.name, identifier: merchant.id,
+                                          poiCategoryRaw: merchant.poiCategoryRaw,
                                           latitude: merchant.latitude,
                                           longitude: merchant.longitude))
         }

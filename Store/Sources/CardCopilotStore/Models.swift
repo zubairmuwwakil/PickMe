@@ -119,19 +119,21 @@ public final class StoredMerchant {
     public private(set) var id: UUID = UUID()
     public private(set) var name: String = ""
     public private(set) var identifier: String?
+    public var poiCategoryRaw: String?
     public private(set) var latitude: Double = 0
     public private(set) var longitude: Double = 0
     public var confirmedCategory: String?
     public var confirmationCount: Int = 0
     public var lastSeenAt: Date = Date()
 
-    public init(name: String, identifier: String? = nil,
+    public init(name: String, identifier: String? = nil, poiCategoryRaw: String? = nil,
                 latitude: Double, longitude: Double,
                 confirmedCategory: String? = nil, confirmationCount: Int = 0,
                 lastSeenAt: Date = Date()) {
         self.id = UUID()
         self.name = name
         self.identifier = identifier
+        self.poiCategoryRaw = poiCategoryRaw
         self.latitude = latitude
         self.longitude = longitude
         self.confirmedCategory = confirmedCategory

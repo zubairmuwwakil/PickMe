@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import CoreLocation
 import CardCopilotEngine
 import CardCopilotStore
 
@@ -9,6 +10,9 @@ struct CheckoutFlowView: View {
     @State private var stage: Stage = .idle
     @State private var deps: Dependencies?
     @State private var locationDenied = false
+    @State private var cachedLocation: CachedLocation?
+    @State private var homeMerchants: [StoredMerchant] = []
+    @State private var valueRecoveredCad: Double = 0
 
     enum Stage {
         case idle
@@ -26,6 +30,16 @@ struct CheckoutFlowView: View {
         let provider: LiveMerchantProvider
     }
 
+    struct CachedLocation {
+        let latitude: Double
+        let longitude: Double
+        let capturedAt: Date
+
+        var isRecent: Bool {
+            Date().timeIntervalSince(capturedAt) < 15 * 60
+        }
+    }
+
     var body: some View {
         NavigationStack {
             content
@@ -38,7 +52,11 @@ struct CheckoutFlowView: View {
     private var content: some View {
         switch stage {
         case .idle:
-            IdleView(locationDenied: locationDenied,
+            HomeView(valueRecoveredCad: valueRecoveredCad,
+                     merchants: homeMerchants,
+                     isSortedByRecentLocation: cachedLocation?.isRecent == true,
+                     locationDenied: locationDenied,
+                     onInstantRepeat: { merchant in startInstantRepeat(merchant) },
                      onFindNearby: { Task { await findNearby() } },
                      onSearch: { text in Task { await search(text) } })
         case .locating:
@@ -56,7 +74,10 @@ struct CheckoutFlowView: View {
         case .recommendation(let result):
             RecommendationView(result: result,
                                deps: deps,
-                               onDone: { stage = .idle })
+                               onDone: {
+                                   refreshHome()
+                                   stage = .idle
+                               })
         case .failed(let message):
             ContentUnavailableView("Something went wrong", systemImage: "exclamationmark.triangle",
                                    description: Text(message))
@@ -75,6 +96,7 @@ struct CheckoutFlowView: View {
                                          context: modelContext),
                 explainer: RecommendationExplainer(catalogue: catalogue),
                 provider: LiveMerchantProvider())
+            refreshHome()
         } catch {
             stage = .failed("Seed data failed to load: \(error.localizedDescription)")
         }
@@ -85,6 +107,10 @@ struct CheckoutFlowView: View {
         stage = .locating
         do {
             let location = try await LocationProvider().requestLocation()
+            cachedLocation = CachedLocation(latitude: location.latitude,
+                                            longitude: location.longitude,
+                                            capturedAt: Date())
+            refreshHome()
             let merchants = try await deps.provider.nearby(latitude: location.latitude,
                                                            longitude: location.longitude)
             stage = merchants.isEmpty
@@ -123,41 +149,40 @@ struct CheckoutFlowView: View {
             stage = .failed(error.localizedDescription)
         }
     }
-}
 
-private struct IdleView: View {
-    let locationDenied: Bool
-    let onFindNearby: () -> Void
-    let onSearch: (String) -> Void
-    @State private var searchText = ""
+    private func startInstantRepeat(_ merchant: StoredMerchant) {
+        // This is the point of instant repeats: local row -> amount capture, with no
+        // location request and no MapKit lookup.
+        stage = .amount(merchant: NearbyMerchant(id: merchant.identifier ?? merchant.id.uuidString,
+                                                 name: merchant.name,
+                                                 poiCategoryRaw: merchant.poiCategoryRaw,
+                                                 latitude: merchant.latitude,
+                                                 longitude: merchant.longitude,
+                                                 distanceMeters: nil))
+    }
 
-    var body: some View {
-        VStack(spacing: 16) {
-            Spacer()
-            Button(action: onFindNearby) {
-                Label("What card should I use here?", systemImage: "location")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(locationDenied)
-
-            if locationDenied {
-                Text("Location is off — search for the merchant instead.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-
-            HStack {
-                TextField("Search a merchant…", text: $searchText)
-                    .textFieldStyle(.roundedBorder)
-                    .onSubmit { onSearch(searchText) }
-                Button("Search") { onSearch(searchText) }
-                    .disabled(searchText.isEmpty)
-            }
-            Spacer()
+    private func refreshHome() {
+        guard let deps else { return }
+        do {
+            valueRecoveredCad = try deps.service.log.valueRecovered()
+            homeMerchants = sortedHomeMerchants(try deps.service.knownMerchants())
+        } catch {
+            stage = .failed(error.localizedDescription)
         }
-        .padding()
+    }
+
+    private func sortedHomeMerchants(_ merchants: [StoredMerchant]) -> [StoredMerchant] {
+        guard let cachedLocation, cachedLocation.isRecent else {
+            return merchants.sorted { $0.lastSeenAt > $1.lastSeenAt }
+        }
+        let origin = CLLocation(latitude: cachedLocation.latitude, longitude: cachedLocation.longitude)
+        return merchants.sorted { lhs, rhs in
+            let lhsDistance = origin.distance(from: CLLocation(latitude: lhs.latitude,
+                                                               longitude: lhs.longitude))
+            let rhsDistance = origin.distance(from: CLLocation(latitude: rhs.latitude,
+                                                               longitude: rhs.longitude))
+            if lhsDistance != rhsDistance { return lhsDistance < rhsDistance }
+            return lhs.lastSeenAt > rhs.lastSeenAt
+        }
     }
 }

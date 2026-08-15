@@ -104,11 +104,11 @@ App/
 
 **Files:** Create `Views/HomeView.swift`
 
-- [ ] Confirmed merchants sorted by proximity; one tap → recommendation with no location fix
-- [ ] "Somewhere new" button runs the full detection flow
-- [ ] Value-recovered counter in the header
-- [ ] Verify in simulator
-- [ ] Commit
+- [x] Confirmed merchants sorted by proximity; one tap → recommendation with no location fix
+- [x] "Somewhere new" button runs the full detection flow
+- [x] Value-recovered counter in the header
+- [x] Verify in simulator
+- [x] Commit
 
 ## Follow-on plans (not this phase)
 
