@@ -56,4 +56,126 @@ final class PortfolioAnalyzerTests: XCTestCase {
         XCTAssertEqual(without.totalValueCad, 2_860, accuracy: 0.01)
         XCTAssertEqual(without.winnersByBucket["Restaurants"], ["mbna-rewards-we", "amex-platinum"])
     }
+
+    // MARK: - Verdicts
+
+    /// A $0 fee card cannot cost the owner anything, so there is no decision to make and no
+    /// benefit value it needs to justify — however little it earns.
+    func testZeroFeeCardIsFreeToKeepHoweverLittleItEarns() throws {
+        let analysis = try analyzer(mrCentsPerPoint: 1.0)
+            .analyze(.placeholderCanadianHousehold, asOf: "2026-08-20")
+        let tangerine = try XCTUnwrap(analysis.contribution("tangerine-moneyback-world"))
+
+        XCTAssertEqual(tangerine.annualFeeCad, 0)
+        XCTAssertEqual(tangerine.verdict, .freeToKeep)
+        XCTAssertEqual(tangerine.requiredBenefitValueCad, 0)
+    }
+
+    func testCardWhoseMarginalValueClearsItsFeeIsAKeepAndNeedsNoBenefits() throws {
+        let distribution = SpendDistribution(
+            profileId: "dining-only", basis: "synthetic",
+            buckets: [.init(label: "Restaurants", annualCad: 12_000, category: "dining", mcc: 5812)])
+
+        let cobalt = try XCTUnwrap(try analyzer().analyze(distribution, asOf: "2026-08-20")
+            .contribution("amex-cobalt"))
+
+        XCTAssertEqual(cobalt.verdict, .keep)
+        XCTAssertEqual(cobalt.requiredBenefitValueCad, 0)
+    }
+
+    /// Platinum at the MR cash floor: Cobalt already out-earns it everywhere it could win, so the
+    /// $799 rests entirely on lounges, credits and insurance — which this engine refuses to price.
+    /// The deliverable is the threshold, not a guess at what those are worth.
+    func testPlatinumFeeIsDisclosedAsARequiredBenefitValueNotAnInventedOne() throws {
+        let platinum = try XCTUnwrap(try analyzer(mrCentsPerPoint: 1.0)
+            .analyze(.placeholderCanadianHousehold, asOf: "2026-08-20")
+            .contribution("amex-platinum"))
+
+        XCTAssertEqual(platinum.annualFeeCad, 799)
+        XCTAssertLessThan(platinum.marginalValueCad, platinum.annualFeeCad)
+        XCTAssertEqual(platinum.requiredBenefitValueCad,
+                       799 - platinum.marginalValueCad, accuracy: 0.01)
+        // Cancel, not downgrade: Cobalt keeps the Membership Rewards balance alive without it.
+        XCTAssertEqual(platinum.verdict, .cancel)
+    }
+
+    /// Bonvoy earns something no other card can (5× at Marriott) but nowhere near its $120, and it
+    /// is the wallet's only Bonvoy card — cancelling outright forfeits the currency, so the honest
+    /// verdict is "cheaper product in the same family", not "cancel".
+    func testSoleHolderOfARewardsProgramIsADowngradeRatherThanACancel() throws {
+        let bonvoy = try XCTUnwrap(try analyzer(mrCentsPerPoint: 1.0)
+            .analyze(.placeholderCanadianHousehold, asOf: "2026-08-20")
+            .contribution("amex-bonvoy"))
+
+        XCTAssertGreaterThan(bonvoy.marginalValueCad, 0)
+        XCTAssertLessThan(bonvoy.marginalValueCad, 120)
+        XCTAssertEqual(bonvoy.verdict, .downgrade)
+    }
+
+    /// Crypto.com is gated out by owner state (Level Up Pro inactive), so it earns nothing on any
+    /// purchase. That has to read as "not in play", not as a card that happens to score zero.
+    func testCardGatedOutByOwnerStateIsMarkedNeverScorable() throws {
+        let analysis = try analyzer(mrCentsPerPoint: 1.0)
+            .analyze(.placeholderCanadianHousehold, asOf: "2026-08-20")
+        let crypto = try XCTUnwrap(analysis.contribution("cryptocom-royal-indigo"))
+
+        XCTAssertTrue(crypto.neverScorable)
+        XCTAssertEqual(crypto.marginalValueCad, 0, accuracy: 0.01)
+        XCTAssertTrue(analysis.contributions.filter(\.neverScorable).map(\.cardId)
+            == ["cryptocom-royal-indigo"])
+    }
+
+    /// Wealthsimple's $240 is waived on assets or direct deposit and the owner hasn't told us
+    /// which — so the verdict is computed at the stated fee and flagged, never guessed either way.
+    func testConditionalFeeIsFlaggedRatherThanAssumedWaived() throws {
+        let analysis = try analyzer(mrCentsPerPoint: 1.0)
+            .analyze(.placeholderCanadianHousehold, asOf: "2026-08-20")
+        let wealthsimple = try XCTUnwrap(analysis.contribution("wealthsimple-vip"))
+
+        XCTAssertTrue(wealthsimple.feeWaiverUnresolved)
+        XCTAssertEqual(wealthsimple.annualFeeCad, 240)
+        XCTAssertFalse(try XCTUnwrap(analysis.contribution("amex-cobalt")).feeWaiverUnresolved)
+    }
+
+    // MARK: - Why a marginal value is what it is
+
+    /// A marginal value on its own is an unexplained number. Naming the card that absorbs the
+    /// spend is what turns "$480" into an argument the owner can check.
+    func testMarginalValueNamesTheCardThatAbsorbsTheSpend() throws {
+        let distribution = SpendDistribution(
+            profileId: "dining-only", basis: "synthetic",
+            buckets: [.init(label: "Restaurants", annualCad: 12_000, category: "dining", mcc: 5812)])
+
+        let cobalt = try XCTUnwrap(try analyzer().analyze(distribution, asOf: "2026-08-20")
+            .contribution("amex-cobalt"))
+
+        XCTAssertEqual(cobalt.backfilledBy.map(\.cardId), ["mbna-rewards-we"])
+        XCTAssertEqual(cobalt.backfilledBy.first?.valueRetainedCad ?? 0, 600, accuracy: 0.01)
+        XCTAssertEqual(cobalt.backfilledBy.first?.bucketLabels, ["Restaurants"])
+    }
+
+    /// The failure mode that makes a marginal-value table dangerous on its own. At the MR cash
+    /// floor Cobalt's 5× and MBNA's 5× pay identically on groceries and dining, so each card's
+    /// individual marginal value is tiny — cancel either one and nothing much happens. Cancel both
+    /// and the wallet falls to Scotia's 4% and a 2% floor. A report that prints only the individual
+    /// numbers reads as "cancel both", which is wrong by hundreds of dollars a year.
+    func testTwoCardsThatCoverForEachOtherAreReportedAsAPairNotTwoCancels() throws {
+        let analyzer = try analyzer(mrCentsPerPoint: 1.0)
+        let analysis = analyzer.analyze(.placeholderCanadianHousehold, asOf: "2026-08-20")
+        let cobalt = try XCTUnwrap(analysis.contribution("amex-cobalt"))
+        let mbna = try XCTUnwrap(analysis.contribution("mbna-rewards-we"))
+
+        XCTAssertLessThan(cobalt.marginalValueCad, cobalt.annualFeeCad)
+        XCTAssertLessThan(mbna.marginalValueCad, mbna.annualFeeCad)
+
+        let pair = try XCTUnwrap(analysis.redundantPairs
+            .first { $0.cardIds == ["amex-cobalt", "mbna-rewards-we"] })
+        XCTAssertGreaterThan(pair.jointMarginalCad, pair.sumOfIndividualMarginalsCad + 100)
+        XCTAssertEqual(pair.combinedAnnualFeeCad, 311.88, accuracy: 0.01)
+        XCTAssertEqual(pair.jointMarginalCad,
+                       analyzer.marginalValue(ofRemoving: ["amex-cobalt", "mbna-rewards-we"],
+                                              from: .placeholderCanadianHousehold,
+                                              asOf: "2026-08-20"),
+                       accuracy: 0.01)
+    }
 }

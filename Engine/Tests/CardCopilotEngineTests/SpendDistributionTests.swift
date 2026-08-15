@@ -1,0 +1,42 @@
+import XCTest
+@testable import CardCopilotEngine
+
+/// The placeholder profile is the weakest link in the whole keep/cancel layer: no real spend data
+/// exists yet. These tests keep it honest — labelled as an assumption, and complete enough that no
+/// card is starved by an accidental omission.
+final class SpendDistributionTests: XCTestCase {
+
+    func testPlaceholderProfileSaysOutLoudThatItIsAnAssumption() {
+        let profile = SpendDistribution.placeholderCanadianHousehold
+        XCTAssertTrue(profile.basis.lowercased().contains("assumption"),
+                      "a guessed distribution that doesn't say so will be read as data: \(profile.basis)")
+        XCTAssertEqual(profile.totalAnnualCad, 40_200, accuracy: 0.01)
+    }
+
+    /// Leaving a category out of the profile is indistinguishable from the owner spending nothing
+    /// on it — and it silently zeroes whichever card accelerates it. So every category the wallet
+    /// can accelerate must appear, and anything left out must be left out on purpose.
+    func testPlaceholderProfileCoversEveryCategoryTheWalletAccelerates() throws {
+        let deliberatelyOmitted = [
+            "evCharging": "no EV assumed in this household",
+            "carRental": "Cobalt's only carRental rule is the amexTravel channel bonus, scoredInV1: false",
+            "ownerSelectedTangerineCategory": "synthetic marker, resolved against the real categories",
+        ]
+
+        let catalogue = try SeedLoader.loadCatalogue()
+        let accelerated = Set(catalogue.cards.flatMap { card in
+            card.earnRules
+                .filter { $0.scoredInV1 != false }
+                .flatMap { $0.predicate.categories ?? [] }
+        })
+        let profile = SpendDistribution.placeholderCanadianHousehold
+        let covered = Set(profile.buckets.map { $0.context.category })
+            .union(profile.buckets.contains { $0.context.recurringIndicator } ? ["recurring"] : [])
+
+        for category in accelerated.sorted() where deliberatelyOmitted[category] == nil {
+            XCTAssertTrue(covered.contains(category),
+                          "\(category) is accelerated by a card in this wallet but absent from the "
+                          + "profile — that card's marginal value is understated by construction")
+        }
+    }
+}

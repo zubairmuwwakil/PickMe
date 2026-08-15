@@ -81,6 +81,9 @@ public struct PortfolioRun: Equatable, Sendable {
     public let totalValueCad: Double
     public let valueByCard: [String: Double]
     public let valueByBucket: [String: Double]
+    /// Cards that produced a score on at least one purchase. A card missing here is gated out by
+    /// owner state or acceptance everywhere — a different fact from earning less than its rivals.
+    public let scorableCards: Set<String>
     /// A bucket can have more than one winner across the year — that is a cap flipping mid-year.
     public let winnersByBucket: [String: Set<String>]
 }
@@ -128,8 +131,7 @@ public struct PortfolioAnalyzer {
                 verdict: verdict(for: card, marginal: marginal, fee: fee),
                 requiredBenefitValueCad: max(0, fee - marginal),
                 feeWaiverUnresolved: feeWaiverUnresolved(card),
-                neverScorable: (full.valueByCard[card.cardId] ?? 0) == 0 && !full.winnersByBucket
-                    .values.contains { $0.contains(card.cardId) },
+                neverScorable: !full.scorableCards.contains(card.cardId),
                 winningBuckets: wins,
                 backfilledBy: backfill(for: card.cardId, wins: wins, without: without)))
         }
@@ -165,16 +167,13 @@ public struct PortfolioAnalyzer {
         var subCatalogue = catalogue
         subCatalogue.cards = catalogue.cards.filter { !excluding.contains($0.cardId) }
 
-        var state = ownerState
-        for cardId in state.cardStates.keys {
-            state.cardStates[cardId]?.capProgress?
-                .forEach { state.cardStates[cardId]?.capProgress?[$0.key] = 0 }
-        }
+        var state = forwardYearState()
 
         var total = 0.0
         var byCard: [String: Double] = [:]
         var byBucket: [String: Double] = [:]
         var winners: [String: Set<String>] = [:]
+        var scorable: Set<String> = []
 
         for month in 0..<12 {
             resetMonthlyCaps(in: &state, catalogue: subCatalogue)
@@ -189,8 +188,9 @@ public struct PortfolioAnalyzer {
                 }) else { continue }
 
                 let engine = RecommendationEngine(catalogue: subCatalogue, ownerState: state)
-                guard let best = engine.recommend(purchase, asOf: monthAsOf)
-                    .allCandidates.first else { continue }
+                let candidates = engine.recommend(purchase, asOf: monthAsOf).allCandidates
+                scorable.formUnion(candidates.map(\.cardId))
+                guard let best = candidates.first else { continue }
 
                 total += best.netValueCad
                 byCard[best.cardId, default: 0] += best.netValueCad
@@ -201,8 +201,20 @@ public struct PortfolioAnalyzer {
             }
         }
 
-        return PortfolioRun(totalValueCad: total, valueByCard: byCard,
-                            valueByBucket: byBucket, winnersByBucket: winners)
+        return PortfolioRun(totalValueCad: total, valueByCard: byCard, valueByBucket: byBucket,
+                            scorableCards: scorable, winnersByBucket: winners)
+    }
+
+    /// Caps start empty: the question is what a card is worth over the *next* year, not what is
+    /// left of the current one. (The seeded Scotia progress is flagged suspect regardless.)
+    private func forwardYearState() -> OwnerState {
+        var state = ownerState
+        state.cardStates = state.cardStates.mapValues { cardState in
+            var reset = cardState
+            reset.capProgress = cardState.capProgress?.mapValues { _ in 0 }
+            return reset
+        }
+        return state
     }
 
     private func resetMonthlyCaps(in state: inout OwnerState, catalogue: Catalogue) {
@@ -244,16 +256,36 @@ public struct PortfolioAnalyzer {
     // MARK: - Verdicts
 
     private func verdict(for card: CardProduct, marginal: Double, fee: Double) -> PortfolioVerdict {
-        return .cancel
+        if fee <= 0 { return .freeToKeep }
+        if marginal >= fee { return .keep }
+        // Cancelling the only card that earns a currency forfeits the currency; cancelling one of
+        // two does not. That difference is the whole distinction between downgrade and cancel.
+        let soleHolderOfProgram = !catalogue.cards.contains {
+            $0.cardId != card.cardId && $0.program.programId == card.program.programId
+        }
+        return (marginal > 0 && soleHolderOfProgram) ? .downgrade : .cancel
     }
 
+    /// A conditional fee whose condition the owner hasn't answered. The engine never guesses
+    /// owner state, so the verdict is computed at the stated fee and the uncertainty is surfaced.
     private func feeWaiverUnresolved(_ card: CardProduct) -> Bool {
-        false
+        card.fee.waiver != nil && ownerState.cardStates[card.cardId]?.feeWaiverActive == nil
     }
 
     private func backfill(for cardId: String, wins: [String],
                           without: PortfolioRun) -> [BackfillShare] {
-        []
+        var buckets: [String: [String]] = [:]
+        var retained: [String: Double] = [:]
+        for label in wins {
+            for successor in (without.winnersByBucket[label] ?? []).sorted() {
+                buckets[successor, default: []].append(label)
+                retained[successor, default: 0] += without.valueByBucket[label] ?? 0
+            }
+        }
+        return buckets.keys
+            .sorted { (retained[$0] ?? 0, $1) > (retained[$1] ?? 0, $0) }
+            .map { BackfillShare(cardId: $0, bucketLabels: buckets[$0] ?? [],
+                                 valueRetainedCad: retained[$0] ?? 0) }
     }
 
     /// A pair is redundant when removing both costs materially more than removing each alone —
@@ -261,6 +293,22 @@ public struct PortfolioAnalyzer {
     private func redundantPairs(_ distribution: SpendDistribution, asOf: String,
                                 full: PortfolioRun,
                                 contributions: [CardContribution]) -> [RedundantPair] {
-        []
+        let unearned = contributions.filter { $0.marginalValueCad < $0.annualFeeCad }
+        var pairs: [RedundantPair] = []
+        for (index, a) in unearned.enumerated() {
+            for b in unearned[(index + 1)...] {
+                guard a.backfilledBy.contains(where: { $0.cardId == b.cardId })
+                        || b.backfilledBy.contains(where: { $0.cardId == a.cardId }) else { continue }
+                let joint = full.totalValueCad
+                    - run(distribution, excluding: [a.cardId, b.cardId], asOf: asOf).totalValueCad
+                let individually = a.marginalValueCad + b.marginalValueCad
+                guard joint > individually + 0.01 else { continue }
+                pairs.append(RedundantPair(cardIds: [a.cardId, b.cardId].sorted(),
+                                           jointMarginalCad: joint,
+                                           sumOfIndividualMarginalsCad: individually,
+                                           combinedAnnualFeeCad: a.annualFeeCad + b.annualFeeCad))
+            }
+        }
+        return pairs.sorted { $0.jointMarginalCad > $1.jointMarginalCad }
     }
 }
