@@ -1,4 +1,5 @@
 import Foundation
+import CardCopilotEngine
 
 public struct CategoryPrediction: Equatable, Sendable {
     public let category: String
@@ -124,4 +125,46 @@ private func normalizedMerchantName(_ merchantName: String) -> String {
         }
     }
     return scalars.joined().trimmingCharacters(in: .whitespaces)
+}
+
+/// Categories the mapper can predict that no catalogue rule names — they score at each card's
+/// base rate, but the owner can still stand in one of them and must be able to say so.
+private let unscoredPredictableCategories = [
+    "other", "wholesaleClub", "drugStore", "entertainment", "fitness",
+]
+
+/// Rule-side markers that are not merchant categories. `ownerSelectedTangerineCategory` stands
+/// in for whichever categories the owner picked on Tangerine; no statement ever shows it, so
+/// offering it in the reconcile picker would invite a meaningless answer.
+private let ruleSideMarkers: Set<String> = ["ownerSelectedTangerineCategory"]
+
+/// Every category the reconcile picker may offer: what the catalogue can score, plus what the
+/// mapper can predict. Derived from the catalogue rather than hand-listed, because the failure
+/// mode is silent — a category the app can predict but the owner cannot select when correcting
+/// it pushes real misses into whichever neighbouring option happened to be on screen.
+public func observableCategories(in catalogue: Catalogue) -> [String] {
+    let fromRules = catalogue.cards
+        .flatMap(\.earnRules)
+        .compactMap(\.predicate.categories)
+        .flatMap { $0 }
+    return Set(fromRules + unscoredPredictableCategories)
+        .subtracting(ruleSideMarkers)
+        .sorted()
+}
+
+/// Human-readable form of an engine category token, for pickers and summaries.
+public func categoryDisplayName(_ category: String) -> String {
+    switch category {
+    case "ctFamily": return "Canadian Tire family"
+    case "marriottDirect": return "Marriott direct"
+    case "other": return "General merchandise"
+    default:
+        // camelCase -> "Camel case", so a catalogue that grows a category still reads properly
+        // in the picker instead of surfacing a raw token.
+        let spaced = category.reduce(into: "") { out, character in
+            if character.isUppercase, !out.isEmpty { out.append(" ") }
+            out.append(character)
+        }
+        return spaced.prefix(1).uppercased() + spaced.dropFirst().lowercased()
+    }
 }
