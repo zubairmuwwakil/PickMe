@@ -61,6 +61,7 @@ final class PortfolioReportTests: XCTestCase {
         \(cad(atFloor.totalAnnualFeesCad))  ·  net \(cad(atFloor.portfolioValueCad - atFloor.totalAnnualFeesCad))
         """)
 
+        printBottomLine(atFloor, mrCents: declared)
         printTable(atFloor, mrCents: declared)
         printTable(atBenchmark, mrCents: benchmark)
 
@@ -73,10 +74,9 @@ final class PortfolioReportTests: XCTestCase {
             let changed = a.verdict != b.verdict
             if changed { moved += 1 }
             guard changed || abs(a.marginalValueCad - b.marginalValueCad) > 1 else { continue }
-            print(String(format: "  %@ %-24@ %@ → %@   (marginal %@ → %@)",
-                         changed ? "⚠️" : "  ", short(a.cardId) as NSString,
-                         a.verdict.rawValue as NSString, b.verdict.rawValue as NSString,
-                         cad(a.marginalValueCad) as NSString, cad(b.marginalValueCad) as NSString))
+            print("  " + (changed ? "⚠️ " : "   ") + pad(short(a.cardId), 24)
+                  + pad("\(a.verdict.rawValue) → \(b.verdict.rawValue)", 26)
+                  + "marginal \(cad(a.marginalValueCad)) → \(cad(b.marginalValueCad))")
         }
         print("\n  \(moved) of \(atFloor.contributions.count) verdicts depend on the MR valuation.")
 
@@ -112,28 +112,55 @@ final class PortfolioReportTests: XCTestCase {
 
     // MARK: - Sections
 
+    /// The answer, in the owner's terms, at the valuation the owner actually declared.
+    private func printBottomLine(_ analysis: PortfolioAnalysis, mrCents: Double) {
+        print("\n─── Bottom line at the declared \(fmt(mrCents))¢/pt ───\n")
+        let byVerdict = Dictionary(grouping: analysis.contributions, by: \.verdict)
+        let earnsItsFee = byVerdict[.keep] ?? []
+        print("  Earns its own fee:      "
+              + (earnsItsFee.isEmpty ? "none — no fee card pays for itself on rewards alone"
+                 : earnsItsFee.map { short($0.cardId) }.joined(separator: ", ")))
+        print("  Costs nothing to hold:  "
+              + (byVerdict[.freeToKeep] ?? []).map { short($0.cardId) }.joined(separator: ", "))
+        print("\n  Everything else is a benefits question. These are the annual benefit values")
+        print("  each fee would need — the engine will not guess whether you get them:\n")
+        for c in analysis.contributions
+        where c.verdict == .cancel || c.verdict == .downgrade {
+            print("    " + pad(short(c.cardId), 26) + rpad(cad(c.requiredBenefitValueCad), 10)
+                  + "/yr   " + (c.verdict == .downgrade
+                                ? "(the wallet's only card earning this currency — a cheaper "
+                                  + "product in the family keeps it)"
+                                : "(another card already earns this currency, so nothing is lost)"))
+        }
+    }
+
     private func printTable(_ analysis: PortfolioAnalysis, mrCents: Double) {
         print("\n─── Membership Rewards at \(fmt(mrCents))¢/pt ───\n")
-        print("  card                       gross   marginal       fee       net   verdict"
-              + "      benefits must be worth")
+        print("  " + pad("card", 26) + rpad("gross", 10) + rpad("marginal", 11)
+              + rpad("fee", 10) + rpad("net", 10) + "  " + pad("verdict", 13)
+              + "benefits must be worth")
         for c in analysis.contributions {
-            let flag = c.neverScorable ? " ⊘" : (c.feeWaiverUnresolved ? " ?" : "  ")
-            print(String(format: "  %-24@%@%9@ %10@ %9@ %9@   %-12@ %@",
-                         short(c.cardId) as NSString, flag as NSString,
-                         cad(c.grossRewardValueCad) as NSString,
-                         cad(c.marginalValueCad) as NSString,
-                         cad(c.annualFeeCad) as NSString,
-                         cad(c.netContributionCad) as NSString,
-                         c.verdict.rawValue as NSString,
-                         (c.requiredBenefitValueCad > 0
-                          ? cad(c.requiredBenefitValueCad) + "/yr" : "—") as NSString))
+            let flag = c.neverScorable ? "⊘ " : (c.feeWaiverUnresolved ? "? " : "  ")
+            print("  " + pad(flag + short(c.cardId), 26)
+                  + rpad(cad(c.grossRewardValueCad), 10) + rpad(cad(c.marginalValueCad), 11)
+                  + rpad(cad(c.annualFeeCad), 10) + rpad(cad(c.netContributionCad), 10)
+                  + "  " + pad(c.verdict.rawValue, 13)
+                  + (c.requiredBenefitValueCad > 0 ? cad(c.requiredBenefitValueCad) + "/yr" : "—"))
         }
-        print("\n  ⊘ gated out by owner state — earns nothing on any purchase"
-              + "     ? fee is conditional and the condition is unrecorded")
-        for c in analysis.contributions where !c.backfilledBy.isEmpty && c.marginalValueCad < 1 {
+        print("\n  ⊘ gated out by owner state — earns nothing on any purchase")
+        print("  ? fee is conditional and the condition is unrecorded — verdict computed at the "
+              + "stated fee, never assumed waived")
+
+        // Why the fee cards fall short: name whoever is already covering their spend.
+        for c in analysis.contributions
+        where c.marginalValueCad < c.annualFeeCad && !c.backfilledBy.isEmpty {
             let takers = c.backfilledBy.prefix(2).map { short($0.cardId) }.joined(separator: " / ")
-            print("    \(short(c.cardId)) looks worthless because \(takers) already covers "
-                  + "\(c.winningBuckets.joined(separator: ", "))")
+            print("    \(short(c.cardId)) → \(takers) already covers "
+                  + ellipsised(c.winningBuckets.joined(separator: ", "), 72))
+        }
+        for c in analysis.contributions where c.feeWaiverUnresolved {
+            print("    \(short(c.cardId)) → if the \(cad(c.annualFeeCad)) waiver is active the fee "
+                  + "is $0 and this becomes freeToKeep. Unrecorded in owner state.")
         }
     }
 
@@ -163,7 +190,7 @@ final class PortfolioReportTests: XCTestCase {
                 unstable.insert(c.cardId)
                 return "\(short(c.cardId)): \(was.rawValue) → \(c.verdict.rawValue)"
             }
-            print("  \(variant.profileId.padding(toLength: 26, withPad: " ", startingAt: 0))"
+            print("  " + pad(variant.profileId, 30)
                   + (changes.isEmpty ? "no verdict changes" : changes.joined(separator: ";  ")))
         }
         print("\n  Sensitive to the spend guess: "
@@ -181,7 +208,18 @@ final class PortfolioReportTests: XCTestCase {
         return copy
     }
 
-    private func cad(_ v: Double) -> String { String(format: "$%.2f", v) }
+    private func cad(_ v: Double) -> String {
+        v < 0 ? String(format: "-$%.2f", -v) : String(format: "$%.2f", v)
+    }
+    private func ellipsised(_ s: String, _ n: Int) -> String {
+        s.count <= n ? s : String(s.prefix(n)) + "…"
+    }
+    private func pad(_ s: String, _ n: Int) -> String {
+        s.count >= n ? s + " " : s + String(repeating: " ", count: n - s.count)
+    }
+    private func rpad(_ s: String, _ n: Int) -> String {
+        s.count >= n ? " " + s : String(repeating: " ", count: n - s.count) + s
+    }
     private func fmt(_ v: Double) -> String { String(format: "%.2f", v) }
 
     private func short(_ id: String) -> String {
@@ -191,6 +229,7 @@ final class PortfolioReportTests: XCTestCase {
             .replacingOccurrences(of: "Wealthsimple Visa Infinite Privilege Credit Card",
                                   with: "Wealthsimple")
             .replacingOccurrences(of: "Crypto.com Prepaid Visa Card (Royal Indigo)", with: "Crypto.com")
+            .replacingOccurrences(of: "Tangerine Money-Back World", with: "Tangerine Money-Back")
             .replacingOccurrences(of: " World Elite", with: "")
             .replacingOccurrences(of: " Mastercard", with: "")
             .replacingOccurrences(of: " Visa Infinite +", with: "")

@@ -178,4 +178,25 @@ final class PortfolioAnalyzerTests: XCTestCase {
                                               asOf: "2026-08-20"),
                        accuracy: 0.01)
     }
+
+    /// Almost any two cards overlap by a few dollars. Reporting every such pair buries the two
+    /// that matter, so a pair has to be materially redundant — worth at least a tenth of the fees
+    /// at stake — before it earns a line.
+    func testTrivialOverlapIsNotReportedAsRedundancy() throws {
+        let analysis = try analyzer(mrCentsPerPoint: 1.0)
+            .analyze(.placeholderCanadianHousehold, asOf: "2026-08-20")
+
+        for pair in analysis.redundantPairs {
+            let overlap = pair.jointMarginalCad - pair.sumOfIndividualMarginalsCad
+            XCTAssertGreaterThanOrEqual(overlap, 0.1 * pair.combinedAnnualFeeCad,
+                                        "\(pair.cardIds) overlap by only \(overlap) against "
+                                        + "\(pair.combinedAnnualFeeCad) of fees — noise, not a pair")
+        }
+        // MBNA and Wealthsimple overlap by about a dollar against $360 of fees.
+        XCTAssertNil(analysis.redundantPairs
+            .first { $0.cardIds == ["mbna-rewards-we", "wealthsimple-vip"] })
+        // ...while Cobalt and MBNA, which pay the same 5x on the same categories, do qualify.
+        XCTAssertNotNil(analysis.redundantPairs
+            .first { $0.cardIds == ["amex-cobalt", "mbna-rewards-we"] })
+    }
 }
