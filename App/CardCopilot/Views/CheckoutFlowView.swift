@@ -13,6 +13,8 @@ struct CheckoutFlowView: View {
     @State private var cachedLocation: CachedLocation?
     @State private var homeMerchants: [StoredMerchant] = []
     @State private var valueRecoveredCad: Double = 0
+    @State private var reconcileQueue: [StoredPrediction] = []
+    @State private var metrics: ExperimentMetrics?
 
     enum Stage {
         case idle
@@ -20,6 +22,8 @@ struct CheckoutFlowView: View {
         case confirming(merchants: [NearbyMerchant])
         case amount(merchant: NearbyMerchant)
         case recommendation(CheckoutResult)
+        case reconcile
+        case dashboard
         case failed(String)
     }
 
@@ -56,9 +60,13 @@ struct CheckoutFlowView: View {
                      merchants: homeMerchants,
                      isSortedByRecentLocation: cachedLocation?.isRecent == true,
                      locationDenied: locationDenied,
+                     reconcileCount: reconcileQueue.count,
+                     confirmedCount: metrics?.confirmedCount ?? 0,
                      onInstantRepeat: { merchant in startInstantRepeat(merchant) },
                      onFindNearby: { Task { await findNearby() } },
-                     onSearch: { text in Task { await search(text) } })
+                     onSearch: { text in Task { await search(text) } },
+                     onReconcile: { stage = .reconcile },
+                     onDashboard: { stage = .dashboard })
         case .locating:
             ProgressView("Finding nearby merchants…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -78,6 +86,16 @@ struct CheckoutFlowView: View {
                                    refreshHome()
                                    stage = .idle
                                })
+        case .reconcile:
+            ReconcileView(queue: reconcileQueue,
+                          cards: deps?.catalogue.cards ?? [],
+                          categories: deps.map { observableCategories(in: $0.catalogue) } ?? [],
+                          onConfirm: { prediction, entry in confirm(prediction, entry: entry) },
+                          onDone: { stage = .idle })
+        case .dashboard:
+            DashboardView(metrics: metrics ?? .empty,
+                          valueRecoveredCad: valueRecoveredCad,
+                          onDone: { stage = .idle })
         case .failed(let message):
             ContentUnavailableView("Something went wrong", systemImage: "exclamationmark.triangle",
                                    description: Text(message))
@@ -161,15 +179,35 @@ struct CheckoutFlowView: View {
                                                  distanceMeters: nil))
     }
 
+    /// Attaching an observation to a prediction. The prediction is never touched — the store
+    /// offers no way to touch it — so this reads as "record what happened", not "fix the guess".
+    private func confirm(_ prediction: StoredPrediction, entry: ReconcileEntry) {
+        guard let deps else { return }
+        do {
+            try deps.service.log.confirm(prediction,
+                                         cardUsed: entry.cardUsed,
+                                         observedCategory: entry.observedCategory,
+                                         observedRewardUnits: entry.observedRewardUnits,
+                                         missClass: entry.missClass,
+                                         note: entry.note)
+            refreshHome()
+        } catch {
+            stage = .failed(error.localizedDescription)
+        }
+    }
+
     private func refreshHome() {
         guard let deps else { return }
         do {
             valueRecoveredCad = try deps.service.log.valueRecovered()
             homeMerchants = sortedHomeMerchants(try deps.service.knownMerchants())
+            reconcileQueue = try deps.service.log.awaitingConfirmation()
+            metrics = try deps.service.log.metrics()
         } catch {
             stage = .failed(error.localizedDescription)
         }
     }
+
 
     private func sortedHomeMerchants(_ merchants: [StoredMerchant]) -> [StoredMerchant] {
         guard let cachedLocation, cachedLocation.isRecent else {

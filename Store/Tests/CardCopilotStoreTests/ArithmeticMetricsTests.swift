@@ -42,6 +42,19 @@ final class ArithmeticMetricsTests: XCTestCase {
         XCTAssertEqual(metrics.arithmeticEligibleCount, 0)
     }
 
+    func testTheEmptyMetricsValueClaimsNothing() {
+        // The app renders this in the window between launch and the first store read. It must
+        // look like "no evidence", never like a failing experiment.
+        let empty = ExperimentMetrics.empty
+        XCTAssertNil(empty.categoryAccuracy)
+        XCTAssertNil(empty.arithmeticCorrectRate)
+        XCTAssertNil(empty.meetsCategoryBar)
+        XCTAssertNil(empty.meetsArithmeticBar)
+        XCTAssertEqual(empty.progressToTarget, 0)
+        XCTAssertEqual(empty.targetCheckouts, PredictionLog.targetCheckouts)
+        XCTAssertTrue(empty.missBreakdown.isEmpty)
+    }
+
     // MARK: tolerance is unit-aware
 
     func testPointsRowInsideOneUnitCounts() throws {

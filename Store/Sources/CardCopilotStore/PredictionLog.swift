@@ -62,6 +62,15 @@ public struct ExperimentMetrics: Equatable, Sendable {
     public let arithmeticEligibleCount: Int
     public let arithmeticCorrectCount: Int
 
+    /// No evidence at all — what the app shows before it has read the store. Deliberately the
+    /// only ExperimentMetrics value constructible from outside this module: metrics are
+    /// something the log computes, never something a caller can assert.
+    public static let empty = ExperimentMetrics(confirmedCount: 0, categoryCorrectCount: 0,
+                                                missBreakdown: [:],
+                                                targetCheckouts: PredictionLog.targetCheckouts,
+                                                arithmeticEligibleCount: 0,
+                                                arithmeticCorrectCount: 0)
+
     /// Nil rather than zero when there is no evidence — an unmeasured experiment is not a
     /// failing one, and a dashboard showing "0%" on day one would be a lie.
     public var categoryAccuracy: Double? {
