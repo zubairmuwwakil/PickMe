@@ -54,7 +54,7 @@ App/
 - [ ] Hand-write `project.pbxproj` with one app target, a `PBXFileSystemSynchronizedRootGroup` for `CardCopilot/`, and an `XCLocalSwiftPackageReference` to `../Engine`
 - [ ] Minimal `@main` App rendering a view that loads the seed catalogue and prints the card count — proves the engine links
 - [ ] Verify: `xcodebuild -project App/CardCopilot.xcodeproj -scheme CardCopilot -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' build` succeeds
-- [ ] Commit
+- [x] Commit
 
 ### Task 2: SwiftData persistence layer
 
@@ -71,10 +71,10 @@ App/
 
 **Files:** Create `Services/CategoryMapper.swift`, test file
 
-- [ ] Map `MKPointOfInterestCategory` → engine category, returning `(category, confidence, source)` per the design's prediction ladder
-- [ ] High-confidence brand priors only (CT-family, Costco, owner-known recurring) — no speculative 50-chain table
-- [ ] Ambiguous POIs (gasStation, generic store) return low confidence and a candidate list, feeding the fork view
-- [ ] Test: `foodMarket` → grocery high; `gasStation` → ambiguous with both pump and kiosk candidates; unknown → fallback
+- [x] Map `MKPointOfInterestCategory` → engine category, returning `(category, confidence, source)` per the design's prediction ladder
+- [x] High-confidence brand priors only (CT-family, Costco, owner-known recurring) — no speculative 50-chain table
+- [x] Ambiguous POIs (gasStation, generic store) return low confidence and a candidate list, feeding the fork view
+- [x] Test: `foodMarket` → grocery high; `gasStation` → ambiguous with both pump and kiosk candidates; unknown → fallback
 - [ ] Commit
 
 ### Task 4: Merchant detection
