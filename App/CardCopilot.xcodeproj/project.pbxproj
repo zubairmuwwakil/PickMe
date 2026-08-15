@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		A1000010 /* CardCopilotEngine in Frameworks */ = {isa = PBXBuildFile; productRef = A1000009 /* CardCopilotEngine */; };
+		A1000031 /* CardCopilotStore in Frameworks */ = {isa = PBXBuildFile; productRef = A1000030 /* CardCopilotStore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -26,6 +27,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1000010 /* CardCopilotEngine in Frameworks */,
+				A1000031 /* CardCopilotStore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -69,6 +71,7 @@
 			name = CardCopilot;
 			packageProductDependencies = (
 				A1000009 /* CardCopilotEngine */,
+				A1000030 /* CardCopilotStore */,
 			);
 			productName = CardCopilot;
 			productReference = A1000003 /* CardCopilot.app */;
@@ -100,6 +103,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				A1000013 /* XCLocalSwiftPackageReference "../Engine" */,
+				A1000032 /* XCLocalSwiftPackageReference "../Store" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A1000002 /* Products */;
@@ -256,12 +260,20 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../Engine;
 		};
+		A1000032 /* XCLocalSwiftPackageReference "../Store" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Store;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		A1000009 /* CardCopilotEngine */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CardCopilotEngine;
+		};
+		A1000030 /* CardCopilotStore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CardCopilotStore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

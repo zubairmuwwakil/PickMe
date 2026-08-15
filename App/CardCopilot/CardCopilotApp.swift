@@ -1,5 +1,7 @@
 import SwiftUI
 import CardCopilotEngine
+import CardCopilotStore
+import SwiftData
 
 @main
 struct CardCopilotApp: App {
@@ -7,6 +9,7 @@ struct CardCopilotApp: App {
         WindowGroup {
             EngineSmokeTestView()
         }
+        .modelContainer(for: [StoredPrediction.self, StoredObservation.self, StoredMerchant.self])
     }
 }
 
