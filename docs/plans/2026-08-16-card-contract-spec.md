@@ -15,6 +15,7 @@ contracts/
   engine-fixtures.json       # moved from Engine/Tests/CardCopilotEngineTests/Fixtures/
   schema/
     card-catalogue.schema.json
+    benefits-catalogue.schema.json
     engine-fixtures.schema.json
   CHANGELOG.md               # one line per catalogue/fixture change
 ```
