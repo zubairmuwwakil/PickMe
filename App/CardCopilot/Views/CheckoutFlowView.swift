@@ -25,6 +25,7 @@ struct CheckoutFlowView: View {
         case reconcile
         case dashboard
         case protectionLens(BenefitContext)
+        case benefitsReference
         case failed(String)
     }
 
@@ -70,7 +71,8 @@ struct CheckoutFlowView: View {
                      onSearch: { text in Task { await search(text) } },
                      onReconcile: { stage = .reconcile },
                      onDashboard: { stage = .dashboard },
-                     onProtectionLens: { stage = .protectionLens(BenefitContext(kind: .flight)) })
+                     onProtectionLens: { stage = .protectionLens(BenefitContext(kind: .flight)) },
+                     onBenefits: { stage = .benefitsReference })
         case .locating:
             ProgressView("Finding nearby merchants…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -106,6 +108,10 @@ struct CheckoutFlowView: View {
                 ProtectionLensView(deps: deps,
                                    initialContext: context,
                                    onDone: { stage = .idle })
+            }
+        case .benefitsReference:
+            if let deps {
+                BenefitsReferenceView(deps: deps, onDone: { stage = .idle })
             }
         case .failed(let message):
             ContentUnavailableView("Something went wrong", systemImage: "exclamationmark.triangle",

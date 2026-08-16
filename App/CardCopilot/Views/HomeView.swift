@@ -14,6 +14,7 @@ struct HomeView: View {
     let onReconcile: () -> Void
     let onDashboard: () -> Void
     let onProtectionLens: () -> Void
+    let onBenefits: () -> Void
 
     @State private var searchText = ""
 
@@ -99,6 +100,14 @@ struct HomeView: View {
                         tint: .blue,
                         title: "Experiment dashboard",
                         subtitle: "\(confirmedCount) of 30 checkouts confirmed")
+            }
+            .buttonStyle(.plain)
+
+            Button(action: onBenefits) {
+                homeRow(icon: "shield.lefthalf.filled",
+                        tint: .secondary,
+                        title: "Card benefits",
+                        subtitle: "What your cards cover — per certificate")
             }
             .buttonStyle(.plain)
         }
