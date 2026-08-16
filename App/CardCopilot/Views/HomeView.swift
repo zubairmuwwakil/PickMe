@@ -314,7 +314,7 @@ struct HomeView: View {
                         icon: "heart.text.square.fill",
                         iconColor: .mint,
                         title: "Wallet Health",
-                        subtitle: "Which cards earn their fee — marginal, not gross",
+                        subtitle: "What to keep, cancel, or add — marginal, not gross",
                         badge: "Estimate",
                         badgeColor: .mint
                     )

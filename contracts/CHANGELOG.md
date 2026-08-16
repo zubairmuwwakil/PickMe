@@ -2,6 +2,16 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-16 — Acquisition candidate catalogue
+
+- Added `candidate-catalogue.json`, deliberately separate from the owned-card catalogue so an
+  acquisition candidate cannot leak into checkout recommendations. The six-card initial Canadian
+  shortlist uses only issuer-confirmed recurring earn, caps, fees and FX rules verified on
+  2026-08-16. Welcome offers and first-year fee rebates are excluded from the encoded economics.
+- Added an explicit `ownedCardIds` boundary to owner state. Acquisition analysis now compares each
+  non-owned candidate against exactly those cards instead of treating catalogue membership as
+  ownership.
+
 ## 2026-08-16 — Protection badge compares only what it shows
 
 Fixes the `x-known-invariant-gap` recorded in the entry below; that key is gone from the schema,

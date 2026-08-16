@@ -272,6 +272,7 @@ Internal boundaries as per brief §10: `MerchantProvider`, `CardRepository`, `Me
 | Brand seed table + personal observations | Merchant Truth Graph with anonymous crowdsourced observations |
 | Wallet Report Card | Shareable "audit my wallet" web flow — the demand test |
 | `PortfolioAnalyzer` keep/cancel verdicts (§5a) | "Should I cancel this card?" — the highest-intent question in the category, and the one affiliate-funded comparison sites structurally cannot answer honestly |
+| `AcquisitionAnalyzer` add-card verdicts | "Which card should I add?" — recurring marginal value against the existing wallet, not gross rewards or an affiliate payout |
 | Fork view confirmations | Community verification loop with corroboration counts |
 | Instant repeats | Exception engine: passive defaults, interrupt only when the default is wrong |
 | Value-recovered counter | North-star metric: verified incremental value per active user |

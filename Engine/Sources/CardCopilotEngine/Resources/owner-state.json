@@ -1,6 +1,18 @@
 {
   "ownerStateVersion": "2026-08-15.1",
   "_note": "Layer 2 of the three-layer model: owner/account state, never product facts. Fields set to null are collected at onboarding — the engine must refuse to score a rule whose ownerCondition is unresolved rather than guess.",
+  "ownedCardIds": [
+    "amex-platinum",
+    "amex-cobalt",
+    "amex-bonvoy",
+    "mbna-rewards-we",
+    "scotia-momentum-vi-plus",
+    "tangerine-moneyback-world",
+    "rogers-red-we",
+    "triangle-we",
+    "wealthsimple-vip",
+    "cryptocom-royal-indigo"
+  ],
   "defaultCardId": "wealthsimple-vip",
   "switchThreshold": {
     "minAdvantagePercentagePoints": 0.5,

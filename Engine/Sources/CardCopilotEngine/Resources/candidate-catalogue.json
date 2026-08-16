@@ -1,0 +1,474 @@
+{
+  "catalogueVersion": "1.0",
+  "currency": "CAD",
+  "_provenance": "Non-owned Canadian cards researched from issuer pages on 2026-08-16. Recurring earn only: welcome bonuses and first-year fee rebates are deliberately excluded.",
+  "cards": [
+    {
+      "cardId": "simplii-cash-back-visa",
+      "officialName": "Simplii Financial Cash Back Visa Card",
+      "issuer": "Simplii Financial / CIBC",
+      "network": "visa",
+      "kind": "credit",
+      "fee": { "annualCad": 0 },
+      "program": { "programId": "cashback", "unit": "cad" },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "simplii-base-0_5pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.005 },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "simplii-dining-4pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.04 },
+          "predicate": {
+            "categories": ["dining"],
+            "mccInclude": [5811, 5812, 5813, 5814]
+          },
+          "capId": "simplii-dining-calendarYear"
+        },
+        {
+          "ruleId": "simplii-everyday-1_5pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.015 },
+          "predicate": {
+            "categories": ["gasStation", "grocery", "drugStore", "recurring"],
+            "mccInclude": [5411, 5541, 5542, 5912],
+            "recurringViaNetworkIndicator": true
+          },
+          "capId": "simplii-everyday-calendarYear"
+        }
+      ],
+      "caps": [
+        {
+          "capId": "simplii-dining-calendarYear",
+          "measure": "spendCad",
+          "limit": 5000,
+          "period": "calendarYear",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": { "type": "cashback", "rate": 0.005 },
+          "proration": true
+        },
+        {
+          "capId": "simplii-everyday-calendarYear",
+          "measure": "spendCad",
+          "limit": 15000,
+          "period": "calendarYear",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": { "type": "cashback", "rate": 0.005 },
+          "proration": true
+        }
+      ],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.simplii.com/en/credit-cards/cash-back-visa.html",
+        "https://www.simplii.com/content/dam/simplii-public-assets/documents/pdf/credit-cards/cash-back-visa-benefits-guide.pdf"
+      ],
+      "lastVerifiedAt": "2026-08-16"
+    },
+    {
+      "cardId": "amex-simplycash-preferred",
+      "officialName": "SimplyCash Preferred Card from American Express",
+      "issuer": "American Express Canada",
+      "network": "amex",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 119.88,
+        "monthlyCad": 9.99,
+        "billing": "monthly"
+      },
+      "program": { "programId": "cashback", "unit": "cad" },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "simplycash-preferred-base-2pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.02 },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "simplycash-preferred-gas-grocery-4pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.04 },
+          "predicate": {
+            "categories": ["gasStation", "grocery"],
+            "mccInclude": [5411, 5541, 5542],
+            "country": "CA",
+            "merchantExclude": ["costco"]
+          },
+          "capId": "simplycash-preferred-gas-grocery-accountYear"
+        }
+      ],
+      "caps": [
+        {
+          "capId": "simplycash-preferred-gas-grocery-accountYear",
+          "measure": "spendCad",
+          "limit": 30000,
+          "period": "accountYear",
+          "anchor": "cardmembership anniversary",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": { "type": "cashback", "rate": 0.02 },
+          "proration": true
+        }
+      ],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.americanexpress.com/en-ca/credit-cards/simply-cash-preferred/",
+        "https://www.americanexpress.com/en-ca/benefits/simplycashpreferred-card/"
+      ],
+      "lastVerifiedAt": "2026-08-16"
+    },
+    {
+      "cardId": "bmo-cashback-world-elite",
+      "officialName": "BMO CashBack World Elite Mastercard",
+      "issuer": "Bank of Montreal",
+      "network": "mastercard",
+      "kind": "credit",
+      "fee": { "annualCad": 139 },
+      "program": { "programId": "cashback", "unit": "cad" },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "bmo-cashback-we-base-1pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.01 },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "bmo-cashback-we-grocery-5pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.05 },
+          "predicate": {
+            "categories": ["grocery"],
+            "mccInclude": [5411],
+            "country": "CA"
+          },
+          "capId": "bmo-cashback-we-grocery-monthly"
+        },
+        {
+          "ruleId": "bmo-cashback-we-transit-4pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.04 },
+          "predicate": {
+            "categories": ["transit"],
+            "mccInclude": [4111, 4112, 4121, 4131, 4789],
+            "country": "CA"
+          },
+          "capId": "bmo-cashback-we-transit-monthly"
+        },
+        {
+          "ruleId": "bmo-cashback-we-gas-3pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.03 },
+          "predicate": {
+            "categories": ["gasStation", "evCharging"],
+            "mccInclude": [5541, 5542, 5552],
+            "country": "CA"
+          },
+          "capId": "bmo-cashback-we-gas-monthly"
+        },
+        {
+          "ruleId": "bmo-cashback-we-recurring-2pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.02 },
+          "predicate": {
+            "categories": ["recurring"],
+            "country": "CA",
+            "recurringViaNetworkIndicator": true
+          },
+          "capId": "bmo-cashback-we-recurring-monthly"
+        }
+      ],
+      "caps": [
+        {
+          "capId": "bmo-cashback-we-grocery-monthly",
+          "measure": "spendCad",
+          "limit": 500,
+          "period": "calendarMonth",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": { "type": "cashback", "rate": 0.01 },
+          "proration": true
+        },
+        {
+          "capId": "bmo-cashback-we-transit-monthly",
+          "measure": "spendCad",
+          "limit": 300,
+          "period": "calendarMonth",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": { "type": "cashback", "rate": 0.01 },
+          "proration": true
+        },
+        {
+          "capId": "bmo-cashback-we-gas-monthly",
+          "measure": "spendCad",
+          "limit": 300,
+          "period": "calendarMonth",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": { "type": "cashback", "rate": 0.01 },
+          "proration": true
+        },
+        {
+          "capId": "bmo-cashback-we-recurring-monthly",
+          "measure": "spendCad",
+          "limit": 500,
+          "period": "calendarMonth",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": { "type": "cashback", "rate": 0.01 },
+          "proration": true
+        }
+      ],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.bmo.com/en-ca/main/personal/credit-cards/bmo-cashback-world-elite-mastercard/",
+        "https://www.bmo.com/popups/main/personal/credit-cards/terms-and-conditions-en.html"
+      ],
+      "lastVerifiedAt": "2026-08-16"
+    },
+    {
+      "cardId": "mbna-smart-cash-world",
+      "officialName": "MBNA Smart Cash World Mastercard",
+      "issuer": "MBNA / TD Bank",
+      "network": "mastercard",
+      "kind": "credit",
+      "fee": { "annualCad": 39 },
+      "program": { "programId": "cashback", "unit": "cad" },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "mbna-smart-cash-world-base-1pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.01 },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "mbna-smart-cash-world-gas-grocery-2pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.02 },
+          "predicate": {
+            "categories": ["gasStation", "grocery"],
+            "mccInclude": [5411, 5541, 5542]
+          },
+          "capId": "mbna-smart-cash-world-gas-grocery-monthly"
+        }
+      ],
+      "caps": [
+        {
+          "capId": "mbna-smart-cash-world-gas-grocery-monthly",
+          "measure": "spendCad",
+          "limit": 500,
+          "period": "calendarMonth",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": { "type": "cashback", "rate": 0.01 },
+          "proration": true
+        }
+      ],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.mbna.ca/en/credit-cards/cash-back/smart-cash-world-mastercard"
+      ],
+      "lastVerifiedAt": "2026-08-16"
+    },
+    {
+      "cardId": "home-trust-preferred-visa",
+      "officialName": "Home Trust Preferred Visa",
+      "issuer": "Home Trust Company",
+      "network": "visa",
+      "kind": "credit",
+      "fee": { "annualCad": 0 },
+      "program": { "programId": "cashback", "unit": "cad" },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "home-trust-foreign-no-reward",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0 },
+          "predicate": {},
+          "capId": null,
+          "_note": "Foreign-currency purchases have no FX surcharge but are not eligible for cash back."
+        },
+        {
+          "ruleId": "home-trust-cad-1pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.01 },
+          "predicate": { "currency": "CAD" },
+          "capId": null
+        }
+      ],
+      "caps": [],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.hometrust.ca/credit-cards/preferred-visa-card/"
+      ],
+      "lastVerifiedAt": "2026-08-16",
+      "_eligibilityNote": "Not available in Quebec."
+    },
+    {
+      "cardId": "rbc-cashback-preferred-we",
+      "officialName": "RBC Cash Back Preferred World Elite Mastercard",
+      "issuer": "Royal Bank of Canada",
+      "network": "mastercard",
+      "kind": "credit",
+      "fee": { "annualCad": 99 },
+      "program": { "programId": "cashback", "unit": "cad" },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "rbc-cashback-preferred-base-1pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.01 },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "rbc-cashback-preferred-1_5pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": { "type": "cashback", "rate": 0.015 },
+          "predicate": {},
+          "capId": "rbc-cashback-preferred-accountYear"
+        }
+      ],
+      "caps": [
+        {
+          "capId": "rbc-cashback-preferred-accountYear",
+          "measure": "spendCad",
+          "limit": 25000,
+          "period": "accountYear",
+          "anchor": "account anniversary",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": { "type": "cashback", "rate": 0.01 },
+          "proration": true
+        }
+      ],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.rbcroyalbank.com/credit-cards/cash-back/rbc-preferred-world-elite-mastercard.html"
+      ],
+      "lastVerifiedAt": "2026-08-16",
+      "_eligibilityNote": "Issuer states $80,000 personal or $150,000 household minimum annual income."
+    }
+  ]
+}

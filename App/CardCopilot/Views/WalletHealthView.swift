@@ -10,6 +10,14 @@ struct WalletHealthView: View {
     let onDone: () -> Void
 
     @State private var analysis: PortfolioAnalysis?
+    @State private var acquisitionAnalysis: AcquisitionAnalysis?
+    @State private var mode: Mode = .wallet
+
+    private enum Mode: String, CaseIterable, Identifiable {
+        case wallet = "Keep or cancel"
+        case acquisition = "Cards to add"
+        var id: String { rawValue }
+    }
 
     private let distribution = SpendDistribution.placeholderCanadianHousehold
 
@@ -17,15 +25,25 @@ struct WalletHealthView: View {
         Dictionary(uniqueKeysWithValues: deps.catalogue.cards.map { ($0.cardId, $0.officialName) })
     }
 
+    private var candidateNames: [String: String] {
+        Dictionary(uniqueKeysWithValues:
+            deps.candidateCatalogue.cards.map { ($0.cardId, $0.officialName) })
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                if let analysis {
+                if let analysis, let acquisitionAnalysis {
                     assumptionBanner
-                    summaryCard(analysis)
-                    cardsSection(analysis)
-                    if !analysis.redundantPairs.isEmpty {
-                        redundantPairsSection(analysis)
+                    modePicker
+                    if mode == .wallet {
+                        summaryCard(analysis)
+                        cardsSection(analysis)
+                        if !analysis.redundantPairs.isEmpty {
+                            redundantPairsSection(analysis)
+                        }
+                    } else {
+                        acquisitionSection(acquisitionAnalysis)
                     }
                     footer
                 } else {
@@ -46,11 +64,25 @@ struct WalletHealthView: View {
             }
         }
         .task {
-            guard analysis == nil else { return }
+            guard analysis == nil || acquisitionAnalysis == nil else { return }
             let today = Date().formatted(.iso8601.year().month().day())
             analysis = PortfolioAnalyzer(catalogue: deps.catalogue, ownerState: deps.ownerState)
                 .analyze(distribution, asOf: today)
+            acquisitionAnalysis = AcquisitionAnalyzer(
+                walletCatalogue: deps.catalogue,
+                candidateCatalogue: deps.candidateCatalogue,
+                ownerState: deps.ownerState)
+                .analyze(distribution, asOf: today)
         }
+    }
+
+    private var modePicker: some View {
+        Picker("Analysis", selection: $mode) {
+            ForEach(Mode.allCases) { mode in
+                Text(mode.rawValue).tag(mode)
+            }
+        }
+        .pickerStyle(.segmented)
     }
 
     // MARK: - Assumption banner (decision #19: viewable, never editable)
@@ -213,8 +245,76 @@ struct WalletHealthView: View {
         )
     }
 
+    // MARK: - Acquisition (the reverse portfolio counterfactual)
+
+    private func acquisitionSection(_ acquisition: AcquisitionAnalysis) -> some View {
+        VStack(alignment: .leading, spacing: 18) {
+            acquisitionOutcome(acquisition)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Ranked by recurring net value")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                Text("Each card is added alone, then every purchase is re-optimized across your wallet.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            VStack(spacing: 0) {
+                ForEach(Array(acquisition.candidates.enumerated()), id: \.element.cardId) {
+                    index, candidate in
+                    AcquisitionCandidateRow(
+                        rank: index + 1,
+                        candidate: candidate,
+                        cardName: candidateNames[candidate.cardId] ?? candidate.cardId,
+                        walletNames: cardNames)
+                    if index < acquisition.candidates.count - 1 {
+                        Divider().padding(.leading, 42)
+                    }
+                }
+            }
+            .padding(.horizontal, 14)
+            .background(Color(.secondarySystemGroupedBackground),
+                        in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 8) {
+                Label("What is not in the number", systemImage: "equal.circle")
+                    .font(.subheadline.weight(.semibold))
+                Text("Welcome bonuses, first-year fee rebates, approval odds, credit-score effects, insurance, lounges and statement credits are excluded. Income eligibility is not assessed.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 2)
+        }
+    }
+
+    private func acquisitionOutcome(_ acquisition: AcquisitionAnalysis) -> some View {
+        let hasRecommendation = !acquisition.recommended.isEmpty
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: hasRecommendation ? "plus.circle.fill" : "checkmark.seal.fill")
+                    .foregroundStyle(hasRecommendation ? Color.teal : Color.green)
+                Text(hasRecommendation ? "A card earns its recurring fee" : "No new card earns its fee")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+            }
+            Text(hasRecommendation
+                 ? "The positive results below add more annual reward value than their stated recurring fee."
+                 : "Against this wallet and spend profile, keeping the wallet unchanged beats every researched candidate on recurring earn after fees.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Text("\(acquisition.candidates.count) issuer-verified candidates · year-two economics")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.teal)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill((hasRecommendation ? Color.teal : Color.green).opacity(0.09))
+        )
+    }
+
     private var footer: some View {
-        Text("Estimates only, from a placeholder spend profile — not a recommendation to cancel any card. Verdicts are re-derived from the same rules the checkout engine uses, never guessed.")
+        Text("Estimates only, from a placeholder spend profile — not financial advice or an application recommendation. Every result is re-derived from the checkout engine's rules, never an affiliate ranking.")
             .font(.caption)
             .foregroundStyle(.secondary)
             .padding(.top, 2)
@@ -320,6 +420,114 @@ private struct CardContributionRow: View {
     }
 }
 
+/// A candidate is a comparison, not an offer. The collapsed row answers the decision; expanding
+/// it exposes the counterfactual evidence without turning the screen into a comparison-site grid.
+private struct AcquisitionCandidateRow: View {
+    let rank: Int
+    let candidate: AcquisitionCandidate
+    let cardName: String
+    let walletNames: [String: String]
+
+    @State private var isExpanded = false
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $isExpanded) {
+            evidence
+                .padding(.top, 12)
+                .padding(.leading, 42)
+        } label: {
+            HStack(alignment: .top, spacing: 10) {
+                Text("\(rank)")
+                    .font(.caption.weight(.bold).monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18, height: 24)
+                CardMiniBadge(cardId: candidate.cardId, size: 24)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(cardName)
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.primary)
+                    Text(WalletHealthFormatting.acquisitionLabel(candidate.verdict))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(WalletHealthFormatting.acquisitionColor(candidate.verdict))
+                }
+                Spacer(minLength: 8)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(WalletHealthFormatting.signedCad(candidate.netAnnualValueCad))
+                        .font(.system(size: 17, weight: .bold, design: .rounded).monospacedDigit())
+                        .foregroundStyle(candidate.netAnnualValueCad > 0.01 ? Color.green : Color.secondary)
+                    Text("net / yr")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.vertical, 14)
+        }
+        .tint(.secondary)
+    }
+
+    private var evidence: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 14) {
+                metric("Marginal rewards", candidate.marginalRewardValueCad)
+                metric("Recurring fee", candidate.annualFeeCad)
+            }
+
+            if candidate.grossRewardValueCad > candidate.marginalRewardValueCad + 0.01 {
+                Text("It would earn \(WalletHealthFormatting.cad(candidate.grossRewardValueCad)) gross, but most of that spend is already covered by cards you own.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if candidate.bucketGains.isEmpty {
+                Label("No spend category improves", systemImage: "minus.circle")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(candidate.bucketGains, id: \.label) { gain in
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack {
+                            Text(gain.label)
+                                .font(.caption.weight(.semibold))
+                            Spacer()
+                            Text(WalletHealthFormatting.signedCad(gain.marginalValueCad))
+                                .font(.caption.weight(.bold).monospacedDigit())
+                                .foregroundStyle(.teal)
+                        }
+                        if !gain.displacedCardIds.isEmpty {
+                            Text("Replaces \(gain.displacedCardIds.map { walletNames[$0] ?? $0 }.joined(separator: ", ")) on \(WalletHealthFormatting.cad(gain.annualSpendCad)) of annual spend.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+
+            if candidate.requiredBenefitValueCad > 0, candidate.marginalRewardValueCad > 0.01 {
+                Text("Its unpriced benefits must be worth at least \(WalletHealthFormatting.cad(candidate.requiredBenefitValueCad))/yr to break even.")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.primary)
+            }
+            if candidate.feeWaiverUnresolved {
+                Label("A possible fee waiver is unresolved; ranking uses the stated fee.",
+                      systemImage: "questionmark.circle")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
+        .padding(.bottom, 14)
+    }
+
+    private func metric(_ label: String, _ value: Double) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(WalletHealthFormatting.cad(value))
+                .font(.subheadline.weight(.bold).monospacedDigit())
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
 enum WalletHealthFormatting {
     static func cad(_ value: Double) -> String {
         let formatter = NumberFormatter()
@@ -345,6 +553,27 @@ enum WalletHealthFormatting {
         case .keep: return .green
         case .downgrade: return .orange
         case .cancel: return .red
+        }
+    }
+
+    static func signedCad(_ value: Double) -> String {
+        if abs(value) < 0.005 { return "$0" }
+        return (value > 0 ? "+" : "−") + cad(abs(value))
+    }
+
+    static func acquisitionLabel(_ verdict: AcquisitionVerdict) -> String {
+        switch verdict {
+        case .worthAdding: return "Earns its fee"
+        case .benefitsRequired: return "Benefits must cover the gap"
+        case .noEarnAdvantage: return "No recurring earn advantage"
+        }
+    }
+
+    static func acquisitionColor(_ verdict: AcquisitionVerdict) -> Color {
+        switch verdict {
+        case .worthAdding: return .green
+        case .benefitsRequired: return .orange
+        case .noEarnAdvantage: return .secondary
         }
     }
 }

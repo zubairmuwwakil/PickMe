@@ -16,6 +16,14 @@ public enum SeedLoader {
         return catalogue
     }
 
+    /// Products researched for acquisition analysis. Kept separate from the wallet catalogue so
+    /// loading them can never make an unowned product eligible at checkout.
+    public static func loadCandidateCatalogue() throws -> Catalogue {
+        let catalogue: Catalogue = try load("candidate-catalogue")
+        try validate(catalogueVersion: catalogue.catalogueVersion)
+        return catalogue
+    }
+
     public static func loadOwnerState() throws -> OwnerState {
         try load("owner-state")
     }

@@ -66,6 +66,10 @@ public struct Valuations: Codable, Equatable, Sendable {
 
 public struct OwnerState: Codable, Equatable, Sendable {
     public var ownerStateVersion: String
+    /// The product catalogue and the wallet are different concepts. Checkout currently receives
+    /// only wallet products, while acquisition analysis also receives non-owned candidates; this
+    /// explicit boundary prevents a candidate from silently becoming a checkout option.
+    public var ownedCardIds: [String]
     public var defaultCardId: String
     public var switchThreshold: SwitchThreshold
     public var carry: Carry

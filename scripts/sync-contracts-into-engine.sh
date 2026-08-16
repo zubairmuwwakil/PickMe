@@ -10,6 +10,8 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 cp "$root/contracts/card-catalogue.json" \
    "$root/Engine/Sources/CardCopilotEngine/Resources/card-catalogue.json"
+cp "$root/contracts/candidate-catalogue.json" \
+   "$root/Engine/Sources/CardCopilotEngine/Resources/candidate-catalogue.json"
 cp "$root/contracts/benefits-catalogue.json" \
    "$root/Engine/Sources/CardCopilotEngine/Resources/benefits-catalogue.json"
 cp "$root/contracts/engine-fixtures.json" \

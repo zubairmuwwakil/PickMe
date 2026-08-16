@@ -44,7 +44,9 @@ JSON Schema describes the format **as-is**, including fields the engine does not
 
 ## 5. Fixture expansion (before any TS twin, after extraction)
 
-`engine-fixtures.json` grows from 12 to ~25 cases, covering each rule family at least twice: MCC include at nil-MCC (the permissive-fallback path) · MCC exclude · merchant exclude vs brand · effective-dating boundary (day-of flip) · FX simple + FX-allowance flag path · cap proration straddle · cap exhausted with `postCapEarn` · switch-threshold `both` vs `either` semantics · valuation floor/upside disclosure gate · owner-condition unresolved (fail-closed). Each keeps the existing discipline: pinned valuations, hand-derived arithmetic in `notes`.
+`engine-fixtures.json` grows from 12 to ~25 cases, covering each rule family at least twice: MCC include at nil-MCC (the permissive-fallback path) · MCC exclude · merchant exclude vs brand · effective-dating boundary (day-of flip) · FX simple + FX-allowance flag path · cap proration straddle · cap exhausted with `postCapEarn` · switch-threshold `both` vs `either` semantics · valuation floor/upside disclosure gate · owner-condition unresolved (fail-closed). Each keeps the existing discipline: pinned valuations, hand-derived arithmetic embedded in each case's `description` (the file's convention — there is no separate `notes` field).
+
+**Status 2026-08-16: DONE — 27 cases at fixturesVersion 1.1, verified.**
 
 ## 6. Implementation chunks (each independently verifiable — orc-able per decision 10)
 

@@ -18,9 +18,18 @@ final class SeedLoaderTests: XCTestCase {
         XCTAssertEqual(crypto.kind, .prepaid)
     }
 
+    func testCandidateCatalogueLoadsSeparately() throws {
+        let candidates = try SeedLoader.loadCandidateCatalogue()
+        XCTAssertEqual(candidates.cards.count, 6)
+        XCTAssertTrue(candidates.cards.allSatisfy {
+            $0.lastVerifiedAt == "2026-08-16"
+        })
+    }
+
     func testOwnerStateLoads() throws {
         let state = try SeedLoader.loadOwnerState()
         XCTAssertEqual(state.defaultCardId, "wealthsimple-vip")
+        XCTAssertEqual(state.ownedCardIds.count, 10)
         XCTAssertEqual(state.switchThreshold.semantics, "both")
         let mr = state.valuationsCad.amexMembershipRewards
         XCTAssertEqual(mr.centsPerPoint, 1.0, accuracy: 0.005,

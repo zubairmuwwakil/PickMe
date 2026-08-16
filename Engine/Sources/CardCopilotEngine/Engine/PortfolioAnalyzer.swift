@@ -109,8 +109,13 @@ public struct PortfolioAnalyzer {
     let catalogue: Catalogue
     let ownerState: OwnerState
 
-    public init(catalogue: Catalogue, ownerState: OwnerState) {
-        self.catalogue = catalogue
+    public init(catalogue: Catalogue, ownerState: OwnerState,
+                cardIds: Set<String>? = nil) {
+        var scopedCatalogue = catalogue
+        if let cardIds {
+            scopedCatalogue.cards = catalogue.cards.filter { cardIds.contains($0.cardId) }
+        }
+        self.catalogue = scopedCatalogue
         self.ownerState = ownerState
     }
 

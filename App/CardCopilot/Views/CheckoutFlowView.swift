@@ -32,6 +32,7 @@ struct CheckoutFlowView: View {
 
     struct Dependencies {
         let catalogue: Catalogue
+        let candidateCatalogue: Catalogue
         let ownerState: OwnerState
         let benefits: BenefitsCatalogue
         let service: CheckoutService
@@ -131,10 +132,12 @@ struct CheckoutFlowView: View {
         guard deps == nil else { return }
         do {
             let catalogue = try SeedLoader.loadCatalogue()
+            let candidates = try SeedLoader.loadCandidateCatalogue()
             let owner = try SeedLoader.loadOwnerState()
             let benefits = try SeedLoader.loadBenefitsCatalogue()
             deps = Dependencies(
                 catalogue: catalogue,
+                candidateCatalogue: candidates,
                 ownerState: owner,
                 benefits: benefits,
                 service: CheckoutService(catalogue: catalogue, ownerState: owner,

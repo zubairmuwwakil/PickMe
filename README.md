@@ -15,7 +15,8 @@ The project is currently a **personal, engine-first MVP**. Its bundled catalogue
 - Reconciles predictions against posted statements, then learns the category for that exact merchant location.
 - Tracks the experiment's category accuracy, arithmetic correctness, miss classes, and confirmed value recovered.
 - Offers one-tap repeats for previously used merchants.
-- Includes an engine-level portfolio analyzer for keep, downgrade, and cancel decisions based on each card's marginal value. This analysis is not yet exposed in the app UI.
+- Audits the wallet for keep, downgrade, and cancel decisions based on each card's marginal value.
+- Ranks non-owned cards by the value they add to the existing wallet after recurring fees, with welcome offers excluded and every counterfactual exposed.
 
 ## The experiment
 
@@ -98,7 +99,7 @@ The two packages can be tested independently from the repository root:
 (cd Store && swift test)
 ```
 
-The current suite contains **163 tests**: 103 engine tests and 60 store tests. To print an end-to-end recommendation walkthrough:
+The current suite contains **216 tests**: 156 engine tests and 60 store tests. To print an end-to-end recommendation walkthrough:
 
 ```bash
 cd Engine
@@ -110,6 +111,7 @@ swift test --filter DemoWalkthroughTests
 The bundled data is intentionally personal rather than a public Canadian card catalogue:
 
 - [`card-catalogue.json`](Engine/Sources/CardCopilotEngine/Resources/card-catalogue.json) defines card products, effective-dated earn and FX rules, caps, fees, sources, and verification dates.
+- [`candidate-catalogue.json`](Engine/Sources/CardCopilotEngine/Resources/candidate-catalogue.json) holds a separate issuer-verified acquisition shortlist so non-owned cards can never leak into checkout recommendations.
 - [`owner-state.json`](Engine/Sources/CardCopilotEngine/Resources/owner-state.json) defines the cards carried, default card, cap progress, reward valuations, and switch threshold.
 - [`engine-fixtures.json`](Engine/Tests/CardCopilotEngineTests/Fixtures/engine-fixtures.json) is the executable recommendation specification for important edge cases.
 
@@ -124,7 +126,8 @@ The material in [`docs/compliance/`](docs/compliance/) is draft planning documen
 ## Current limitations
 
 - The seed catalogue and owner state represent one person's wallet; there is no onboarding or in-app wallet editor yet.
-- The portfolio analyzer exists only at the engine/test layer.
+- Keep/cancel and acquisition results still use a documented placeholder spend distribution until statement imports provide measured category totals.
+- The acquisition catalogue is a researched six-card shortlist, not a claim of complete Canadian-market coverage.
 - Data export, record deletion controls, rule-freshness UI, localization, and App Intent support are planned but not implemented.
 - The project is an experimental decision aid, not financial advice, and is not ready for public App Store distribution.
 

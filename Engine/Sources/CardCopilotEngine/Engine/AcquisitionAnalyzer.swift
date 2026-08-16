@@ -1,0 +1,158 @@
+import Foundation
+
+/// The earn-only answer to “which card should I add?”
+///
+/// This deliberately measures steady-state value, not an issuer's acquisition promotion:
+///
+///     marginal earn = optimal rewards(wallet + candidate) - optimal rewards(wallet)
+///     net annual value = marginal earn - stated recurring annual fee
+///
+/// Existing wallet fees cancel out of the comparison. Welcome bonuses, first-year fee rebates,
+/// credit-score effects, approval odds and non-earn benefits are not guessed.
+public enum AcquisitionVerdict: String, Codable, Equatable, Sendable {
+    /// Recurring marginal earn exceeds the candidate's recurring fee.
+    case worthAdding
+    /// It improves earn, but benefits the engine does not price must cover the remaining fee.
+    case benefitsRequired
+    /// It adds no earn value to this wallet on this spend distribution.
+    case noEarnAdvantage
+}
+
+/// One category where adding a candidate changes the optimized wallet result.
+public struct AcquisitionBucketGain: Equatable, Sendable {
+    public let label: String
+    public let annualSpendCad: Double
+    public let valueBeforeCad: Double
+    public let valueAfterCad: Double
+    public let displacedCardIds: [String]
+
+    public var marginalValueCad: Double { valueAfterCad - valueBeforeCad }
+}
+
+public struct AcquisitionCandidate: Equatable, Sendable {
+    public let cardId: String
+    /// Rewards the candidate earns on purchases it wins. This is not the decision number.
+    public let grossRewardValueCad: Double
+    /// What the whole wallet gains after every purchase is re-optimized.
+    public let marginalRewardValueCad: Double
+    public let annualFeeCad: Double
+    /// `marginalRewardValueCad - annualFeeCad`; the ranking key.
+    public let netAnnualValueCad: Double
+    public let verdict: AcquisitionVerdict
+    /// Non-earn value required to break even when earn alone does not cover the fee.
+    public let requiredBenefitValueCad: Double
+    public let feeWaiverUnresolved: Bool
+    public let neverScorable: Bool
+    public let bucketGains: [AcquisitionBucketGain]
+}
+
+public struct AcquisitionAnalysis: Equatable, Sendable {
+    public let profileId: String
+    public let asOf: String
+    public let walletCardIds: [String]
+    public let baselinePortfolioValueCad: Double
+    /// Ranked by recurring net annual value, best first. A negative first result honestly means
+    /// no researched candidate earns its fee against this wallet and spend profile.
+    public let candidates: [AcquisitionCandidate]
+
+    public var recommended: [AcquisitionCandidate] {
+        candidates.filter { $0.verdict == .worthAdding }
+    }
+
+    public func candidate(_ cardId: String) -> AcquisitionCandidate? {
+        candidates.first { $0.cardId == cardId }
+    }
+}
+
+public struct AcquisitionAnalyzer {
+    let walletCatalogue: Catalogue
+    let candidateCatalogue: Catalogue
+    let ownerState: OwnerState
+
+    public init(walletCatalogue: Catalogue, candidateCatalogue: Catalogue,
+                ownerState: OwnerState) {
+        self.walletCatalogue = walletCatalogue
+        self.candidateCatalogue = candidateCatalogue
+        self.ownerState = ownerState
+    }
+
+    public func analyze(_ distribution: SpendDistribution, asOf: String) -> AcquisitionAnalysis {
+        let owned = Set(ownerState.ownedCardIds)
+        var knownCatalogue = walletCatalogue
+        let walletProductIds = Set(walletCatalogue.cards.map(\.cardId))
+        knownCatalogue.cards += candidateCatalogue.cards.filter {
+            !walletProductIds.contains($0.cardId)
+        }
+        let walletIds = owned.intersection(knownCatalogue.cards.map(\.cardId))
+        let baselineAnalyzer = PortfolioAnalyzer(catalogue: knownCatalogue,
+                                                 ownerState: ownerState,
+                                                 cardIds: walletIds)
+        let baseline = baselineAnalyzer.run(distribution, excluding: [], asOf: asOf)
+        let annualSpendByLabel = Dictionary(uniqueKeysWithValues:
+            distribution.buckets.map { ($0.label, $0.annualCad) })
+
+        var results: [AcquisitionCandidate] = []
+        for card in candidateCatalogue.cards where !owned.contains(card.cardId) {
+            let combinedIds = walletIds.union([card.cardId])
+            let combined = PortfolioAnalyzer(catalogue: knownCatalogue,
+                                             ownerState: ownerState,
+                                             cardIds: combinedIds)
+                .run(distribution, excluding: [], asOf: asOf)
+
+            let marginal = combined.totalValueCad - baseline.totalValueCad
+            let fee = card.fee.annualCad ?? card.fee.monthlyCad.map { $0 * 12 } ?? 0
+            let net = marginal - fee
+            let gains = combined.winnersByBucket.keys.compactMap { label -> AcquisitionBucketGain? in
+                guard combined.winnersByBucket[label]?.contains(card.cardId) == true else {
+                    return nil
+                }
+                let before = baseline.valueByBucket[label] ?? 0
+                let after = combined.valueByBucket[label] ?? 0
+                guard after > before + 0.005 else { return nil }
+                return AcquisitionBucketGain(
+                    label: label,
+                    annualSpendCad: annualSpendByLabel[label] ?? 0,
+                    valueBeforeCad: before,
+                    valueAfterCad: after,
+                    displacedCardIds: Array(baseline.winnersByBucket[label] ?? []).sorted())
+            }.sorted {
+                $0.marginalValueCad != $1.marginalValueCad
+                    ? $0.marginalValueCad > $1.marginalValueCad
+                    : $0.label < $1.label
+            }
+            let scorable = combined.scorableCards.contains(card.cardId)
+            let verdict: AcquisitionVerdict
+            if net > 0.01 {
+                verdict = .worthAdding
+            } else if marginal > 0.01 {
+                verdict = .benefitsRequired
+            } else {
+                verdict = .noEarnAdvantage
+            }
+
+            results.append(AcquisitionCandidate(
+                cardId: card.cardId,
+                grossRewardValueCad: combined.valueByCard[card.cardId] ?? 0,
+                marginalRewardValueCad: marginal,
+                annualFeeCad: fee,
+                netAnnualValueCad: net,
+                verdict: verdict,
+                requiredBenefitValueCad: max(0, fee - marginal),
+                feeWaiverUnresolved: card.fee.waiver != nil
+                    && ownerState.cardStates[card.cardId]?.feeWaiverActive == nil,
+                neverScorable: !scorable,
+                bucketGains: gains))
+        }
+        results.sort {
+            $0.netAnnualValueCad != $1.netAnnualValueCad
+                ? $0.netAnnualValueCad > $1.netAnnualValueCad
+                : $0.cardId < $1.cardId
+        }
+
+        return AcquisitionAnalysis(profileId: distribution.profileId,
+                                   asOf: asOf,
+                                   walletCardIds: walletIds.sorted(),
+                                   baselinePortfolioValueCad: baseline.totalValueCad,
+                                   candidates: results)
+    }
+}
