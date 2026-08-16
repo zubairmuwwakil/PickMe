@@ -51,20 +51,20 @@ App/
 
 **Files:** Create `App/CardCopilot.xcodeproj/project.pbxproj`, `App/CardCopilot/CardCopilotApp.swift`, `App/CardCopilot/Resources/Info.plist`
 
-- [ ] Hand-write `project.pbxproj` with one app target, a `PBXFileSystemSynchronizedRootGroup` for `CardCopilot/`, and an `XCLocalSwiftPackageReference` to `../Engine`
-- [ ] Minimal `@main` App rendering a view that loads the seed catalogue and prints the card count — proves the engine links
-- [ ] Verify: `xcodebuild -project App/CardCopilot.xcodeproj -scheme CardCopilot -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' build` succeeds
+- [x] Hand-write `project.pbxproj` with one app target, a `PBXFileSystemSynchronizedRootGroup` for `CardCopilot/`, and an `XCLocalSwiftPackageReference` to `../Engine`
+- [x] Minimal `@main` App rendering a view that loads the seed catalogue and prints the card count — proves the engine links
+- [x] Verify: `xcodebuild -project App/CardCopilot.xcodeproj -scheme CardCopilot -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' build` succeeds
 - [x] Commit
 
 ### Task 2: SwiftData persistence layer
 
 **Files:** Create `Persistence/Models.swift`, `Persistence/OwnerStateStore.swift`
 
-- [ ] `StoredPrediction`: merchant name/id, predicted category, confidence source, winner cardId, winner value, runner-up, amount, timestamp, valuation used — all immutable after write
-- [ ] `StoredObservation`: links to a prediction, records card used, observed category/multiplier, miss class, notes, confirmation date
-- [ ] `StoredMerchant`: brand, MapKit id, coordinates, confirmed category, observation count, last seen
-- [ ] Miss-class enum matching design §6 (wrongCategory, capExceeded, staleRule, processorWeirdness, networkNotAccepted)
-- [ ] Test: round-trip each model through an in-memory `ModelContainer`
+- [x] `StoredPrediction`: merchant name/id, predicted category, confidence source, winner cardId, winner value, runner-up, amount, timestamp, valuation used — all immutable after write
+- [x] `StoredObservation`: links to a prediction, records card used, observed category/multiplier, miss class, notes, confirmation date
+- [x] `StoredMerchant`: brand, MapKit id, coordinates, confirmed category, observation count, last seen
+- [x] Miss-class enum matching design §6 (wrongCategory, capExceeded, staleRule, processorWeirdness, networkNotAccepted)
+- [x] Test: round-trip each model through an in-memory `ModelContainer`
 - [x] Commit
 
 ### Task 3: Category mapping with honest confidence
