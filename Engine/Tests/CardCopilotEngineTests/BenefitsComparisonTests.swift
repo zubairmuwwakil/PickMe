@@ -142,6 +142,42 @@ final class BenefitsComparisonTests: XCTestCase {
         XCTAssertEqual(comparison.dominantCardId, "cheap")
     }
 
+    // MARK: - Compared fields must be displayed fields (spec B7)
+
+    func testOriginalWarrantyCeilingDoesNotDecideDominance() {
+        // maxOriginalWarrantyYears is an ELIGIBILITY CEILING, not a coverage magnitude, so its
+        // absence cannot be ranked: a certificate stating no ceiling plausibly means "no
+        // restriction" (the best case), not "worst". Scoring nil as -infinity ranked the four
+        // cards carrying 5 above the five carrying null — possibly backwards. It no longer votes.
+        let capped = card("capped", benefits: [
+            benefit("c-ew", family: "shopping", kind: "extendedWarranty") {
+                $0.extraYears = 1; $0.maxOriginalWarrantyYears = 5 }])
+        let uncapped = card("uncapped", benefits: [
+            benefit("u-ew", family: "shopping", kind: "extendedWarranty") {
+                $0.extraYears = 1 }])
+        let comparison = BenefitsAdvisor.comparison(context: BenefitContext(kind: .electronics),
+                                                    wallet: ["capped", "uncapped"],
+                                                    catalogue: catalogue([capped, uncapped]))
+        XCTAssertNil(comparison.dominantCardId,
+                     "cards differing only on the warranty ceiling must tie, not badge")
+    }
+
+    func testAnnualMaximumStillDecidesDominance() {
+        // The mirror of the test above: maxAnnualCad IS a magnitude (higher is plainly better)
+        // and is now rendered by factsLine, so it keeps its vote. Pins that the B7 fix removed
+        // the eligibility ceiling and nothing else.
+        let generous = card("generous", benefits: [
+            benefit("g-pp", family: "shopping", kind: "purchaseProtection") {
+                $0.windowDays = 90; $0.maxAnnualCad = 10_000 }])
+        let plain = card("plain", benefits: [
+            benefit("p-pp", family: "shopping", kind: "purchaseProtection") {
+                $0.windowDays = 90 }])
+        let comparison = BenefitsAdvisor.comparison(context: BenefitContext(kind: .electronics),
+                                                    wallet: ["generous", "plain"],
+                                                    catalogue: catalogue([generous, plain]))
+        XCTAssertEqual(comparison.dominantCardId, "generous")
+    }
+
     func testMissingKindIsWorstSoFullerCardDominates() {
         let full = card("full", benefits: [
             benefit("f-fd", family: "travelDisruption", kind: "flightDelay") { $0.delayHours = 4 },

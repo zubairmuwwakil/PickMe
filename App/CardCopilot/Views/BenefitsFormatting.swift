@@ -24,13 +24,21 @@ enum BenefitsFormatting {
     }
 
     /// Short factual fragment for a coverage block, e.g. "90 days · up to $1,000".
+    ///
+    /// Spec B7 requires the protection lens's "equal or better on every line below" badge to be
+    /// checkable against what this renders, so **every field in `BenefitsAdvisor.fieldSpecs` must
+    /// appear here**. `maxOriginalWarrantyYears` is shown but deliberately does not vote (it is an
+    /// eligibility ceiling, not a magnitude — see the invariants on `fieldSpecs`); displaying more
+    /// than is compared is safe, comparing more than is displayed is not.
     static func factsLine(for coverage: BenefitCoverage, kind: String) -> String {
         var parts: [String] = []
         if let hours = coverage.delayHours { parts.append("\(hours) h+ delay") }
         if let days = coverage.windowDays { parts.append("\(days) days") }
         if let years = coverage.extraYears { parts.append("+\(years) yr warranty") }
+        if let years = coverage.maxOriginalWarrantyYears { parts.append("originals ≤ \(years) yr") }
         if let max = coverage.maxPerOccurrenceCad { parts.append("up to \(cad(max))") }
         if let max = coverage.maxCad { parts.append("up to \(cad(max))") }
+        if let annual = coverage.maxAnnualCad { parts.append("\(cad(annual))/yr") }
         if let perDay = coverage.perDayCad { parts.append("\(cad(perDay))/day") }
         if let deductible = coverage.deductibleCad { parts.append("\(cad(deductible)) deductible") }
         if let days = coverage.maxTripLengthDays { parts.append("trips ≤ \(days) days") }

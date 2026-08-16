@@ -2,6 +2,26 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-16 — Protection badge compares only what it shows
+
+Fixes the `x-known-invariant-gap` recorded in the entry below; that key is gone from the schema,
+replaced by `x-compared-vs-displayed`. No data change — engine, app, and schema documentation only.
+
+- `maxAnnualCad` is now rendered by `BenefitsFormatting.factsLine` (`"$10,000/yr"`). It was voting in
+  the dominance badge while invisible, so the badge's "equal or better on every line below" claim
+  could turn on a row the user could not check. Concretely: Triangle's purchase protection displayed
+  as `"90 days"`, character-identical to MBNA/Scotia/Tangerine/Rogers, while its unstated $10,000
+  annual maximum strictly outranked all four.
+- `maxOriginalWarrantyYears` is **removed from `BenefitsAdvisor.fieldSpecs`** and is now display-only
+  (`"originals ≤ 5 yr"`). It is an eligibility ceiling, not a coverage magnitude: a certificate
+  stating no ceiling plausibly means *no restriction* — the best case — but the code scored absence
+  as worst, ranking the four cards carrying `5` above the five carrying `null` on a comparison that
+  may have been exactly backwards. Absence is only rankable for magnitudes.
+- The resulting invariant, now stated on `fieldSpecs` and `factsLine` and in the schema: **every
+  compared field must be displayed; a displayed field need not be compared.** Pinned by
+  `BenefitsComparisonTests.testOriginalWarrantyCeilingDoesNotDecideDominance` (ties instead of
+  badging) and `testAnnualMaximumStillDecidesDominance` (the magnitude keeps its vote).
+
 ## 2026-08-16 — Benefits contract parity
 
 - Added `schema/benefits-catalogue.schema.json`. The extraction below moved `benefits-catalogue.json`

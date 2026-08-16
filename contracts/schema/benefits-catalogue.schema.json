@@ -153,8 +153,8 @@
       "type": "object",
       "description": "Mirrors BenefitCoverage: thirteen fields, ALL optional in Swift, all nullable here. Typed fields exist only for values the protection-lens comparison sorts or displays; everything conditional stays verbatim in conditions/exclusions rather than being modelled (benefits design §4). Which fields are meaningful depends on kind — see benefits-extraction-template.md for the per-kind field guide. Fields are used two ways, and the two sets are NOT the same: BenefitsFormatting.factsLine renders eleven of them into the UI, while BenefitsAdvisor.fieldSpecs feeds all thirteen (minus null) into the Pareto dominance comparison. See x-dominance and x-display markers below.",
       "additionalProperties": false,
-      "x-dominance-direction": "BenefitsAdvisor.fieldSpecs treats delayHours and deductibleCad as lower-is-better and every other field as higher-is-better; a null field, or a card missing the kind entirely, scores worst. A number that does not fit that reading for some certificate belongs in notes/conditions rather than in a typed field, or the dominance badge will rank it backwards.",
-      "x-known-invariant-gap": "maxAnnualCad and maxOriginalWarrantyYears participate in dominance but are NOT rendered by factsLine, so the badge's claim (\"equal or better on every line below\") can be decided by a row the user cannot see. This contradicts benefits design B7, which requires the badge to assert only what the table beneath it shows. Currently masked by the data rather than fixed: as of catalogue 1.0 the cards differing on these fields also differ on a displayed field, so the lens returns a trade-off anyway. Re-check when this catalogue's values change.",
+      "x-dominance-direction": "BenefitsAdvisor.fieldSpecs treats delayHours and deductibleCad as lower-is-better and every other compared field as higher-is-better; a null field, or a card missing the kind entirely, scores worst. Only MAGNITUDES are compared — quantities where more is plainly better coverage, so that absence can honestly score worst. An eligibility gate, whose absence may mean \"no restriction\" rather than \"none offered\", must not be compared; it belongs in conditions and on screen. See x-compared-vs-displayed.",
+      "x-compared-vs-displayed": "Spec B7 requires the protection lens's \"equal or better on every line below\" badge to be checkable row by row, which imposes: every field compared by BenefitsAdvisor.fieldSpecs MUST be rendered by BenefitsFormatting.factsLine. The converse is deliberately allowed — a field may be displayed without voting. Exactly one field is in that state: maxOriginalWarrantyYears is shown (\"originals ≤ 5 yr\") but does not vote, because it is an eligibility ceiling rather than a magnitude — a certificate stating no ceiling plausibly means no restriction, i.e. the best case, so scoring its absence as worst ranked cards backwards. Both halves of this invariant were violated until catalogue 1.0: maxAnnualCad voted without being displayed (now displayed), and maxOriginalWarrantyYears voted on absence it could not interpret (now display-only).",
       "properties": {
         "windowDays": {
           "type": ["integer", "null"],
@@ -171,8 +171,8 @@
         "maxAnnualCad": {
           "type": ["number", "null"],
           "minimum": 0,
-          "x-display": "NOT RENDERED — see x-known-invariant-gap above",
-          "description": "Per-year aggregate maximum. Participates in the dominance badge but never appears in the UI facts line."
+          "x-display": "rendered as \"$<n>/yr\"",
+          "description": "Per-year aggregate maximum. A magnitude, so it both renders and votes in the dominance badge."
         },
         "extraYears": {
           "type": ["integer", "null"],
@@ -183,8 +183,8 @@
         "maxOriginalWarrantyYears": {
           "type": ["integer", "null"],
           "minimum": 0,
-          "x-display": "NOT RENDERED — see x-known-invariant-gap above",
-          "description": "Longest original manufacturer warranty still eligible for extension. Participates in the dominance badge but never appears in the UI facts line."
+          "x-display": "rendered as \"originals ≤ <n> yr\"; DISPLAY-ONLY — does not vote in dominance",
+          "description": "Longest original manufacturer warranty still eligible for extension. An eligibility ceiling rather than a coverage magnitude, so it is shown but excluded from the dominance comparison: a certificate stating no ceiling plausibly means no restriction (the best case), which makes its absence unrankable. Pinned by BenefitsComparisonTests.testOriginalWarrantyCeilingDoesNotDecideDominance."
         },
         "maxCad": {
           "type": ["number", "null"],

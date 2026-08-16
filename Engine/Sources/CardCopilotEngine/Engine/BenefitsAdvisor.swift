@@ -202,6 +202,19 @@ extension BenefitsAdvisor {
 
     /// Comparable coverage fields and their direction. Higher is better except where a
     /// lower number pays out sooner or costs less.
+    ///
+    /// TWO INVARIANTS, both load-bearing for spec B7 — the badge may only claim what the user
+    /// can check on the rows beneath it:
+    ///
+    /// 1. Every field listed here MUST be rendered by `BenefitsFormatting.factsLine`. A field
+    ///    that votes without appearing makes the "equal or better on every line below" claim
+    ///    unfalsifiable. (The reverse is fine: a displayed field need not vote.)
+    /// 2. Only *magnitudes* belong here — quantities where more is plainly better coverage, so
+    ///    that a missing value can honestly score worst. `maxOriginalWarrantyYears` is
+    ///    deliberately absent: it is an eligibility ceiling ("originals of five years or less
+    ///    qualify"), and a certificate stating no ceiling plausibly means *no restriction* —
+    ///    the best case, not the worst. Scoring its absence as -infinity ranked cards backwards.
+    ///    Eligibility gates belong in `conditions`, and on screen, not in this table.
     private struct FieldSpec {
         let name: String
         let lowerIsBetter: Bool
@@ -213,7 +226,6 @@ extension BenefitsAdvisor {
         .init(name: "maxPerOccurrenceCad", lowerIsBetter: false) { $0.maxPerOccurrenceCad },
         .init(name: "maxAnnualCad", lowerIsBetter: false) { $0.maxAnnualCad },
         .init(name: "extraYears", lowerIsBetter: false) { $0.extraYears.map(Double.init) },
-        .init(name: "maxOriginalWarrantyYears", lowerIsBetter: false) { $0.maxOriginalWarrantyYears.map(Double.init) },
         .init(name: "maxCad", lowerIsBetter: false) { $0.maxCad },
         .init(name: "deductibleCad", lowerIsBetter: true) { $0.deductibleCad },
         .init(name: "delayHours", lowerIsBetter: true) { $0.delayHours.map(Double.init) },
