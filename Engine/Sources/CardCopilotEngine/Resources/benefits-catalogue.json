@@ -1,0 +1,191 @@
+{
+  "benefitsCatalogueVersion": "0.1.0-stub",
+  "_provenance": "STUB drafted 2026-08-16 by Claude from public issuer pages, NOT verified against any certificate of insurance. Every entry carries verificationStatus=stub and renders as an unverified draft. Zubair's certificate dossier replaces this file wholesale (spec B4). Absence of a kind on a card means UNKNOWN at stub level, not 'no coverage' (spec B8).",
+  "triggers": {
+    "bigTicketThresholdCad": 150,
+    "consumableCategories": ["dining", "grocery", "foodDelivery", "gasStation", "transit", "drugStore", "entertainment", "fitness"]
+  },
+  "cards": [
+    {
+      "cardId": "amex-platinum",
+      "certificate": { "underwriter": null, "sourceUrl": "https://www.americanexpress.com/ca/en/benefits/insurance/", "certificateDate": null, "lastVerifiedAt": null, "verificationStatus": "stub" },
+      "benefits": [
+        { "benefitId": "platinum-purchase-protection", "family": "shopping", "kind": "purchaseProtection",
+          "coverage": { "windowDays": 90, "maxPerOccurrenceCad": 1000 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "platinum-extended-warranty", "family": "shopping", "kind": "extendedWarranty",
+          "coverage": { "extraYears": 1, "maxOriginalWarrantyYears": 5 },
+          "conditions": ["Full purchase charged to the card", "Original manufacturer warranty valid in Canada"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "platinum-flight-delay", "family": "travelDisruption", "kind": "flightDelay",
+          "coverage": { "delayHours": 4, "maxCad": 1000 },
+          "conditions": ["Round trip charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "platinum-baggage-delay", "family": "travelDisruption", "kind": "baggageDelay",
+          "coverage": { "delayHours": 6, "maxCad": 1000 },
+          "conditions": ["Round trip charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "platinum-baggage-loss", "family": "travelDisruption", "kind": "baggageLoss",
+          "coverage": { "maxCad": 1000 },
+          "conditions": ["Round trip charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "platinum-trip-cancellation", "family": "travelDisruption", "kind": "tripCancellation",
+          "coverage": { "maxCad": 2500 },
+          "conditions": ["Trip charged to the card before the cause of cancellation arose"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "platinum-trip-interruption", "family": "travelDisruption", "kind": "tripInterruption",
+          "coverage": { "maxCad": 2500 },
+          "conditions": ["Trip charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "platinum-rental-cdw", "family": "rentalCdw", "kind": "rentalCdw",
+          "coverage": { "maxRentalDays": 48, "maxVehicleValueCad": 85000 },
+          "conditions": ["Full rental charged to the card", "Decline the rental agency's CDW"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "platinum-travel-medical", "family": "travelMedical", "kind": "travelMedical",
+          "coverage": { "maxCad": 5000000, "maxTripLengthDays": 15, "ageLimit": 65 },
+          "conditions": ["Coverage for the first portion of each trip only"], "exclusions": [], "certificateQuote": null, "notes": null }
+      ]
+    },
+    {
+      "cardId": "amex-cobalt",
+      "certificate": { "underwriter": null, "sourceUrl": "https://www.americanexpress.com/ca/en/benefits/insurance/", "certificateDate": null, "lastVerifiedAt": null, "verificationStatus": "stub" },
+      "benefits": [
+        { "benefitId": "cobalt-purchase-protection", "family": "shopping", "kind": "purchaseProtection",
+          "coverage": { "windowDays": 90, "maxPerOccurrenceCad": 1000 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "cobalt-extended-warranty", "family": "shopping", "kind": "extendedWarranty",
+          "coverage": { "extraYears": 1, "maxOriginalWarrantyYears": 5 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "cobalt-mobile-device", "family": "shopping", "kind": "mobileDeviceInsurance",
+          "coverage": { "maxCad": 1000, "deductibleCad": 100 },
+          "conditions": ["Device purchased with the card, or monthly plan billed to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "cobalt-flight-delay", "family": "travelDisruption", "kind": "flightDelay",
+          "coverage": { "delayHours": 4, "maxCad": 500 },
+          "conditions": ["Round trip charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "cobalt-baggage-delay", "family": "travelDisruption", "kind": "baggageDelay",
+          "coverage": { "delayHours": 6, "maxCad": 500 },
+          "conditions": ["Round trip charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "cobalt-baggage-loss", "family": "travelDisruption", "kind": "baggageLoss",
+          "coverage": { "maxCad": 500 },
+          "conditions": ["Round trip charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null }
+      ]
+    },
+    {
+      "cardId": "amex-bonvoy",
+      "certificate": { "underwriter": null, "sourceUrl": "https://www.americanexpress.com/ca/en/benefits/insurance/", "certificateDate": null, "lastVerifiedAt": null, "verificationStatus": "stub" },
+      "benefits": [
+        { "benefitId": "bonvoy-purchase-protection", "family": "shopping", "kind": "purchaseProtection",
+          "coverage": { "windowDays": 90, "maxPerOccurrenceCad": 1000 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "bonvoy-extended-warranty", "family": "shopping", "kind": "extendedWarranty",
+          "coverage": { "extraYears": 1, "maxOriginalWarrantyYears": 5 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "bonvoy-flight-delay", "family": "travelDisruption", "kind": "flightDelay",
+          "coverage": { "delayHours": 4, "maxCad": 500 },
+          "conditions": ["Round trip charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "bonvoy-baggage-delay", "family": "travelDisruption", "kind": "baggageDelay",
+          "coverage": { "delayHours": 6, "maxCad": 500 },
+          "conditions": ["Round trip charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "bonvoy-rental-cdw", "family": "rentalCdw", "kind": "rentalCdw",
+          "coverage": { "maxRentalDays": 48, "maxVehicleValueCad": 85000 },
+          "conditions": ["Full rental charged to the card", "Decline the rental agency's CDW"], "exclusions": [], "certificateQuote": null, "notes": null }
+      ]
+    },
+    {
+      "cardId": "mbna-rewards-we",
+      "certificate": { "underwriter": null, "sourceUrl": "https://www.mbna.ca/", "certificateDate": null, "lastVerifiedAt": null, "verificationStatus": "stub" },
+      "benefits": [
+        { "benefitId": "mbna-purchase-protection", "family": "shopping", "kind": "purchaseProtection",
+          "coverage": { "windowDays": 90, "maxPerOccurrenceCad": 1000 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "mbna-extended-warranty", "family": "shopping", "kind": "extendedWarranty",
+          "coverage": { "extraYears": 1 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "mbna-mobile-device", "family": "shopping", "kind": "mobileDeviceInsurance",
+          "coverage": { "maxCad": 1000 },
+          "conditions": ["Device purchased with the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "mbna-baggage-delay", "family": "travelDisruption", "kind": "baggageDelay",
+          "coverage": { "delayHours": 6, "maxCad": 500 },
+          "conditions": ["Trip charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null }
+      ]
+    },
+    {
+      "cardId": "scotia-momentum-vi-plus",
+      "certificate": { "underwriter": null, "sourceUrl": "https://www.scotiabank.com/ca/en/personal/credit-cards/", "certificateDate": null, "lastVerifiedAt": null, "verificationStatus": "stub" },
+      "benefits": [
+        { "benefitId": "scotia-purchase-security", "family": "shopping", "kind": "purchaseProtection",
+          "coverage": { "windowDays": 90, "maxPerOccurrenceCad": 1000 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "scotia-extended-warranty", "family": "shopping", "kind": "extendedWarranty",
+          "coverage": { "extraYears": 1, "maxOriginalWarrantyYears": 5 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "scotia-flight-delay", "family": "travelDisruption", "kind": "flightDelay",
+          "coverage": { "delayHours": 4, "maxCad": 500 },
+          "conditions": ["Fare charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "scotia-baggage-delay", "family": "travelDisruption", "kind": "baggageDelay",
+          "coverage": { "delayHours": 4, "maxCad": 500 },
+          "conditions": ["Fare charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "scotia-trip-interruption", "family": "travelDisruption", "kind": "tripInterruption",
+          "coverage": { "maxCad": 1500 },
+          "conditions": ["Trip charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "scotia-rental-cdw", "family": "rentalCdw", "kind": "rentalCdw",
+          "coverage": { "maxRentalDays": 48, "maxVehicleValueCad": 65000 },
+          "conditions": ["Full rental charged to the card", "Decline the rental agency's CDW"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "scotia-travel-medical", "family": "travelMedical", "kind": "travelMedical",
+          "coverage": { "maxCad": 1000000, "maxTripLengthDays": 25, "ageLimit": 65 },
+          "conditions": ["Coverage for the first portion of each trip only"], "exclusions": [], "certificateQuote": null, "notes": null }
+      ]
+    },
+    {
+      "cardId": "tangerine-moneyback-world",
+      "certificate": { "underwriter": null, "sourceUrl": "https://www.tangerine.ca/en/products/spending/creditcard/", "certificateDate": null, "lastVerifiedAt": null, "verificationStatus": "stub" },
+      "benefits": [
+        { "benefitId": "tangerine-purchase-assurance", "family": "shopping", "kind": "purchaseProtection",
+          "coverage": { "windowDays": 90, "maxPerOccurrenceCad": 1000 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "tangerine-extended-warranty", "family": "shopping", "kind": "extendedWarranty",
+          "coverage": { "extraYears": 1 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "tangerine-mobile-device", "family": "shopping", "kind": "mobileDeviceInsurance",
+          "coverage": { "maxCad": 1000 },
+          "conditions": ["Device purchased with the card"], "exclusions": [], "certificateQuote": null, "notes": null }
+      ]
+    },
+    {
+      "cardId": "rogers-red-we",
+      "certificate": { "underwriter": null, "sourceUrl": "https://www.rogersbank.com/", "certificateDate": null, "lastVerifiedAt": null, "verificationStatus": "stub" },
+      "benefits": [
+        { "benefitId": "rogers-purchase-protection", "family": "shopping", "kind": "purchaseProtection",
+          "coverage": { "windowDays": 90, "maxPerOccurrenceCad": 1000 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "rogers-extended-warranty", "family": "shopping", "kind": "extendedWarranty",
+          "coverage": { "extraYears": 1 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null }
+      ]
+    },
+    {
+      "cardId": "triangle-we",
+      "certificate": { "underwriter": null, "sourceUrl": "https://www.canadiantire.ca/en/triangle.html", "certificateDate": null, "lastVerifiedAt": null, "verificationStatus": "stub" },
+      "benefits": [
+        { "benefitId": "triangle-purchase-security", "family": "shopping", "kind": "purchaseProtection",
+          "coverage": { "windowDays": 90, "maxPerOccurrenceCad": 1000 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null },
+        { "benefitId": "triangle-extended-warranty", "family": "shopping", "kind": "extendedWarranty",
+          "coverage": { "extraYears": 1 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null, "notes": null }
+      ]
+    },
+    {
+      "cardId": "wealthsimple-vip",
+      "certificate": { "underwriter": null, "sourceUrl": null, "certificateDate": null, "lastVerifiedAt": null, "verificationStatus": "stub" },
+      "benefits": [
+        { "benefitId": "wsvip-purchase-protection", "family": "shopping", "kind": "purchaseProtection",
+          "coverage": { "windowDays": 90, "maxPerOccurrenceCad": 1000 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null,
+          "notes": "Public page unclear — certificate needed before even issuerPage status" },
+        { "benefitId": "wsvip-extended-warranty", "family": "shopping", "kind": "extendedWarranty",
+          "coverage": { "extraYears": 1 },
+          "conditions": ["Full purchase charged to the card"], "exclusions": [], "certificateQuote": null,
+          "notes": "Public page unclear — certificate needed before even issuerPage status" }
+      ]
+    },
+    {
+      "cardId": "cryptocom-royal-indigo",
+      "certificate": { "underwriter": null, "sourceUrl": null, "certificateDate": null, "lastVerifiedAt": null, "verificationStatus": "stub" },
+      "benefits": []
+    }
+  ]
+}

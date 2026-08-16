@@ -11,6 +11,10 @@ public enum SeedLoader {
         try load("owner-state")
     }
 
+    public static func loadBenefitsCatalogue() throws -> BenefitsCatalogue {
+        try load("benefits-catalogue")
+    }
+
     private static func load<T: Decodable>(_ name: String) throws -> T {
         guard let url = Bundle.module.url(forResource: name, withExtension: "json") else {
             throw SeedLoaderError.resourceMissing(name)
