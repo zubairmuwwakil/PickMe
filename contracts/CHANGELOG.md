@@ -22,6 +22,40 @@ replaced by `x-compared-vs-displayed`. No data change — engine, app, and schem
   `BenefitsComparisonTests.testOriginalWarrantyCeilingDoesNotDecideDominance` (ties instead of
   badging) and `testAnnualMaximumStillDecidesDominance` (the magnitude keeps its vote).
 
+## 2026-08-16 — Fixture expansion (fixturesVersion 1.0 → 1.1)
+
+- `engine-fixtures.json` grows 12 → 27 cases, completing spec §5: every rule family is now covered at
+  least twice. New coverage: mccInclude at a nil MCC (the permissive-fallback path) and at a known
+  non-matching MCC · mccExclude · merchantExclude by brand, isolated from the MCC gate · the
+  effective-dating boundary from both sides of the flip day · the announced 2026-09-01 Crypto FX
+  record ignored before its `effectiveFrom` · the FX free-allowance path · a second cap-proration
+  straddle at a different split · a cap fully exhausted where the exhausted card still wins at its
+  `postCapEarn` rate · switch-threshold `both` from the side the suite was missing (CAD floor met,
+  pp floor missed) and the same purchase clearing both floors by 0.02pp · the valuation-upside
+  disclosure gate from just inside and just outside the published benchmark · an `ownerCondition`
+  left genuinely unresolved. MINOR, not MAJOR: shape is additive and every new expectation field is
+  optional, so the 12 original cases are byte-unchanged and a 1.0 reader still loads the file.
+- **Harness gained six fields, because three of §5's families were inexpressible in 1.0.** Per-case
+  `asOf` (date boundaries cannot be exercised at one fixed date); `expected.warningsAbsent` (Crypto's
+  two FX records are both rate 0, so the announced record applying early is dollar-identical and
+  observable *only* as a warning — without a negative assertion that case would pass while broken);
+  `expected.valuationSensitive` / `valuationDirection` / `alternateWinner` / `breakevenCentsPerPoint`
+  (the disclosure gate had no assertable surface at all); and `ownerStateOverrides` `unsetFields`,
+  since merging can only SET a field while nil is a distinct, load-bearing input. All optional and
+  all mutation-tested — every one was verified to fail the suite when perturbed, because an optional
+  field with a typo'd key is a silent no-op.
+- Two behaviours the new cases pin that were previously undocumented, both current behaviour rather
+  than endorsement: (1) **unknown data and unknown owner state fail in opposite directions** — a nil
+  `purchase.mcc` skips `mccInclude` and the accelerated rule fires anyway (permissive), while a nil
+  `ownerCondition` drops the rule (restrictive); (2) `appliedRuleId` names the rule that MATCHED, never
+  the rate actually paid, so a fully-exhausted cap yields winner rule `rogers-base-2-with-service` at
+  a 1.5% outcome — a UI rendering "2%" from `appliedRuleId` would overstate that checkout.
+- Also pinned: `runnerUp` can exceed the winner's value when the switch threshold holds the default
+  (it means "the card you passed up", not "second best"), and the FX free-allowance is
+  declared-not-computed — a C$2,000 purchase against a C$1,400 monthly allowance is scored at $60.00
+  when the defensible figure net of `postAllowanceRate` is $48.00.
+- `schema/engine-fixtures.schema.json` updated to document all six fields.
+
 ## 2026-08-16 — Benefits contract parity
 
 - Added `schema/benefits-catalogue.schema.json`. The extraction below moved `benefits-catalogue.json`

@@ -11,10 +11,31 @@ private struct FixtureFile: Decodable {
 private struct FixtureCase: Decodable {
     let caseId: String
     let purchase: PurchaseContext
+    /// Evaluation date. Defaults to the suite-wide date so the original 12 cases are unaffected;
+    /// set per case to exercise effective-dating boundaries (earn rules and FX records).
+    let asOf: String?
     let ownerStateOverrides: Overrides?
     let expected: Expected
 
-    struct Overrides: Decodable { let cardStates: [String: CardState]? }
+    struct Overrides: Decodable { let cardStates: [String: CardStateOverride]? }
+
+    /// A `CardState` plus the list of fields to force back to `nil`. Needed because merging a
+    /// partial override onto the base owner state can only ever *set* a field — but "unresolved"
+    /// (nil) is a distinct, load-bearing input to `RuleMatcher.conditionsResolveTrue`, and
+    /// owner-state.json resolves most conditions to `false` rather than leaving them nil.
+    struct CardStateOverride: Decodable {
+        let state: CardState
+        let unsetFields: [String]?
+
+        private enum CodingKeys: String, CodingKey { case unsetFields }
+
+        init(from decoder: Decoder) throws {
+            // CardState's synthesized decoder ignores the extra `unsetFields` key.
+            state = try CardState(from: decoder)
+            unsetFields = try decoder.container(keyedBy: CodingKeys.self)
+                .decodeIfPresent([String].self, forKey: .unsetFields)
+        }
+    }
 
     struct Expected: Decodable {
         let winner: String
@@ -28,6 +49,14 @@ private struct FixtureCase: Decodable {
         let suppressedBetterCard: String?
         let suppressedValueCad: Double?
         let warnings: [String]?
+        /// Warnings that must NOT be on the winner. The only way to pin behaviour whose entire
+        /// signal is a warning — e.g. an announced FX record being ignored before its
+        /// `effectiveFrom`, which is dollar-identical to the record it replaces.
+        let warningsAbsent: [String]?
+        let valuationSensitive: Bool?
+        let valuationDirection: String?
+        let alternateWinner: String?
+        let breakevenCentsPerPoint: Double?
     }
 }
 
@@ -35,12 +64,15 @@ private struct FixtureCase: Decodable {
 /// A failure means either an engine bug or a wrong expectation — never tune one to the other
 /// without re-deriving the arithmetic by hand.
 final class FixtureHarnessTests: XCTestCase {
+    private static let defaultAsOf = "2026-08-20"
+
     func testAllFixtures() throws {
         let url = try XCTUnwrap(Bundle.module.url(forResource: "engine-fixtures",
                                                   withExtension: "json",
                                                   subdirectory: "Fixtures"))
         let file = try JSONDecoder().decode(FixtureFile.self, from: Data(contentsOf: url))
-        XCTAssertEqual(file.cases.count, 12)
+        XCTAssertEqual(file.cases.count, 27)
+        XCTAssertEqual(Set(file.cases.map(\.caseId)).count, file.cases.count, "duplicate caseId")
 
         let catalogue = try SeedLoader.loadCatalogue()
         var baseState = try SeedLoader.loadOwnerState()
@@ -50,24 +82,35 @@ final class FixtureHarnessTests: XCTestCase {
 
         for fixture in file.cases {
             var state = baseState
+            let ctx = "case \(fixture.caseId)"
             if let overrides = fixture.ownerStateOverrides?.cardStates {
                 for (cardId, override) in overrides {
                     var merged = state.cardStates[cardId] ?? CardState()
-                    if let cap = override.capProgress {
+                    if let cap = override.state.capProgress {
                         merged.capProgress = (merged.capProgress ?? [:]).merging(cap) { _, new in new }
                     }
-                    if let v = override.cryptoLevelUpProActive { merged.cryptoLevelUpProActive = v }
-                    if let v = override.croHandling { merged.croHandling = v }
-                    if let v = override.rogersEligibleServiceLinked { merged.rogersEligibleServiceLinked = v }
-                    if let v = override.selectedCategories { merged.selectedCategories = v }
+                    if let v = override.state.cryptoLevelUpProActive { merged.cryptoLevelUpProActive = v }
+                    if let v = override.state.croHandling { merged.croHandling = v }
+                    if let v = override.state.rogersEligibleServiceLinked { merged.rogersEligibleServiceLinked = v }
+                    if let v = override.state.selectedCategories { merged.selectedCategories = v }
+                    for field in override.unsetFields ?? [] {
+                        switch field {
+                        case "capProgress": merged.capProgress = nil
+                        case "cryptoLevelUpProActive": merged.cryptoLevelUpProActive = nil
+                        case "croHandling": merged.croHandling = nil
+                        case "rogersEligibleServiceLinked": merged.rogersEligibleServiceLinked = nil
+                        case "selectedCategories": merged.selectedCategories = nil
+                        case "treatAsAllSelected": merged.treatAsAllSelected = nil
+                        default: XCTFail("\(ctx): unknown unsetFields entry '\(field)'")
+                        }
+                    }
                     state.cardStates[cardId] = merged
                 }
             }
 
             let engine = RecommendationEngine(catalogue: catalogue, ownerState: state)
-            let r = engine.recommend(fixture.purchase, asOf: "2026-08-20")
+            let r = engine.recommend(fixture.purchase, asOf: fixture.asOf ?? Self.defaultAsOf)
             let e = fixture.expected
-            let ctx = "case \(fixture.caseId)"
 
             XCTAssertEqual(r.winner.cardId, e.winner, ctx)
             XCTAssertEqual(r.winner.netValueCad, e.winnerValueCad, accuracy: 0.005, ctx)
@@ -85,10 +128,20 @@ final class FixtureHarnessTests: XCTestCase {
             if let v = e.suppressedValueCad {
                 XCTAssertEqual(r.suppressedBetterCard?.netValueCad ?? .nan, v, accuracy: 0.005, ctx)
             }
-            if let warnings = e.warnings {
-                for w in warnings {
-                    XCTAssertTrue(r.winner.warnings.map(\.rawValue).contains(w), "\(ctx): missing \(w)")
-                }
+            let actualWarnings = r.winner.warnings.map(\.rawValue)
+            for w in e.warnings ?? [] {
+                XCTAssertTrue(actualWarnings.contains(w), "\(ctx): missing \(w)")
+            }
+            for w in e.warningsAbsent ?? [] {
+                XCTAssertFalse(actualWarnings.contains(w), "\(ctx): unexpected \(w)")
+            }
+            if let s = e.valuationSensitive { XCTAssertEqual(r.valuationSensitive, s, ctx) }
+            if let d = e.valuationDirection {
+                XCTAssertEqual(r.valuationDirection.map(String.init(describing:)), d, ctx)
+            }
+            if let a = e.alternateWinner { XCTAssertEqual(r.alternateWinnerCardId, a, ctx) }
+            if let b = e.breakevenCentsPerPoint {
+                XCTAssertEqual(r.breakevenCentsPerPoint ?? .nan, b, accuracy: 0.005, ctx)
             }
         }
     }
