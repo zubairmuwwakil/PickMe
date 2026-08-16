@@ -1,10 +1,8 @@
 import SwiftUI
 import CardCopilotEngine
 
-/// The "two runs" screen (spec §6.2): declare a planned purchase, see which card earns best
-/// and — separately — what each card's certificate says about protecting it. The two rankings
-/// are never merged; when certificates genuinely trade off, the screen says so instead of
-/// hiding the judgement inside a weight nobody chose (spec B7).
+/// The "two runs" screen: declare a planned purchase, see which card earns best
+/// and — separately — what each card's certificate says about protecting it.
 struct ProtectionLensView: View {
     let deps: CheckoutFlowView.Dependencies
     let initialContext: BenefitContext
@@ -54,41 +52,63 @@ struct ProtectionLensView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .listStyle(.insetGrouped)
         .navigationTitle("Big purchase or trip")
-        .toolbar { Button("Done") { onDone() } }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done", action: onDone)
+                    .font(.headline)
+            }
+        }
         .sheet(item: $selectedDisclosure) { disclosure in
             BenefitDetailSheet(disclosure: disclosure, cardName: cardName(disclosure.cardId))
         }
     }
 
     private var contextSection: some View {
-        Section("What are you buying?") {
-            Picker("Kind", selection: $contextKind) {
-                Text("Flight").tag(BenefitContextKind.flight)
-                Text("Trip").tag(BenefitContextKind.trip)
-                Text("Car rental").tag(BenefitContextKind.carRental)
-                Text("Electronics").tag(BenefitContextKind.electronics)
-                Text("Phone").tag(BenefitContextKind.mobileDevice)
-                Text("Appliance/furniture").tag(BenefitContextKind.applianceFurniture)
+        Section("Purchase Context") {
+            Picker("Purchase Type", selection: $contextKind) {
+                Label("Flight", systemImage: "airplane").tag(BenefitContextKind.flight)
+                Label("Trip / Vacation", systemImage: "suitcase.rolling.fill").tag(BenefitContextKind.trip)
+                Label("Car Rental", systemImage: "car.fill").tag(BenefitContextKind.carRental)
+                Label("Electronics / Tech", systemImage: "laptopcomputer").tag(BenefitContextKind.electronics)
+                Label("Mobile Device", systemImage: "iphone").tag(BenefitContextKind.mobileDevice)
+                Label("Appliance & Furniture", systemImage: "sofa.fill").tag(BenefitContextKind.applianceFurniture)
             }
+
             Toggle("Outside Canada", isOn: $abroad)
-            TextField("Amount (optional)", text: $amountText)
-                .keyboardType(.decimalPad)
+
+            HStack {
+                Text("Planned Amount")
+                Spacer()
+                TextField("Optional ($)", text: $amountText)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+            }
         }
     }
 
-    /// The earn run — computed by the engine directly so nothing is logged (spec B9).
+    /// The earn run — computed by the engine directly so nothing is logged.
     @ViewBuilder
     private var earnSection: some View {
         if let amount = amountCad {
             let today = Date().formatted(.iso8601.year().month().day())
             let recommendation = deps.engine.recommend(
                 PurchaseContext(amountCad: amount, category: "other"), asOf: today)
-            Section("Best earn") {
-                LabeledContent(cardName(recommendation.winner.cardId),
-                               value: String(format: "≈ $%.2f back", recommendation.winner.netValueCad))
-                Text("Earn and protection are separate calls — the best earner isn't always the best protector.")
-                    .font(.caption)
+            Section("Best Reward Return") {
+                HStack(spacing: 12) {
+                    CardMiniBadge(cardId: recommendation.winner.cardId, size: 22)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(cardName(recommendation.winner.cardId))
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        Text("Earns ≈ $\(String(format: "%.2f", recommendation.winner.netValueCad)) back on $\(Int(amount))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Text("Earn rewards and certificate protections are evaluated separately — the highest earning card may not offer the best insurance coverage.")
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
             }
         }
@@ -97,21 +117,61 @@ struct ProtectionLensView: View {
     @ViewBuilder
     private var verdictSection: some View {
         if comparison.columns.isEmpty {
-            Section("Protection") {
-                Text("No relevant coverage found in your wallet for this purchase kind.")
-                    .foregroundStyle(.secondary)
+            Section("Protection Verdict") {
+                HStack(spacing: 10) {
+                    Image(systemName: "shield.slash")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                    Text("No relevant insurance coverage found in your wallet for this category.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
             }
         } else if let dominant = comparison.dominantCardId {
-            Section("Protection") {
-                Label("\(cardName(dominant)) — equal or better on every line below",
-                      systemImage: "shield.checkerboard")
-                    .font(.headline)
+            Section("Protection Verdict") {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.green.opacity(0.14))
+                            .frame(width: 38, height: 38)
+                        Image(systemName: "shield.checkerboard")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(.green)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Dominant Protection Card")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundStyle(.green)
+                        Text("\(cardName(dominant)) equals or beats all other cards on every line below.")
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.primary)
+                    }
+                }
+                .padding(.vertical, 4)
             }
         } else {
-            Section("Protection") {
-                Label("Trade-off — your call. No card wins every line below.",
-                      systemImage: "scalemass")
-                    .font(.headline)
+            Section("Protection Verdict") {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.orange.opacity(0.14))
+                            .frame(width: 38, height: 38)
+                        Image(systemName: "scalemass.fill")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(.orange)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Certificate Trade-Off")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundStyle(.orange)
+                        Text("No single card dominates every line — compare coverage limits below to decide.")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.primary)
+                    }
+                }
+                .padding(.vertical, 4)
             }
         }
     }
@@ -120,37 +180,61 @@ struct ProtectionLensView: View {
         Section {
             ForEach(comparison.relevantKinds, id: \.rawValue) { kind in
                 if let disclosure = column.byKind[kind.rawValue] {
-                    Button { selectedDisclosure = disclosure } label: {
-                        LabeledContent(BenefitsFormatting.kindDisplayName(kind.rawValue),
-                                       value: BenefitsFormatting.factsLine(for: disclosure.coverage,
-                                                                           kind: kind.rawValue))
-                            .font(.footnote)
+                    Button {
+                        selectedDisclosure = disclosure
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(BenefitsFormatting.kindDisplayName(kind.rawValue))
+                                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(.primary)
+                                Text(BenefitsFormatting.factsLine(for: disclosure.coverage, kind: kind.rawValue))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.tertiary)
+                        }
                     }
                     .buttonStyle(.plain)
                 }
             }
         } header: {
-            HStack {
+            HStack(spacing: 8) {
+                CardMiniBadge(cardId: column.cardId, size: 16)
                 Text(cardName(column.cardId))
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
                 Spacer()
                 Text(BenefitsFormatting.verificationLabel(column.verification))
-                    .font(.caption2)
-                    .foregroundStyle(column.verification == .certificateVerified ? .green : .orange)
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(
+                        (column.verification == .certificateVerified ? Color.green : Color.orange).opacity(0.15),
+                        in: Capsule()
+                    )
+                    .foregroundStyle(column.verification == .certificateVerified ? Color.green : Color.orange)
             }
         }
     }
 
-    /// Spec B8: absence only means "no coverage" once the certificate proved the negative.
     @ViewBuilder
     private var absentSection: some View {
         if !comparison.absent.isEmpty {
-            Section("Not covering this") {
+            Section("No Applicable Coverage") {
                 ForEach(comparison.absent, id: \.cardId) { absent in
-                    LabeledContent(cardName(absent.cardId),
-                                   value: absent.verification == .certificateVerified
-                                       ? "No coverage"
-                                       : "Unknown — unverified")
-                        .font(.footnote)
+                    HStack {
+                        CardMiniBadge(cardId: absent.cardId, size: 16)
+                        Text(cardName(absent.cardId))
+                            .font(.system(size: 14, weight: .medium))
+                        Spacer()
+                        Text(absent.verification == .certificateVerified ? "Confirmed No Coverage" : "Unverified")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
         }

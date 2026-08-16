@@ -17,189 +17,409 @@ struct HomeView: View {
     let onBenefits: () -> Void
 
     @State private var searchText = ""
+    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                header
-                primaryActions
-                experimentRows
-                instantRepeats
+            VStack(spacing: 20) {
+                valueRecoveredCard
+                primaryCheckoutSection
+                instantRepeatsSection
+                toolsAndExperimentSection
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
         .background(Color(.systemGroupedBackground))
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Value recovered")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
-            Text(valueRecoveredText)
-                .font(.largeTitle.bold())
-                .contentTransition(.numericText())
+    // MARK: - Value Recovered & Experiment Banner
+
+    private var valueRecoveredCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "sparkles")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.tint)
+                        Text("VALUE RECOVERED")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .tracking(1.0)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Text(String(format: "$%.2f", valueRecoveredCad))
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                        .contentTransition(.numericText())
+                }
+
+                Spacer()
+
+                // Experiment status badge
+                Button(action: onDashboard) {
+                    HStack(spacing: 5) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.green)
+                        Text("\(confirmedCount)/30 confirmed")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.primary)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(Color(.tertiarySystemFill), in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+
+            // Progress bar to 30 checkouts
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Experiment Progress")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text("\(Int((Double(min(confirmedCount, 30)) / 30.0) * 100))%")
+                        .font(.caption.weight(.bold).monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+
+                ProgressView(value: Double(min(confirmedCount, 30)), total: 30.0)
+                    .tint(.blue)
+            }
         }
+        .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
+        )
     }
 
-    private var primaryActions: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    // MARK: - Primary Checkout Actions
+
+    private var primaryCheckoutSection: some View {
+        VStack(spacing: 12) {
+            // Hero Find Nearby Button
             Button(action: onFindNearby) {
-                Label("Somewhere new", systemImage: "location")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+                HStack(spacing: 14) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 42, height: 42)
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Find Nearby Merchant")
+                            .font(.system(size: 17, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                        Text(locationDenied ? "Location off — tap to retry" : "One-tap GPS check at checkout")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.85))
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .background(
+                    LinearGradient(
+                        colors: locationDenied
+                            ? [Color.gray, Color.gray.opacity(0.8)]
+                            : [Color.blue, Color(red: 0.1, green: 0.45, blue: 0.95)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .shadow(color: locationDenied ? Color.clear : Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
             }
-            .buttonStyle(.borderedProminent)
             .disabled(locationDenied)
 
-            if locationDenied {
-                Text("Location is off. Search still works.")
-                    .font(.footnote)
+            // Modern Integrated Search Bar
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(.secondary)
-            }
 
-            HStack(spacing: 10) {
-                TextField("Search a merchant", text: $searchText)
-                    .textFieldStyle(.roundedBorder)
+                TextField("Search merchant (e.g. Costco, Loblaws)", text: $searchText)
+                    .font(.system(size: 15))
+                    .focused($isSearchFocused)
+                    .textInputAutocapitalization(.words)
+                    .disableAutocorrection(true)
                     .onSubmit { submitSearch() }
-                Button("Search") { submitSearch() }
-                    .disabled(searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
 
-            Button(action: onProtectionLens) {
-                Label("Big purchase or trip", systemImage: "shield.lefthalf.filled")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button("Search") {
+                        submitSearch()
+                    }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.blue)
+                }
             }
-            .buttonStyle(.bordered)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(isSearchFocused ? Color.blue.opacity(0.6) : Color.clear, lineWidth: 1.5)
+                    )
+            )
         }
     }
 
-    /// The weekly ritual and its scoreboard. Kept on the home screen because a reconcile queue
-    /// you have to go looking for is a reconcile queue that never gets done — and the experiment
-    /// is worth exactly as much as the statements that get matched to it.
-    private var experimentRows: some View {
-        VStack(spacing: 8) {
-            Button(action: onReconcile) {
-                homeRow(icon: "tray.full.fill",
-                        tint: reconcileCount > 0 ? .orange : .secondary,
-                        title: reconcileCount == 0 ? "Nothing to reconcile"
-                                                   : "\(reconcileCount) to reconcile",
-                        subtitle: reconcileCount == 0
-                            ? "Every prediction is matched to a statement."
-                            : "Match them against your statement.")
-            }
-            .buttonStyle(.plain)
+    // MARK: - Instant Repeats Section
 
-            Button(action: onDashboard) {
-                homeRow(icon: "chart.bar.fill",
-                        tint: .blue,
-                        title: "Experiment dashboard",
-                        subtitle: "\(confirmedCount) of 30 checkouts confirmed")
-            }
-            .buttonStyle(.plain)
-
-            Button(action: onBenefits) {
-                homeRow(icon: "shield.lefthalf.filled",
-                        tint: .secondary,
-                        title: "Card benefits",
-                        subtitle: "What your cards cover — per certificate")
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private func homeRow(icon: String, tint: Color, title: String, subtitle: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundStyle(tint)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                Text(subtitle)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.tertiary)
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground),
-                    in: RoundedRectangle(cornerRadius: 8))
-    }
-
-    private var instantRepeats: some View {
+    private var instantRepeatsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Instant repeats")
-                    .font(.title3.weight(.semibold))
+                Text("Instant Repeats")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+
                 Spacer()
+
                 if !merchants.isEmpty {
                     Label(isSortedByRecentLocation ? "Nearby" : "Recent",
-                          systemImage: isSortedByRecentLocation ? "location.fill" : "clock")
-                        .font(.caption.weight(.semibold))
+                          systemImage: isSortedByRecentLocation ? "location.fill" : "clock.fill")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color(.tertiarySystemFill), in: Capsule())
                 }
             }
 
             if merchants.isEmpty {
-                ContentUnavailableView("No repeats yet",
-                                       systemImage: "clock.arrow.circlepath",
-                                       description: Text("Use Somewhere new or Search once, then this list becomes one tap."))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 20)
+                VStack(spacing: 8) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 32))
+                        .foregroundStyle(.secondary)
+                    Text("No repeats yet")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Text("Find or search a merchant once, then this list gives you instant 1-tap checkout advice.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(24)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color(.secondarySystemGroupedBackground))
+                )
             } else {
                 LazyVStack(spacing: 8) {
                     ForEach(merchants) { merchant in
-                        Button {
-                            onInstantRepeat(merchant)
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: "arrow.counterclockwise.circle.fill")
-                                    .font(.title3)
-                                    .foregroundStyle(.blue)
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(merchant.name)
-                                        .font(.headline)
-                                        .foregroundStyle(.primary)
-                                        .lineLimit(1)
-                                    Text("Last seen \(merchant.lastSeenAt, style: .relative)")
-                                        .font(.footnote)
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.footnote.weight(.semibold))
-                                    .foregroundStyle(.tertiary)
-                            }
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color(.secondarySystemGroupedBackground),
-                                        in: RoundedRectangle(cornerRadius: 8))
-                        }
-                        .buttonStyle(.plain)
+                        merchantRow(merchant)
                     }
                 }
             }
         }
     }
 
+    private func merchantRow(_ merchant: StoredMerchant) -> some View {
+        let meta = CategoryVisuals.meta(for: merchant.confirmedCategory ?? merchant.poiCategoryRaw ?? "general")
+        let formattedCategory = CategoryVisuals.humanizePoiCategory(merchant.poiCategoryRaw) ?? meta.displayName
+        let relativeTime = CategoryVisuals.relativeTime(from: merchant.lastSeenAt)
+
+        return Button {
+            onInstantRepeat(merchant)
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(meta.color.opacity(0.15))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: meta.icon)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(meta.color)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(merchant.name)
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+
+                    HStack(spacing: 6) {
+                        Text(formattedCategory)
+                        Text("•")
+                        Text(relativeTime)
+                    }
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                HStack(spacing: 4) {
+                    Text("Pick")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.blue)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.blue.opacity(0.7))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.blue.opacity(0.1), in: Capsule())
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Tools & Experiment Hub
+
+    private var toolsAndExperimentSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Wallet & Tools")
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
+
+            VStack(spacing: 10) {
+                // Reconcile Queue Row
+                Button(action: onReconcile) {
+                    toolRow(
+                        icon: "tray.full.fill",
+                        iconColor: reconcileCount > 0 ? .orange : .green,
+                        title: reconcileCount == 0 ? "Reconcile Queue" : "\(reconcileCount) Waiting to Reconcile",
+                        subtitle: reconcileCount == 0 ? "All predictions matched to statements" : "Match posted rewards against predictions",
+                        badge: reconcileCount > 0 ? "\(reconcileCount)" : nil,
+                        badgeColor: .orange
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Experiment Dashboard
+                Button(action: onDashboard) {
+                    toolRow(
+                        icon: "chart.bar.fill",
+                        iconColor: .blue,
+                        title: "Experiment Scoreboard",
+                        subtitle: "Category accuracy & arithmetic correctness",
+                        badge: nil,
+                        badgeColor: .blue
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Protection Lens
+                Button(action: onProtectionLens) {
+                    toolRow(
+                        icon: "shield.lefthalf.filled",
+                        iconColor: .indigo,
+                        title: "Big Purchase or Trip Lens",
+                        subtitle: "Compare insurance, CDW & extended warranty",
+                        badge: "Advisory",
+                        badgeColor: .indigo
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Card Benefits
+                Button(action: onBenefits) {
+                    toolRow(
+                        icon: "creditcard.and.123",
+                        iconColor: .purple,
+                        title: "Card Benefits Library",
+                        subtitle: "Verified certificate coverage per card",
+                        badge: nil,
+                        badgeColor: .purple
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func toolRow(
+        icon: String,
+        iconColor: Color,
+        title: String,
+        subtitle: String,
+        badge: String?,
+        badgeColor: Color
+    ) -> some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(iconColor.opacity(0.14))
+                    .frame(width: 38, height: 38)
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(iconColor)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text(title)
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.primary)
+
+                    if let badge {
+                        Text(badge)
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2)
+                            .background(badgeColor, in: Capsule())
+                    }
+                }
+
+                Text(subtitle)
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+    }
+
     private func submitSearch() {
         let text = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
+        isSearchFocused = false
         onSearch(text)
-    }
-
-    private var valueRecoveredText: String {
-        String(format: "$%.2f so far", valueRecoveredCad)
     }
 }

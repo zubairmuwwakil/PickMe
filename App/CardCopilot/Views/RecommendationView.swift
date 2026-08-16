@@ -2,9 +2,8 @@ import SwiftUI
 import CardCopilotEngine
 import CardCopilotStore
 
-/// The answer screen. Two shapes: a single verdict with the full explanation, or — when the
-/// category is genuinely ambiguous AND the branches disagree — the fork, shown as honest
-/// uncertainty rather than fake confidence.
+/// The answer screen. Displays the winning card with a physical card visual,
+/// structured reward breakdown, and honest split-branch scenarios for ambiguous merchants.
 struct RecommendationView: View {
     let result: CheckoutResult
     let deps: CheckoutFlowView.Dependencies?
@@ -13,98 +12,258 @@ struct RecommendationView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 20) {
                 switch result.outcome {
                 case .single(let recommendation):
-                    singleView(recommendation)
+                    singleOutcomeView(recommendation)
                 case .fork(let branches):
-                    forkView(branches)
+                    forkOutcomeView(branches)
                 }
 
                 if result.amountWasEstimated {
-                    Label("Based on a typical ~$\(Int(result.effectiveAmountCad)) purchase — amounts you enter feed your value-recovered total.",
-                          systemImage: "questionmark.circle")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                    HStack(spacing: 8) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(.blue)
+                        Text("Based on a typical ~$\(Int(result.effectiveAmountCad)) purchase. Exact amounts you enter feed your value-recovered scoreboard.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.blue.opacity(0.08))
+                    )
                 }
 
-                Button("Done") { onDone() }
-                    .buttonStyle(.borderedProminent)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 8)
+                Button(action: onDone) {
+                    Text("Done")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.blue)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                }
+                .padding(.top, 4)
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
         }
+        .background(Color(.systemGroupedBackground))
         .navigationBarBackButtonHidden()
     }
 
+    // MARK: - Single Outcome View
+
     @ViewBuilder
-    private func singleView(_ recommendation: Recommendation) -> some View {
+    private func singleOutcomeView(_ recommendation: Recommendation) -> some View {
         let explanation = explanation(for: recommendation, category: result.prediction.category)
-        VStack(alignment: .leading, spacing: 12) {
-            Text(cardName(recommendation.winner.cardId))
-                .font(.largeTitle.bold())
-            Text(explanation?.headline ?? "")
-                .font(.title3)
+        let winnerCard = recommendation.winner
+        let officialName = cardName(winnerCard.cardId)
+        let returnText = String(format: "$%.2f back", winnerCard.netValueCad)
 
-            if let why = explanation?.why {
-                Text(why).font(.subheadline).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 16) {
+            // Hero Card Visual
+            CardArtView(
+                cardId: winnerCard.cardId,
+                officialName: officialName,
+                rewardHeadline: explanation?.headline,
+                effectiveReturnText: returnText,
+                isHero: true
+            )
+
+            // Value summary banner
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("ESTIMATED RETURN")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .tracking(1.0)
+                        .foregroundStyle(.secondary)
+                    Text(String(format: "$%.2f", winnerCard.netValueCad))
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                }
+
+                Spacer()
+
+                if winnerCard.rewardUnits > 0 {
+                    let unitKind = deps?.catalogue.cards.first { $0.cardId == winnerCard.cardId }?.program.unit
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("REWARDS EARNED")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .tracking(1.0)
+                            .foregroundStyle(.secondary)
+                        Text(formatRewardUnits(units: winnerCard.rewardUnits, kind: unitKind))
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundStyle(.blue)
+                    }
+                }
             }
-            if let runnerUp = explanation?.runnerUpLine {
-                Text(runnerUp).font(.subheadline).foregroundStyle(.secondary)
-            }
-            if let valuation = explanation?.valuationLine {
-                Label(valuation, systemImage: "info.circle")
-                    .font(.footnote)
-                    .foregroundStyle(.blue)
-            }
-            ForEach(explanation?.warningLines ?? [], id: \.self) { warning in
-                Label(warning, systemImage: "exclamationmark.triangle")
-                    .font(.footnote)
-                    .foregroundStyle(.orange)
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+
+            // Explanations & Insights
+            VStack(spacing: 10) {
+                if let why = explanation?.why {
+                    insightRow(
+                        icon: "checkmark.circle.fill",
+                        iconColor: .green,
+                        title: "Why this card won",
+                        detail: why
+                    )
+                }
+
+                if let runnerUp = explanation?.runnerUpLine {
+                    insightRow(
+                        icon: "arrow.up.arrow.down",
+                        iconColor: .blue,
+                        title: "Runner-up Comparison",
+                        detail: runnerUp
+                    )
+                }
+
+                if let valuation = explanation?.valuationLine {
+                    insightRow(
+                        icon: "slider.horizontal.3",
+                        iconColor: .purple,
+                        title: "Point Valuation",
+                        detail: valuation
+                    )
+                }
+
+                ForEach(explanation?.warningLines ?? [], id: \.self) { warning in
+                    insightRow(
+                        icon: "exclamationmark.triangle.fill",
+                        iconColor: .orange,
+                        title: "Important Note",
+                        detail: warning
+                    )
+                }
             }
 
+            // Benefits and protections section
             if let deps {
-                BenefitsDisclosureSection(result: result,
-                                          deps: deps,
-                                          winnerCardId: recommendation.winner.cardId,
-                                          onCompare: { onCompare?($0) })
+                BenefitsDisclosureSection(
+                    result: result,
+                    deps: deps,
+                    winnerCardId: winnerCard.cardId,
+                    onCompare: { onCompare?($0) }
+                )
             }
         }
     }
 
+    // MARK: - Fork Outcome View (Ambiguous Merchant)
+
     @ViewBuilder
-    private func forkView(_ branches: [CheckoutBranch]) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("This one could code either way", systemImage: "arrow.triangle.branch")
-                .font(.title3.weight(.semibold))
-            Text("After it posts, tell the app which it was — next time the answer is instant.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+    private func forkOutcomeView(_ branches: [CheckoutBranch]) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 8) {
+                    Image(systemName: "arrow.triangle.branch")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(.orange)
+                    Text("Ambiguous Merchant Coding")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                }
+
+                Text("This merchant location may code differently depending on the register terminal. Reconcile this purchase once posted to lock in the exact terminal rule.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.vertical, 4)
 
             ForEach(branches, id: \.category) { branch in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("If it codes as \(readableCategory(branch.category))")
-                        .font(.caption.weight(.semibold))
-                        .textCase(.uppercase)
-                        .foregroundStyle(.secondary)
-                    Text(cardName(branch.recommendation.winner.cardId))
-                        .font(.headline)
-                    Text(String(format: "≈ $%.2f back", branch.recommendation.winner.netValueCad))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                let cardId = branch.recommendation.winner.cardId
+                let cardOfficialName = cardName(cardId)
+                let netValue = branch.recommendation.winner.netValueCad
+
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Label(
+                            "If Coded as \(readableCategory(branch.category).uppercased())",
+                            systemImage: CategoryVisuals.meta(for: branch.category).icon
+                        )
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundStyle(CategoryVisuals.meta(for: branch.category).color)
+
+                        Spacer()
+
+                        Text(String(format: "≈ $%.2f back", netValue))
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundStyle(.primary)
+                    }
+
+                    CardArtView(
+                        cardId: cardId,
+                        officialName: cardOfficialName,
+                        rewardHeadline: "Best if coded as \(readableCategory(branch.category))",
+                        effectiveReturnText: String(format: "$%.2f", netValue),
+                        isHero: false
+                    )
                 }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color(.secondarySystemGroupedBackground))
+                        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
+                )
             }
+        }
+    }
+
+    private func insightRow(icon: String, iconColor: Color, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(iconColor)
+                .padding(.top, 2)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+                Text(detail)
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+    }
+
+    private func formatRewardUnits(units: Double, kind: String?) -> String {
+        switch kind {
+        case "point":
+            return "\(Int(units)) pts"
+        case "cad":
+            return String(format: "$%.2f cash", units)
+        case "ctDollar":
+            return String(format: "$%.2f CT Money", units)
+        case "cro":
+            return String(format: "%.2f CRO", units)
+        default:
+            return String(format: "%.1f units", units)
         }
     }
 
     private func explanation(for recommendation: Recommendation, category: String) -> Explanation? {
-        deps?.explainer.explain(recommendation,
-                                purchase: PurchaseContext(amountCad: result.effectiveAmountCad,
-                                                          category: category))
+        deps?.explainer.explain(
+            recommendation,
+            purchase: PurchaseContext(amountCad: result.effectiveAmountCad, category: category)
+        )
     }
 
     private func cardName(_ cardId: String) -> String {
@@ -113,11 +272,11 @@ struct RecommendationView: View {
 
     private func readableCategory(_ category: String) -> String {
         switch category {
-        case "grocery": return "grocery"
-        case "gasStation": return "a gas station"
-        case "dining": return "dining"
-        case "other": return "general merchandise"
-        default: return category
+        case "grocery": return "Grocery"
+        case "gasStation": return "Gas Station"
+        case "dining": return "Dining & Food"
+        case "other": return "General Merchandise"
+        default: return category.capitalized
         }
     }
 }

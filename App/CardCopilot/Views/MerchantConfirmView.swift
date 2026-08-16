@@ -1,8 +1,7 @@
 import SwiftUI
 import CardCopilotStore
 
-/// Ranked nearby list — the user confirms rather than the app guessing. Search stays
-/// available here too: the nearest POI is not always the right one inside a mall.
+/// Ranked nearby merchant list — lets the user confirm which merchant they are standing in.
 struct MerchantConfirmView: View {
     let merchants: [NearbyMerchant]
     let onConfirm: (NearbyMerchant) -> Void
@@ -12,28 +11,67 @@ struct MerchantConfirmView: View {
 
     var body: some View {
         List {
-            Section("Which merchant are you at?") {
+            Section {
                 ForEach(merchants) { merchant in
-                    Button { onConfirm(merchant) } label: {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(merchant.name).font(.body.weight(.medium))
-                            HStack(spacing: 6) {
-                                if let d = merchant.distanceMeters {
-                                    Text("\(Int(d)) m")
-                                }
-                                if let raw = merchant.poiCategoryRaw {
-                                    Text(raw.replacingOccurrences(of: "MKPOICategory", with: ""))
-                                }
+                    let meta = CategoryVisuals.meta(for: merchant.poiCategoryRaw ?? "general")
+                    let formattedPoi = CategoryVisuals.humanizePoiCategory(merchant.poiCategoryRaw) ?? meta.displayName
+
+                    Button {
+                        onConfirm(merchant)
+                    } label: {
+                        HStack(spacing: 14) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(meta.color.opacity(0.14))
+                                    .frame(width: 42, height: 42)
+                                Image(systemName: meta.icon)
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(meta.color)
                             }
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(merchant.name)
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(.primary)
+
+                                HStack(spacing: 6) {
+                                    if let d = merchant.distanceMeters {
+                                        HStack(spacing: 3) {
+                                            Image(systemName: "location.fill")
+                                                .font(.system(size: 9))
+                                            Text("\(Int(d)) m away")
+                                        }
+                                    }
+                                    if merchant.distanceMeters != nil {
+                                        Text("•")
+                                    }
+                                    Text(formattedPoi)
+                                }
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(.tertiary)
                         }
+                        .padding(.vertical, 4)
                     }
-                    .foregroundStyle(.primary)
+                    .buttonStyle(.plain)
                 }
+            } header: {
+                Text("Select your location")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+            } footer: {
+                Text("Selecting the exact merchant helps Card Copilot determine the precise MCC and terminal rules.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
-        .searchable(text: $searchText, prompt: "Not listed? Search…")
+        .listStyle(.insetGrouped)
+        .searchable(text: $searchText, prompt: "Search different merchant…")
         .onSubmit(of: .search) { onSearch(searchText) }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
