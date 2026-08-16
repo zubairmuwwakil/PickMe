@@ -29,8 +29,10 @@ struct CheckoutFlowView: View {
 
     struct Dependencies {
         let catalogue: Catalogue
+        let benefits: BenefitsCatalogue
         let service: CheckoutService
         let explainer: RecommendationExplainer
+        let engine: RecommendationEngine
         let provider: LiveMerchantProvider
     }
 
@@ -82,6 +84,7 @@ struct CheckoutFlowView: View {
         case .recommendation(let result):
             RecommendationView(result: result,
                                deps: deps,
+                               onCompare: nil,
                                onDone: {
                                    refreshHome()
                                    stage = .idle
@@ -108,11 +111,16 @@ struct CheckoutFlowView: View {
         do {
             let catalogue = try SeedLoader.loadCatalogue()
             let owner = try SeedLoader.loadOwnerState()
+            let benefits = try SeedLoader.loadBenefitsCatalogue()
             deps = Dependencies(
                 catalogue: catalogue,
+                benefits: benefits,
                 service: CheckoutService(catalogue: catalogue, ownerState: owner,
                                          context: modelContext),
                 explainer: RecommendationExplainer(catalogue: catalogue),
+                // The lens computes its earn line through the engine directly — NEVER through
+                // CheckoutService — so a lens query can't write a prediction (spec B9).
+                engine: RecommendationEngine(catalogue: catalogue, ownerState: owner),
                 provider: LiveMerchantProvider())
             refreshHome()
         } catch {

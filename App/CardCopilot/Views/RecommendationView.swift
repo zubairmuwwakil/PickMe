@@ -8,6 +8,7 @@ import CardCopilotStore
 struct RecommendationView: View {
     let result: CheckoutResult
     let deps: CheckoutFlowView.Dependencies?
+    let onCompare: ((BenefitContextKind) -> Void)?
     let onDone: () -> Void
 
     var body: some View {
@@ -61,6 +62,13 @@ struct RecommendationView: View {
                 Label(warning, systemImage: "exclamationmark.triangle")
                     .font(.footnote)
                     .foregroundStyle(.orange)
+            }
+
+            if let deps {
+                BenefitsDisclosureSection(result: result,
+                                          deps: deps,
+                                          winnerCardId: recommendation.winner.cardId,
+                                          onCompare: { onCompare?($0) })
             }
         }
     }
