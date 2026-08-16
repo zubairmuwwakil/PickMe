@@ -158,6 +158,55 @@ Value is measured at the wallet's optimum rather than the threshold-gated recomm
 
 Report: `swift test --filter PortfolioReportTests`. Behaviour spec: `PortfolioAnalyzerTests` (pinned per decision #16).
 
+## 5b. Recurring-payment assignment audit — ✅ BUILT (engine level, 2026-08-16, UI deferred)
+
+`RecurringAuditor` + `CapProjector` answer the third wallet question. Checkout asks *which card
+for this purchase*; §5a asks *which cards are worth keeping*; this asks **where should my autopays
+live, and where are my caps heading**. A parallel component in the `BenefitsAdvisor` mould: the
+scoring pipeline, `CheckoutService`, the prediction log and the fixture contract are all untouched.
+
+**Why it exists.** Scotia's 4% cap is consumed mostly by charges that never pass a checkout moment,
+so the app is structurally blind to them. Every recurring payment is therefore owner-declared —
+`RecurringPlan` is a parameter, never seeded into owner-state.json, exactly as the spend
+distribution is (decision #19).
+
+**The honesty problem, and the answer.** The catalogue's `recurring` category is driven by the
+*network's* recurring-payment indicator, not by billing frequency — and in `RuleMatcher.matches`
+the `"recurring"` case reads `purchase.recurringIndicator` directly, bypassing the MCC gate. The
+engine has never seen a transaction and cannot read that flag. So every `assumed` bill is scored
+in **both worlds**:
+
+| | |
+|---|---|
+| R1 | **Bounded-regret test.** Same winner in both worlds → `flagIndependent`, act today. Different winners → recommend the flagged card iff `annual gain if the flag is real > one billing cycle of being wrong`, and publish the falsification step ("check next statement: 4% posted confirms it, 1% means move it back"). One cycle is the entire price of the experiment because the statement settles it permanently — the crucial difference from a point valuation, which no statement can validate (decision #15). Cadence is what makes the test decline: an annual transit pass risks $28.80 to win $7.20, so it stays on the flag-independent card. |
+| R2 | **Never advances `capProgress`.** Owner state is read-only here. `capProgress` is a live input to the checkout scoring the 30-checkout experiment measures; feeding an unverified declaration into it would manufacture arithmetic misses that are artefacts of the guess. The projection is published separately, carrying the provenance of its starting point — the seeded Scotia figure has no as-of date, and the projection says so rather than building a date on it. |
+| R3 | **The projection is a bound, and it names why.** Recurring-only burn understates a cap shared with undeclared categories, so the crossing month is the *latest possible*. `undeclaredCategories` publishes exactly which categories make it so; `restsOnAssumedFlags` fires only when losing the flag would move the bill off that cap — a warning that always fires is one the owner learns to skip. Undated lumpy charges are placed as late as the window allows, which is what preserves the "no later than" reading. |
+| R4 | **Move bar: ≥0.5pp and ≥C$5/yr.** The checkout threshold's per-transaction C$0.25 prices one wallet dig, paid every time; changing an autopay is paid once and earns every year after, so the dollar floor is annual and lower. At C$5 a $203.88/yr subscription moving 2%→5% (+$6.12/yr) stays on the list. Suppressed moves are listed, never hidden. |
+| R5 | **Detect contention, don't solve it.** Scotia's $25k cap is shared by grocery and recurring, so greedy per-bill assignment can be globally wrong. When declared demand exceeds the room left, the competing categories are reported; allocating scarce cap room is a knapsack problem and a v2 feature. Same posture as §5a detecting redundant pairs rather than solving the wallet. |
+
+**The finding that inverts the premise.** MBNA's five $50,000 5× buckets beat Scotia's 4% on every
+recurring category they reach — utilities, memberships, digital media, streaming — at any plausible
+Membership Rewards valuation. Scotia's recurring rate only wins bills nothing else accelerates
+(insurance), and those are precisely the flag-contingent ones. So the audit's headline on this
+wallet is usually **"move recurring spend off Scotia"**, not "you'll cross the cap in November".
+`RecurringReportTests` asserts this at both ends of the MR range so it cannot rot silently.
+
+**Two sharp edges found in existing code, handled without touching it.** `RuleMatcher.matches`
+falls through to a *match* when a predicate has an `mccInclude` list and the purchase MCC is `nil`
+— so an owner who knows no MCC would be handed MBNA's 5× unconditionally. The audit supplies a
+representative MCC from a stated table and discloses it, and independently discloses
+`mccGateUnverified` whenever a gated rule wins on a gate that was never tested. `Predicate.
+recurringViaNetworkIndicator` remains decoded-but-unread; the flag branching above is what that
+field would have been for, and no scoring behaviour changed.
+
+**Free byproduct.** `RecurringPlan.asSpendDistribution()` hands `PortfolioAnalyzer` its first
+non-assumption input — declared bills are the owner's own numbers, not the placeholder household
+guess. Annual-fee re-verdicts are explicitly out of scope for v1; the bridge makes them answerable
+later without new coupling.
+
+Report: `swift test --filter RecurringReportTests`. Behaviour spec: `RecurringAuditorTests`,
+`CapProjectorTests`, `CapWindowTests`, `RecurringPlanTests` (pinned per decision #16).
+
 ## 6. Category prediction & observation model
 
 **Prediction source ladder (v1, descending confidence — dossier §5.6):**
