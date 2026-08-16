@@ -26,11 +26,13 @@ struct CheckoutFlowView: View {
         case dashboard
         case protectionLens(BenefitContext)
         case benefitsReference
+        case walletHealth
         case failed(String)
     }
 
     struct Dependencies {
         let catalogue: Catalogue
+        let ownerState: OwnerState
         let benefits: BenefitsCatalogue
         let service: CheckoutService
         let explainer: RecommendationExplainer
@@ -72,7 +74,8 @@ struct CheckoutFlowView: View {
                      onReconcile: { stage = .reconcile },
                      onDashboard: { stage = .dashboard },
                      onProtectionLens: { stage = .protectionLens(BenefitContext(kind: .flight)) },
-                     onBenefits: { stage = .benefitsReference })
+                     onBenefits: { stage = .benefitsReference },
+                     onWalletHealth: { stage = .walletHealth })
         case .locating:
             ProgressView("Finding nearby merchants…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -113,6 +116,10 @@ struct CheckoutFlowView: View {
             if let deps {
                 BenefitsReferenceView(deps: deps, onDone: { stage = .idle })
             }
+        case .walletHealth:
+            if let deps {
+                WalletHealthView(deps: deps, onDone: { stage = .idle })
+            }
         case .failed(let message):
             ContentUnavailableView("Something went wrong", systemImage: "exclamationmark.triangle",
                                    description: Text(message))
@@ -128,6 +135,7 @@ struct CheckoutFlowView: View {
             let benefits = try SeedLoader.loadBenefitsCatalogue()
             deps = Dependencies(
                 catalogue: catalogue,
+                ownerState: owner,
                 benefits: benefits,
                 service: CheckoutService(catalogue: catalogue, ownerState: owner,
                                          context: modelContext),

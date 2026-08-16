@@ -15,6 +15,7 @@ struct HomeView: View {
     let onDashboard: () -> Void
     let onProtectionLens: () -> Void
     let onBenefits: () -> Void
+    let onWalletHealth: () -> Void
 
     @State private var searchText = ""
     @FocusState private var isSearchFocused: Bool
@@ -307,6 +308,19 @@ struct HomeView: View {
                 .foregroundStyle(.primary)
 
             VStack(spacing: 10) {
+                // Wallet Health (keep/cancel)
+                Button(action: onWalletHealth) {
+                    toolRow(
+                        icon: "heart.text.square.fill",
+                        iconColor: .mint,
+                        title: "Wallet Health",
+                        subtitle: "Which cards earn their fee — marginal, not gross",
+                        badge: "Estimate",
+                        badgeColor: .mint
+                    )
+                }
+                .buttonStyle(.plain)
+
                 // Reconcile Queue Row
                 Button(action: onReconcile) {
                     toolRow(
