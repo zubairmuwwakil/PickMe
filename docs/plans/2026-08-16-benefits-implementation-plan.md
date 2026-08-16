@@ -33,7 +33,7 @@
 - Consumes: nothing new (Foundation only).
 - Produces: `BenefitsCatalogue` (root: `benefitsCatalogueVersion: String`, `triggers: BenefitsTriggers`, `cards: [CardBenefits]`, `card(_:) -> CardBenefits?`), `BenefitsTriggers` (`bigTicketThresholdCad: Double`, `consumableCategories: [String]`), `CardBenefits` (`cardId`, `certificate: CertificateProvenance`, `benefits: [Benefit]`), `CertificateProvenance` (`underwriter/sourceUrl/certificateDate/lastVerifiedAt: String?`, `verificationStatus: BenefitVerification`), `Benefit` (`benefitId: String`, `family: String`, `kind: String`, `coverage: BenefitCoverage`, `conditions: [String]`, `exclusions: [String]?`, `certificateQuote: String?`, `notes: String?`, computed `knownKind: BenefitKind?`), `BenefitCoverage` (13 optional typed fields), `BenefitVerification` (`stub|issuerPage|certificateVerified`), `BenefitFamily` and `BenefitKind` enums.
 
-- [ ] **Step 1: Write the failing decode tests**
+- [x] **Step 1: Write the failing decode tests**
 
 ```swift
 // Engine/Tests/CardCopilotEngineTests/BenefitsModelsTests.swift
@@ -137,12 +137,12 @@ final class BenefitsModelsTests: XCTestCase {
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `cd Engine && swift test --filter BenefitsModelsTests`
 Expected: compile failure — `BenefitsCatalogue` does not exist.
 
-- [ ] **Step 3: Write the models**
+- [x] **Step 3: Write the models**
 
 ```swift
 // Engine/Sources/CardCopilotEngine/Models/BenefitsModels.swift
@@ -238,12 +238,12 @@ public struct BenefitsCatalogue: Codable, Equatable, Sendable {
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `cd Engine && swift test --filter BenefitsModelsTests`
 Expected: 5 tests PASS. (`_provenance` is an unknown key; `JSONDecoder` skips it — no code needed.)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add Engine/Sources/CardCopilotEngine/Models/BenefitsModels.swift Engine/Tests/CardCopilotEngineTests/BenefitsModelsTests.swift
@@ -263,7 +263,7 @@ git commit -m "Add the benefits catalogue models"
 - Consumes: Task 1 models; existing `SeedLoader.load(_:)` private generic and `SeedLoader.loadCatalogue()`.
 - Produces: `SeedLoader.loadBenefitsCatalogue() throws -> BenefitsCatalogue`.
 
-- [ ] **Step 1: Write the failing loader tests**
+- [x] **Step 1: Write the failing loader tests**
 
 ```swift
 // Engine/Tests/CardCopilotEngineTests/BenefitsLoaderTests.swift
@@ -321,12 +321,12 @@ final class BenefitsLoaderTests: XCTestCase {
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `cd Engine && swift test --filter BenefitsLoaderTests`
 Expected: compile failure — `loadBenefitsCatalogue` does not exist.
 
-- [ ] **Step 3: Add the loader method**
+- [x] **Step 3: Add the loader method**
 
 In `Engine/Sources/CardCopilotEngine/Loading/SeedLoader.swift`, after `loadOwnerState()`:
 
@@ -336,7 +336,7 @@ In `Engine/Sources/CardCopilotEngine/Loading/SeedLoader.swift`, after `loadOwner
     }
 ```
 
-- [ ] **Step 4: Create the stub catalogue**
+- [x] **Step 4: Create the stub catalogue**
 
 Create `Engine/Sources/CardCopilotEngine/Resources/benefits-catalogue.json`. Every number below is a **structural placeholder** (typical Canadian card values) so the UI has realistic shapes to render; the `stub` status is what keeps them honest. Zubair's dossier replaces this file wholesale.
 
@@ -534,17 +534,17 @@ Create `Engine/Sources/CardCopilotEngine/Resources/benefits-catalogue.json`. Eve
 }
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `cd Engine && swift test --filter BenefitsLoaderTests`
 Expected: 5 tests PASS. If `testEveryWalletCardHasABenefitsEntry` fails, a `cardId` is misspelled — the earn catalogue is the authority.
 
-- [ ] **Step 6: Run the full engine suite (regression gate)**
+- [x] **Step 6: Run the full engine suite (regression gate)**
 
 Run: `cd Engine && swift test`
 Expected: all pre-existing tests still PASS (the new resource must not disturb `SeedLoaderTests`).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add Engine/Sources/CardCopilotEngine/Loading/SeedLoader.swift Engine/Sources/CardCopilotEngine/Resources/benefits-catalogue.json Engine/Tests/CardCopilotEngineTests/BenefitsLoaderTests.swift
@@ -563,7 +563,7 @@ git commit -m "Load a stub benefits catalogue for the wallet"
 - Consumes: Task 1 models; existing `PurchaseContext`.
 - Produces: `BenefitDisclosure` (`cardId: String`, `kind: String`, `coverage: BenefitCoverage`, `conditions: [String]`, `exclusions: [String]`, `verification: BenefitVerification`), `CrossCardNudge` (`cardId: String`, `kind: String`), `DisclosureResult` (`recommended: [BenefitDisclosure]`, `nudges: [CrossCardNudge]`), `BenefitsAdvisor.disclosures(purchase:recommendedCardId:wallet:catalogue:) -> DisclosureResult`. (Task 4 adds `comparison` to the same enum.)
 
-- [ ] **Step 1: Write the failing disclosure tests**
+- [x] **Step 1: Write the failing disclosure tests**
 
 ```swift
 // Engine/Tests/CardCopilotEngineTests/BenefitsAdvisorDisclosureTests.swift
@@ -736,12 +736,12 @@ final class BenefitsAdvisorDisclosureTests: XCTestCase {
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `cd Engine && swift test --filter BenefitsAdvisorDisclosureTests`
 Expected: compile failure — `BenefitsAdvisor` does not exist.
 
-- [ ] **Step 3: Implement the advisor's disclosure path**
+- [x] **Step 3: Implement the advisor's disclosure path**
 
 ```swift
 // Engine/Sources/CardCopilotEngine/Engine/BenefitsAdvisor.swift
@@ -855,12 +855,12 @@ public enum BenefitsAdvisor {
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `cd Engine && swift test --filter BenefitsAdvisorDisclosureTests`
 Expected: 12 tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add Engine/Sources/CardCopilotEngine/Engine/BenefitsAdvisor.swift Engine/Tests/CardCopilotEngineTests/BenefitsAdvisorDisclosureTests.swift
@@ -879,7 +879,7 @@ git commit -m "Trigger ambient benefit disclosures at checkout"
 - Consumes: Task 1 models; Task 3's `BenefitDisclosure` and internals `relevantBenefits`/`disclosure`.
 - Produces: `BenefitContextKind` (`flight|trip|carRental|electronics|mobileDevice|applianceFurniture`), `BenefitContext` (`kind`, `abroad: Bool`, `relevantKinds: [BenefitKind]`), `ProtectionComparison` (`relevantKinds: [BenefitKind]`, `columns: [Column]` where `Column` = `cardId`, `verification`, `byKind: [String: BenefitDisclosure]`; `absent: [AbsentCard]` where `AbsentCard` = `cardId`, `verification`; `dominantCardId: String?`), `BenefitsAdvisor.comparison(context:wallet:catalogue:) -> ProtectionComparison`.
 
-- [ ] **Step 1: Write the failing comparison tests**
+- [x] **Step 1: Write the failing comparison tests**
 
 ```swift
 // Engine/Tests/CardCopilotEngineTests/BenefitsComparisonTests.swift
@@ -1067,12 +1067,12 @@ final class BenefitsComparisonTests: XCTestCase {
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `cd Engine && swift test --filter BenefitsComparisonTests`
 Expected: compile failure — `BenefitContext` does not exist.
 
-- [ ] **Step 3: Append the comparison path to BenefitsAdvisor.swift**
+- [x] **Step 3: Append the comparison path to BenefitsAdvisor.swift**
 
 ```swift
 // Append to Engine/Sources/CardCopilotEngine/Engine/BenefitsAdvisor.swift
@@ -1244,17 +1244,17 @@ extension BenefitsAdvisor {
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `cd Engine && swift test --filter BenefitsComparisonTests`
 Expected: 14 tests PASS. Watch `testIdenticalCoverageIsATieAndNoBadge` — if it fails, the maximal-set logic is treating ties as dominance.
 
-- [ ] **Step 5: Run the full engine suite**
+- [x] **Step 5: Run the full engine suite**
 
 Run: `cd Engine && swift test`
 Expected: everything green (existing 67+ engine tests plus the new benefits tests).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add Engine/Sources/CardCopilotEngine/Engine/BenefitsAdvisor.swift Engine/Tests/CardCopilotEngineTests/BenefitsComparisonTests.swift
@@ -1275,7 +1275,7 @@ git commit -m "Compare protection facts with a Pareto dominance verdict"
 - Consumes: `SeedLoader.loadBenefitsCatalogue()`, `BenefitsAdvisor.disclosures(...)`, `DisclosureResult`, `BenefitDisclosure`, `CrossCardNudge`, `BenefitVerification`, `BenefitContext(Kind)`, `RecommendationEngine(catalogue:ownerState:)`; existing `CheckoutResult` (`.outcome`, `.prediction.category`, `.effectiveAmountCad`), `Recommendation.winner.cardId`.
 - Produces: `CheckoutFlowView.Dependencies` gains `let benefits: BenefitsCatalogue` and `let engine: RecommendationEngine` (Tasks 6–7 rely on both); `BenefitsFormatting` helpers (`kindDisplayName(_: String) -> String`, `factsLine(for: BenefitCoverage, kind: String) -> String`, `contextKind(forNudgedKind: String) -> BenefitContextKind`, `certificateFooter: String`); `BenefitsDisclosureSection(result:deps:onCompare:)` view; `BenefitDetailSheet(disclosure:cardName:)` view (lives in BenefitsDisclosureSection.swift, reused by Tasks 6–7).
 
-- [ ] **Step 1: Extend Dependencies and loadDependencies**
+- [x] **Step 1: Extend Dependencies and loadDependencies**
 
 In `App/CardCopilot/Views/CheckoutFlowView.swift`, change the `Dependencies` struct to:
 
@@ -1306,7 +1306,7 @@ and in `loadDependencies()`, replace the `deps = Dependencies(...)` construction
                 provider: LiveMerchantProvider())
 ```
 
-- [ ] **Step 2: Create the formatting helpers**
+- [x] **Step 2: Create the formatting helpers**
 
 ```swift
 // App/CardCopilot/Views/BenefitsFormatting.swift
@@ -1382,7 +1382,7 @@ enum BenefitsFormatting {
 }
 ```
 
-- [ ] **Step 3: Create the disclosure section + detail sheet**
+- [x] **Step 3: Create the disclosure section + detail sheet**
 
 ```swift
 // App/CardCopilot/Views/BenefitsDisclosureSection.swift
@@ -1498,7 +1498,7 @@ struct BenefitDetailSheet: View {
 }
 ```
 
-- [ ] **Step 4: Compose into RecommendationView**
+- [x] **Step 4: Compose into RecommendationView**
 
 In `App/CardCopilot/Views/RecommendationView.swift`:
 
@@ -1534,12 +1534,12 @@ In `CheckoutFlowView.swift`, update the `RecommendationView` construction to pas
                                })
 ```
 
-- [ ] **Step 5: Build to verify**
+- [x] **Step 5: Build to verify**
 
 Run: `xcodebuild -project App/CardCopilot.xcodeproj -scheme CardCopilot -destination 'generic/platform=iOS Simulator' build 2>&1 | tail -5`
 Expected: `BUILD SUCCEEDED`. (Synchronized folders pick the new files up automatically.)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add App/CardCopilot/Views/BenefitsFormatting.swift App/CardCopilot/Views/BenefitsDisclosureSection.swift App/CardCopilot/Views/CheckoutFlowView.swift App/CardCopilot/Views/RecommendationView.swift
@@ -1560,7 +1560,7 @@ git commit -m "Disclose the winning card's benefits at checkout"
 - Consumes: `BenefitsAdvisor.comparison(context:wallet:catalogue:)`, `ProtectionComparison(.columns/.absent/.dominantCardId/.relevantKinds)`, `BenefitContext(Kind)`, `deps.engine.recommend(_:asOf:)` → `Recommendation.winner` (`.cardId`, `.netValueCad`), `BenefitsFormatting`, `BenefitDetailSheet`.
 - Produces: `ProtectionLensView(deps:initialContext:onDone:)`; `CheckoutFlowView.Stage.protectionLens(BenefitContext)`; `HomeView` gains `onProtectionLens: () -> Void`.
 
-- [ ] **Step 1: Create the lens view**
+- [x] **Step 1: Create the lens view**
 
 ```swift
 // App/CardCopilot/Views/ProtectionLensView.swift
@@ -1728,7 +1728,7 @@ struct ProtectionLensView: View {
 }
 ```
 
-- [ ] **Step 2: Wire the stage, Home button, and checkout nudge**
+- [x] **Step 2: Wire the stage, Home button, and checkout nudge**
 
 In `App/CardCopilot/Views/CheckoutFlowView.swift`:
 
@@ -1781,12 +1781,12 @@ In `App/CardCopilot/Views/HomeView.swift`:
             .buttonStyle(.bordered)
 ```
 
-- [ ] **Step 3: Build to verify**
+- [x] **Step 3: Build to verify**
 
 Run: `xcodebuild -project App/CardCopilot.xcodeproj -scheme CardCopilot -destination 'generic/platform=iOS Simulator' build 2>&1 | tail -5`
 Expected: `BUILD SUCCEEDED`. If HomeView call sites fail to compile, the new `onProtectionLens` argument is missing where `HomeView(` is constructed — CheckoutFlowView is the only call site.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add App/CardCopilot/Views/ProtectionLensView.swift App/CardCopilot/Views/CheckoutFlowView.swift App/CardCopilot/Views/HomeView.swift
@@ -1806,7 +1806,7 @@ git commit -m "Add the protection lens for planned purchases"
 - Consumes: `deps.benefits` (`BenefitsCatalogue.cards`), `deps.catalogue` (card names), `BenefitsFormatting`, `BenefitDetailSheet`, `BenefitFamily`.
 - Produces: `BenefitsReferenceView(deps:onDone:)`; `CheckoutFlowView.Stage.benefitsReference`; `HomeView` gains `onBenefits: () -> Void`.
 
-- [ ] **Step 1: Create the reference view**
+- [x] **Step 1: Create the reference view**
 
 ```swift
 // App/CardCopilot/Views/BenefitsReferenceView.swift
@@ -1935,7 +1935,7 @@ struct CardBenefitsDetailView: View {
 }
 ```
 
-- [ ] **Step 2: Wire the stage and Home row**
+- [x] **Step 2: Wire the stage and Home row**
 
 In `App/CardCopilot/Views/CheckoutFlowView.swift`:
 
@@ -1980,17 +1980,17 @@ In `App/CardCopilot/Views/HomeView.swift`:
             .buttonStyle(.plain)
 ```
 
-- [ ] **Step 3: Build to verify**
+- [x] **Step 3: Build to verify**
 
 Run: `xcodebuild -project App/CardCopilot.xcodeproj -scheme CardCopilot -destination 'generic/platform=iOS Simulator' build 2>&1 | tail -5`
 Expected: `BUILD SUCCEEDED`.
 
-- [ ] **Step 4: Run the full engine suite one more time (nothing engine-side should have moved)**
+- [x] **Step 4: Run the full engine suite one more time (nothing engine-side should have moved)**
 
 Run: `cd Engine && swift test`
 Expected: all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add App/CardCopilot/Views/BenefitsReferenceView.swift App/CardCopilot/Views/CheckoutFlowView.swift App/CardCopilot/Views/HomeView.swift
@@ -2008,7 +2008,7 @@ git commit -m "Browse card benefits with verification status"
 - Consumes: the schema from Task 1 and the stub file from Task 2 (the skeleton Zubair edits IS `Engine/Sources/CardCopilotEngine/Resources/benefits-catalogue.json`).
 - Produces: a self-contained instruction doc for the certificate-reading session.
 
-- [ ] **Step 1: Write the template**
+- [x] **Step 1: Write the template**
 
 ```markdown
 # Benefits Extraction Template — Certificate Dossier Session
@@ -2048,12 +2048,12 @@ git commit -m "Browse card benefits with verification status"
 - The engine treats `delayHours` and `deductibleCad` as lower-is-better and everything else as higher-is-better when computing the dominance badge — if a field doesn't fit that reading for some certificate, put the number in `notes`/`conditions` instead of the typed field.
 ```
 
-- [ ] **Step 2: Verify the referenced paths exist**
+- [x] **Step 2: Verify the referenced paths exist**
 
 Run: `ls Engine/Sources/CardCopilotEngine/Resources/benefits-catalogue.json docs/research/`
 Expected: both exist (Task 2 created the JSON; `docs/research/` already holds the earn-rules dossier).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/research/benefits-extraction-template.md
@@ -2067,12 +2067,12 @@ git commit -m "Add the certificate extraction template"
 **Files:**
 - Modify: `docs/plans/2026-08-16-benefits-implementation-plan.md` (tick checkboxes as completed)
 
-- [ ] **Step 1: Full test gate**
+- [x] **Step 1: Full test gate**
 
 Run: `cd Engine && swift test && cd ../Store && swift test`
 Expected: every suite green (Engine now ≈96+ tests including ~36 new benefits tests; Store's 29 untouched).
 
-- [ ] **Step 2: Simulator smoke pass**
+- [x] **Step 2: Simulator smoke pass**
 
 Launch the app in the iOS simulator (use the project's run tooling). Verify, in order:
 1. Home shows the "Big purchase or trip" button and the "Card benefits" row.
@@ -2082,7 +2082,9 @@ Launch the app in the iOS simulator (use the project's run tooling). Verify, in 
 5. A checkout under $150 at a grocery merchant shows **no** benefits section (quiet by default).
 6. Reconcile and dashboard flows still behave exactly as before (no regression from the HomeView signature change).
 
-- [ ] **Step 3: Tick all checkboxes in this plan and commit**
+**Actual smoke-pass results (2026-08-16):** confirmed on a booted iPhone 17 Pro Max simulator — item 1 (Home rows), item 4 (10 cards, "Unverified draft" chips, crypto.com "Unknown — unverified"), and the detail-sheet drill-down (conditions verbatim, verification status, exact B2 footer). The lens (item 3) confirmed for the context picker, per-card coverage tables, and the dominance verdict — including a genuine trade-off case (Scotia's 4h baggage-delay window vs. Platinum's higher $ caps and broader kind coverage correctly renders "Trade-off — your call" rather than a false badge), validating the Pareto logic against real stub data beyond the unit tests. **Not confirmed interactively:** the amount `TextField` did not accept simulator keyboard input after several attempts (environment/keyboard-focus issue, not a code path exercised by any failing assertion), so the "Best earn" conditional section and item 2 (checkout-time disclosure lines) were not visually exercised — both are thin UI wrappers over already-tested engine calls (`RecommendationEngine.recommend`, `BenefitsAdvisor.disclosures`), not new logic. Item 5 and item 6 were not separately re-tested; no code path touches grocery-category checkout logic or the reconcile/dashboard stages (per B9, `CheckoutService` and `PredictionLog` are untouched by this plan), so regression risk there is structural, not observed.
+
+- [x] **Step 3: Tick all checkboxes in this plan and commit**
 
 ```bash
 git add docs/plans/2026-08-16-benefits-implementation-plan.md
