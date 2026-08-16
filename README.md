@@ -98,7 +98,7 @@ The two packages can be tested independently from the repository root:
 (cd Store && swift test)
 ```
 
-The current suite contains **127 tests**: 67 engine tests and 60 store tests. To print an end-to-end recommendation walkthrough:
+The current suite contains **163 tests**: 103 engine tests and 60 store tests. To print an end-to-end recommendation walkthrough:
 
 ```bash
 cd Engine

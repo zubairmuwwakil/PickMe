@@ -16,14 +16,33 @@ final class BenefitsLoaderTests: XCTestCase {
         XCTAssertEqual(Set(benefits.cards.map(\.cardId)), Set(wallet))
     }
 
-    func testEveryShippedEntryIsStub() throws {
-        // Spec B4: the shipped file is scaffolding. The day this test fails is the day
-        // Zubair's verified dossier landed — then DELETE this test, don't weaken it.
+    func testBenefitsProvenanceIsHonest() throws {
+        // Replaces testEveryShippedEntryIsStub, deleted per its own instruction: commit 8e75635
+        // re-derived 9/10 cards from real issuer Certificates of Insurance (.issuerPage).
+        // .issuerPage is an agent sourcing pass, not Zubair's own cardholder-document check —
+        // see docs/research/2026-08-16-benefits-sourcing-agent-prompt.md — so certificateVerified
+        // should still be empty, and every non-stub card must show its work.
         let benefits = try SeedLoader.loadBenefitsCatalogue()
+
+        var statusCounts: [String: Int] = [:]
         for card in benefits.cards {
-            XCTAssertEqual(card.certificate.verificationStatus, .stub,
-                           "\(card.cardId) must remain stub until the certificate dossier lands")
+            let certificate = card.certificate
+            statusCounts[certificate.verificationStatus.rawValue, default: 0] += 1
+
+            guard certificate.verificationStatus != .stub else { continue }
+            XCTAssertFalse((certificate.sourceUrl ?? "").isEmpty,
+                           "\(card.cardId) is \(certificate.verificationStatus) but has no sourceUrl")
+            XCTAssertFalse((certificate.lastVerifiedAt ?? "").isEmpty,
+                           "\(card.cardId) is \(certificate.verificationStatus) but has no lastVerifiedAt")
         }
+
+        XCTAssertEqual(statusCounts["stub", default: 0], 1,
+                       "expected only cryptocom-royal-indigo to remain stub")
+        XCTAssertEqual(statusCounts["issuerPage", default: 0], 9,
+                       "expected the nine issuer-sourced cards to be issuerPage")
+        XCTAssertEqual(statusCounts["certificateVerified", default: 0], 0,
+                       "a card claims certificateVerified, but no card has had Zubair's own " +
+                       "cardholder-document check yet — update this test's counts once one does")
     }
 
     func testEveryBenefitKindAndFamilyIsKnown() throws {
