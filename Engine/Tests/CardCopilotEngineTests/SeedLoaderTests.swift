@@ -38,4 +38,19 @@ final class SeedLoaderTests: XCTestCase {
         XCTAssertEqual(state.cardStates["tangerine-moneyback-world"]?.selectedCategories?.count, 13,
                        "treat-as-all-selected: 13 eligible Tangerine categories")
     }
+
+    func testCatalogueVersionRejectsAnUnknownMajor() {
+        XCTAssertThrowsError(try SeedLoader.validate(catalogueVersion: "2.0")) { error in
+            XCTAssertEqual(error as? SeedLoaderError, .unsupportedCatalogueVersion("2.0"))
+        }
+    }
+
+    func testCatalogueVersionAcceptsTheKnownMajorRegardlessOfMinor() {
+        XCTAssertNoThrow(try SeedLoader.validate(catalogueVersion: "1.0"))
+        XCTAssertNoThrow(try SeedLoader.validate(catalogueVersion: "1.7"))
+    }
+
+    func testCatalogueVersionRejectsAMalformedString() {
+        XCTAssertThrowsError(try SeedLoader.validate(catalogueVersion: "not-a-version"))
+    }
 }
