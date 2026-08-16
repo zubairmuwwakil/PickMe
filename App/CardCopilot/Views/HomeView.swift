@@ -13,6 +13,7 @@ struct HomeView: View {
     let onSearch: (String) -> Void
     let onReconcile: () -> Void
     let onDashboard: () -> Void
+    let onProtectionLens: () -> Void
 
     @State private var searchText = ""
 
@@ -66,6 +67,14 @@ struct HomeView: View {
                 Button("Search") { submitSearch() }
                     .disabled(searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
+
+            Button(action: onProtectionLens) {
+                Label("Big purchase or trip", systemImage: "shield.lefthalf.filled")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+            }
+            .buttonStyle(.bordered)
         }
     }
 

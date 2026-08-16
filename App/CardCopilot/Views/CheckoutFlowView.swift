@@ -24,6 +24,7 @@ struct CheckoutFlowView: View {
         case recommendation(CheckoutResult)
         case reconcile
         case dashboard
+        case protectionLens(BenefitContext)
         case failed(String)
     }
 
@@ -68,7 +69,8 @@ struct CheckoutFlowView: View {
                      onFindNearby: { Task { await findNearby() } },
                      onSearch: { text in Task { await search(text) } },
                      onReconcile: { stage = .reconcile },
-                     onDashboard: { stage = .dashboard })
+                     onDashboard: { stage = .dashboard },
+                     onProtectionLens: { stage = .protectionLens(BenefitContext(kind: .flight)) })
         case .locating:
             ProgressView("Finding nearby merchants…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -84,7 +86,7 @@ struct CheckoutFlowView: View {
         case .recommendation(let result):
             RecommendationView(result: result,
                                deps: deps,
-                               onCompare: nil,
+                               onCompare: { kind in stage = .protectionLens(BenefitContext(kind: kind)) },
                                onDone: {
                                    refreshHome()
                                    stage = .idle
@@ -99,6 +101,12 @@ struct CheckoutFlowView: View {
             DashboardView(metrics: metrics ?? .empty,
                           valueRecoveredCad: valueRecoveredCad,
                           onDone: { stage = .idle })
+        case .protectionLens(let context):
+            if let deps {
+                ProtectionLensView(deps: deps,
+                                   initialContext: context,
+                                   onDone: { stage = .idle })
+            }
         case .failed(let message):
             ContentUnavailableView("Something went wrong", systemImage: "exclamationmark.triangle",
                                    description: Text(message))
