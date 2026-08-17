@@ -112,6 +112,22 @@ iPhone's History** remains available.
 These are statements in the current draft that shipped code contradicts. **The policy must not be
 published until they are fixed** — the draft says as much about itself at §B1.
 
+> **Resolved in the published page (2026-08-17).** All seven are corrected in
+> `MoneyTalks/src/app/privacy/content.ts`, published at
+> https://moneytalks.zubairmuwwakil.com/privacy (MoneyTalks `910fc9f`). Item 4 is scoped to the web
+> hub rather than built for iOS; item 5 is dropped rather than built. `policy-claims.test.ts` pins
+> each retraction so it cannot be reintroduced silently.
+>
+> **The corrections are not back-ported into `privacy-policy.md`** — it is retained as the long-form
+> working document with its wrong sections intact, so this list stays legible against them. This
+> file remains the source of truth for what deletion does.
+>
+> Two things the published page discloses that this file does not cover, both server-side: the
+> Wallet Shortcut posts optional precise coordinates that are **retained** un-truncated per the
+> owner decision in `MoneyTalks/docs/plans/2026-08-16-wallet-capture-spec.md` §Privacy/retention,
+> and the Gmail integration holds the `gmail.readonly` scope — whole-mailbox read access, which the
+> scan-mode setting narrows in processing but not in authorization.
+
 1. **§6 — "That is the app's only outbound network activity of any kind."** False once signed in.
    The app talks to MoneyTalks (Clerk auth, cap/feedback pull, installation tokens, deletion) and
    the Wallet Shortcut posts transactions to it.

@@ -11,10 +11,33 @@
 > **[inference]** — reasoning from verified sources that counsel should confirm ·
 > **[uncertain]** — genuinely unresolved; flagged rather than papered over.
 
-**Status:** draft v1, 2026-08-15
-**Applies to:** Canadian Card Copilot for iPhone
+**Status:** draft v1, 2026-08-15 — **superseded as the published artifact, retained as the working
+document**
+**Applies to:** Canadian Card Copilot for iPhone (renamed PickMe in `d4338e2`)
 **Placeholders to fill before publication:** `[[LEGAL ENTITY NAME]]`, `[[CONTACT EMAIL]]`,
 `[[PRIVACY OFFICER NAME AND TITLE]]`, `[[EFFECTIVE DATE]]`, `[[POLICY URL]]`
+
+> ### What is actually published
+>
+> The live policy is the page at **https://moneytalks.zubairmuwwakil.com/privacy**, whose source is
+> `MoneyTalks/src/app/privacy/content.ts` (MoneyTalks `910fc9f`). **That page, not this file, is the
+> text people are shown and the URL given to App Store Connect.**
+>
+> The published page is corrected against [`account-deletion.md`](./account-deletion.md) §5: it
+> describes the two-store split, the real outbound payload surface, the Wallet Shortcut flow
+> (including retained precise coordinates), and the `gmail.readonly` scope. It scopes the export
+> claim to the web hub and drops the per-record delete claim. It resolves the placeholders above as
+> a named sole proprietor rather than an entity.
+>
+> **The counsel-review warning above still stands and was not satisfied by publishing.** The page
+> went live because App Store Connect requires a reachable URL; that is a scheduling reason, not a
+> legal sign-off. Review by Canadian privacy counsel remains outstanding.
+>
+> This file stays the long-form working document — it carries the Notes for counsel appendix, the
+> PIPEDA and Law 25 analysis, and the open questions, none of which belong on a public page. **Edit
+> the published page and this file together, or they drift apart again**, which is the failure that
+> made `account-deletion.md` necessary in the first place. Sections 4, 6, 7 and 8 below are the
+> known-wrong ones and are kept as written so the corrections stay legible.
 
 ---
 
