@@ -6,6 +6,7 @@ import CardCopilotStore
 struct DashboardView: View {
     let metrics: ExperimentMetrics
     let valueRecoveredCad: Double
+    let pendingValueCad: Double
     let onDone: () -> Void
 
     var body: some View {
@@ -174,7 +175,13 @@ struct DashboardView: View {
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
 
-            Text("Calculated as winning card return minus your default card (Wealthsimple VIP), counted on confirmed checkouts with captured amounts.")
+            if pendingValueCad > 0 {
+                Text(String(format: "+$%.2f recorded but not yet reconciled", pendingValueCad))
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.orange)
+            }
+
+            Text("Counted only where you used the recommended card and recorded what it actually cost, scaled from the amount the engine scored. Reconciled purchases only — the pending figure is not included, because until a statement confirms how a charge coded, the return is an assumption.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }

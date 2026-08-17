@@ -105,6 +105,7 @@ struct CheckoutFlowView: View {
         switch stage {
         case .idle:
             HomeView(valueRecoveredCad: valueRecoveredCad,
+                     pendingValueCad: pendingValueCad,
                      merchants: homeMerchants,
                      isSortedByRecentLocation: cachedLocation?.isRecent == true,
                      locationDenied: locationDenied,
@@ -157,6 +158,7 @@ struct CheckoutFlowView: View {
         case .dashboard:
             DashboardView(metrics: metrics ?? .empty,
                           valueRecoveredCad: valueRecoveredCad,
+                          pendingValueCad: pendingValueCad,
                           onDone: { stage = .idle })
         case .protectionLens(let context):
             if let deps {

@@ -1,0 +1,28 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Your location is used only on this device to detect arrival at merchants you have saved, so PickMe can suggest a card before you pay. It never tracks your route or leaves your phone." : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre position sert seulement sur cet appareil à détecter votre arrivée chez les commerces que vous avez enregistrés, afin que PickMe puisse vous suggérer une carte avant le paiement. L’app ne suit jamais votre trajet et votre position ne quitte pas votre téléphone."
+          }
+        }
+      }
+    },
+    "Your location is used only on this device to identify a nearby merchant when you ask, or to detect arrival at merchants you have saved. It never tracks your route or leaves your phone." : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre position sert seulement sur cet appareil à repérer un commerce près de vous lorsque vous le demandez, ou à détecter votre arrivée chez les commerces que vous avez enregistrés. L’app ne suit jamais votre trajet et votre position ne quitte pas votre téléphone."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -1,0 +1,80 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Arrival alerts" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Alertes à l’arrivée" } } } },
+    "Get advice when you arrive" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Recevez un conseil à votre arrivée" } } } },
+    "PickMe can recognize arrival at up to 20 merchants you have already saved, then suggest a card before you pay." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "PickMe peut reconnaître votre arrivée chez un maximum de 20 commerces que vous avez déjà enregistrés, puis vous suggérer une carte avant le paiement." } } } },
+    "Location is used only for arrival detection at your saved merchants." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Votre position sert uniquement à détecter votre arrivée chez les commerces que vous avez enregistrés." } } } },
+    "It does not continuously track your route, and your location never leaves this phone." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "L’app ne suit pas votre trajet en continu et votre position ne quitte jamais cet iPhone." } } } },
+    "You can keep using manual checkout if you decline." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Vous pouvez continuer d’utiliser le paiement manuel si vous refusez." } } } },
+    "Enable arrival alerts" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Activer les alertes d’arrivée" } } } },
+    "Not now" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Pas maintenant" } } } },
+    "Arrival alerts" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Alertes d’arrivée" } } } },
+    "Find Nearby Merchant" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Trouver un commerce près d’ici" } } } },
+    "Search merchant (e.g. Costco, Loblaws)" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Rechercher un commerce (p. ex. Costco, Loblaws)" } } } },
+    "Search" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Rechercher" } } } },
+    "Cancel" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Annuler" } } } },
+    "Done" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Terminé" } } } },
+    "Settings" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Réglages" } } } },
+    "Account" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Compte" } } } },
+    "Ambient" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Alertes contextuelles" } } } },
+    "Status" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "État" } } } },
+    "On" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Activé" } } } },
+    "Off" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Désactivé" } } } },
+    "Sign in to PickMe" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Ouvrir une session dans PickMe" } } } },
+    "Sync & Wallet Capture" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Synchronisation et collecte Wallet" } } } },
+    "Ambient arrival setup" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Configurer les alertes d’arrivée" } } } },
+    "Erase This iPhone's History" : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Effacer l’historique de cet iPhone" } } } },
+    "Erase History" : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Effacer l’historique" } } } },
+    "Delete Account" : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Supprimer le compte" } } } },
+    "Delete your PickMe account" : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Supprimer votre compte PickMe" } } } },
+    "What this deletes" : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Ce qui sera supprimé" } } } },
+    "This iPhone's history" : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "L’historique de cet iPhone" } } } },
+    "Erase this iPhone's history?" : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Effacer l’historique de cet iPhone?" } } } },
+    "Delete your PickMe account permanently?" : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Supprimer définitivement votre compte PickMe?" } } } },
+    "Delete Account and Erase History" : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Supprimer le compte et effacer l’historique" } } } },
+    "How much are you spending?" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Quel est le montant de votre achat?" } } } },
+    "QUICK PRESETS" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "MONTANTS RAPIDES" } } } },
+    "CUSTOM AMOUNT" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "AUTRE MONTANT" } } } },
+    "Calculate" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Calculer" } } } },
+    "Skip — just tell me which card" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Passer — dites-moi seulement quelle carte utiliser" } } } },
+    "Entering amounts feeds your value-recovered scoreboard. Skip anytime." : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Les montants saisis alimentent votre tableau de valeur récupérée. Vous pouvez passer cette étape en tout temps." } } } },
+    "ESTIMATED RETURN" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "REMISE ESTIMÉE" } } } },
+    "REWARDS EARNED" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "RÉCOMPENSES OBTENUES" } } } },
+    "Why this card won" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Pourquoi cette carte est la meilleure" } } } },
+    "Runner-up Comparison" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Comparaison avec la suivante" } } } },
+    "Point Valuation" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Valeur des points" } } } },
+    "Important Note" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "À noter" } } } },
+    "Ambiguous Merchant Coding" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Codage du commerce incertain" } } } },
+    "Reconcile" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Vérifier" } } } },
+    "Match" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Concorde" } } } },
+    "Statement observation" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Observation au relevé" } } } },
+    "Points posted (e.g. 700)" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Points portés au relevé (p. ex. 700)" } } } },
+    "Cash back posted ($)" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Remise portée au relevé ($)" } } } },
+    "Wallet Health" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "État du portefeuille" } } } },
+    "Keep or cancel" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Garder ou annuler" } } } },
+    "Cards to add" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Cartes à ajouter" } } } },
+    "Recurring fee" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Frais annuels" } } } },
+    "Conversion fee" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Frais de conversion" } } } },
+    "ambient.mute-merchant" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Masquer ce commerce" } } } },
+    "ambient.notification.title" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ — utilisez %2$@ (%3$@)" } } } },
+    "ambient.notification.body" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Conseil sur l’appareil pour ce commerce enregistré." } } } },
+    "ambient.reward.best-return" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "meilleure remise" } } } },
+    "ambient.reward.points" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "points" } } } },
+    "ambient.reward.multiplier" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ × %2$@" } } } },
+    "ambient.reward.cash-back" : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "%.0f % de remise" } } } }
+    ,"Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to PickMe are not affected." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Efface de cet iPhone votre journal de prédictions, vos confirmations et les emplacements de commerces enregistrés. Votre compte et les données déjà synchronisées avec PickMe ne sont pas touchés." } } } }
+    ,"Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Votre journal de prédictions, vos confirmations et les emplacements de commerces enregistrés sont supprimés de cet iPhone. Cette action est irréversible. Votre compte n’est pas touché." } } } }
+    ,"Deletes your PickMe account and everything stored for it on the server. You choose separately what happens to this iPhone's history." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Supprime votre compte PickMe et toutes les données qui y sont conservées sur le serveur. Vous choisissez séparément ce qui arrive à l’historique de cet iPhone." } } } }
+    ,"Everything PickMe stores for you on the server: captured wallet events, cap usage, your saved card setup, and the account record itself." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Tout ce que PickMe conserve pour vous sur le serveur : les événements collectés dans Wallet, l’utilisation des plafonds, la configuration de vos cartes enregistrées et le dossier de compte lui-même." } } } }
+    ,"Your PickMe sign-in. You will not be able to sign in again, here or on the web." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Votre accès PickMe. Vous ne pourrez plus ouvrir de session, ni ici ni sur le Web." } } } }
+    ,"Any Wallet Shortcut tokens you created. They stop working immediately." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Tout jeton de raccourci Wallet que vous avez créé. Ils cessent de fonctionner immédiatement." } } } }
+    ,"This cannot be undone, and it cannot be restored for you." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Cette action est irréversible et nous ne pouvons pas restaurer les données pour vous." } } } }
+    ,"Your prediction log, your confirmations, and saved merchant locations are stored only on this iPhone — they were never uploaded, so deleting your account does not touch them. Choose what happens to them." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Votre journal de prédictions, vos confirmations et les emplacements de commerces enregistrés sont conservés uniquement sur cet iPhone — ils n’ont jamais été téléversés. La suppression de votre compte ne les touche donc pas. Choisissez ce qui leur arrive." } } } }
+    ,"Kept. Checkout keeps working offline with your history intact." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Conservé. Le paiement continue de fonctionner hors ligne avec votre historique intact." } } } }
+    ,"Erased from this iPhone along with the account. This cannot be undone either." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Effacé de cet iPhone en même temps que le compte. Cette action est aussi irréversible." } } } }
+    ,"Your account, your server data, and this iPhone's history will be deleted. This cannot be undone." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Votre compte, vos données sur le serveur et l’historique de cet iPhone seront supprimés. Cette action est irréversible." } } } }
+    ,"Your account and your server data will be deleted. This iPhone's history is kept. This cannot be undone." : { "comment" : "human review before public launch", "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Votre compte et vos données sur le serveur seront supprimés. L’historique de cet iPhone sera conservé. Cette action est irréversible." } } } }
+  },
+  "version" : "1.0"
+}

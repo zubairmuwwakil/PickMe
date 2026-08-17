@@ -4,6 +4,10 @@ import CardCopilotStore
 
 struct HomeView: View {
     let valueRecoveredCad: Double
+    /// Complete purchases not yet checked against a statement. Shown beside the confirmed
+    /// figure, never folded into it — until the statement lands, "it coded as predicted" is an
+    /// assumption, and an assumption must not be added to a number labelled as recovered.
+    let pendingValueCad: Double
     let merchants: [StoredMerchant]
     let isSortedByRecentLocation: Bool
     let locationDenied: Bool
@@ -94,6 +98,12 @@ struct HomeView: View {
                         .font(.system(size: 34, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
                         .contentTransition(.numericText())
+
+                    if pendingValueCad > 0 {
+                        Text(String(format: "+$%.2f awaiting your statement", pendingValueCad))
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 Spacer()
