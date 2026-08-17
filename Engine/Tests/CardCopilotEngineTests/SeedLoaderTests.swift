@@ -2,9 +2,9 @@ import XCTest
 @testable import CardCopilotEngine
 
 final class SeedLoaderTests: XCTestCase {
-    func testCatalogueLoadsAllTenCards() throws {
+    func testCatalogueLoadsAllCards() throws {
         let catalogue = try SeedLoader.loadCatalogue()
-        XCTAssertEqual(catalogue.cards.count, 10)
+        XCTAssertEqual(catalogue.cards.count, 15)
         let cobalt = try XCTUnwrap(catalogue.cards.first { $0.cardId == "amex-cobalt" })
         XCTAssertEqual(cobalt.fee.annualCad ?? 0, 191.88, accuracy: 0.005)
         XCTAssertEqual(cobalt.network, .amex)
@@ -29,7 +29,7 @@ final class SeedLoaderTests: XCTestCase {
     func testOwnerStateLoads() throws {
         let state = try SeedLoader.loadOwnerState()
         XCTAssertEqual(state.defaultCardId, "wealthsimple-vip")
-        XCTAssertEqual(state.ownedCardIds.count, 10)
+        XCTAssertEqual(state.ownedCardIds.count, 15)
         XCTAssertEqual(state.switchThreshold.semantics, "both")
         let mr = state.valuationsCad.amexMembershipRewards
         XCTAssertEqual(mr.centsPerPoint, 1.0, accuracy: 0.005,

@@ -24,6 +24,7 @@ struct HomeView: View {
     let onDashboard: () -> Void
     let onProtectionLens: () -> Void
     let onBenefits: () -> Void
+    let onCategoryPicker: () -> Void
     let onWalletHealth: () -> Void
     let onConfigureAmbient: () -> Void
 
@@ -358,6 +359,20 @@ struct HomeView: View {
                 .foregroundStyle(.primary)
 
             VStack(spacing: 10) {
+                // Which Card? — a no-amount category lookup, so it belongs before anything that
+                // needs a purchase already in progress.
+                Button(action: onCategoryPicker) {
+                    toolRow(
+                        icon: "square.grid.2x2.fill",
+                        iconColor: .teal,
+                        title: "Which Card?",
+                        subtitle: "Pick a category, see the card",
+                        badge: nil,
+                        badgeColor: .teal
+                    )
+                }
+                .buttonStyle(.plain)
+
                 // Wallet Health (keep/cancel)
                 Button(action: onWalletHealth) {
                     toolRow(
@@ -443,8 +458,8 @@ struct HomeView: View {
     private func toolRow(
         icon: String,
         iconColor: Color,
-        title: String,
-        subtitle: String,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
         badge: String?,
         badgeColor: Color
     ) -> some View {

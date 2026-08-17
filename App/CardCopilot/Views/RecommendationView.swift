@@ -188,7 +188,7 @@ struct RecommendationView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Label(
-                            "If Coded as \(readableCategory(branch.category).uppercased())",
+                            "If Coded as \(categoryLabel(branch.category).uppercased())",
                             systemImage: CategoryVisuals.meta(for: branch.category).icon
                         )
                         .font(.system(size: 12, weight: .bold, design: .rounded))
@@ -204,7 +204,7 @@ struct RecommendationView: View {
                     CardArtView(
                         cardId: cardId,
                         officialName: cardOfficialName,
-                        rewardHeadline: "Best if coded as \(readableCategory(branch.category))",
+                        rewardHeadline: "Best if coded as \(categoryLabel(branch.category))",
                         effectiveReturnText: String(format: "$%.2f", netValue),
                         isHero: false
                     )
@@ -270,13 +270,11 @@ struct RecommendationView: View {
         deps?.catalogue.cards.first { $0.cardId == cardId }?.officialName ?? cardId
     }
 
-    private func readableCategory(_ category: String) -> String {
-        switch category {
-        case "grocery": return "Grocery"
-        case "gasStation": return "Gas Station"
-        case "dining": return "Dining & Food"
-        case "other": return "General Merchandise"
-        default: return category.capitalized
-        }
+    /// Routes through the same shared, catalogue-derived label source the category picker uses
+    /// (`CategoryPickerAdvisor.label`), so a fork branch and a category pill never disagree on
+    /// what to call the same category — and so a category the catalogue grows into never falls
+    /// through to a raw identifier here either.
+    private func categoryLabel(_ category: String) -> String {
+        CategoryPickerAdvisor.label(for: category)
     }
 }

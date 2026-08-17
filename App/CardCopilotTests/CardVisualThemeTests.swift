@@ -1,0 +1,224 @@
+import XCTest
+import SwiftUI
+import SwiftData
+import CardCopilotEngine
+import CardCopilotStore
+@testable import CardCopilot
+
+/// Drift-prevention and branding validation test suite for CardVisualTheme and CategoryVisuals.
+///
+/// Ensures that visual theme styling never drifts from the live card catalogue in contracts/card-catalogue.json:
+/// - Every defined theme key must correspond to an actual card in the live catalogue.
+/// - Every card in the live catalogue must have a dedicated theme style (never silently falling back to generic gray).
+/// - Every card style must have valid non-empty branding attributes and multi-stop gradients.
+/// - Every category dynamically derived by CategoryPickerAdvisor must resolve to a dedicated visual icon, color, and label.
+final class CardVisualThemeTests: XCTestCase {
+
+    func testAllDefinedThemeKeysExistInCatalogue() throws {
+        let catalogue = try SeedLoader.loadCatalogue()
+        let catalogueCardIds = Set(catalogue.cards.map(\.cardId))
+
+        let unknownThemeKeys = CardVisualTheme.definedCardIds.subtracting(catalogueCardIds)
+        XCTAssertTrue(
+            unknownThemeKeys.isEmpty,
+            "CardVisualTheme defines theme keys that do not exist in card-catalogue.json: \(unknownThemeKeys). Fix the keys to match the canonical catalogue."
+        )
+    }
+
+    func testAllCatalogueCardsHaveDedicatedVisualTheme() throws {
+        let catalogue = try SeedLoader.loadCatalogue()
+        let catalogueCardIds = Set(catalogue.cards.map(\.cardId))
+
+        let missingThemeKeys = catalogueCardIds.subtracting(CardVisualTheme.definedCardIds)
+        XCTAssertTrue(
+            missingThemeKeys.isEmpty,
+            "card-catalogue.json contains cards that lack a dedicated style in CardVisualTheme: \(missingThemeKeys). Add explicit styles for these cards."
+        )
+    }
+
+    func testEveryDefinedCardProducesNonGenericStyle() {
+        for cardId in CardVisualTheme.definedCardIds {
+            let style = CardVisualTheme.style(for: cardId)
+
+            XCTAssertEqual(style.cardId, cardId, "Style cardId mismatch for \(cardId)")
+            XCTAssertFalse(style.shortName.trimmingCharacters(in: .whitespaces).isEmpty, "shortName must not be empty for \(cardId)")
+            XCTAssertFalse(style.issuer.trimmingCharacters(in: .whitespaces).isEmpty, "issuer must not be empty for \(cardId)")
+            XCTAssertNotEqual(style.issuer, "Card", "\(cardId) unexpectedly resolved to generic fallback issuer 'Card'")
+            XCTAssertGreaterThanOrEqual(style.gradientColors.count, 2, "gradientColors must contain at least 2 gradient stops for \(cardId)")
+        }
+    }
+
+    func testUnknownCardFallsBackToGenericStyle() {
+        let unknownId = "unknown-test-card-\(UUID().uuidString)"
+        let fallback = CardVisualTheme.style(for: unknownId)
+
+        XCTAssertEqual(fallback.cardId, unknownId)
+        XCTAssertEqual(fallback.shortName, unknownId)
+        XCTAssertEqual(fallback.issuer, "Card")
+        XCTAssertEqual(fallback.network, .mastercard)
+        XCTAssertGreaterThanOrEqual(fallback.gradientColors.count, 2)
+        XCTAssertTrue(fallback.isDark)
+    }
+
+    func testCardVisualThemeNetworksAlignWithCatalogue() throws {
+        let catalogue = try SeedLoader.loadCatalogue()
+
+        for card in catalogue.cards {
+            let style = CardVisualTheme.style(for: card.cardId)
+            switch card.network {
+            case .amex:
+                XCTAssertEqual(style.network, .amex, "Amex card \(card.cardId) must have .amex network in CardVisualTheme")
+            case .visa:
+                XCTAssertTrue(
+                    style.network == .visa || style.network == .visaInfinite || style.network == .visaInfinitePrivilege || style.network == .prepaid,
+                    "Visa card \(card.cardId) has unexpected network \(style.network) in CardVisualTheme"
+                )
+            case .mastercard:
+                XCTAssertTrue(
+                    style.network == .mastercard || style.network == .mastercardWorldElite,
+                    "Mastercard \(card.cardId) has unexpected network \(style.network) in CardVisualTheme"
+                )
+            }
+        }
+    }
+
+    func testAmbientLocationServiceShortCardNamesCoversAllCatalogueCards() throws {
+        let catalogue = try SeedLoader.loadCatalogue()
+
+        for card in catalogue.cards {
+            let shortName = AmbientLocationService.shortCardName(card)
+            XCTAssertFalse(shortName.isEmpty, "Ambient short card name must not be empty for \(card.cardId)")
+            XCTAssertFalse(shortName.hasSuffix(" Credit Card"), "Ambient short card name should trim 'Credit Card' suffix for \(card.cardId)")
+        }
+    }
+
+    // MARK: - CategoryVisuals Dynamic Coverage Tests
+
+    func testAllDerivedCategoriesResolveToDedicatedVisualMeta() throws {
+        let catalogue = try SeedLoader.loadCatalogue()
+        let derivedCategories = CategoryPickerAdvisor.derivedCategories(catalogue: catalogue)
+
+        XCTAssertFalse(derivedCategories.isEmpty, "CategoryPickerAdvisor.derivedCategories must not be empty")
+
+        for category in derivedCategories {
+            let meta = CategoryVisuals.meta(for: category)
+
+            let isDefaultFallback = meta.icon == "bag.fill" && meta.color == .secondary && meta.displayName == "General"
+            XCTAssertFalse(
+                isDefaultFallback,
+                "Category '\(category)' derived by CategoryPickerAdvisor resolved to generic default visual fallback. Add a dedicated case in CategoryVisuals.meta(for:)."
+            )
+            XCTAssertFalse(meta.icon.trimmingCharacters(in: .whitespaces).isEmpty, "Icon for '\(category)' must not be empty")
+            XCTAssertFalse(meta.displayName.trimmingCharacters(in: .whitespaces).isEmpty, "DisplayName for '\(category)' must not be empty")
+        }
+    }
+
+    func testAllObservableCategoriesResolveToDedicatedVisualMeta() throws {
+        let catalogue = try SeedLoader.loadCatalogue()
+        let observable = observableCategories(in: catalogue)
+
+        XCTAssertFalse(observable.isEmpty, "observableCategories must not be empty")
+
+        for category in observable {
+            let meta = CategoryVisuals.meta(for: category)
+
+            let isDefaultFallback = meta.icon == "bag.fill" && meta.color == .secondary && meta.displayName == "General"
+            XCTAssertFalse(
+                isDefaultFallback,
+                "Observable category '\(category)' resolved to generic default visual fallback. Add a dedicated case in CategoryVisuals.meta(for:)."
+            )
+        }
+    }
+
+    func testSpecificCategoryVisualMappings() {
+        XCTAssertEqual(CategoryVisuals.meta(for: "ctFamily").icon, "triangle.fill")
+        XCTAssertEqual(CategoryVisuals.meta(for: "wholesaleClub").icon, "building.2.fill")
+        XCTAssertEqual(CategoryVisuals.meta(for: "digitalMedia").icon, "play.square.fill")
+        XCTAssertEqual(CategoryVisuals.meta(for: "evCharging").icon, "bolt.car.fill")
+        XCTAssertEqual(CategoryVisuals.meta(for: "entertainment").icon, "ticket.fill")
+        XCTAssertEqual(CategoryVisuals.meta(for: "householdUtilities").icon, "lightbulb.fill")
+        XCTAssertEqual(CategoryVisuals.meta(for: "marriottDirect").icon, "crown.fill")
+        XCTAssertEqual(CategoryVisuals.meta(for: "memberships").icon, "person.2.fill")
+        XCTAssertEqual(CategoryVisuals.meta(for: "other").icon, "tag.fill")
+        XCTAssertEqual(CategoryVisuals.meta(for: "travel").icon, "airplane")
+    }
+
+    func testUnknownCategoryFallsBackToGenericBagMeta() {
+        let unknown = "unmappedCategory_\(UUID().uuidString)"
+        let fallback = CategoryVisuals.meta(for: unknown)
+
+        XCTAssertEqual(fallback.icon, "bag.fill")
+        XCTAssertEqual(fallback.color, .secondary)
+        XCTAssertEqual(fallback.displayName, "General")
+    }
+
+    @MainActor
+    func testRenderCategoryPickerGridScreenshot() throws {
+        let catalogue = try SeedLoader.loadCatalogue()
+        let candidateCatalogue = try SeedLoader.loadCandidateCatalogue()
+        let ownerState = try SeedLoader.loadOwnerState()
+        let benefits = try SeedLoader.loadBenefitsCatalogue()
+        let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
+        let explainer = RecommendationExplainer(catalogue: catalogue)
+        let schema = Schema([
+            StoredPrediction.self, StoredPurchase.self, StoredObservation.self, StoredMerchant.self,
+            ExploredCell.self, ShoppingArea.self, AreaMember.self
+        ])
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: [config])
+        let context = ModelContext(container)
+        let service = CheckoutService(catalogue: catalogue, ownerState: ownerState, context: context)
+        let provider = LiveMerchantProvider()
+        let deps = CheckoutFlowView.Dependencies(
+            catalogue: catalogue,
+            candidateCatalogue: candidateCatalogue,
+            ownerState: ownerState,
+            benefits: benefits,
+            service: service,
+            explainer: explainer,
+            engine: engine,
+            provider: provider
+        )
+
+        let view = NavigationStack {
+            CategoryPickerView(deps: deps, onDone: {})
+        }
+        .frame(width: 430, height: 1650)
+
+        let hosting = UIHostingController(rootView: view)
+        hosting.view.frame = CGRect(x: 0, y: 0, width: 430, height: 1650)
+        // Dark mode screenshot
+        hosting.overrideUserInterfaceStyle = .dark
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 430, height: 1650))
+        window.rootViewController = hosting
+        window.makeKeyAndVisible()
+        hosting.view.setNeedsLayout()
+        hosting.view.layoutIfNeeded()
+
+        let renderer = UIGraphicsImageRenderer(bounds: hosting.view.bounds)
+        let darkImage = renderer.image { _ in
+            hosting.view.drawHierarchy(in: hosting.view.bounds, afterScreenUpdates: true)
+        }
+
+        if let data = darkImage.pngData() {
+            let artifactPath = "/Users/zub/.gemini/antigravity/brain/12e8edf2-025a-4b62-9134-ac17f8147e16/category_picker_grid.png"
+            try data.write(to: URL(fileURLWithPath: artifactPath))
+            try data.write(to: URL(fileURLWithPath: "/tmp/category_picker_grid.png"))
+        }
+
+        // Light mode screenshot
+        hosting.overrideUserInterfaceStyle = .light
+        hosting.view.setNeedsLayout()
+        hosting.view.layoutIfNeeded()
+
+        let lightImage = renderer.image { _ in
+            hosting.view.drawHierarchy(in: hosting.view.bounds, afterScreenUpdates: true)
+        }
+
+        if let data = lightImage.pngData() {
+            let artifactPath = "/Users/zub/.gemini/antigravity/brain/12e8edf2-025a-4b62-9134-ac17f8147e16/category_picker_grid_light.png"
+            try data.write(to: URL(fileURLWithPath: artifactPath))
+            try data.write(to: URL(fileURLWithPath: "/tmp/category_picker_grid_light.png"))
+        }
+    }
+}

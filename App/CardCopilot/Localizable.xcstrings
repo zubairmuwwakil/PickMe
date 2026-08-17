@@ -37,6 +37,28 @@
         }
       }
     },
+    "%@ back in %@" : {
+      "comment" : "human review before public launch — reward-program terminology (CT Money, CRO)",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ de retour en %@"
+          }
+        }
+      }
+    },
+    "%@ cash back" : {
+      "comment" : "human review before public launch — reward-program terminology",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ de remise en argent"
+          }
+        }
+      }
+    },
     "%@ equals or beats all other cards on every line below." : {
       "localizations" : {
         "fr-CA" : {
@@ -79,6 +101,16 @@
         }
       }
     },
+    "%@ – %@" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ – %@"
+          }
+        }
+      }
+    },
     "%@: %.2f¢ / point" : {
       "localizations" : {
         "en" : {
@@ -91,6 +123,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ : %2$.2f ¢ / point"
+          }
+        }
+      }
+    },
+    "%@x points" : {
+      "comment" : "human review before public launch — reward-program terminology",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@x points"
           }
         }
       }
@@ -669,7 +712,16 @@
         }
       }
     },
-    "Choose up to three categories currently selected on your Tangerine account. Leave all unselected if you are not sure." : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Choisissez jusqu’à trois catégories actuellement sélectionnées dans votre compte Tangerine. Ne sélectionnez rien si vous n’êtes pas certain." } } } },
+    "Choose up to three categories currently selected on your Tangerine account. Leave all unselected if you are not sure." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez jusqu’à trois catégories actuellement sélectionnées dans votre compte Tangerine. Ne sélectionnez rien si vous n’êtes pas certain."
+          }
+        }
+      }
+    },
     "Classification" : {
       "localizations" : {
         "fr-CA" : {
@@ -1894,6 +1946,16 @@
         }
       }
     },
+    "Pick a category, see the card" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez une catégorie, voyez la carte"
+          }
+        }
+      }
+    },
     "PickMe" : {
       "localizations" : {
         "fr-CA" : {
@@ -2515,6 +2577,26 @@
         }
       }
     },
+    "The answer can change with the amount — tap a category to see how." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réponse peut changer selon le montant — touchez une catégorie pour voir comment."
+          }
+        }
+      }
+    },
+    "The answer changes with the amount for this category — enter the exact figure at checkout for the precise cutoff." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réponse change selon le montant pour cette catégorie — entrez le montant exact à la caisse pour le seuil précis."
+          }
+        }
+      }
+    },
     "The certificate confirms no insurance coverage on this card product." : {
       "localizations" : {
         "fr-CA" : {
@@ -2845,6 +2927,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Où"
+          }
+        }
+      }
+    },
+    "Which Card?" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quelle carte?"
           }
         }
       }
@@ -3198,6 +3290,16 @@
         }
       }
     },
+    "fuel savings" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "économies de carburant"
+          }
+        }
+      }
+    },
     "in fees across %lld cards" : {
       "localizations" : {
         "fr-CA" : {
@@ -3228,12 +3330,53 @@
         }
       }
     },
+    "over %@" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "plus de %@"
+          }
+        }
+      }
+    },
+    "under %@" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "moins de %@"
+          }
+        }
+      }
+    },
     "vs" : {
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "c."
+          }
+        }
+      }
+    },
+    "your default" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "votre carte par défaut"
+          }
+        }
+      }
+    },
+    "your default — not worth switching" : {
+      "comment" : "human review before public launch — financial guidance copy",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "votre carte par défaut — ça ne vaut pas la peine de changer"
           }
         }
       }

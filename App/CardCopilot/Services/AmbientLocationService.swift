@@ -483,7 +483,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         let titleTemplate = String(localized: "ambient.notification.title",
                                    defaultValue: "%@ — use %@ (%@)")
         content.title = String(format: titleTemplate, locale: .current,
-                               notificationMerchantName(arrival.merchant.name), shortCardName(card),
+                               notificationMerchantName(arrival.merchant.name), Self.shortCardName(card),
                                rewardReason(card, recommendation))
         content.body = String(localized: "ambient.notification.body",
                               defaultValue: "On-device advice for this saved merchant.")
@@ -630,18 +630,23 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         manager.startMonitoringSignificantLocationChanges()
     }
 
-    private func shortCardName(_ card: CardProduct) -> String {
+    nonisolated static func shortCardName(_ card: CardProduct) -> String {
         switch card.cardId {
         case "amex-cobalt": return "Amex Cobalt"
         case "amex-platinum": return "Amex Platinum"
-        case "scotia-momentum-vi": return "Scotia Momentum"
+        case "amex-bonvoy": return "Marriott Bonvoy"
         case "mbna-rewards-we": return "MBNA Rewards"
-        case "marriott-bonvoy-amex": return "Marriott Bonvoy"
+        case "scotia-momentum-vi-plus": return "Scotia Momentum"
+        case "tangerine-moneyback-world": return "Tangerine Money-Back"
         case "triangle-we": return "Triangle"
         case "wealthsimple-vip": return "Wealthsimple VIP"
         case "rogers-red-we": return "Rogers Red"
-        case "tangerine-moneyback": return "Tangerine Money-Back"
-        case "cryptocom-ruby": return "Crypto.com Ruby"
+        case "cryptocom-royal-indigo": return "Crypto.com Indigo"
+        case "scotia-gold-amex": return "Scotia Gold Amex"
+        case "td-aeroplan-visa-infinite": return "TD Aeroplan"
+        case "rbc-avion-visa-infinite": return "RBC Avion"
+        case "cibc-dividend-visa-infinite": return "CIBC Dividend"
+        case "scotia-passport-visa-infinite-plus": return "Scotia Passport"
         default: return card.officialName.replacingOccurrences(of: " Credit Card", with: "")
         }
     }

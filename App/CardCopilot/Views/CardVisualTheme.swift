@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Visual theme and branding metadata for cards in the user's wallet.
 enum CardVisualTheme {
-    struct CardStyle {
+    struct CardStyle: Equatable {
         let cardId: String
         let shortName: String
         let issuer: String
@@ -13,14 +13,34 @@ enum CardVisualTheme {
         let isDark: Bool
     }
 
-    enum CardNetwork: String {
+    enum CardNetwork: String, Equatable {
         case amex = "AMEX"
         case visaInfinitePrivilege = "VISA INFINITE PRIVILEGE"
         case visaInfinite = "VISA INFINITE"
+        case visa = "VISA"
         case mastercardWorldElite = "WORLD ELITE"
         case mastercard = "MASTERCARD"
         case prepaid = "PREPAID"
     }
+
+    /// All card IDs that have explicit, dedicated branding themes defined.
+    static let definedCardIds: Set<String> = [
+        "amex-cobalt",
+        "amex-platinum",
+        "amex-bonvoy",
+        "mbna-rewards-we",
+        "scotia-momentum-vi-plus",
+        "tangerine-moneyback-world",
+        "triangle-we",
+        "wealthsimple-vip",
+        "rogers-red-we",
+        "cryptocom-royal-indigo",
+        "scotia-gold-amex",
+        "td-aeroplan-visa-infinite",
+        "rbc-avion-visa-infinite",
+        "cibc-dividend-visa-infinite",
+        "scotia-passport-visa-infinite-plus",
+    ]
 
     static func style(for cardId: String) -> CardStyle {
         switch cardId {
@@ -46,15 +66,15 @@ enum CardVisualTheme {
                 accentColor: Color(red: 0.2, green: 0.25, blue: 0.3),
                 isDark: false
             )
-        case "scotia-momentum-vi":
+        case "amex-bonvoy":
             return CardStyle(
                 cardId: cardId,
-                shortName: "Momentum",
-                issuer: "Scotiabank",
-                network: .visaInfinite,
-                gradientColors: [Color(red: 0.65, green: 0.08, blue: 0.12), Color(red: 0.38, green: 0.03, blue: 0.06)],
+                shortName: "Bonvoy",
+                issuer: "Marriott / Amex",
+                network: .amex,
+                gradientColors: [Color(red: 0.11, green: 0.16, blue: 0.28), Color(red: 0.2, green: 0.14, blue: 0.32)],
                 textColor: .white,
-                accentColor: Color(red: 1.0, green: 0.82, blue: 0.4),
+                accentColor: Color(red: 0.95, green: 0.78, blue: 0.45),
                 isDark: true
             )
         case "mbna-rewards-we":
@@ -68,15 +88,26 @@ enum CardVisualTheme {
                 accentColor: Color(red: 0.3, green: 0.85, blue: 0.95),
                 isDark: true
             )
-        case "marriott-bonvoy-amex":
+        case "scotia-momentum-vi-plus":
             return CardStyle(
                 cardId: cardId,
-                shortName: "Bonvoy",
-                issuer: "Marriott / Amex",
-                network: .amex,
-                gradientColors: [Color(red: 0.11, green: 0.16, blue: 0.28), Color(red: 0.2, green: 0.14, blue: 0.32)],
+                shortName: "Momentum",
+                issuer: "Scotiabank",
+                network: .visaInfinite,
+                gradientColors: [Color(red: 0.65, green: 0.08, blue: 0.12), Color(red: 0.38, green: 0.03, blue: 0.06)],
                 textColor: .white,
-                accentColor: Color(red: 0.95, green: 0.78, blue: 0.45),
+                accentColor: Color(red: 1.0, green: 0.82, blue: 0.4),
+                isDark: true
+            )
+        case "tangerine-moneyback-world":
+            return CardStyle(
+                cardId: cardId,
+                shortName: "Money-Back",
+                issuer: "Tangerine",
+                network: .mastercard,
+                gradientColors: [Color(red: 0.95, green: 0.45, blue: 0.05), Color(red: 0.8, green: 0.3, blue: 0.02)],
+                textColor: .white,
+                accentColor: .white,
                 isDark: true
             )
         case "triangle-we":
@@ -112,26 +143,70 @@ enum CardVisualTheme {
                 accentColor: .white,
                 isDark: true
             )
-        case "tangerine-moneyback":
+        case "cryptocom-royal-indigo":
             return CardStyle(
                 cardId: cardId,
-                shortName: "Money-Back",
-                issuer: "Tangerine",
-                network: .mastercard,
-                gradientColors: [Color(red: 0.95, green: 0.45, blue: 0.05), Color(red: 0.8, green: 0.3, blue: 0.02)],
-                textColor: .white,
-                accentColor: .white,
-                isDark: true
-            )
-        case "cryptocom-ruby":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Ruby Steel",
+                shortName: "Royal Indigo",
                 issuer: "Crypto.com",
                 network: .prepaid,
-                gradientColors: [Color(red: 0.6, green: 0.08, blue: 0.18), Color(red: 0.35, green: 0.04, blue: 0.1)],
+                gradientColors: [Color(red: 0.18, green: 0.14, blue: 0.44), Color(red: 0.08, green: 0.06, blue: 0.22)],
                 textColor: .white,
-                accentColor: Color(red: 0.95, green: 0.6, blue: 0.7),
+                accentColor: Color(red: 0.7, green: 0.65, blue: 0.95),
+                isDark: true
+            )
+        case "scotia-gold-amex":
+            return CardStyle(
+                cardId: cardId,
+                shortName: "Scotia Gold",
+                issuer: "Scotiabank",
+                network: .amex,
+                gradientColors: [Color(red: 0.72, green: 0.56, blue: 0.22), Color(red: 0.42, green: 0.30, blue: 0.10)],
+                textColor: .white,
+                accentColor: Color(red: 1.0, green: 0.90, blue: 0.55),
+                isDark: true
+            )
+        case "td-aeroplan-visa-infinite":
+            return CardStyle(
+                cardId: cardId,
+                shortName: "TD Aeroplan",
+                issuer: "TD",
+                network: .visaInfinite,
+                gradientColors: [Color(red: 0.08, green: 0.22, blue: 0.15), Color(red: 0.03, green: 0.08, blue: 0.05)],
+                textColor: .white,
+                accentColor: Color(red: 0.25, green: 0.85, blue: 0.42),
+                isDark: true
+            )
+        case "rbc-avion-visa-infinite":
+            return CardStyle(
+                cardId: cardId,
+                shortName: "RBC Avion",
+                issuer: "RBC",
+                network: .visaInfinite,
+                gradientColors: [Color(red: 0.06, green: 0.20, blue: 0.48), Color(red: 0.02, green: 0.08, blue: 0.25)],
+                textColor: .white,
+                accentColor: Color(red: 1.0, green: 0.82, blue: 0.15),
+                isDark: true
+            )
+        case "cibc-dividend-visa-infinite":
+            return CardStyle(
+                cardId: cardId,
+                shortName: "CIBC Dividend",
+                issuer: "CIBC",
+                network: .visaInfinite,
+                gradientColors: [Color(red: 0.58, green: 0.06, blue: 0.15), Color(red: 0.28, green: 0.02, blue: 0.08)],
+                textColor: .white,
+                accentColor: Color(red: 0.95, green: 0.75, blue: 0.80),
+                isDark: true
+            )
+        case "scotia-passport-visa-infinite-plus":
+            return CardStyle(
+                cardId: cardId,
+                shortName: "Scotia Passport",
+                issuer: "Scotiabank",
+                network: .visaInfinite,
+                gradientColors: [Color(red: 0.08, green: 0.26, blue: 0.35), Color(red: 0.03, green: 0.10, blue: 0.18)],
+                textColor: .white,
+                accentColor: Color(red: 0.35, green: 0.85, blue: 0.95),
                 isDark: true
             )
         default:
@@ -167,8 +242,8 @@ enum CategoryVisuals {
             return Meta(icon: "fuelpump.fill", color: .blue, displayName: "Gas Station")
         case "transit":
             return Meta(icon: "tram.fill", color: .teal, displayName: "Transit & Travel")
-        case "flight", "flights":
-            return Meta(icon: "airplane", color: .indigo, displayName: "Flights")
+        case "flight", "flights", "travel":
+            return Meta(icon: "airplane", color: .indigo, displayName: "Travel")
         case "hotel", "lodging", "hotels":
             return Meta(icon: "bed.double.fill", color: .purple, displayName: "Hotel & Lodging")
         case "streaming":
@@ -185,6 +260,26 @@ enum CategoryVisuals {
             return Meta(icon: "cross.case.fill", color: .mint, displayName: "Pharmacy")
         case "recurring", "recurringbills":
             return Meta(icon: "arrow.triangle.2.circlepath", color: .pink, displayName: "Recurring Bills")
+        case "ctfamily":
+            return Meta(icon: "triangle.fill", color: .red, displayName: "Canadian Tire Family")
+        case "wholesaleclub":
+            return Meta(icon: "building.2.fill", color: .blue, displayName: "Wholesale Club")
+        case "digitalmedia":
+            return Meta(icon: "play.square.fill", color: .purple, displayName: "Digital Media")
+        case "evcharging":
+            return Meta(icon: "bolt.car.fill", color: .green, displayName: "EV Charging")
+        case "entertainment":
+            return Meta(icon: "ticket.fill", color: .pink, displayName: "Entertainment")
+        case "householdutilities", "utilities":
+            return Meta(icon: "lightbulb.fill", color: .yellow, displayName: "Household Utilities")
+        case "marriottdirect":
+            return Meta(icon: "crown.fill", color: .brown, displayName: "Marriott Direct")
+        case "memberships":
+            return Meta(icon: "person.2.fill", color: .teal, displayName: "Memberships")
+        case "other", "general":
+            return Meta(icon: "tag.fill", color: .gray, displayName: "General Merchandise")
+        case "fitness":
+            return Meta(icon: "figure.run", color: .mint, displayName: "Fitness & Gym")
         default:
             return Meta(icon: "bag.fill", color: .secondary, displayName: "General")
         }

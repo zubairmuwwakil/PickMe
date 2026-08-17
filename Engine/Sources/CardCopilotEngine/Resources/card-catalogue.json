@@ -494,6 +494,465 @@
       "perTransactionRewardVisibility": "issuerConfirmed",
       "sources": ["https://help.crypto.com/en/articles/2742447-crypto-com-prepaid-card-rewards-benefits"],
       "lastVerifiedAt": "2026-08-15"
+    },
+    {
+      "cardId": "scotia-gold-amex",
+      "officialName": "Scotiabank Gold American Express Card",
+      "issuer": "Scotiabank",
+      "network": "amex",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 120,
+        "waiver": "Scotia Ultimate Package can rebate up to $150 of the annual fee; Preferred Package can rebate $40 subject to purchase conditions."
+      },
+      "program": {
+        "programId": "scenePlus",
+        "unit": "point",
+        "_note": "NEW programId; valuation and scorer support required."
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.0,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "scotia-gold-base-1x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "points", "pointsPerCad": 1 },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "scotia-gold-featured-grocery-6x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "points", "pointsPerCad": 6 },
+          "predicate": {
+            "merchantInclude": [
+              "Sobeys",
+              "Safeway",
+              "FreshCo",
+              "Chalo FreshCo",
+              "Thrifty Foods",
+              "IGA",
+              "Les Marches Tradition",
+              "Rachelle Bery",
+              "Voila"
+            ],
+            "currency": "CAD"
+          },
+          "capId": "scotia-gold-accelerated-calendarYear",
+          "scoredInV1": false,
+          "_note": "Disabled until merchant normalization and strict qualifying-merchant logic are verified."
+        },
+        {
+          "ruleId": "scotia-gold-grocery-dining-entertainment-5x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "points", "pointsPerCad": 5 },
+          "predicate": {
+            "categories": ["grocery", "dining", "entertainment"],
+            "currency": "CAD"
+          },
+          "capId": "scotia-gold-accelerated-calendarYear",
+          "scoredInV1": false,
+          "_note": "Requires strict issuer-MCC matching; category-only fallback is unsafe."
+        },
+        {
+          "ruleId": "scotia-gold-gas-transit-3x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "points", "pointsPerCad": 3 },
+          "predicate": {
+            "categories": ["gasStation", "transit"],
+            "currency": "CAD"
+          },
+          "capId": "scotia-gold-accelerated-calendarYear",
+          "scoredInV1": false
+        },
+        {
+          "ruleId": "scotia-gold-streaming-3x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "points", "pointsPerCad": 3 },
+          "predicate": {
+            "categories": ["streaming"],
+            "currency": "CAD"
+          },
+          "capId": "scotia-gold-accelerated-calendarYear",
+          "scoredInV1": false,
+          "_note": "Current exact participating-provider list unresolved."
+        }
+      ],
+      "caps": [
+        {
+          "capId": "scotia-gold-accelerated-calendarYear",
+          "measure": "spendCad",
+          "limit": 50000,
+          "period": "calendarYear",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": { "type": "points", "pointsPerCad": 1 },
+          "proration": true,
+          "_note": "Issuer states first $50,000. Exact treatment of a transaction straddling the threshold was not separately documented."
+        }
+      ],
+      "perTransactionRewardVisibility": "unknown",
+      "sources": ["https://www.scotiabank.com/ca/en/personal/credit-cards/american-express/gold-card.html"],
+      "lastVerifiedAt": "2026-08-17",
+      "_note": "Scene+ Travel payment-independent points and Shell fuel economics deliberately excluded from checkout scoring."
+    },
+    {
+      "cardId": "td-aeroplan-visa-infinite",
+      "officialName": "TD Aeroplan Visa Infinite Card",
+      "issuer": "TD Canada Trust",
+      "network": "visa",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 139,
+        "waiver": "TD All-Inclusive Banking Plan may rebate the fee on one eligible TD credit-card account, subject to current plan terms."
+      },
+      "program": {
+        "programId": "aeroplan",
+        "unit": "point",
+        "_note": "NEW programId; valuation and scorer support required."
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "td-aeroplan-base-1x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "points", "pointsPerCad": 1 },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "td-aeroplan-gas-grocery-ev-1_5x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "points", "pointsPerCad": 1.5 },
+          "predicate": {
+            "categories": ["gasStation", "evCharging", "grocery"]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "Issuer confirms $80,000 annual maximum but public reset basis remains unresolved; strict MCC matching is also required."
+        },
+        {
+          "ruleId": "td-aeroplan-air-canada-direct-1_5x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "points", "pointsPerCad": 1.5 },
+          "predicate": {
+            "merchantInclude": ["Air Canada"]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "Requires reliable direct-Air-Canada transaction identification and the unresolved annual-cap window."
+        },
+        {
+          "ruleId": "td-aeroplan-hyatt-1_5x",
+          "status": "current",
+          "effectiveFrom": "2026-07-15",
+          "effectiveTo": "2029-07-15",
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "points", "pointsPerCad": 1.5 },
+          "predicate": {
+            "merchantInclude": ["Hyatt"]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "Participating-property qualification requires better merchant mapping. Separate linked-account World of Hyatt earn cannot be represented by the current single-reward earn model."
+        }
+      ],
+      "caps": [],
+      "perTransactionRewardVisibility": "unknown",
+      "sources": ["https://www.td.com/ca/en/personal-banking/products/credit-cards/aeroplan/aeroplan-visa-infinite-card"],
+      "lastVerifiedAt": "2026-08-17",
+      "_note": "Do not encode an $80,000 cap until its issuer-defined reset period is verified."
+    },
+    {
+      "cardId": "rbc-avion-visa-infinite",
+      "officialName": "RBC Avion Visa Infinite",
+      "issuer": "Royal Bank of Canada",
+      "network": "visa",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 120,
+        "waiver": "Eligible RBC VIP Banking customers may receive an annual-fee rebate on one qualifying RBC card."
+      },
+      "program": {
+        "programId": "rbcAvion",
+        "unit": "point",
+        "_note": "NEW programId; valuation and scorer support required."
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "_note": "Current issuer-hosted disclosure states 2.5%; reverify at merge because the PDF revision identifier is older."
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "rbc-avion-base-1x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "points", "pointsPerCad": 1 },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "rbc-avion-travel-1_25x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "points", "pointsPerCad": 1.25 },
+          "predicate": {
+            "categories": ["travel"]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "Strict Visa MCC matching required. Current personal-card cap/no-cap status not sufficiently verified."
+        }
+      ],
+      "caps": [],
+      "perTransactionRewardVisibility": "unknown",
+      "sources": ["https://www.rbcroyalbank.com/credit-cards/travel/rbc-avion-visa-infinite.html"],
+      "lastVerifiedAt": "2026-08-17"
+    },
+    {
+      "cardId": "cibc-dividend-visa-infinite",
+      "officialName": "CIBC Dividend Visa Infinite Card",
+      "issuer": "CIBC",
+      "network": "visa",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 120,
+        "waiver": "Eligible CIBC Smart Account tiers may provide partial or full annual-fee rebates subject to current issuer conditions."
+      },
+      "program": {
+        "programId": "cashback",
+        "unit": "cad"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": "2026-08-01",
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "cibc-dividend-base-1pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "cashback", "rate": 0.01 },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "cibc-dividend-gas-grocery-ev-4pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "cashback", "rate": 0.04 },
+          "predicate": {
+            "categories": ["gasStation", "evCharging", "grocery"]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "Requires first-of-two cap group: $50k all-card purchases OR $20k accelerated purchases, reset after December Statement Date."
+        },
+        {
+          "ruleId": "cibc-dividend-transit-dining-recurring-2pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "cashback", "rate": 0.02 },
+          "predicate": {
+            "categories": ["transit", "dining", "recurring"]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "Same unsupported first-of-two cap structure as the 4% accelerator."
+        },
+        {
+          "ruleId": "cibc-dividend-expedia-2pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "cashback", "rate": 0.02 },
+          "predicate": {
+            "merchantInclude": ["CIBC by Expedia"]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "Issuer carves this earn out of the regular accelerated cap; enable only after reliable CIBC-by-Expedia transaction identification."
+        }
+      ],
+      "caps": [],
+      "perTransactionRewardVisibility": "unknown",
+      "sources": ["https://www.cibc.com/en/personal-banking/credit-cards/all-credit-cards/dividend-visa-infinite-card.html"],
+      "lastVerifiedAt": "2026-08-17",
+      "_note": "Do not approximate CIBC's dual annual thresholds as a single calendar-year cap."
+    },
+    {
+      "cardId": "scotia-passport-visa-infinite-plus",
+      "officialName": "Scotiabank Passport Visa Infinite + Card",
+      "issuer": "Scotiabank",
+      "network": "visa",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 150,
+        "waiver": "Ultimate Package may fully rebate the primary fee on one eligible card; Preferred Package may rebate $40 subject to current issuer conditions."
+      },
+      "program": {
+        "programId": "scenePlus",
+        "unit": "point",
+        "_note": "NEW programId; shared with Scotiabank Gold implementation."
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.0,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "scotia-passport-base-1x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "points", "pointsPerCad": 1 },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "scotia-passport-featured-grocery-3x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "points", "pointsPerCad": 3 },
+          "predicate": {
+            "merchantInclude": [
+              "Sobeys",
+              "Safeway",
+              "IGA",
+              "Foodland",
+              "FreshCo",
+              "Chalo FreshCo",
+              "Thrifty Foods",
+              "Rachelle Bery",
+              "Les Marches Tradition",
+              "Voila"
+            ]
+          },
+          "capId": "scotia-passport-accelerated-calendarYear",
+          "scoredInV1": false,
+          "_note": "Enable after normalized partner-merchant matching is proven."
+        },
+        {
+          "ruleId": "scotia-passport-grocery-dining-entertainment-transit-2x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-17",
+          "earn": { "type": "points", "pointsPerCad": 2 },
+          "predicate": {
+            "categories": ["grocery", "dining", "entertainment", "transit"]
+          },
+          "capId": "scotia-passport-accelerated-calendarYear",
+          "scoredInV1": false,
+          "_note": "Strict Visa MCC matching required before activation."
+        }
+      ],
+      "caps": [
+        {
+          "capId": "scotia-passport-accelerated-calendarYear",
+          "measure": "spendCad",
+          "limit": 50000,
+          "period": "calendarYear",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": { "type": "points", "pointsPerCad": 1 },
+          "proration": true
+        }
+      ],
+      "perTransactionRewardVisibility": "unknown",
+      "sources": ["https://www.scotiabank.com/ca/en/personal/credit-cards/visa/passport-infinite-card.html"],
+      "lastVerifiedAt": "2026-08-17",
+      "_note": "10,000-point $40k annual milestone and subsequent 2,000-point milestones intentionally omitted from earnRules because current engine cannot represent lump-sum rewards. Scene+ Travel payment-independent points and Shell economics also excluded."
     }
   ]
 }

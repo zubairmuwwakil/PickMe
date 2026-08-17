@@ -2,6 +2,18 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-17 — Added 5 Canadian Card Products & Insurance Certificates
+
+- Added 5 researched Canadian credit cards to `card-catalogue.json`:
+  1. `scotia-gold-amex` (Scotiabank Gold American Express Card)
+  2. `td-aeroplan-visa-infinite` (TD Aeroplan Visa Infinite Card)
+  3. `rbc-avion-visa-infinite` (RBC Avion Visa Infinite)
+  4. `cibc-dividend-visa-infinite` (CIBC Dividend Visa Infinite Card)
+  5. `scotia-passport-visa-infinite-plus` (Scotiabank Passport Visa Infinite + Card)
+- Extended `program.programId` enum in `card-catalogue.schema.json` with `"scenePlus"`, `"aeroplan"`, and `"rbcAvion"`.
+- Sourced and added verified Certificates of Insurance / Guides to Coverage for all 5 cards at `issuerPage` verification status in `benefits-catalogue.json`.
+- Accelerators set to `scoredInV1: false` fail closed safely pending dynamic points-program valuation, strict MCC predicate matching, and multi-cap engine support.
+
 ## 2026-08-16 — Acquisition candidate catalogue
 
 - Added `candidate-catalogue.json`, deliberately separate from the owned-card catalogue so an

@@ -11,7 +11,12 @@
     "rogers-red-we",
     "triangle-we",
     "wealthsimple-vip",
-    "cryptocom-royal-indigo"
+    "cryptocom-royal-indigo",
+    "scotia-gold-amex",
+    "td-aeroplan-visa-infinite",
+    "rbc-avion-visa-infinite",
+    "cibc-dividend-visa-infinite",
+    "scotia-passport-visa-infinite-plus"
   ],
   "defaultCardId": "wealthsimple-vip",
   "switchThreshold": {

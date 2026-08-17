@@ -43,6 +43,7 @@ struct CheckoutFlowView: View {
         case dashboard
         case protectionLens(BenefitContext)
         case benefitsReference
+        case categoryPicker
         case walletHealth
         case sync
         case settings
@@ -127,6 +128,7 @@ struct CheckoutFlowView: View {
                      onDashboard: { stage = .dashboard },
                      onProtectionLens: { stage = .protectionLens(BenefitContext(kind: .flight)) },
                      onBenefits: { stage = .benefitsReference },
+                     onCategoryPicker: { stage = .categoryPicker },
                      onWalletHealth: { stage = .walletHealth },
                      onConfigureAmbient: { stage = .ambientSetup })
         case .locating:
@@ -174,6 +176,10 @@ struct CheckoutFlowView: View {
         case .benefitsReference:
             if let deps {
                 BenefitsReferenceView(deps: deps, onDone: { stage = .idle })
+            }
+        case .categoryPicker:
+            if let deps {
+                CategoryPickerView(deps: deps, onDone: { stage = .idle })
             }
         case .walletHealth:
             if let deps {

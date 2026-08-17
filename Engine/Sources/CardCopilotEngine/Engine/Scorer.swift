@@ -134,7 +134,8 @@ public enum Scorer {
                 ? valuations.cro.faceValueFactorIfAutoSold
                 : valuations.cro.defaultHeldRiskFactor
             return units * factor
-        default: return units * valuations.cashBack.cadPerDollar
+        case "cashback": return units * valuations.cashBack.cadPerDollar
+        default: return 0.0
         }
     }
 }
