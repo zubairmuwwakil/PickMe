@@ -4,10 +4,18 @@ public struct SwitchThreshold: Codable, Equatable, Sendable {
     public var minAdvantagePercentagePoints: Double
     public var minAdvantageCad: Double
     public var semantics: String   // "both" | "either"
+
+    public init(minAdvantagePercentagePoints: Double, minAdvantageCad: Double, semantics: String) {
+        self.minAdvantagePercentagePoints = minAdvantagePercentagePoints
+        self.minAdvantageCad = minAdvantageCad
+        self.semantics = semantics
+    }
 }
 
 public struct Carry: Codable, Equatable, Sendable {
     public var drawerCards: [String]
+
+    public init(drawerCards: [String]) { self.drawerCards = drawerCards }
 }
 
 /// Layer 2 of the three-layer model: per-card owner/account state.
@@ -75,4 +83,16 @@ public struct OwnerState: Codable, Equatable, Sendable {
     public var carry: Carry
     public var cardStates: [String: CardState]
     public var valuationsCad: Valuations
+
+    public init(ownerStateVersion: String, ownedCardIds: [String], defaultCardId: String,
+                switchThreshold: SwitchThreshold, carry: Carry, cardStates: [String: CardState],
+                valuationsCad: Valuations) {
+        self.ownerStateVersion = ownerStateVersion
+        self.ownedCardIds = ownedCardIds
+        self.defaultCardId = defaultCardId
+        self.switchThreshold = switchThreshold
+        self.carry = carry
+        self.cardStates = cardStates
+        self.valuationsCad = valuationsCad
+    }
 }

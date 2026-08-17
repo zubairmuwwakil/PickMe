@@ -16,6 +16,7 @@ struct SettingsView: View {
     let ambientEnabled: Bool
     let onOpenSync: () -> Void
     let onOpenAmbient: () -> Void
+    let onEditWallet: () -> Void
     let onSignIn: () -> Void
     let onEraseLocalHistory: () -> Void
     let onDeleteAccount: (_ eraseLocalHistory: Bool) async throws -> Void
@@ -47,6 +48,12 @@ struct SettingsView: View {
             Section("Ambient") {
                 Button("Ambient arrival setup", action: onOpenAmbient)
                 LabeledContent("Status", value: ambientEnabled ? "On" : "Off")
+            }
+
+            Section("Wallet") {
+                Button("Edit cards and rewards", action: onEditWallet)
+                Text("Change your cards, account conditions, default card, switch threshold, or point values.")
+                    .font(.footnote).foregroundStyle(.secondary)
             }
 
             // Ahead of the destructive sections so Danger zone stays last for App Review, and

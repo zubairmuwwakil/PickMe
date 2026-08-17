@@ -27,6 +27,10 @@ struct CheckoutFlowView: View {
     @State private var isSyncing = false
     @State private var ambient = AmbientLocationService()
     @State private var ambientDiagnostics = SuppressionLog()
+    @State private var seedOwnerState: OwnerState?
+    @State private var walletIsFirstRun = false
+    private let ownerStateLocalStore = OwnerStateLocalStore()
+    private let cardRequestQueue = CardRequestQueue()
 
     enum Stage {
         case idle
@@ -42,6 +46,7 @@ struct CheckoutFlowView: View {
         case walletHealth
         case sync
         case settings
+        case walletSetup
         case ambientSetup
         case failed(String)
     }
@@ -189,10 +194,20 @@ struct CheckoutFlowView: View {
                          ambientEnabled: ambient.isEnabled,
                          onOpenSync: { stage = .sync },
                          onOpenAmbient: { stage = .ambientSetup },
+                         onEditWallet: { stage = .walletSetup },
                          onSignIn: { stage = .sync },
                          onEraseLocalHistory: { eraseLocalHistory() },
                          onDeleteAccount: { erase in try await deleteAccount(eraseLocalHistory: erase) },
                          onDone: { stage = .idle })
+        case .walletSetup:
+            if let deps, let seedOwnerState {
+                WalletSetupView(catalogue: deps.catalogue, seed: seedOwnerState,
+                                existing: walletIsFirstRun ? nil : deps.ownerState,
+                                isFirstRun: walletIsFirstRun,
+                                onSave: { setup in await saveWalletSetup(setup) },
+                                onRequestCard: { request in await requestCard(request) },
+                                onDone: { stage = .idle })
+            }
         case .ambientSetup:
             AmbientLocationExplainerView(onEnable: {
                 ambient.requestAlwaysAuthorization()
@@ -211,11 +226,16 @@ struct CheckoutFlowView: View {
         do {
             let catalogue = try SeedLoader.loadCatalogue()
             let candidates = try SeedLoader.loadCandidateCatalogue()
-            let owner = try SeedLoader.loadOwnerState()
+            let seedOwner = try SeedLoader.loadOwnerState()
+            let localOwner = ownerStateLocalStore.load()
+            let owner = localOwner ?? seedOwner
+            seedOwnerState = seedOwner
+            walletIsFirstRun = localOwner == nil
             let benefits = try SeedLoader.loadBenefitsCatalogue()
             deps = makeDependencies(catalogue: catalogue, candidates: candidates, owner: owner, benefits: benefits)
             configureAmbient(catalogue: catalogue, owner: owner)
             refreshHome()
+            if localOwner == nil { stage = .walletSetup }
         } catch {
             stage = .failed("Seed data failed to load: \(error.localizedDescription)")
         }
@@ -354,11 +374,61 @@ struct CheckoutFlowView: View {
             let result = try await OwnerStateSyncService(client: client).sync(ownerState: deps.ownerState, catalogue: deps.catalogue)
             self.deps = makeDependencies(catalogue: deps.catalogue, candidates: deps.candidateCatalogue,
                                          owner: result.ownerState, benefits: deps.benefits)
+            try? ownerStateLocalStore.save(result.ownerState)
             configureAmbient(catalogue: deps.catalogue, owner: result.ownerState)
             walletFeedback = result.feedback
             lastSyncedAt = result.lastSyncedAt
+            try await flushQueuedCardRequests(using: client)
         } catch {
             // A1: existing local state is usable; connectivity must never interrupt checkout.
+        }
+    }
+
+    private func saveWalletSetup(_ setup: WalletSetup) async {
+        guard let deps else { return }
+        let owner = OwnerStateBuilder.make(setup: setup, catalogue: deps.catalogue)
+        do {
+            try ownerStateLocalStore.save(owner)
+        } catch {
+            stage = .failed(error.localizedDescription)
+            return
+        }
+        self.deps = makeDependencies(catalogue: deps.catalogue, candidates: deps.candidateCatalogue,
+                                     owner: owner, benefits: deps.benefits)
+        configureAmbient(catalogue: deps.catalogue, owner: owner)
+        walletIsFirstRun = false
+        stage = .idle
+
+        // Setup remains usable offline. The server copy is retried by re-saving from Settings,
+        // while Wallet Capture sees the exact per-user state as soon as this write succeeds.
+        guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
+              Clerk.shared.user != nil else { return }
+        do {
+            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+            try await client.updateOwnerState(owner)
+        } catch { }
+    }
+
+    private func requestCard(_ request: PendingCardRequest) async -> Bool {
+        guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
+              Clerk.shared.user != nil else {
+            cardRequestQueue.enqueue(request)
+            return false
+        }
+        do {
+            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+            try await client.createCardRequest(request)
+            return true
+        } catch {
+            cardRequestQueue.enqueue(request)
+            return false
+        }
+    }
+
+    private func flushQueuedCardRequests(using client: MoneyTalksAPIClient) async throws {
+        for request in cardRequestQueue.pending() {
+            try await client.createCardRequest(request)
+            cardRequestQueue.remove(request)
         }
     }
 

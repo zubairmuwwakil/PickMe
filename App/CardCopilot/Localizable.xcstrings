@@ -1,2860 +1,3263 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "$": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "$"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "$" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "$"
           }
         }
       }
     },
-    "$%lld": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld $"
+    "$%lld" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld $"
           }
         }
       }
     },
-    "%@ adds %@ — compare": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@ adds %2$@ — compare"
-          }
-        },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ ajoute %@ — comparer"
-          }
-        }
-      }
-    },
-    "%@ equals or beats all other cards on every line below.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ égale ou surpasse toutes les autres cartes sur chaque ligne ci-dessous."
-          }
-        }
-      }
-    },
-    "%@ · %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@ · %2$@"
+    "%@ adds %@ — compare" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ adds %2$@ — compare"
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ · %@"
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ajoute %@ — comparer"
           }
         }
       }
     },
-    "%@ · %@ — per certificate": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@ · %2$@ — per certificate"
+    "%@ equals or beats all other cards on every line below." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ égale ou surpasse toutes les autres cartes sur chaque ligne ci-dessous."
+          }
+        }
+      }
+    },
+    "%@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ · %@ — selon le certificat"
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · %@"
           }
         }
       }
     },
-    "%lld": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld"
-          }
-        }
-      }
-    },
-    "%lld certificate benefits": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld protections prévues au certificat"
-          }
-        }
-      }
-    },
-    "%lld issuer-verified candidates · year-two economics": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld cartes vérifiées par l’émetteur · valeur à partir de la 2e année"
-          }
-        }
-      }
-    },
-    "%lld m away": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "à %lld m"
-          }
-        }
-      }
-    },
-    "%lld predictions waiting": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld prédictions en attente"
-          }
-        }
-      }
-    },
-    "%lld purchases to finish": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld achats à terminer"
-          }
-        }
-      }
-    },
-    "%lld%%": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld %%"
-          }
-        }
-      }
-    },
-    "%lld/30 confirmed": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld/30 confirmés"
-          }
-        }
-      }
-    },
-    "/ %lld checkouts": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "/ %lld achats"
-          }
-        }
-      }
-    },
-    "0.00": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "0,00"
-          }
-        }
-      }
-    },
-    "1 prediction waiting": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 prédiction en attente"
-          }
-        }
-      }
-    },
-    "1 purchase to finish": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 achat à terminer"
-          }
-        }
-      }
-    },
-    "A card earns its recurring fee": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Une carte couvre ses frais annuels"
-          }
-        }
-      }
-    },
-    "A ceiling, not a forecast — it assumes every purchase always lands on its best card. The per-card verdicts below are what each card actually contributes toward it.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un plafond, pas une prévision — ce calcul suppose que chaque achat est porté sur la meilleure carte. Les résultats par carte ci-dessous indiquent la contribution réelle de chacune."
-          }
-        }
-      }
-    },
-    "A possible fee waiver is unresolved; ranking uses the stated fee.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Une exemption possible des frais reste à confirmer; le classement utilise les frais affichés."
-          }
-        }
-      }
-    },
-    "A purchase needs the card you tapped and what it actually cost before it can be checked against your statement.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pour être comparé à votre relevé, un achat doit inclure la carte utilisée et son montant réel."
-          }
-        }
-      }
-    },
-    "About": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "À propos"
-          }
-        }
-      }
-    },
-    "Account": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Account"
-          }
-        }
-      }
-    },
-    "Against this wallet and spend profile, keeping the wallet unchanged beats every researched candidate on recurring earn after fees.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avec ce portefeuille et ce profil de dépenses, garder les cartes actuelles donne une meilleure valeur récurrente après les frais que toute carte analysée."
-          }
-        }
-      }
-    },
-    "All Caught Up!": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tout est à jour!"
-          }
-        }
-      }
-    },
-    "Ambient": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ambient"
-          }
-        }
-      }
-    },
-    "Ambient arrival setup": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ambient arrival setup"
-          }
-        }
-      }
-    },
-    "Ambiguous Merchant Coding": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ambiguous Merchant Coding"
-          }
-        }
-      }
-    },
-    "Amount Scored": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Montant évalué"
-          }
-        }
-      }
-    },
-    "Amount charged": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Montant facturé"
-          }
-        }
-      }
-    },
-    "Analysis": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Analyse"
-          }
-        }
-      }
-    },
-    "Any Wallet Shortcut tokens you created. They stop working immediately.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Any Wallet Shortcut tokens you created. They stop working immediately."
-          }
-        }
-      }
-    },
-    "Appliance & Furniture": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Électroménagers et meubles"
-          }
-        }
-      }
-    },
-    "Arrival alerts": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Arrival alerts"
-          }
-        }
-      }
-    },
-    "Awaiting Evidence": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "En attente de preuves"
-          }
-        }
-      }
-    },
-    "Based on a typical ~$%lld purchase. Exact amounts you enter feed your value-recovered scoreboard.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Selon un achat type d’environ %lld $. Les montants exacts que vous entrez alimentent votre tableau de valeur récupérée."
-          }
-        }
-      }
-    },
-    "Below Target": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sous la cible"
-          }
-        }
-      }
-    },
-    "Best Reward Return": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Meilleure remise"
-          }
-        }
-      }
-    },
-    "Big purchase or trip": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gros achat ou voyage"
-          }
-        }
-      }
-    },
-    "CUSTOM AMOUNT": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CUSTOM AMOUNT"
-          }
-        }
-      }
-    },
-    "Calculate": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Calculate"
-          }
-        }
-      }
-    },
-    "Cancel": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cancel"
-          }
-        }
-      }
-    },
-    "Car Rental": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Location d’auto"
-          }
-        }
-      }
-    },
-    "Card": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Carte"
-          }
-        }
-      }
-    },
-    "Card Used": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Carte utilisée"
-          }
-        }
-      }
-    },
-    "Card benefits": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Avantages de la carte"
-          }
-        }
-      }
-    },
-    "Card you used": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Carte utilisée"
-          }
-        }
-      }
-    },
-    "Cards Covering For Each Other": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cartes qui se remplacent"
-          }
-        }
-      }
-    },
-    "Cards to add": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cards to add"
-          }
-        }
-      }
-    },
-    "Cash back posted ($)": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cash back posted ($)"
-          }
-        }
-      }
-    },
-    "Certificate Trade-Off": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Compromis entre certificats"
-          }
-        }
-      }
-    },
-    "Checkout stays available. Add the dedicated PickMe Clerk key and API URL to MoneyTalksConfiguration.swift, then return here to sign in.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le paiement reste disponible. Ajoutez la clé Clerk et l’URL d’API PickMe dans MoneyTalksConfiguration.swift, puis revenez ici pour ouvrir une session."
-          }
-        }
-      }
-    },
-    "Checkout works without an account. Sign in only to sync cap usage and capture feedback.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le paiement fonctionne sans compte. Ouvrez une session seulement pour synchroniser l’utilisation des plafonds et la rétroaction de collecte."
-          }
-        }
-      }
-    },
-    "Classification": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Classification"
-          }
-        }
-      }
-    },
-    "Coded As": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Codé comme"
-          }
-        }
-      }
-    },
-    "Conditions (per certificate)": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conditions (selon le certificat)"
-          }
-        }
-      }
-    },
-    "Confirm predictions that matched your statement in one tap, or tap the row to record discrepancies.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Confirmez d’un toucher les prédictions qui correspondent à votre relevé, ou touchez une ligne pour signaler un écart."
-          }
-        }
-      }
-    },
-    "Confirmed No Coverage": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune protection confirmée"
-          }
-        }
-      }
-    },
-    "Conversion fee": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conversion fee"
-          }
-        }
-      }
-    },
-    "Copy token": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Copier le jeton"
-          }
-        }
-      }
-    },
-    "Counted only where you used the recommended card and recorded what it actually cost, scaled from the amount the engine scored. Reconciled purchases only — the pending figure is not included, because until a statement confirms how a charge coded, the return is an assumption.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Comptée seulement lorsque vous avez utilisé la carte recommandée et saisi le montant réellement payé, ajusté selon le montant évalué par le moteur. Achats vérifiés seulement — la valeur en attente est exclue, car tant qu’un relevé ne confirme pas le codage, la remise demeure une estimation."
-          }
-        }
-      }
-    },
-    "Coverage": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Protection"
-          }
-        }
-      }
-    },
-    "Create installation token": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Créer un jeton d’installation"
-          }
-        }
-      }
-    },
-    "Create one token for this device, copy it once, then paste it into the shared Wallet Capture Shortcut. The Shortcut’s assembly contract is in MoneyTalks/docs/plans/2026-08-16-wallet-capture-spec.md.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Créez un jeton pour cet appareil, copiez-le une seule fois, puis collez-le dans le raccourci partagé de collecte Wallet. Le contrat du raccourci se trouve dans MoneyTalks/docs/plans/2026-08-16-wallet-capture-spec.md."
-          }
-        }
-      }
-    },
-    "Creating…": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Création…"
-          }
-        }
-      }
-    },
-    "Danger zone": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zone sensible"
-          }
-        }
-      }
-    },
-    "Delete Account": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete Account"
-          }
-        }
-      }
-    },
-    "Delete Account and Erase History": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete Account and Erase History"
-          }
-        }
-      }
-    },
-    "Delete your PickMe account": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete your PickMe account"
-          }
-        }
-      }
-    },
-    "Delete your PickMe account permanently?": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete your PickMe account permanently?"
-          }
-        }
-      }
-    },
-    "Deletes your PickMe account and everything stored for it on the server. You choose separately what happens to this iPhone's history.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Deletes your PickMe account and everything stored for it on the server. You choose separately what happens to this iPhone's history."
-          }
-        }
-      }
-    },
-    "Deleting…": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Suppression…"
-          }
-        }
-      }
-    },
-    "Dominant Protection Card": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Carte offrant la meilleure protection"
-          }
-        }
-      }
-    },
-    "Done": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Done"
-          }
-        }
-      }
-    },
-    "ESTIMATED RETURN": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ESTIMATED RETURN"
-          }
-        }
-      }
-    },
-    "EXPERIMENT PROGRESS": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PROGRESSION DE L’EXPÉRIENCE"
-          }
-        }
-      }
-    },
-    "Each card below measures near-$0 alone only because the other already earns the same spend. That is a pair fact, not two individual cancel verdicts — cancelling both loses real value.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chaque carte ci-dessous vaut près de 0 $ seule parce que l’autre récompense déjà les mêmes dépenses. C’est un constat pour la paire, pas deux décisions distinctes d’annulation — annuler les deux ferait perdre une vraie valeur."
-          }
-        }
-      }
-    },
-    "Each card is added alone, then every purchase is re-optimized across your wallet.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chaque carte est ajoutée seule, puis chaque achat est optimisé de nouveau dans votre portefeuille."
-          }
-        }
-      }
-    },
-    "Earn rewards and certificate protections are evaluated separately — the highest earning card may not offer the best insurance coverage.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les récompenses et les protections du certificat sont évaluées séparément — la carte la plus payante n’offre pas forcément la meilleure assurance."
-          }
-        }
-      }
-    },
-    "Earns ≈ $%@ back on $%lld": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Earns ≈ $%1$@ back on $%2$lld"
+    "%@ · %@ — per certificate" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@ — per certificate"
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Donne environ %@ $ de remise sur %lld $"
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · %@ — selon le certificat"
           }
         }
       }
     },
-    "Electronics / Tech": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Électronique et technologie"
-          }
-        }
-      }
-    },
-    "Enable arrival alerts": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enable arrival alerts"
-          }
-        }
-      }
-    },
-    "Entering amounts feeds your value-recovered scoreboard. Skip anytime.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Entering amounts feeds your value-recovered scoreboard. Skip anytime."
-          }
-        }
-      }
-    },
-    "Erase History": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erase History"
-          }
-        }
-      }
-    },
-    "Erase This iPhone's History": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erase This iPhone's History"
-          }
-        }
-      }
-    },
-    "Erase this iPhone's history?": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erase this iPhone's history?"
-          }
-        }
-      }
-    },
-    "Erased from this iPhone along with the account. This cannot be undone either.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erased from this iPhone along with the account. This cannot be undone either."
-          }
-        }
-      }
-    },
-    "Erased.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Effacé."
-          }
-        }
-      }
-    },
-    "Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to PickMe are not affected.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to PickMe are not affected."
-          }
-        }
-      }
-    },
-    "Estimates only, from a placeholder spend profile — not financial advice or an application recommendation. Every result is re-derived from the checkout engine's rules, never an affiliate ranking.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Estimations seulement, fondées sur un profil de dépenses provisoire — ce ne sont ni des conseils financiers ni une recommandation de demande de carte. Chaque résultat est recalculé à partir des règles du moteur de paiement, jamais d’un classement d’affiliés."
-          }
-        }
-      }
-    },
-    "Every purchase has the card you used and what it cost.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chaque achat comprend la carte utilisée et son montant."
-          }
-        }
-      }
-    },
-    "Every recorded checkout prediction has been matched to a statement observation.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chaque prédiction de paiement enregistrée a été associée à une observation au relevé."
-          }
-        }
-      }
-    },
-    "Every verdict below runs against a documented guess at a %@/yr Canadian household — not your real spending. No statement history exists yet to replace it.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chaque résultat ci-dessous repose sur une estimation documentée des dépenses annuelles d’un ménage canadien de %@ — et non sur vos dépenses réelles. Aucun historique de relevé ne permet encore de la remplacer."
-          }
-        }
-      }
-    },
-    "Everything PickMe stores for you on the server: captured wallet events, cap usage, your saved card setup, and the account record itself.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Everything PickMe stores for you on the server: captured wallet events, cap usage, your saved card setup, and the account record itself."
-          }
-        }
-      }
-    },
-    "Exclusions (per certificate)": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exclusions (selon le certificat)"
-          }
-        }
-      }
-    },
-    "Experiment": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Expérience"
-          }
-        }
-      }
-    },
-    "Experiment Progress": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Progression de l’expérience"
-          }
-        }
-      }
-    },
-    "Find Nearby Merchant": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Find Nearby Merchant"
-          }
-        }
-      }
-    },
-    "Find or search a merchant once, then this list gives you instant 1-tap checkout advice.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trouvez ou recherchez un commerce une fois, puis cette liste vous donne des conseils instantanés de paiement en un toucher."
-          }
-        }
-      }
-    },
-    "Finding nearby merchants…": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recherche de commerces près d’ici…"
-          }
-        }
-      }
-    },
-    "Finish": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Terminer"
-          }
-        }
-      }
-    },
-    "Finish Purchase": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Terminer l’achat"
-          }
-        }
-      }
-    },
-    "Flight": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vol"
-          }
-        }
-      }
-    },
-    "Get advice when you arrive": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Get advice when you arrive"
-          }
-        }
-      }
-    },
-    "Gross %@/yr before removing duplicate coverage — not what this card is actually worth to the wallet.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ par an avant d’enlever les chevauchements — ce n’est pas la valeur réelle de cette carte pour votre portefeuille."
-          }
-        }
-      }
-    },
-    "How much are you spending?": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "How much are you spending?"
-          }
-        }
-      }
-    },
-    "If Coded as %@": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Si codé comme %@"
-          }
-        }
-      }
-    },
-    "If cancelled, %@ absorbs %@/yr of this spend (%@).": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "If cancelled, %1$@ absorbs %2$@/yr of this spend (%3$@)."
+    "%@: %.2f¢ / point" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$.2f¢ / point"
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Si vous l’annulez, %@ couvre %@ par an de ces dépenses (%@)."
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : %2$.2f ¢ / point"
           }
         }
       }
     },
-    "If you didn't use the recommended card, say so — the value-recovered figure only counts purchases where you actually took the advice.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Si vous n’avez pas utilisé la carte recommandée, indiquez-le — la valeur récupérée ne compte que les achats où vous avez réellement suivi le conseil."
+    "%lld" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld"
           }
         }
       }
     },
-    "Important Note": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Important Note"
+    "%lld certificate benefits" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld protections prévues au certificat"
           }
         }
       }
     },
-    "Installation name": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nom de l’installation"
+    "%lld issuer-verified candidates · year-two economics" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld cartes vérifiées par l’émetteur · valeur à partir de la 2e année"
           }
         }
       }
     },
-    "Instant Repeats": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Raccourcis récents"
+    "%lld m away" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "à %lld m"
           }
         }
       }
     },
-    "It does not continuously track your route, and your location never leaves this phone.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "It does not continuously track your route, and your location never leaves this phone."
+    "%lld predictions waiting" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld prédictions en attente"
           }
         }
       }
     },
-    "It would earn %@ gross, but most of that spend is already covered by cards you own.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Elle rapporterait %@ avant frais, mais la majeure partie de ces dépenses est déjà couverte par vos cartes."
+    "%lld purchases to finish" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld achats à terminer"
           }
         }
       }
     },
-    "Its unpriced benefits must be worth at least %@/yr to break even.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ses avantages non chiffrés doivent valoir au moins %@ par an pour atteindre le seuil de rentabilité."
+    "%lld%%" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %%"
           }
         }
       }
     },
-    "Jointly worth %@/yr, versus %@ summing their individual marginals — against %@ combined fees.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Jointly worth %1$@/yr, versus %2$@ summing their individual marginals — against %3$@ combined fees."
+    "%lld/30 confirmed" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld/30 confirmés"
+          }
+        }
+      }
+    },
+    "/ %lld checkouts" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/ %lld achats"
+          }
+        }
+      }
+    },
+    "0.00" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0,00"
+          }
+        }
+      }
+    },
+    "1 prediction waiting" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 prédiction en attente"
+          }
+        }
+      }
+    },
+    "1 purchase to finish" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 achat à terminer"
+          }
+        }
+      }
+    },
+    "A card earns its recurring fee" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une carte couvre ses frais annuels"
+          }
+        }
+      }
+    },
+    "A ceiling, not a forecast — it assumes every purchase always lands on its best card. The per-card verdicts below are what each card actually contributes toward it." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un plafond, pas une prévision — ce calcul suppose que chaque achat est porté sur la meilleure carte. Les résultats par carte ci-dessous indiquent la contribution réelle de chacune."
+          }
+        }
+      }
+    },
+    "A possible fee waiver is unresolved; ranking uses the stated fee." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une exemption possible des frais reste à confirmer; le classement utilise les frais affichés."
+          }
+        }
+      }
+    },
+    "A purchase needs the card you tapped and what it actually cost before it can be checked against your statement." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour être comparé à votre relevé, un achat doit inclure la carte utilisée et son montant réel."
+          }
+        }
+      }
+    },
+    "About" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À propos"
+          }
+        }
+      }
+    },
+    "Account" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Account"
+          }
+        }
+      }
+    },
+    "Advanced switch threshold" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seuil de changement avancé"
+          }
+        }
+      }
+    },
+    "Against this wallet and spend profile, keeping the wallet unchanged beats every researched candidate on recurring earn after fees." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avec ce portefeuille et ce profil de dépenses, garder les cartes actuelles donne une meilleure valeur récurrente après les frais que toute carte analysée."
+          }
+        }
+      }
+    },
+    "All Caught Up!" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout est à jour!"
+          }
+        }
+      }
+    },
+    "Ambient" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ambient"
+          }
+        }
+      }
+    },
+    "Ambient arrival setup" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ambient arrival setup"
+          }
+        }
+      }
+    },
+    "Ambiguous Merchant Coding" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ambiguous Merchant Coding"
+          }
+        }
+      }
+    },
+    "Amount Scored" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montant évalué"
+          }
+        }
+      }
+    },
+    "Amount charged" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montant facturé"
+          }
+        }
+      }
+    },
+    "Analysis" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Analyse"
+          }
+        }
+      }
+    },
+    "Any Wallet Shortcut tokens you created. They stop working immediately." : {
+      "comment" : "human review before public launch",
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Any Wallet Shortcut tokens you created. They stop working immediately."
+          }
+        }
+      }
+    },
+    "Appliance & Furniture" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Électroménagers et meubles"
+          }
+        }
+      }
+    },
+    "Arrival alerts" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrival alerts"
+          }
+        }
+      }
+    },
+    "At least $%.2f more" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au moins %.2f $ de plus"
+          }
+        }
+      }
+    },
+    "At least %.1f percentage points better" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au moins %.1f points de pourcentage de mieux"
+          }
+        }
+      }
+    },
+    "Awaiting Evidence" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente de preuves"
+          }
+        }
+      }
+    },
+    "Back" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retour"
+          }
+        }
+      }
+    },
+    "Based on a typical ~$%lld purchase. Exact amounts you enter feed your value-recovered scoreboard." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selon un achat type d’environ %lld $. Les montants exacts que vous entrez alimentent votre tableau de valeur récupérée."
+          }
+        }
+      }
+    },
+    "Below Target" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sous la cible"
+          }
+        }
+      }
+    },
+    "Best Reward Return" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meilleure remise"
+          }
+        }
+      }
+    },
+    "Big purchase or trip" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gros achat ou voyage"
+          }
+        }
+      }
+    },
+    "Both must be true before PickMe suggests switching cards." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les deux conditions doivent être remplies avant que PickMe propose de changer de carte."
+          }
+        }
+      }
+    },
+    "CUSTOM AMOUNT" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CUSTOM AMOUNT"
+          }
+        }
+      }
+    },
+    "Calculate" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calculate"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "Car Rental" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location d’auto"
+          }
+        }
+      }
+    },
+    "Card" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carte"
+          }
+        }
+      }
+    },
+    "Card Used" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carte utilisée"
+          }
+        }
+      }
+    },
+    "Card benefits" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avantages de la carte"
+          }
+        }
+      }
+    },
+    "Card name" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom de la carte"
+          }
+        }
+      }
+    },
+    "Card you used" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carte utilisée"
+          }
+        }
+      }
+    },
+    "Cards Covering For Each Other" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cartes qui se remplacent"
+          }
+        }
+      }
+    },
+    "Cards to add" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cards to add"
+          }
+        }
+      }
+    },
+    "Cash back posted ($)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cash back posted ($)"
+          }
+        }
+      }
+    },
+    "Certificate Trade-Off" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compromis entre certificats"
+          }
+        }
+      }
+    },
+    "Change your cards, account conditions, default card, switch threshold, or point values." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifiez vos cartes, les conditions du compte, la carte par défaut, le seuil de changement ou les valeurs de vos points."
+          }
+        }
+      }
+    },
+    "Checkout stays available. Add the dedicated PickMe Clerk key and API URL to MoneyTalksConfiguration.swift, then return here to sign in." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le paiement reste disponible. Ajoutez la clé Clerk et l’URL d’API PickMe dans MoneyTalksConfiguration.swift, puis revenez ici pour ouvrir une session."
+          }
+        }
+      }
+    },
+    "Checkout works without an account. Sign in only to sync cap usage and capture feedback." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le paiement fonctionne sans compte. Ouvrez une session seulement pour synchroniser l’utilisation des plafonds et la rétroaction de collecte."
+          }
+        }
+      }
+    },
+    "Choose every card in your wallet. PickMe only recommends cards you select." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez toutes les cartes de votre portefeuille. PickMe ne recommande que les cartes que vous sélectionnez."
+          }
+        }
+      }
+    },
+    "Choose the categories currently selected on your Tangerine account. Leave all unselected if you are not sure." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez les catégories actuellement sélectionnées dans votre compte Tangerine. Ne sélectionnez rien si vous n’êtes pas certain."
+          }
+        }
+      }
+    },
+    "Choose up to three categories currently selected on your Tangerine account. Leave all unselected if you are not sure." : { "localizations" : { "fr-CA" : { "stringUnit" : { "state" : "translated", "value" : "Choisissez jusqu’à trois catégories actuellement sélectionnées dans votre compte Tangerine. Ne sélectionnez rien si vous n’êtes pas certain." } } } },
+    "Classification" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classification"
+          }
+        }
+      }
+    },
+    "Coded As" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Codé comme"
+          }
+        }
+      }
+    },
+    "Conditions (per certificate)" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conditions (selon le certificat)"
+          }
+        }
+      }
+    },
+    "Confirm predictions that matched your statement in one tap, or tap the row to record discrepancies." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmez d’un toucher les prédictions qui correspondent à votre relevé, ou touchez une ligne pour signaler un écart."
+          }
+        }
+      }
+    },
+    "Confirmed No Coverage" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune protection confirmée"
+          }
+        }
+      }
+    },
+    "Continue" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer"
+          }
+        }
+      }
+    },
+    "Conversion fee" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conversion fee"
+          }
+        }
+      }
+    },
+    "Copy token" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier le jeton"
+          }
+        }
+      }
+    },
+    "Counted only where you used the recommended card and recorded what it actually cost, scaled from the amount the engine scored. Reconciled purchases only — the pending figure is not included, because until a statement confirms how a charge coded, the return is an assumption." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comptée seulement lorsque vous avez utilisé la carte recommandée et saisi le montant réellement payé, ajusté selon le montant évalué par le moteur. Achats vérifiés seulement — la valeur en attente est exclue, car tant qu’un relevé ne confirme pas le codage, la remise demeure une estimation."
+          }
+        }
+      }
+    },
+    "Coverage" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Protection"
+          }
+        }
+      }
+    },
+    "Create installation token" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créer un jeton d’installation"
+          }
+        }
+      }
+    },
+    "Create one token for this device, copy it once, then paste it into the shared Wallet Capture Shortcut. The Shortcut’s assembly contract is in MoneyTalks/docs/plans/2026-08-16-wallet-capture-spec.md." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créez un jeton pour cet appareil, copiez-le une seule fois, puis collez-le dans le raccourci partagé de collecte Wallet. Le contrat du raccourci se trouve dans MoneyTalks/docs/plans/2026-08-16-wallet-capture-spec.md."
+          }
+        }
+      }
+    },
+    "Creating…" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Création…"
+          }
+        }
+      }
+    },
+    "Crypto.com Royal Indigo" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crypto.com Royal Indigo"
+          }
+        }
+      }
+    },
+    "Danger zone" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zone sensible"
+          }
+        }
+      }
+    },
+    "Default card" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carte par défaut"
+          }
+        }
+      }
+    },
+    "Default: 0.5 percentage points and $0.25 more — both conditions must be met." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Par défaut : 0,5 point de pourcentage et 0,25 $ de plus — les deux conditions doivent être remplies."
+          }
+        }
+      }
+    },
+    "Delete Account" : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Account"
+          }
+        }
+      }
+    },
+    "Delete Account and Erase History" : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Account and Erase History"
+          }
+        }
+      }
+    },
+    "Delete your PickMe account" : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete your PickMe account"
+          }
+        }
+      }
+    },
+    "Delete your PickMe account permanently?" : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete your PickMe account permanently?"
+          }
+        }
+      }
+    },
+    "Deletes your PickMe account and everything stored for it on the server. You choose separately what happens to this iPhone's history." : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deletes your PickMe account and everything stored for it on the server. You choose separately what happens to this iPhone's history."
+          }
+        }
+      }
+    },
+    "Deleting…" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppression…"
+          }
+        }
+      }
+    },
+    "Dominant Protection Card" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carte offrant la meilleure protection"
+          }
+        }
+      }
+    },
+    "Done" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        }
+      }
+    },
+    "ESTIMATED RETURN" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ESTIMATED RETURN"
+          }
+        }
+      }
+    },
+    "EXPERIMENT PROGRESS" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PROGRESSION DE L’EXPÉRIENCE"
+          }
+        }
+      }
+    },
+    "Each card below measures near-$0 alone only because the other already earns the same spend. That is a pair fact, not two individual cancel verdicts — cancelling both loses real value." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque carte ci-dessous vaut près de 0 $ seule parce que l’autre récompense déjà les mêmes dépenses. C’est un constat pour la paire, pas deux décisions distinctes d’annulation — annuler les deux ferait perdre une vraie valeur."
+          }
+        }
+      }
+    },
+    "Each card is added alone, then every purchase is re-optimized across your wallet." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque carte est ajoutée seule, puis chaque achat est optimisé de nouveau dans votre portefeuille."
+          }
+        }
+      }
+    },
+    "Earn rewards and certificate protections are evaluated separately — the highest earning card may not offer the best insurance coverage." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les récompenses et les protections du certificat sont évaluées séparément — la carte la plus payante n’offre pas forcément la meilleure assurance."
+          }
+        }
+      }
+    },
+    "Earns ≈ $%@ back on $%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Earns ≈ $%1$@ back on $%2$lld"
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Valeur conjointe de %@ par an, comparativement à %@ pour la somme de leurs valeurs marginales — contre %@ de frais combinés."
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Donne environ %@ $ de remise sur %lld $"
           }
         }
       }
     },
-    "Keep only if its benefits are worth ≥ %@/yr to you.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gardez-la seulement si ses avantages valent au moins %@ par an pour vous."
+    "Edit cards and rewards" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier les cartes et les récompenses"
           }
         }
       }
     },
-    "Keep or cancel": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Keep or cancel"
+    "Edit wallet" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier le portefeuille"
           }
         }
       }
     },
-    "Keep your caps in sync": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Synchronisez vos plafonds"
+    "Electronics / Tech" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Électronique et technologie"
           }
         }
       }
     },
-    "Kept. Checkout keeps working offline with your history intact.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kept. Checkout keeps working offline with your history intact."
+    "Enable arrival alerts" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable arrival alerts"
           }
         }
       }
     },
-    "Last 7 days: %lld fired · %lld suppressed": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Last 7 days: %1$lld fired · %2$lld suppressed"
-          }
-        },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "7 derniers jours : %lld déclenchées · %lld supprimées"
+    "Entering amounts feeds your value-recovered scoreboard. Skip anytime." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entering amounts feeds your value-recovered scoreboard. Skip anytime."
           }
         }
       }
     },
-    "Last synced": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dernière synchronisation"
+    "Erase History" : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erase History"
           }
         }
       }
     },
-    "Last synced %@": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dernière synchronisation %@"
+    "Erase This iPhone's History" : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erase This iPhone's History"
           }
         }
       }
     },
-    "Location is used only for arrival detection at your saved merchants.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Location is used only for arrival detection at your saved merchants."
+    "Erase this iPhone's history?" : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erase this iPhone's history?"
           }
         }
       }
     },
-    "Location off — tap to retry": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Position désactivée — touchez pour réessayer"
+    "Erased from this iPhone along with the account. This cannot be undone either." : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erased from this iPhone along with the account. This cannot be undone either."
           }
         }
       }
     },
-    "Match": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Match"
+    "Erased." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacé."
           }
         }
       }
     },
-    "Matched": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Confirmé"
+    "Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to PickMe are not affected." : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to PickMe are not affected."
           }
         }
       }
     },
-    "Meets Target": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Atteint la cible"
+    "Estimates only, from a placeholder spend profile — not financial advice or an application recommendation. Every result is re-derived from the checkout engine's rules, never an affiliate ranking." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estimations seulement, fondées sur un profil de dépenses provisoire — ce ne sont ni des conseils financiers ni une recommandation de demande de carte. Chaque résultat est recalculé à partir des règles du moteur de paiement, jamais d’un classement d’affiliés."
           }
         }
       }
     },
-    "Merchant": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Commerce"
+    "Every purchase has the card you used and what it cost." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque achat comprend la carte utilisée et son montant."
           }
         }
       }
     },
-    "Miss Taxonomy": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Classification des écarts"
+    "Every recorded checkout prediction has been matched to a statement observation." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque prédiction de paiement enregistrée a été associée à une observation au relevé."
           }
         }
       }
     },
-    "Mobile Device": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Appareil mobile"
+    "Every verdict below runs against a documented guess at a %@/yr Canadian household — not your real spending. No statement history exists yet to replace it." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque résultat ci-dessous repose sur une estimation documentée des dépenses annuelles d’un ménage canadien de %@ — et non sur vos dépenses réelles. Aucun historique de relevé ne permet encore de la remplacer."
           }
         }
       }
     },
-    "NET VALUE RECOVERED": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "VALEUR NETTE RÉCUPÉRÉE"
+    "Everything PickMe stores for you on the server: captured wallet events, cap usage, your saved card setup, and the account record itself." : {
+      "comment" : "human review before public launch",
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everything PickMe stores for you on the server: captured wallet events, cap usage, your saved card setup, and the account record itself."
           }
         }
       }
     },
-    "Nearby": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "À proximité"
+    "Exclusions (per certificate)" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exclusions (selon le certificat)"
           }
         }
       }
     },
-    "No Applicable Coverage": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune protection applicable"
+    "Experiment" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expérience"
           }
         }
       }
     },
-    "No coverage": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune protection"
+    "Experiment Progress" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progression de l’expérience"
           }
         }
       }
     },
-    "No coverage found yet — unverified. The certificate pass will settle it.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune protection trouvée pour l’instant — non vérifiée. La vérification du certificat permettra de trancher."
+    "Find Nearby Merchant" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find Nearby Merchant"
           }
         }
       }
     },
-    "No misses recorded so far across all confirmed checkouts.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucun écart enregistré jusqu’ici parmi les paiements confirmés."
+    "Find or search a merchant once, then this list gives you instant 1-tap checkout advice." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trouvez ou recherchez un commerce une fois, puis cette liste vous donne des conseils instantanés de paiement en un toucher."
           }
         }
       }
     },
-    "No new card earns its fee": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune nouvelle carte ne couvre ses frais"
+    "Finding nearby merchants…" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recherche de commerces près d’ici…"
           }
         }
       }
     },
-    "No relevant insurance coverage found in your wallet for this category.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune protection d’assurance pertinente n’a été trouvée dans votre portefeuille pour cette catégorie."
+    "Finish" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminer"
           }
         }
       }
     },
-    "No repeats yet": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucun raccourci pour l’instant"
+    "Finish Purchase" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminer l’achat"
           }
         }
       }
     },
-    "No single card dominates every line — compare coverage limits below to decide.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune carte ne surpasse les autres sur chaque ligne — comparez les limites de protection ci-dessous pour décider."
+    "Flight" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vol"
           }
         }
       }
     },
-    "No spend category improves": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune catégorie de dépenses ne s’améliore"
+    "Get advice when you arrive" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get advice when you arrive"
           }
         }
       }
     },
-    "None — Correct": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune — correct"
+    "Gross %@/yr before removing duplicate coverage — not what this card is actually worth to the wallet." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ par an avant d’enlever les chevauchements — ce n’est pas la valeur réelle de cette carte pour votre portefeuille."
           }
         }
       }
     },
-    "Not now": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not now"
+    "How much are you spending?" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How much are you spending?"
           }
         }
       }
     },
-    "Not synced yet — stored cap data remains in use until a sync succeeds.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pas encore synchronisé — les données de plafonds enregistrées restent utilisées jusqu’à une synchronisation réussie."
+    "If Coded as %@" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si codé comme %@"
           }
         }
       }
     },
-    "Notes (optional)": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notes (facultatives)"
-          }
-        }
-      }
-    },
-    "Nothing reconciled yet.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rien n’a encore été vérifié."
-          }
-        }
-      }
-    },
-    "Nothing to Finish": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucun achat à terminer"
-          }
-        }
-      }
-    },
-    "Off": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Off"
-          }
-        }
-      }
-    },
-    "On": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On"
-          }
-        }
-      }
-    },
-    "Once both are recorded, this moves to Reconcile to be checked against your statement.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Une fois les deux saisis, l’achat passe à Vérifier pour être comparé à votre relevé."
-          }
-        }
-      }
-    },
-    "One-tap GPS check at checkout": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vérification GPS en un toucher au paiement"
-          }
-        }
-      }
-    },
-    "Optional ($)": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Facultatif ($)"
-          }
-        }
-      }
-    },
-    "Optional: Enter points or cash back posted on your statement to verify arithmetic accuracy.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Facultatif : entrez les points ou la remise portés à votre relevé pour vérifier l’exactitude du calcul."
-          }
-        }
-      }
-    },
-    "Optional: Points or cash back posted on statement.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Facultatif : points ou remise portés au relevé."
-          }
-        }
-      }
-    },
-    "Outside Canada": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hors Canada"
-          }
-        }
-      }
-    },
-    "Per Card": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Par carte"
-          }
-        }
-      }
-    },
-    "Pick": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choisir"
-          }
-        }
-      }
-    },
-    "PickMe": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PickMe"
-          }
-        }
-      }
-    },
-    "PickMe can recognize arrival at up to 20 merchants you have already saved, then suggest a card before you pay.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PickMe can recognize arrival at up to 20 merchants you have already saved, then suggest a card before you pay."
-          }
-        }
-      }
-    },
-    "Planned Amount": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Montant prévu"
-          }
-        }
-      }
-    },
-    "Point Valuation": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Point Valuation"
-          }
-        }
-      }
-    },
-    "Points posted (e.g. 700)": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Points posted (e.g. 700)"
-          }
-        }
-      }
-    },
-    "Predicted Category": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Catégorie prévue"
-          }
-        }
-      }
-    },
-    "Privacy Policy": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Politique de confidentialité"
-          }
-        }
-      }
-    },
-    "Protection Verdict": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Résultat de protection"
-          }
-        }
-      }
-    },
-    "Purchase Context": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Contexte de l’achat"
-          }
-        }
-      }
-    },
-    "Purchase Type": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Type d’achat"
-          }
-        }
-      }
-    },
-    "QUICK PRESETS": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "QUICK PRESETS"
-          }
-        }
-      }
-    },
-    "REWARDS EARNED": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "REWARDS EARNED"
-          }
-        }
-      }
-    },
-    "Ranked by recurring net value": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Classées selon la valeur nette récurrente"
-          }
-        }
-      }
-    },
-    "Recent": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Récent"
-          }
-        }
-      }
-    },
-    "Recent capture feedback": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rétroaction récente de collecte"
-          }
-        }
-      }
-    },
-    "Recommended": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recommandée"
-          }
-        }
-      }
-    },
-    "Recommended Card": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Carte recommandée"
-          }
-        }
-      }
-    },
-    "Reconcile": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reconcile"
-          }
-        }
-      }
-    },
-    "Recurring fee": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recurring fee"
-          }
-        }
-      }
-    },
-    "Replaces %@ on %@ of annual spend.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Replaces %1$@ on %2$@ of annual spend."
+    "If cancelled, %@ absorbs %@/yr of this spend (%@)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "If cancelled, %1$@ absorbs %2$@/yr of this spend (%3$@)."
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remplace %@ sur %@ de dépenses annuelles."
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si vous l’annulez, %@ couvre %@ par an de ces dépenses (%@)."
           }
         }
       }
     },
-    "Review Mode": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mode de révision"
+    "If you didn't use the recommended card, say so — the value-recovered figure only counts purchases where you actually took the advice." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si vous n’avez pas utilisé la carte recommandée, indiquez-le — la valeur récupérée ne compte que les achats où vous avez réellement suivi le conseil."
           }
         }
       }
     },
-    "Runner-up Comparison": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Runner-up Comparison"
+    "Important Note" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Important Note"
           }
         }
       }
     },
-    "SPEND PROFILE: PLACEHOLDER": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PROFIL DE DÉPENSES : PROVISOIRE"
+    "Installation name" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom de l’installation"
           }
         }
       }
     },
-    "Save": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enregistrer"
+    "Instant Repeats" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raccourcis récents"
           }
         }
       }
     },
-    "Save Statement Observation": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enregistrer l’observation au relevé"
+    "Issuer" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Émetteur"
           }
         }
       }
     },
-    "Search": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search"
+    "It does not continuously track your route, and your location never leaves this phone." : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It does not continuously track your route, and your location never leaves this phone."
           }
         }
       }
     },
-    "Search different merchant…": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rechercher un autre commerce…"
+    "It would earn %@ gross, but most of that spend is already covered by cards you own." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle rapporterait %@ avant frais, mais la majeure partie de ces dépenses est déjà couverte par vos cartes."
           }
         }
       }
     },
-    "Search merchant (e.g. Costco, Loblaws)": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search merchant (e.g. Costco, Loblaws)"
+    "Its unpriced benefits must be worth at least %@/yr to break even." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses avantages non chiffrés doivent valoir au moins %@ par an pour atteindre le seuil de rentabilité."
           }
         }
       }
     },
-    "Select your location": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sélectionnez votre emplacement"
+    "I’m not sure" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je ne suis pas certain"
           }
         }
       }
     },
-    "Selecting the exact merchant helps PickMe determine the precise MCC and terminal rules.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sélectionner le commerce exact aide PickMe à déterminer le bon MCC et les règles du terminal."
-          }
-        }
-      }
-    },
-    "Set up": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Configurer"
-          }
-        }
-      }
-    },
-    "Set up on-device arrival detection": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Configurer la détection d’arrivée sur l’appareil"
-          }
-        }
-      }
-    },
-    "Settings": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Settings"
-          }
-        }
-      }
-    },
-    "Sign in only to sync cap usage, view capture feedback, and create a Wallet Shortcut installation token. Checkout recommendations work without an account or connection.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ouvrez une session seulement pour synchroniser l’utilisation des plafonds, consulter la rétroaction de collecte et créer un jeton d’installation pour le raccourci Wallet. Les recommandations de paiement fonctionnent sans compte ni connexion."
-          }
-        }
-      }
-    },
-    "Sign in to PickMe": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sign in to PickMe"
-          }
-        }
-      }
-    },
-    "Signed in as": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Session ouverte sous"
-          }
-        }
-      }
-    },
-    "Skip — just tell me which card": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skip — just tell me which card"
-          }
-        }
-      }
-    },
-    "Something went wrong": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un problème est survenu"
-          }
-        }
-      }
-    },
-    "Start over": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recommencer"
-          }
-        }
-      }
-    },
-    "Statement observation": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Statement observation"
-          }
-        }
-      }
-    },
-    "Status": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Status"
-          }
-        }
-      }
-    },
-    "Sync": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Synchroniser"
-          }
-        }
-      }
-    },
-    "Sync & Capture": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Synchronisation et collecte"
-          }
-        }
-      }
-    },
-    "Sync & Wallet Capture": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sync & Wallet Capture"
-          }
-        }
-      }
-    },
-    "Sync and Wallet Capture": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Synchronisation et collecte Wallet"
-          }
-        }
-      }
-    },
-    "Sync now": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Synchroniser maintenant"
-          }
-        }
-      }
-    },
-    "Sync setup required": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Configuration de synchronisation requise"
-          }
-        }
-      }
-    },
-    "Syncing…": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Synchronisation…"
-          }
-        }
-      }
-    },
-    "TOP REWARD": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MEILLEURE RÉCOMPENSE"
-          }
-        }
-      }
-    },
-    "Target Reached": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cible atteinte"
-          }
-        }
-      }
-    },
-    "Taxonomy Breakdown": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Répartition des écarts"
-          }
-        }
-      }
-    },
-    "The amount on your receipt, not what you entered before paying. This is what the value-recovered figure is calculated from.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le montant sur votre reçu, et non celui entré avant de payer. C’est le montant utilisé pour calculer la valeur récupérée."
-          }
-        }
-      }
-    },
-    "The certificate confirms no insurance coverage on this card product.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le certificat confirme qu’aucune protection d’assurance ne s’applique à ce produit de carte."
-          }
-        }
-      }
-    },
-    "The positive results below add more annual reward value than their stated recurring fee.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les résultats positifs ci-dessous ajoutent plus de valeur annuelle en récompenses que leurs frais récurrents affichés."
-          }
-        }
-      }
-    },
-    "The total on the receipt, not what you entered before paying.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Le total sur le reçu, et non le montant entré avant de payer."
-          }
-        }
-      }
-    },
-    "This cannot be undone, and it cannot be restored for you.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This cannot be undone, and it cannot be restored for you."
-          }
-        }
-      }
-    },
-    "This iPhone": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cet iPhone"
-          }
-        }
-      }
-    },
-    "This iPhone's history": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This iPhone's history"
-          }
-        }
-      }
-    },
-    "This is the only time PickMe displays this token. Store it in the Shortcut, not a note.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "C’est la seule fois où PickMe affiche ce jeton. Conservez-le dans le raccourci, pas dans une note."
-          }
-        }
-      }
-    },
-    "This merchant location may code differently depending on the register terminal. Reconcile this purchase once posted to lock in the exact terminal rule.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ce commerce peut être codé différemment selon le terminal de caisse. Vérifiez cet achat une fois porté au relevé pour confirmer la règle exacte du terminal."
-          }
-        }
-      }
-    },
-    "This permanently logs your statement observation and trains the local Merchant Truth Graph for next time.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cette action enregistre définitivement votre observation au relevé et améliore le graphe local des commerces pour la prochaine fois."
-          }
-        }
-      }
-    },
-    "Trip / Vacation": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Voyage ou vacances"
-          }
-        }
-      }
-    },
-    "Unknown — unverified": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Inconnu — non vérifié"
-          }
-        }
-      }
-    },
-    "Unverified": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Non vérifié"
-          }
-        }
-      }
-    },
-    "VALUE RECOVERED": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "VALEUR RÉCUPÉRÉE"
-          }
-        }
-      }
-    },
-    "Validation target: 30 physical Canadian checkouts": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cible de validation : 30 paiements canadiens en personne"
-          }
-        }
-      }
-    },
-    "View the %lld assumed categories": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Voir les %lld catégories supposées"
-          }
-        }
-      }
-    },
-    "WALLET, OPTIMALLY USED": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PORTEFEUILLE UTILISÉ DE FAÇON OPTIMALE"
-          }
-        }
-      }
-    },
-    "Wallet & Tools": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Portefeuille et outils"
-          }
-        }
-      }
-    },
-    "Wallet Health": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wallet Health"
-          }
-        }
-      }
-    },
-    "Wallet Shortcut token": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Jeton de raccourci Wallet"
-          }
-        }
-      }
-    },
-    "Welcome bonuses, first-year fee rebates, approval odds, credit-score effects, insurance, lounges and statement credits are excluded. Income eligibility is not assessed.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les primes de bienvenue, remises sur les frais de la première année, probabilités d’approbation, effets sur la cote de crédit, assurances, salons et crédits au relevé sont exclus. L’admissibilité selon le revenu n’est pas évaluée."
-          }
-        }
-      }
-    },
-    "What PickMe keeps on this iPhone, what reaches the server if you have an account, and how to delete either.": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ce que PickMe conserve sur cet iPhone, ce qui atteint le serveur si vous avez un compte, et comment supprimer l’un ou l’autre."
-          }
-        }
-      }
-    },
-    "What actually posted": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ce qui a réellement été porté au relevé"
-          }
-        }
-      }
-    },
-    "What did it come to?": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Quel en était le total?"
-          }
-        }
-      }
-    },
-    "What is not in the number": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ce qui n’est pas inclus"
-          }
-        }
-      }
-    },
-    "What the app recommended": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ce que l’app a recommandé"
-          }
-        }
-      }
-    },
-    "What this deletes": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "What this deletes"
-          }
-        }
-      }
-    },
-    "What you actually paid": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ce que vous avez réellement payé"
-          }
-        }
-      }
-    },
-    "When": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Quand"
-          }
-        }
-      }
-    },
-    "Where": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Où"
-          }
-        }
-      }
-    },
-    "Which card did you tap?": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Quelle carte avez-vous utilisée?"
-          }
-        }
-      }
-    },
-    "Why this card won": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Why this card won"
-          }
-        }
-      }
-    },
-    "You can keep using manual checkout if you decline.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You can keep using manual checkout if you decline."
-          }
-        }
-      }
-    },
-    "Your PickMe sign-in. You will not be able to sign in again, here or on the web.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your PickMe sign-in. You will not be able to sign in again, here or on the web."
-          }
-        }
-      }
-    },
-    "Your account and your server data will be deleted. This iPhone's history is kept. This cannot be undone.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your account and your server data will be deleted. This iPhone's history is kept. This cannot be undone."
-          }
-        }
-      }
-    },
-    "Your account, your server data, and this iPhone's history will be deleted. This cannot be undone.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your account, your server data, and this iPhone's history will be deleted. This cannot be undone."
-          }
-        }
-      }
-    },
-    "Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected."
-          }
-        }
-      }
-    },
-    "Your prediction log, your confirmations, and saved merchant locations are stored only on this iPhone — they were never uploaded, so deleting your account does not touch them. Choose what happens to them.": {
-      "comment": "human review before public launch",
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your prediction log, your confirmations, and saved merchant locations are stored only on this iPhone — they were never uploaded, so deleting your account does not touch them. Choose what happens to them."
-          }
-        }
-      }
-    },
-    "ambient.amount.body": {
-      "extractionState": "extracted_with_value",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Stays on this iPhone. Skip it and you can add it later."
+    "Jointly worth %@/yr, versus %@ summing their individual marginals — against %@ combined fees." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Jointly worth %1$@/yr, versus %2$@ summing their individual marginals — against %3$@ combined fees."
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saisissez le total du reçu pour vérifier plus tard."
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valeur conjointe de %@ par an, comparativement à %@ pour la somme de leurs valeurs marginales — contre %@ de frais combinés."
           }
         }
       }
     },
-    "ambient.amount.title": {
-      "extractionState": "extracted_with_value",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "What did you spend at %@?"
+    "Keep only if its benefits are worth ≥ %@/yr to you." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gardez-la seulement si ses avantages valent au moins %@ par an pour vous."
+          }
+        }
+      }
+    },
+    "Keep or cancel" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep or cancel"
+          }
+        }
+      }
+    },
+    "Keep your caps in sync" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisez vos plafonds"
+          }
+        }
+      }
+    },
+    "Kept. Checkout keeps working offline with your history intact." : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kept. Checkout keeps working offline with your history intact."
+          }
+        }
+      }
+    },
+    "Last 7 days: %lld fired · %lld suppressed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Last 7 days: %1$lld fired · %2$lld suppressed"
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Achat chez %@"
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "7 derniers jours : %lld déclenchées · %lld supprimées"
           }
         }
       }
     },
-    "ambient.enter-amount": {
-      "extractionState": "extracted_with_value",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Enter amount"
+    "Last synced" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière synchronisation"
+          }
+        }
+      }
+    },
+    "Last synced %@" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière synchronisation %@"
+          }
+        }
+      }
+    },
+    "Location is used only for arrival detection at your saved merchants." : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location is used only for arrival detection at your saved merchants."
+          }
+        }
+      }
+    },
+    "Location off — tap to retry" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position désactivée — touchez pour réessayer"
+          }
+        }
+      }
+    },
+    "Match" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Match"
+          }
+        }
+      }
+    },
+    "Matched" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmé"
+          }
+        }
+      }
+    },
+    "Meets Target" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atteint la cible"
+          }
+        }
+      }
+    },
+    "Merchant" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commerce"
+          }
+        }
+      }
+    },
+    "Miss Taxonomy" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classification des écarts"
+          }
+        }
+      }
+    },
+    "Mobile Device" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareil mobile"
+          }
+        }
+      }
+    },
+    "My card isn't listed" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ma carte n’est pas affichée"
+          }
+        }
+      }
+    },
+    "NET VALUE RECOVERED" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VALEUR NETTE RÉCUPÉRÉE"
+          }
+        }
+      }
+    },
+    "Nearby" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À proximité"
+          }
+        }
+      }
+    },
+    "No" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non"
+          }
+        }
+      }
+    },
+    "No Applicable Coverage" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune protection applicable"
+          }
+        }
+      }
+    },
+    "No card conditions" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune condition de carte"
+          }
+        }
+      }
+    },
+    "No coverage" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune protection"
+          }
+        }
+      }
+    },
+    "No coverage found yet — unverified. The certificate pass will settle it." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune protection trouvée pour l’instant — non vérifiée. La vérification du certificat permettra de trancher."
+          }
+        }
+      }
+    },
+    "No misses recorded so far across all confirmed checkouts." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun écart enregistré jusqu’ici parmi les paiements confirmés."
+          }
+        }
+      }
+    },
+    "No new card earns its fee" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune nouvelle carte ne couvre ses frais"
+          }
+        }
+      }
+    },
+    "No relevant insurance coverage found in your wallet for this category." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune protection d’assurance pertinente n’a été trouvée dans votre portefeuille pour cette catégorie."
+          }
+        }
+      }
+    },
+    "No repeats yet" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun raccourci pour l’instant"
+          }
+        }
+      }
+    },
+    "No single card dominates every line — compare coverage limits below to decide." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune carte ne surpasse les autres sur chaque ligne — comparez les limites de protection ci-dessous pour décider."
+          }
+        }
+      }
+    },
+    "No spend category improves" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune catégorie de dépenses ne s’améliore"
+          }
+        }
+      }
+    },
+    "None of your selected cards needs an account-specific reward answer." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune de vos cartes sélectionnées ne nécessite une réponse liée à votre compte."
+          }
+        }
+      }
+    },
+    "None — Correct" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune — correct"
+          }
+        }
+      }
+    },
+    "Not now" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not now"
+          }
+        }
+      }
+    },
+    "Not synced yet — stored cap data remains in use until a sync succeeds." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore synchronisé — les données de plafonds enregistrées restent utilisées jusqu’à une synchronisation réussie."
+          }
+        }
+      }
+    },
+    "Notes (optional)" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes (facultatives)"
+          }
+        }
+      }
+    },
+    "Nothing reconciled yet." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien n’a encore été vérifié."
+          }
+        }
+      }
+    },
+    "Nothing to Finish" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun achat à terminer"
+          }
+        }
+      }
+    },
+    "Off" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off"
+          }
+        }
+      }
+    },
+    "On" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On"
+          }
+        }
+      }
+    },
+    "Once both are recorded, this moves to Reconcile to be checked against your statement." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une fois les deux saisis, l’achat passe à Vérifier pour être comparé à votre relevé."
+          }
+        }
+      }
+    },
+    "One-tap GPS check at checkout" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérification GPS en un toucher au paiement"
+          }
+        }
+      }
+    },
+    "Only cards with a condition need an answer. Leave anything uncertain unresolved — we'll skip this card's bonus until you confirm." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seules les cartes assorties d’une condition exigent une réponse. Laissez les éléments incertains non résolus — nous ignorerons la prime de cette carte jusqu’à votre confirmation."
+          }
+        }
+      }
+    },
+    "Optional ($)" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facultatif ($)"
+          }
+        }
+      }
+    },
+    "Optional: Enter points or cash back posted on your statement to verify arithmetic accuracy." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facultatif : entrez les points ou la remise portés à votre relevé pour vérifier l’exactitude du calcul."
+          }
+        }
+      }
+    },
+    "Optional: Points or cash back posted on statement." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facultatif : points ou remise portés au relevé."
+          }
+        }
+      }
+    },
+    "Outside Canada" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hors Canada"
+          }
+        }
+      }
+    },
+    "Per Card" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Par carte"
+          }
+        }
+      }
+    },
+    "Pick" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir"
+          }
+        }
+      }
+    },
+    "PickMe" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PickMe"
+          }
+        }
+      }
+    },
+    "PickMe can recognize arrival at up to 20 merchants you have already saved, then suggest a card before you pay." : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PickMe can recognize arrival at up to 20 merchants you have already saved, then suggest a card before you pay."
+          }
+        }
+      }
+    },
+    "Planned Amount" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montant prévu"
+          }
+        }
+      }
+    },
+    "Point Valuation" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Point Valuation"
+          }
+        }
+      }
+    },
+    "Point valuations" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valeur des points"
+          }
+        }
+      }
+    },
+    "Points posted (e.g. 700)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Points posted (e.g. 700)"
+          }
+        }
+      }
+    },
+    "Predicted Category" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Catégorie prévue"
+          }
+        }
+      }
+    },
+    "Privacy Policy" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Politique de confidentialité"
+          }
+        }
+      }
+    },
+    "Protection Verdict" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Résultat de protection"
+          }
+        }
+      }
+    },
+    "Purchase Context" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contexte de l’achat"
+          }
+        }
+      }
+    },
+    "Purchase Type" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type d’achat"
+          }
+        }
+      }
+    },
+    "QUICK PRESETS" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "QUICK PRESETS"
+          }
+        }
+      }
+    },
+    "REWARDS EARNED" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REWARDS EARNED"
+          }
+        }
+      }
+    },
+    "Ranked by recurring net value" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classées selon la valeur nette récurrente"
+          }
+        }
+      }
+    },
+    "Recent" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Récent"
+          }
+        }
+      }
+    },
+    "Recent capture feedback" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rétroaction récente de collecte"
+          }
+        }
+      }
+    },
+    "Recommended" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recommandée"
+          }
+        }
+      }
+    },
+    "Recommended Card" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carte recommandée"
+          }
+        }
+      }
+    },
+    "Reconcile" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconcile"
+          }
+        }
+      }
+    },
+    "Recurring fee" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recurring fee"
+          }
+        }
+      }
+    },
+    "Replaces %@ on %@ of annual spend." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Replaces %1$@ on %2$@ of annual spend."
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saisir le montant"
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplace %@ sur %@ de dépenses annuelles."
           }
         }
       }
     },
-    "ambient.mute-merchant": {
-      "extractionState": "extracted_with_value",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Mute this merchant"
+    "Request this card" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demander cette carte"
+          }
+        }
+      }
+    },
+    "Review Mode" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode de révision"
+          }
+        }
+      }
+    },
+    "Rogers Red World Elite" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rogers Red World Elite"
+          }
+        }
+      }
+    },
+    "Runner-up Comparison" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Runner-up Comparison"
+          }
+        }
+      }
+    },
+    "SPEND PROFILE: PLACEHOLDER" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PROFIL DE DÉPENSES : PROVISOIRE"
+          }
+        }
+      }
+    },
+    "Save" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer"
+          }
+        }
+      }
+    },
+    "Save Statement Observation" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer l’observation au relevé"
+          }
+        }
+      }
+    },
+    "Save changes" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer les modifications"
+          }
+        }
+      }
+    },
+    "Save my wallet" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer mon portefeuille"
+          }
+        }
+      }
+    },
+    "Search" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search"
+          }
+        }
+      }
+    },
+    "Search different merchant…" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher un autre commerce…"
+          }
+        }
+      }
+    },
+    "Search merchant (e.g. Costco, Loblaws)" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search merchant (e.g. Costco, Loblaws)"
+          }
+        }
+      }
+    },
+    "Select your location" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez votre emplacement"
+          }
+        }
+      }
+    },
+    "Selecting the exact merchant helps PickMe determine the precise MCC and terminal rules." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner le commerce exact aide PickMe à déterminer le bon MCC et les règles du terminal."
+          }
+        }
+      }
+    },
+    "Set up" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurer"
+          }
+        }
+      }
+    },
+    "Set up on-device arrival detection" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurer la détection d’arrivée sur l’appareil"
+          }
+        }
+      }
+    },
+    "Set up your wallet" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurer votre portefeuille"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        }
+      }
+    },
+    "Sign in only to sync cap usage, view capture feedback, and create a Wallet Shortcut installation token. Checkout recommendations work without an account or connection." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrez une session seulement pour synchroniser l’utilisation des plafonds, consulter la rétroaction de collecte et créer un jeton d’installation pour le raccourci Wallet. Les recommandations de paiement fonctionnent sans compte ni connexion."
+          }
+        }
+      }
+    },
+    "Sign in to PickMe" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to PickMe"
+          }
+        }
+      }
+    },
+    "Signed in as" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session ouverte sous"
+          }
+        }
+      }
+    },
+    "Skip — just tell me which card" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip — just tell me which card"
+          }
+        }
+      }
+    },
+    "Something went wrong" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un problème est survenu"
+          }
+        }
+      }
+    },
+    "Start over" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recommencer"
+          }
+        }
+      }
+    },
+    "Statement observation" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statement observation"
+          }
+        }
+      }
+    },
+    "Status" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        }
+      }
+    },
+    "Switch recommendations" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recommandations de changement"
+          }
+        }
+      }
+    },
+    "Sync" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchroniser"
+          }
+        }
+      }
+    },
+    "Sync & Capture" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisation et collecte"
+          }
+        }
+      }
+    },
+    "Sync & Wallet Capture" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync & Wallet Capture"
+          }
+        }
+      }
+    },
+    "Sync and Wallet Capture" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisation et collecte Wallet"
+          }
+        }
+      }
+    },
+    "Sync now" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchroniser maintenant"
+          }
+        }
+      }
+    },
+    "Sync setup required" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuration de synchronisation requise"
+          }
+        }
+      }
+    },
+    "Syncing…" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisation…"
+          }
+        }
+      }
+    },
+    "TOP REWARD" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MEILLEURE RÉCOMPENSE"
+          }
+        }
+      }
+    },
+    "Tangerine Money-Back" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tangerine Money-Back"
+          }
+        }
+      }
+    },
+    "Target Reached" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cible atteinte"
+          }
+        }
+      }
+    },
+    "Taxonomy Breakdown" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répartition des écarts"
+          }
+        }
+      }
+    },
+    "The 3% CRO reward applies only while your Level Up Pro plan is active." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La récompense de 3 % en CRO ne s’applique que lorsque votre forfait Level Up Pro est actif."
+          }
+        }
+      }
+    },
+    "The amount on your receipt, not what you entered before paying. This is what the value-recovered figure is calculated from." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le montant sur votre reçu, et non celui entré avant de payer. C’est le montant utilisé pour calculer la valeur récupérée."
+          }
+        }
+      }
+    },
+    "The certificate confirms no insurance coverage on this card product." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le certificat confirme qu’aucune protection d’assurance ne s’applique à ce produit de carte."
+          }
+        }
+      }
+    },
+    "The higher 2% rate requires an eligible Rogers, Fido, Shaw, Comwave, or Sportsnet+ service linked to your account." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le taux supérieur de 2 % exige qu’un service Rogers, Fido, Shaw, Comwave ou Sportsnet+ admissible soit lié à votre compte."
+          }
+        }
+      }
+    },
+    "The positive results below add more annual reward value than their stated recurring fee." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les résultats positifs ci-dessous ajoutent plus de valeur annuelle en récompenses que leurs frais récurrents affichés."
+          }
+        }
+      }
+    },
+    "The total on the receipt, not what you entered before paying." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le total sur le reçu, et non le montant entré avant de payer."
+          }
+        }
+      }
+    },
+    "These published benchmarks are starting points. PickMe assumes the cents-per-point values above; recommendations disclose when the answer flips." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ces repères publiés sont des points de départ. PickMe suppose les valeurs par point ci-dessus; les recommandations indiquent quand le résultat change."
+          }
+        }
+      }
+    },
+    "This cannot be undone, and it cannot be restored for you." : {
+      "comment" : "human review before public launch",
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This cannot be undone, and it cannot be restored for you."
+          }
+        }
+      }
+    },
+    "This iPhone" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet iPhone"
+          }
+        }
+      }
+    },
+    "This iPhone's history" : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This iPhone's history"
+          }
+        }
+      }
+    },
+    "This is the only time PickMe displays this token. Store it in the Shortcut, not a note." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C’est la seule fois où PickMe affiche ce jeton. Conservez-le dans le raccourci, pas dans une note."
+          }
+        }
+      }
+    },
+    "This merchant location may code differently depending on the register terminal. Reconcile this purchase once posted to lock in the exact terminal rule." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce commerce peut être codé différemment selon le terminal de caisse. Vérifiez cet achat une fois porté au relevé pour confirmer la règle exacte du terminal."
+          }
+        }
+      }
+    },
+    "This permanently logs your statement observation and trains the local Merchant Truth Graph for next time." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette action enregistre définitivement votre observation au relevé et améliore le graphe local des commerces pour la prochaine fois."
+          }
+        }
+      }
+    },
+    "Trip / Vacation" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voyage ou vacances"
+          }
+        }
+      }
+    },
+    "Unknown — unverified" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inconnu — non vérifié"
+          }
+        }
+      }
+    },
+    "Unverified" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non vérifié"
+          }
+        }
+      }
+    },
+    "Use by default" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser par défaut"
+          }
+        }
+      }
+    },
+    "VALUE RECOVERED" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VALEUR RÉCUPÉRÉE"
+          }
+        }
+      }
+    },
+    "Validation target: 30 physical Canadian checkouts" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cible de validation : 30 paiements canadiens en personne"
+          }
+        }
+      }
+    },
+    "View the %lld assumed categories" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir les %lld catégories supposées"
+          }
+        }
+      }
+    },
+    "WALLET, OPTIMALLY USED" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PORTEFEUILLE UTILISÉ DE FAÇON OPTIMALE"
+          }
+        }
+      }
+    },
+    "Wallet" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portefeuille"
+          }
+        }
+      }
+    },
+    "Wallet & Tools" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portefeuille et outils"
+          }
+        }
+      }
+    },
+    "Wallet Health" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wallet Health"
+          }
+        }
+      }
+    },
+    "Wallet Shortcut token" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeton de raccourci Wallet"
+          }
+        }
+      }
+    },
+    "Welcome bonuses, first-year fee rebates, approval odds, credit-score effects, insurance, lounges and statement credits are excluded. Income eligibility is not assessed." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les primes de bienvenue, remises sur les frais de la première année, probabilités d’approbation, effets sur la cote de crédit, assurances, salons et crédits au relevé sont exclus. L’admissibilité selon le revenu n’est pas évaluée."
+          }
+        }
+      }
+    },
+    "What PickMe keeps on this iPhone, what reaches the server if you have an account, and how to delete either." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que PickMe conserve sur cet iPhone, ce qui atteint le serveur si vous avez un compte, et comment supprimer l’un ou l’autre."
+          }
+        }
+      }
+    },
+    "What actually posted" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui a réellement été porté au relevé"
+          }
+        }
+      }
+    },
+    "What did it come to?" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quel en était le total?"
+          }
+        }
+      }
+    },
+    "What is not in the number" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui n’est pas inclus"
+          }
+        }
+      }
+    },
+    "What the app recommended" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que l’app a recommandé"
+          }
+        }
+      }
+    },
+    "What this deletes" : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What this deletes"
+          }
+        }
+      }
+    },
+    "What you actually paid" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que vous avez réellement payé"
+          }
+        }
+      }
+    },
+    "When" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quand"
+          }
+        }
+      }
+    },
+    "Where" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Où"
+          }
+        }
+      }
+    },
+    "Which card did you tap?" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quelle carte avez-vous utilisée?"
+          }
+        }
+      }
+    },
+    "Which cards do you own?" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quelles cartes possédez-vous?"
+          }
+        }
+      }
+    },
+    "Why this card won" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Why this card won"
+          }
+        }
+      }
+    },
+    "Yes" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oui"
+          }
+        }
+      }
+    },
+    "You can keep using manual checkout if you decline." : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can keep using manual checkout if you decline."
+          }
+        }
+      }
+    },
+    "Your PickMe sign-in. You will not be able to sign in again, here or on the web." : {
+      "comment" : "human review before public launch",
+      "extractionState" : "stale",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your PickMe sign-in. You will not be able to sign in again, here or on the web."
+          }
+        }
+      }
+    },
+    "Your account and your server data will be deleted. This iPhone's history is kept. This cannot be undone." : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your account and your server data will be deleted. This iPhone's history is kept. This cannot be undone."
+          }
+        }
+      }
+    },
+    "Your account, your server data, and this iPhone's history will be deleted. This cannot be undone." : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your account, your server data, and this iPhone's history will be deleted. This cannot be undone."
+          }
+        }
+      }
+    },
+    "Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected." : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected."
+          }
+        }
+      }
+    },
+    "Your prediction log, your confirmations, and saved merchant locations are stored only on this iPhone — they were never uploaded, so deleting your account does not touch them. Choose what happens to them." : {
+      "comment" : "human review before public launch",
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your prediction log, your confirmations, and saved merchant locations are stored only on this iPhone — they were never uploaded, so deleting your account does not touch them. Choose what happens to them."
+          }
+        }
+      }
+    },
+    "ambient.amount.body" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stays on this iPhone. Skip it and you can add it later."
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Masquer ce commerce"
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez le total du reçu pour vérifier plus tard."
           }
         }
       }
     },
-    "ambient.notification.body": {
-      "extractionState": "extracted_with_value",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "On-device advice for this saved merchant."
+    "ambient.amount.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "What did you spend at %@?"
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conseil sur l’appareil pour ce commerce enregistré."
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Achat chez %@"
           }
         }
       }
     },
-    "ambient.notification.title": {
-      "extractionState": "extracted_with_value",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@ — use %2$@ (%3$@)"
+    "ambient.enter-amount" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter amount"
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ — %2$@ (%3$@)"
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisir le montant"
           }
         }
       }
     },
-    "ambient.reward.best-return": {
-      "extractionState": "extracted_with_value",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "best return"
+    "ambient.mute-merchant" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mute this merchant"
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "meilleure remise"
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer ce commerce"
           }
         }
       }
     },
-    "ambient.reward.cash-back": {
-      "extractionState": "extracted_with_value",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%.0f%% cash back"
+    "ambient.notification.body" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "On-device advice for this saved merchant."
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%.0f % de remise"
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conseil sur l’appareil pour ce commerce enregistré."
           }
         }
       }
     },
-    "ambient.reward.multiplier": {
-      "extractionState": "extracted_with_value",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@× %2$@"
+    "ambient.notification.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ — use %2$@ (%3$@)"
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ × %2$@"
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — %2$@ (%3$@)"
           }
         }
       }
     },
-    "ambient.reward.points": {
-      "extractionState": "extracted_with_value",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "points"
+    "ambient.reward.best-return" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "best return"
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "points"
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "meilleure remise"
           }
         }
       }
     },
-    "ambient.save-amount": {
-      "extractionState": "extracted_with_value",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Save"
+    "ambient.reward.cash-back" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%.0f%% cash back"
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enregistrer le montant"
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%.0f % de remise"
           }
         }
       }
     },
-    "ambient.used-other-card": {
-      "extractionState": "extracted_with_value",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Used a different card"
+    "ambient.reward.multiplier" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@× %2$@"
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "J’ai utilisé une autre carte"
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ × %2$@"
           }
         }
       }
     },
-    "ambient.used-this-card": {
-      "extractionState": "extracted_with_value",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Used this card"
+    "ambient.reward.points" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "points"
           }
         },
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "J’ai utilisé cette carte"
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "points"
           }
         }
       }
     },
-    "earned/yr, every purchase on its best card": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "gagné par an, chaque achat sur sa meilleure carte"
+    "ambient.save-amount" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Save"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer le montant"
           }
         }
       }
     },
-    "fee": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "frais"
+    "ambient.used-other-card" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Used a different card"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "J’ai utilisé une autre carte"
           }
         }
       }
     },
-    "in fees across %lld cards": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "en frais pour %lld cartes"
+    "ambient.used-this-card" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Used this card"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "J’ai utilisé cette carte"
           }
         }
       }
     },
-    "marginal": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "marginale"
+    "earned/yr, every purchase on its best card" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gagné par an, chaque achat sur sa meilleure carte"
           }
         }
       }
     },
-    "net / yr": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "net / an"
+    "fee" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "frais"
           }
         }
       }
     },
-    "vs": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "c."
+    "in fees across %lld cards" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "en frais pour %lld cartes"
           }
         }
       }
     },
-    "•": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "•"
+    "marginal" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "marginale"
           }
         }
       }
     },
-    "••••  ••••  ••••  ••••": {
-      "localizations": {
-        "fr-CA": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "••••  ••••  ••••  ••••"
+    "net / yr" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "net / an"
+          }
+        }
+      }
+    },
+    "vs" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "c."
+          }
+        }
+      }
+    },
+    "•" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "•"
+          }
+        }
+      }
+    },
+    "••••  ••••  ••••  ••••" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "••••  ••••  ••••  ••••"
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

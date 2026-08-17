@@ -97,6 +97,24 @@ public actor MoneyTalksAPIClient {
         try await sendIgnoringBody(request)
     }
 
+    /// The app writes its complete local wallet after setup/editing. The server uses this same
+    /// record when it evaluates Wallet Capture verdicts.
+    public func updateOwnerState(_ ownerState: OwnerState) async throws {
+        var request = try await authenticatedRequest(path: "api/spine/owner-state")
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(ownerState)
+        try await sendIgnoringBody(request)
+    }
+
+    public func createCardRequest(_ requestBody: PendingCardRequest) async throws {
+        var request = try await authenticatedRequest(path: "api/card-requests")
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(requestBody)
+        try await sendIgnoringBody(request)
+    }
+
     private func get<Response: Decodable>(_ path: String) async throws -> Response {
         var request = try await authenticatedRequest(path: path)
         request.httpMethod = "GET"
