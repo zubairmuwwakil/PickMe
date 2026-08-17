@@ -17,10 +17,13 @@ struct SettingsView: View {
     let onOpenSync: () -> Void
     let onOpenAmbient: () -> Void
     let onSignIn: () -> Void
+    let onEraseLocalHistory: () -> Void
     let onDeleteAccount: (_ eraseLocalHistory: Bool) async throws -> Void
     let onDone: () -> Void
 
     @State private var deleteIsPresented = false
+    @State private var eraseIsPresented = false
+    @State private var didErase = false
 
     var body: some View {
         List {
@@ -42,6 +45,20 @@ struct SettingsView: View {
                 LabeledContent("Status", value: ambientEnabled ? "On" : "Off")
             }
 
+            // Deliberately NOT gated on being signed in. The prediction log exists whether or not
+            // an account does — checkout never required one — so the control that erases it must
+            // not be reachable only through account deletion.
+            Section {
+                Button("Erase This iPhone's History", role: .destructive) { eraseIsPresented = true }
+                if didErase {
+                    Text("Erased.").font(.footnote).foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("This iPhone")
+            } footer: {
+                Text("Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to PickMe are not affected.")
+            }
+
             if isSignedIn {
                 Section {
                     Button("Delete Account", role: .destructive) { deleteIsPresented = true }
@@ -51,6 +68,16 @@ struct SettingsView: View {
                     Text("Deletes your PickMe account and everything stored for it on the server. You choose separately what happens to this iPhone's history.")
                 }
             }
+        }
+        .confirmationDialog("Erase this iPhone's history?", isPresented: $eraseIsPresented,
+                            titleVisibility: .visible) {
+            Button("Erase History", role: .destructive) {
+                onEraseLocalHistory()
+                didErase = true
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected.")
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)

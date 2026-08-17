@@ -175,6 +175,7 @@ struct CheckoutFlowView: View {
                          onOpenSync: { stage = .sync },
                          onOpenAmbient: { stage = .ambientSetup },
                          onSignIn: { stage = .sync },
+                         onEraseLocalHistory: { eraseLocalHistory() },
                          onDeleteAccount: { erase in try await deleteAccount(eraseLocalHistory: erase) },
                          onDone: { stage = .idle })
         case .ambientSetup:
@@ -311,6 +312,15 @@ struct CheckoutFlowView: View {
         }
     }
 
+    /// Erasing the device history on its own — no account required, and nothing on the server is
+    /// touched. Account deletion reuses this rather than repeating it.
+    private func eraseLocalHistory() {
+        try? LocalDataEraser(context: modelContext).eraseLocalHistory()
+        ambient.forgetLocalHistory()
+        ambientDiagnostics = ambient.diagnostics
+        refreshHome()
+    }
+
     /// Order matters and is not cosmetic. The server call comes first and everything after it is
     /// local cleanup: if the deletion fails, the account and this iPhone are untouched and the
     /// sheet says so. Once the server has confirmed, the local steps must not be able to fail the
@@ -322,13 +332,9 @@ struct CheckoutFlowView: View {
         let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
         try await client.deleteAccount()
 
-        if eraseLocalHistory {
-            try? LocalDataEraser(context: modelContext).eraseLocalHistory()
-            // Geofences are refreshed from the store on the next significant location change,
-            // which could be hours away. Arrival monitoring for merchants the owner just erased
-            // stops now instead.
-            ambient.forgetLocalHistory()
-        }
+        // Geofences are refreshed from the store on the next significant location change, which
+        // could be hours away. Arrival monitoring for merchants the owner just erased stops now.
+        if eraseLocalHistory { self.eraseLocalHistory() }
         try? await Clerk.shared.auth.signOut()
         resetSyncedState()
         stage = .idle

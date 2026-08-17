@@ -15,12 +15,18 @@
 
 /* Begin PBXFileReference section */
 		A1000003 /* CardCopilot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CardCopilot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1000050 /* CardCopilotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CardCopilotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A1000004 /* CardCopilot */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = CardCopilot;
+			sourceTree = "<group>";
+		};
+		A1000051 /* CardCopilotTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = CardCopilotTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -37,6 +43,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1000053 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -44,6 +57,7 @@
 			isa = PBXGroup;
 			children = (
 				A1000004 /* CardCopilot */,
+				A1000051 /* CardCopilotTests */,
 				A1000002 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -52,6 +66,7 @@
 			isa = PBXGroup;
 			children = (
 				A1000003 /* CardCopilot.app */,
+				A1000050 /* CardCopilotTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -85,6 +100,29 @@
 			productReference = A1000003 /* CardCopilot.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A1000055 /* CardCopilotTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1000060 /* Build configuration list for PBXNativeTarget "CardCopilotTests" */;
+			buildPhases = (
+				A1000052 /* Sources */,
+				A1000053 /* Frameworks */,
+				A1000054 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1000056 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A1000051 /* CardCopilotTests */,
+			);
+			name = CardCopilotTests;
+			packageProductDependencies = (
+			);
+			productName = CardCopilotTests;
+			productReference = A1000050 /* CardCopilotTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -97,6 +135,10 @@
 				TargetAttributes = {
 					A1000006 = {
 						CreatedOnToolsVersion = 26.3;
+					};
+					A1000055 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = A1000006;
 					};
 				};
 			};
@@ -120,12 +162,20 @@
 			projectRoot = "";
 			targets = (
 				A1000006 /* CardCopilot */,
+				A1000055 /* CardCopilotTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A1000008 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1000054 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -142,7 +192,32 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1000052 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A1000056 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1000006 /* CardCopilot */;
+			targetProxy = A1000057 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXContainerItemProxy section */
+		A1000057 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1000006;
+			remoteInfo = CardCopilot;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin XCBuildConfiguration section */
 		A1000020 /* Debug */ = {
@@ -236,6 +311,40 @@
 			};
 			name = Release;
 		};
+		A1000058 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MC8XJ6GXBM;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = ca.pickme.cardcopilot.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CardCopilot.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CardCopilot";
+			};
+			name = Debug;
+		};
+		A1000059 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MC8XJ6GXBM;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = ca.pickme.cardcopilot.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CardCopilot.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CardCopilot";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -253,6 +362,15 @@
 			buildConfigurations = (
 				A1000022 /* Debug */,
 				A1000023 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1000060 /* Build configuration list for PBXNativeTarget "CardCopilotTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1000058 /* Debug */,
+				A1000059 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
