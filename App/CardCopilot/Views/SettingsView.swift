@@ -25,6 +25,10 @@ struct SettingsView: View {
     @State private var eraseIsPresented = false
     @State private var didErase = false
 
+    /// The published policy, served without authentication so it resolves for a signed-out
+    /// reviewer. Same URL as the one given to App Store Connect; keep the two in step.
+    private static let privacyPolicyURL = URL(string: "https://moneytalks.zubairmuwwakil.com/privacy")!
+
     var body: some View {
         List {
             Section("Account") {
@@ -43,6 +47,17 @@ struct SettingsView: View {
             Section("Ambient") {
                 Button("Ambient arrival setup", action: onOpenAmbient)
                 LabeledContent("Status", value: ambientEnabled ? "On" : "Off")
+            }
+
+            // Ahead of the destructive sections so Danger zone stays last for App Review, and
+            // outside the isSignedIn branch: the policy describes the on-device store too, which
+            // exists whether or not an account does.
+            Section {
+                Link("Privacy Policy", destination: Self.privacyPolicyURL)
+            } header: {
+                Text("About")
+            } footer: {
+                Text("What PickMe keeps on this iPhone, what reaches the server if you have an account, and how to delete either.")
             }
 
             // Deliberately NOT gated on being signed in. The prediction log exists whether or not
