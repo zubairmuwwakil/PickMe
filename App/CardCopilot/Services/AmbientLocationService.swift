@@ -243,7 +243,11 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         let advantageCad = recommendation.advantageOverDefaultCad ?? 0
         let advantagePP = purchase.amountCad > 0 ? advantageCad / purchase.amountCad * 100 : 0
         let decision = AmbientGate.evaluate(AmbientGateInput(
-            merchantConfidence: prediction.confidenceSource.isVerified ? .high : .low,
+            // Only two tiers are reachable today: every merchant here comes from StoredMerchant,
+            // so it is either owner-reconciled or a stored guess. `.brandMatched` becomes
+            // reachable when discovery lands (design §7) and POI names start being resolved
+            // through `canonicalEngineBrand` at arrival.
+            merchantConfidence: prediction.confidenceSource.isVerified ? .verified : .unknown,
             recommendedCardId: recommendation.winner.cardId,
             defaultCardId: ownerState.defaultCardId,
             advantage: AmbientAdvantage(percentagePoints: advantagePP, cad: advantageCad),

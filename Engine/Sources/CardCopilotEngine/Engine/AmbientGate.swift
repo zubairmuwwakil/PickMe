@@ -1,11 +1,22 @@
 import Foundation
 
-/// Confidence in the local merchant truth graph. Ambient recommendations deliberately accept
-/// only the terminal-level, owner-verified rung; a brand or MapKit guess is not enough to
-/// interrupt the owner.
+/// Confidence in the local merchant truth graph.
+///
+/// This was a binary — owner-verified, or not — and the not-verified half was silent. That
+/// policy is correct for a wallet built entirely out of terminals the owner has reconciled, and
+/// wrong for one that discovers merchants: a discovered POI is never verified, so a strict
+/// binary means discovery can never speak.
+///
+/// The middle rung exists because "the POI is literally named Costco" and "the POI is an
+/// unnamed store pin" are not the same guess. The first can be checked against the engine's own
+/// brand vocabulary (`canonicalEngineBrand`); the second cannot be checked against anything.
 public enum AmbientMerchantConfidence: String, Codable, Equatable, Sendable {
-    case high
-    case low
+    /// The owner reconciled THIS terminal against a statement. Was `.high`.
+    case verified
+    /// A POI whose name resolves to a brand the catalogue knows. A guess, but a checkable one.
+    case brandMatched
+    /// A bare pin. Was `.low`.
+    case unknown
 }
 
 /// The winner's advantage over the owner's habitual card, expressed in the two units used by
@@ -47,6 +58,11 @@ public enum AmbientSuppressionReason: String, Codable, CaseIterable, Hashable, S
     case merchantConfidenceLow
     case recommendedDefaultCard
     case advantageBelowSwitchThreshold
+    /// An unverified merchant whose advantage cleared the owner's own floor but not the scaled
+    /// one. Kept distinct from `advantageBelowSwitchThreshold` so the field-test counters can
+    /// separate "the multiplier is too aggressive" from "the owner's threshold is simply high" —
+    /// tuning §5's multiplier against evidence needs those two to be tellable apart.
+    case advantageBelowUnverifiedThreshold
     case merchantMuted
 }
 
@@ -63,17 +79,52 @@ public struct AmbientGateDecision: Codable, Equatable, Sendable {
 }
 
 public enum AmbientGate {
-    /// A3: fire only for a high-confidence merchant, a non-default recommendation whose
-    /// advantage clears the existing switch threshold, and a merchant the owner has not muted.
+    /// How much more advantage an unverified merchant must show before it earns an interruption.
+    ///
+    /// A starting guess, not a derived value. The honest justification for a number like this is
+    /// the suppression counters: if `advantageBelowUnverifiedThreshold` dominates the log while
+    /// the owner keeps confirming those merchants by hand, it is too high; if brand-matched
+    /// notifications get muted, too low. It is a constant so that tuning it is one edit with one
+    /// test, rather than a policy spread across call sites.
+    public static let unverifiedAdvantageMultiplier: Double = 2.0
+
+    /// A3: fire only for a merchant confident enough to interrupt over, a non-default
+    /// recommendation whose advantage clears that merchant's threshold, and a merchant the owner
+    /// has not muted.
     public static func evaluate(_ input: AmbientGateInput) -> AmbientGateDecision {
         var reasons = Set<AmbientSuppressionReason>()
-        if input.merchantConfidence != .high { reasons.insert(.merchantConfidenceLow) }
         if input.recommendedCardId == input.defaultCardId { reasons.insert(.recommendedDefaultCard) }
-        if !clearsSwitchThreshold(input.advantage, threshold: input.switchThreshold) {
-            reasons.insert(.advantageBelowSwitchThreshold)
-        }
         if input.isMuted { reasons.insert(.merchantMuted) }
+
+        // The advantage conjunct is the one place this does NOT report every failure, and the
+        // exception is deliberate. `.unknown` is a hard stop: no multiplier makes it fire, so
+        // recording "the advantage was also too small" would be noise. Worse, it would be
+        // *misleading* noise — `advantageBelowUnverifiedThreshold` exists to tune
+        // `unverifiedAdvantageMultiplier`, and mixing in decisions the multiplier cannot affect
+        // makes the counter useless for the one job it has.
+        switch input.merchantConfidence {
+        case .unknown:
+            reasons.insert(.merchantConfidenceLow)
+        case .verified:
+            if !clearsSwitchThreshold(input.advantage, threshold: input.switchThreshold) {
+                reasons.insert(.advantageBelowSwitchThreshold)
+            }
+        case .brandMatched:
+            if !clearsSwitchThreshold(input.advantage, threshold: scaled(input.switchThreshold)) {
+                reasons.insert(.advantageBelowUnverifiedThreshold)
+            }
+        }
+
         return AmbientGateDecision(suppressionReasons: reasons)
+    }
+
+    /// Scales both floors, leaving `semantics` alone. Scaling only one axis would silently turn
+    /// an `either` threshold into a stricter rule on whichever axis was left unscaled.
+    static func scaled(_ threshold: SwitchThreshold) -> SwitchThreshold {
+        SwitchThreshold(
+            minAdvantagePercentagePoints: threshold.minAdvantagePercentagePoints * unverifiedAdvantageMultiplier,
+            minAdvantageCad: threshold.minAdvantageCad * unverifiedAdvantageMultiplier,
+            semantics: threshold.semantics)
     }
 
     /// Exactly mirrors `RecommendationEngine`'s switch policy: `both` requires both floors;
