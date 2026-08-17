@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		A1000010 /* CardCopilotEngine in Frameworks */ = {isa = PBXBuildFile; productRef = A1000009 /* CardCopilotEngine */; };
 		A1000031 /* CardCopilotStore in Frameworks */ = {isa = PBXBuildFile; productRef = A1000030 /* CardCopilotStore */; };
+		A1000041 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1000040 /* ClerkKit */; };
+		A1000043 /* ClerkKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1000042 /* ClerkKitUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +32,8 @@
 			files = (
 				A1000010 /* CardCopilotEngine in Frameworks */,
 				A1000031 /* CardCopilotStore in Frameworks */,
+				A1000041 /* ClerkKit in Frameworks */,
+				A1000043 /* ClerkKitUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,6 +78,8 @@
 			packageProductDependencies = (
 				A1000009 /* CardCopilotEngine */,
 				A1000030 /* CardCopilotStore */,
+				A1000040 /* ClerkKit */,
+				A1000042 /* ClerkKitUI */,
 			);
 			productName = CardCopilot;
 			productReference = A1000003 /* CardCopilot.app */;
@@ -106,6 +112,7 @@
 			packageReferences = (
 				A1000013 /* XCLocalSwiftPackageReference "../Engine" */,
 				A1000032 /* XCLocalSwiftPackageReference "../Store" */,
+				A1000044 /* XCRemoteSwiftPackageReference "clerk-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A1000002 /* Products */;
@@ -277,7 +284,28 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = CardCopilotStore;
 		};
+		A1000040 /* ClerkKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1000044 /* XCRemoteSwiftPackageReference "clerk-ios" */;
+			productName = ClerkKit;
+		};
+		A1000042 /* ClerkKitUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1000044 /* XCRemoteSwiftPackageReference "clerk-ios" */;
+			productName = ClerkKitUI;
+		};
 /* End XCSwiftPackageProductDependency section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A1000044 /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/clerk/clerk-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.9;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 	};
 	rootObject = A1000000 /* Project object */;
 }

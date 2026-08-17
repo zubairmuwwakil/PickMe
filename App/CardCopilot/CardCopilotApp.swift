@@ -1,12 +1,25 @@
 import SwiftUI
 import SwiftData
 import CardCopilotStore
+import ClerkKit
 
 @main
 struct CardCopilotApp: App {
+    init() {
+        if let publishableKey = MoneyTalksConfiguration.clerkPublishableKey,
+           publishableKey.hasPrefix("pk_") {
+            Clerk.configure(publishableKey: publishableKey)
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
-            CheckoutFlowView()
+            if MoneyTalksConfiguration.isConfigured {
+                CheckoutFlowView()
+                    .environment(Clerk.shared)
+            } else {
+                CheckoutFlowView()
+            }
         }
         .modelContainer(for: [StoredPrediction.self, StoredObservation.self, StoredMerchant.self])
     }

@@ -3,6 +3,7 @@ import SwiftData
 import CoreLocation
 import CardCopilotEngine
 import CardCopilotStore
+import ClerkKit
 
 /// The core loop: find or search the merchant, capture the amount, show the answer.
 struct CheckoutFlowView: View {
@@ -15,6 +16,9 @@ struct CheckoutFlowView: View {
     @State private var valueRecoveredCad: Double = 0
     @State private var reconcileQueue: [StoredPrediction] = []
     @State private var metrics: ExperimentMetrics?
+    @State private var lastSyncedAt: Date?
+    @State private var walletFeedback: [WalletFeedback] = []
+    @State private var isSyncing = false
 
     enum Stage {
         case idle
@@ -27,6 +31,7 @@ struct CheckoutFlowView: View {
         case protectionLens(BenefitContext)
         case benefitsReference
         case walletHealth
+        case sync
         case failed(String)
     }
 
@@ -55,6 +60,14 @@ struct CheckoutFlowView: View {
         NavigationStack {
             content
                 .navigationTitle("Card Copilot")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button { stage = .sync } label: {
+                            Image(systemName: lastSyncedAt == nil ? "icloud" : "checkmark.icloud")
+                        }
+                        .accessibilityLabel("Sync and Wallet Capture")
+                    }
+                }
         }
         .task { loadDependencies() }
     }
@@ -121,6 +134,14 @@ struct CheckoutFlowView: View {
             if let deps {
                 WalletHealthView(deps: deps, onDone: { stage = .idle })
             }
+        case .sync:
+            SyncCenterView(isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
+                           lastSyncedAt: lastSyncedAt,
+                           feedback: walletFeedback,
+                           isSyncing: isSyncing,
+                           onSync: { Task { await syncCapsSilently() } },
+                           onCreateInstallation: { label in try await createInstallation(label: label) },
+                           onDone: { stage = .idle })
         case .failed(let message):
             ContentUnavailableView("Something went wrong", systemImage: "exclamationmark.triangle",
                                    description: Text(message))
@@ -135,18 +156,7 @@ struct CheckoutFlowView: View {
             let candidates = try SeedLoader.loadCandidateCatalogue()
             let owner = try SeedLoader.loadOwnerState()
             let benefits = try SeedLoader.loadBenefitsCatalogue()
-            deps = Dependencies(
-                catalogue: catalogue,
-                candidateCatalogue: candidates,
-                ownerState: owner,
-                benefits: benefits,
-                service: CheckoutService(catalogue: catalogue, ownerState: owner,
-                                         context: modelContext),
-                explainer: RecommendationExplainer(catalogue: catalogue),
-                // The lens computes its earn line through the engine directly — NEVER through
-                // CheckoutService — so a lens query can't write a prediction (spec B9).
-                engine: RecommendationEngine(catalogue: catalogue, ownerState: owner),
-                provider: LiveMerchantProvider())
+            deps = makeDependencies(catalogue: catalogue, candidates: candidates, owner: owner, benefits: benefits)
             refreshHome()
         } catch {
             stage = .failed("Seed data failed to load: \(error.localizedDescription)")
@@ -239,6 +249,41 @@ struct CheckoutFlowView: View {
         } catch {
             stage = .failed(error.localizedDescription)
         }
+    }
+
+    private func syncCapsSilently() async {
+        guard MoneyTalksConfiguration.isConfigured, !isSyncing, let baseURL = MoneyTalksConfiguration.apiBaseURL,
+              Clerk.shared.user != nil, let deps else { return }
+        isSyncing = true
+        defer { isSyncing = false }
+        do {
+            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+            let result = try await OwnerStateSyncService(client: client).sync(ownerState: deps.ownerState, catalogue: deps.catalogue)
+            self.deps = makeDependencies(catalogue: deps.catalogue, candidates: deps.candidateCatalogue,
+                                         owner: result.ownerState, benefits: deps.benefits)
+            walletFeedback = result.feedback
+            lastSyncedAt = result.lastSyncedAt
+        } catch {
+            // A1: existing local state is usable; connectivity must never interrupt checkout.
+        }
+    }
+
+    private func createInstallation(label: String) async throws -> String {
+        guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL else {
+            throw MoneyTalksAPIError.unavailableConfiguration
+        }
+        let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+        let installation = try await client.createWalletInstallation(label: label)
+        guard let token = installation.token else { throw MoneyTalksAPIError.unexpectedResponse(-1) }
+        return token
+    }
+
+    private func makeDependencies(catalogue: Catalogue, candidates: Catalogue, owner: OwnerState,
+                                  benefits: BenefitsCatalogue) -> Dependencies {
+        Dependencies(catalogue: catalogue, candidateCatalogue: candidates, ownerState: owner, benefits: benefits,
+                     service: CheckoutService(catalogue: catalogue, ownerState: owner, context: modelContext),
+                     explainer: RecommendationExplainer(catalogue: catalogue),
+                     engine: RecommendationEngine(catalogue: catalogue, ownerState: owner), provider: LiveMerchantProvider())
     }
 
 
