@@ -2,6 +2,25 @@ import XCTest
 @testable import CardCopilotStore
 
 final class CategoryMapperTests: XCTestCase {
+
+    func testKnownMerchantUsesVerifiedTruthGraphBeforeMapperFallback() {
+        let merchant = StoredMerchant(name: "Walmart Supercentre", identifier: "poi-walmart",
+                                      poiCategoryRaw: "MKPOICategoryFoodMarket", latitude: 43.7,
+                                      longitude: -79.4, confirmedCategory: "other",
+                                      confirmationCount: 2)
+        let prediction = predictionForKnownMerchant(merchant)
+        XCTAssertEqual(prediction.category, "other")
+        XCTAssertEqual(prediction.confidenceSource, .repeatedTerminal)
+        XCTAssertEqual(prediction.candidates, ["other"])
+    }
+
+    func testKnownMerchantWithoutTruthGraphFallsBackToMapper() {
+        let merchant = StoredMerchant(name: "Costco Wholesale", identifier: "poi-costco",
+                                      poiCategoryRaw: nil, latitude: 43.7, longitude: -79.4)
+        let prediction = predictionForKnownMerchant(merchant)
+        XCTAssertEqual(prediction.category, "wholesaleClub")
+        XCTAssertEqual(prediction.confidenceSource, .brandPrior)
+    }
     func testFoodMarketMapsToGroceryFromMapKitCategory() {
         let prediction = predict(poiCategoryRaw: "foodMarket", merchantName: "Loblaws")
 

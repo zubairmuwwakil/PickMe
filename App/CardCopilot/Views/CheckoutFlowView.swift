@@ -8,6 +8,7 @@ import ClerkKit
 /// The core loop: find or search the merchant, capture the amount, show the answer.
 struct CheckoutFlowView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @State private var stage: Stage = .idle
     @State private var deps: Dependencies?
     @State private var locationDenied = false
@@ -73,6 +74,9 @@ struct CheckoutFlowView: View {
                 }
         }
         .task { loadDependencies() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { ambientDiagnostics = ambient.diagnostics }
+        }
     }
 
     @ViewBuilder
