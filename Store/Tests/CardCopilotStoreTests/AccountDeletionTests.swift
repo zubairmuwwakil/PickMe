@@ -107,6 +107,7 @@ final class LocalDataEraserTests: XCTestCase {
     override func setUpWithError() throws {
         container = try ModelContainer(
             for: StoredPrediction.self, StoredPurchase.self, StoredObservation.self, StoredMerchant.self,
+            ExploredCell.self, ShoppingArea.self, AreaMember.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         context = ModelContext(container)
     }
@@ -123,6 +124,16 @@ final class LocalDataEraserTests: XCTestCase {
             headline: "Use American Express Cobalt Card."))
         try log.settle(prediction, cardUsed: "amex-cobalt", observedCategory: "grocery",
                         missClass: nil, note: nil)
+
+        // Discovery leaves its own trail: a grid of cells the owner has passed through, and the
+        // coordinates of every shop found in them.
+        try DiscoveryCache(context: context).record(
+            cellKey: cellKey(latitude: 45.42, longitude: -75.69),
+            areas: clusterIntoAreas([NearbyMerchant(id: "poi-999", name: "Costco",
+                                                    poiCategoryRaw: "store",
+                                                    latitude: 45.42, longitude: -75.69,
+                                                    distanceMeters: nil)]),
+            at: Date())
     }
 
     func testErasingLocalHistoryRemovesPredictionsConfirmationsAndSavedMerchantLocations() throws {
@@ -131,10 +142,27 @@ final class LocalDataEraserTests: XCTestCase {
         try LocalDataEraser(context: context).eraseLocalHistory()
 
         XCTAssertEqual(try context.fetchCount(FetchDescriptor<StoredPrediction>()), 0)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<StoredPurchase>()), 0)
         XCTAssertEqual(try context.fetchCount(FetchDescriptor<StoredObservation>()), 0)
         // The merchant rows carry the coordinates of places the owner shopped; a local wipe that
         // left them behind would leave the most sensitive local data in place.
         XCTAssertEqual(try context.fetchCount(FetchDescriptor<StoredMerchant>()), 0)
+    }
+
+    /// The discovery cache is a coarse record of everywhere the owner has been — broader than the
+    /// merchant rows, and kept purely as an optimisation. A wipe that spared it would leave the
+    /// most sensitive local data behind, which is the exact failure the merchant rows were
+    /// included to avoid.
+    func testErasingLocalHistoryRemovesTheDiscoveryTrail() throws {
+        try seedConfirmedCheckout()
+        XCTAssertGreaterThan(try context.fetchCount(FetchDescriptor<ExploredCell>()), 0,
+                             "fixture must actually seed a trail, or this asserts nothing")
+
+        try LocalDataEraser(context: context).eraseLocalHistory()
+
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<ExploredCell>()), 0)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<ShoppingArea>()), 0)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<AreaMember>()), 0)
     }
 
     func testErasingLocalHistoryLeavesTheStoreUsable() throws {
