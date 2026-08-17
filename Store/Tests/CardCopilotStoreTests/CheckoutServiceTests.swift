@@ -13,7 +13,7 @@ final class CheckoutServiceTests: XCTestCase {
 
     override func setUpWithError() throws {
         container = try ModelContainer(
-            for: StoredPrediction.self, StoredObservation.self, StoredMerchant.self,
+            for: StoredPrediction.self, StoredPurchase.self, StoredObservation.self, StoredMerchant.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         service = CheckoutService(catalogue: try SeedLoader.loadCatalogue(),
                                   ownerState: try SeedLoader.loadOwnerState(),
@@ -50,7 +50,7 @@ final class CheckoutServiceTests: XCTestCase {
         let stored = try XCTUnwrap(try service.log.allPredictions().first)
         XCTAssertEqual(stored.predictedCategory, "grocery")
         XCTAssertEqual(stored.winnerCardId, "amex-cobalt")
-        XCTAssertEqual(stored.amountCad ?? .nan, 140, accuracy: 0.005)
+        XCTAssertEqual(stored.scoredAmountCad ?? .nan, 140, accuracy: 0.005)
         XCTAssertEqual(stored.defaultCardValueCad ?? .nan, 2.80, accuracy: 0.005)
         XCTAssertEqual(stored.valuationCentsPerPoint ?? .nan, 1.0, accuracy: 0.005,
                        "the valuation in force must be snapshotted with the prediction")
@@ -139,7 +139,7 @@ final class CheckoutServiceTests: XCTestCase {
         XCTAssertEqual(result.effectiveAmountCad, 60, accuracy: 0.005,
                        "grocery estimate per the category table")
         let stored = try XCTUnwrap(try service.log.allPredictions().first)
-        XCTAssertNil(stored.amountCad,
+        XCTAssertNil(stored.scoredAmountCad,
                      "an estimated amount is not evidence — the value-recovered counter must skip it")
     }
 

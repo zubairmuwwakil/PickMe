@@ -146,9 +146,15 @@ public struct CheckoutService {
             winnerRuleId: primary.winner.appliedRuleId,
             runnerUpCardId: primary.runnerUp?.cardId,
             runnerUpValueCad: primary.runnerUp?.netValueCad,
-            amountCad: amountCad,
+            scoredAmountCad: amountCad,
             valuationCentsPerPoint: mrCentsPerPoint,
             headline: headline))
+        // Asking "which card here?" is an assertion of intent to buy, so the till record opens
+        // now — otherwise the purchase would reach neither queue and the checkout could never be
+        // reconciled. It opens EMPTY on purpose: the amount above is what the owner expected to
+        // spend, and writing it here as the charge would rebuild the very conflation this model
+        // exists to break. Both facts arrive after payment.
+        try log.recordPurchase(for: stored)
         try upsertMerchant(merchant)
 
         return CheckoutResult(merchant: merchant, prediction: prediction, outcome: outcome,

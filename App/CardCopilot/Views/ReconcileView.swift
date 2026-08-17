@@ -6,6 +6,9 @@ import CardCopilotStore
 /// store: corrections travel out as data and become an observation elsewhere.
 struct ReconcileEntry {
     let cardUsed: String
+    /// What the charge actually came to. Separate from the pre-purchase figure on the prediction,
+    /// and never defaulted from it — the scoreboard is only as honest as this number.
+    let actualAmountCad: Double?
     let observedCategory: String
     let observedRewardUnits: Double?
     let missClass: MissClass?
@@ -154,11 +157,23 @@ struct ReconcileView: View {
         }
     }
 
+    /// "Match" asserts one thing: the right card coded the right way. It says NOTHING about the
+    /// reward units, which the owner would have had to read off a statement line to know.
+    ///
+    /// This previously copied `predictedRewardUnits` into the observation, so `arithmeticVerdict`
+    /// compared a number to itself and returned `.matches` every time — the arithmetic bar, whose
+    /// threshold is 100%, passed without a statement ever being opened. Passing nil drops the row
+    /// out of the arithmetic denominator via `.notEligible`, which is what "the owner did not
+    /// check the math" is supposed to mean. It still counts toward category accuracy, which is
+    /// the claim the tap actually makes.
     private func quickConfirm(_ prediction: StoredPrediction) {
         let entry = ReconcileEntry(
             cardUsed: prediction.winnerCardId,
+            // Not the scored amount: a preset tapped before paying is not what the till charged.
+            // Nil leaves the purchase incomplete, which is honest — Match did not supply it.
+            actualAmountCad: prediction.purchase?.amountCad,
             observedCategory: prediction.predictedCategory,
-            observedRewardUnits: prediction.predictedRewardUnits,
+            observedRewardUnits: nil,
             missClass: nil,
             note: nil
         )
@@ -191,6 +206,7 @@ struct ReconcileEntryView: View {
     @State private var cardUsed: String
     @State private var observedCategory: String
     @State private var unitsText: String = ""
+    @State private var actualAmountText: String = ""
     @State private var missClass: MissClass?
     @State private var note: String = ""
 
@@ -201,8 +217,13 @@ struct ReconcileEntryView: View {
         self.categories = categories
         self.onConfirm = onConfirm
         self.onCancel = onCancel
-        _cardUsed = State(initialValue: prediction.winnerCardId)
+        _cardUsed = State(initialValue: prediction.purchase?.cardUsedId ?? prediction.winnerCardId)
         _observedCategory = State(initialValue: prediction.predictedCategory)
+        // Prefilled only from a charge already recorded at the till. Deliberately NOT seeded from
+        // the prediction's scored amount: that figure is what the owner expected to spend.
+        _actualAmountText = State(initialValue: prediction.purchase?.amountCad.map {
+            String(format: "%.2f", $0)
+        } ?? "")
     }
 
     var body: some View {
@@ -214,6 +235,18 @@ struct ReconcileEntryView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+            }
+
+            Section("What you actually paid") {
+                HStack {
+                    Text("$")
+                        .foregroundStyle(.secondary)
+                    TextField("Amount charged", text: $actualAmountText)
+                        .keyboardType(.decimalPad)
+                }
+            } footer: {
+                Text("The amount on your receipt, not what you entered before paying. This is what the value-recovered figure is calculated from.")
+                    .font(.caption)
             }
 
             Section("What the app recommended") {
@@ -280,7 +313,7 @@ struct ReconcileEntryView: View {
                         .frame(maxWidth: .infinity)
                         .foregroundStyle(.blue)
                 }
-                .disabled(!unitsAreValid)
+                .disabled(!unitsAreValid || !amountIsValid)
             } footer: {
                 Text("This permanently logs your statement observation and trains the local Merchant Truth Graph for next time.")
             }
@@ -306,6 +339,7 @@ struct ReconcileEntryView: View {
         if mode == .matched {
             return ReconcileEntry(
                 cardUsed: prediction.winnerCardId,
+                actualAmountCad: parsedActualAmount,
                 observedCategory: prediction.predictedCategory,
                 observedRewardUnits: Double(unitsText.trimmingCharacters(in: .whitespaces)),
                 missClass: nil,
@@ -314,12 +348,26 @@ struct ReconcileEntryView: View {
         } else {
             return ReconcileEntry(
                 cardUsed: cardUsed,
+                actualAmountCad: parsedActualAmount,
                 observedCategory: observedCategory,
                 observedRewardUnits: Double(unitsText.trimmingCharacters(in: .whitespaces)),
                 missClass: missClass,
                 note: trimmedNote.isEmpty ? nil : trimmedNote
             )
         }
+    }
+
+    /// Nil rather than zero when blank or unparseable — an unstated charge is unknown, and a
+    /// zero would quietly contribute nothing to a scoreboard while looking like a real figure.
+    private var parsedActualAmount: Double? {
+        let trimmed = actualAmountText.trimmingCharacters(in: .whitespaces)
+        guard let value = Double(trimmed), value > 0 else { return nil }
+        return value
+    }
+
+    private var amountIsValid: Bool {
+        let trimmed = actualAmountText.trimmingCharacters(in: .whitespaces)
+        return trimmed.isEmpty || (Double(trimmed).map { $0 > 0 } ?? false)
     }
 
     private var unitsAreValid: Bool {

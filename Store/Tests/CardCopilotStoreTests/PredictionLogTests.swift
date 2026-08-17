@@ -11,7 +11,7 @@ final class PredictionLogTests: XCTestCase {
 
     override func setUpWithError() throws {
         container = try ModelContainer(
-            for: StoredPrediction.self, StoredObservation.self, StoredMerchant.self,
+            for: StoredPrediction.self, StoredPurchase.self, StoredObservation.self, StoredMerchant.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         log = PredictionLog(context: ModelContext(container))
     }
@@ -25,7 +25,7 @@ final class PredictionLogTests: XCTestCase {
             winnerCardId: "amex-cobalt", winnerValueCad: winnerValueCad,
             defaultCardValueCad: defaultCardValueCad, winnerRuleId: "cobalt-eats-5x",
             runnerUpCardId: "mbna-rewards-we", runnerUpValueCad: 7.00,
-            amountCad: amountCad, valuationCentsPerPoint: 1.0,
+            scoredAmountCad: amountCad, valuationCentsPerPoint: 1.0,
             headline: "Use American Express Cobalt Card — about $7.00 back on this $140.00 purchase.",
             recordedAt: Date(timeIntervalSince1970: 1_786_000_000))
     }
@@ -45,7 +45,7 @@ final class PredictionLogTests: XCTestCase {
         let originalWinner = prediction.winnerCardId
         let originalHeadline = prediction.headline
 
-        try log.confirm(prediction, cardUsed: "wealthsimple-vip",
+        try log.settle(prediction, cardUsed: "wealthsimple-vip",
                         observedCategory: "wholesaleClub", missClass: .wrongCategory,
                         note: "coded as warehouse club, not grocery")
 
@@ -55,19 +55,21 @@ final class PredictionLogTests: XCTestCase {
         XCTAssertEqual(reloaded.winnerCardId, originalWinner)
         XCTAssertEqual(reloaded.headline, originalHeadline)
 
-        let observation = try XCTUnwrap(reloaded.observation)
+        let purchase = try XCTUnwrap(reloaded.purchase)
+        let observation = try XCTUnwrap(purchase.observation)
         XCTAssertEqual(observation.observedCategory, "wholesaleClub")
         XCTAssertEqual(observation.missClass, .wrongCategory)
-        XCTAssertEqual(observation.cardUsed, "wealthsimple-vip")
+        // The card is a till fact and now lives on the purchase, not the statement.
+        XCTAssertEqual(purchase.cardUsedId, "wealthsimple-vip")
     }
 
     func testAccuracyCountsOnlyConfirmedPredictions() throws {
         let a = try log.record(samplePrediction())
         let b = try log.record(samplePrediction())
         _ = try log.record(samplePrediction())          // left unconfirmed
-        try log.confirm(a, cardUsed: "amex-cobalt", observedCategory: "grocery",
+        try log.settle(a, cardUsed: "amex-cobalt", observedCategory: "grocery",
                         missClass: nil, note: nil)
-        try log.confirm(b, cardUsed: "wealthsimple-vip", observedCategory: "wholesaleClub",
+        try log.settle(b, cardUsed: "wealthsimple-vip", observedCategory: "wholesaleClub",
                         missClass: .wrongCategory, note: nil)
 
         let metrics = try log.metrics()
@@ -89,34 +91,49 @@ final class PredictionLogTests: XCTestCase {
         // a statement that does not show per-transaction rewards must be recordable as unknown
         // rather than guessed.
         let prediction = try log.record(samplePrediction())
-        try log.confirm(prediction, cardUsed: "amex-cobalt", observedCategory: "grocery",
+        try log.settle(prediction, cardUsed: "amex-cobalt", observedCategory: "grocery",
                         observedRewardUnits: 700, missClass: nil, note: nil)
 
-        let observation = try XCTUnwrap(try log.allPredictions().first?.observation)
+        let observation = try XCTUnwrap(try log.allPredictions().first?.purchase?.observation)
         XCTAssertEqual(observation.observedRewardUnits ?? .nan, 700, accuracy: 0.001)
     }
 
     func testObservedRewardUnitsAreOptionalAndDefaultToUnknown() throws {
         let prediction = try log.record(samplePrediction())
-        try log.confirm(prediction, cardUsed: "amex-cobalt", observedCategory: "grocery",
+        try log.settle(prediction, cardUsed: "amex-cobalt", observedCategory: "grocery",
                         missClass: nil, note: nil)
-        XCTAssertNil(try log.allPredictions().first?.observation?.observedRewardUnits,
+        XCTAssertNil(try log.allPredictions().first?.purchase?.observation?.observedRewardUnits,
                      "a statement with no per-transaction reward line is unknown, not zero")
     }
 
-    func testUnconfirmedPredictionsDriveTheReconcileQueue() throws {
+    func testReconcilingARowRemovesItFromTheReconcileQueue() throws {
         let a = try log.record(samplePrediction())
-        _ = try log.record(samplePrediction())
-        try log.confirm(a, cardUsed: "amex-cobalt", observedCategory: "grocery",
+        let b = try log.record(samplePrediction())
+        for prediction in [a, b] {
+            let purchase = try log.recordPurchase(for: prediction, cardUsedId: "amex-cobalt",
+                                                  cardSource: .atTill)
+            try log.recordAmount(140, source: .atTill, on: purchase)
+        }
+        XCTAssertEqual(try log.awaitingConfirmation().count, 2)
+
+        try log.settle(a, cardUsed: "amex-cobalt", observedCategory: "grocery",
                         missClass: nil, note: nil)
         XCTAssertEqual(try log.awaitingConfirmation().count, 1)
+    }
+
+    /// Advice the owner never acted on is a real outcome, not an unfinished chore. Without this,
+    /// walking past a shop would put a row on a to-do list and the queues would measure footfall.
+    func testAPredictionWithNoPurchaseIsInNeitherQueue() throws {
+        _ = try log.record(samplePrediction())
+        XCTAssertEqual(try log.awaitingCompletion().count, 0)
+        XCTAssertEqual(try log.awaitingConfirmation().count, 0)
     }
 
     func testMissBreakdownGroupsByClass() throws {
         let a = try log.record(samplePrediction())
         let b = try log.record(samplePrediction())
-        try log.confirm(a, cardUsed: "x", observedCategory: "other", missClass: .wrongCategory, note: nil)
-        try log.confirm(b, cardUsed: "x", observedCategory: "other", missClass: .wrongCategory, note: nil)
+        try log.settle(a, cardUsed: "x", observedCategory: "other", missClass: .wrongCategory, note: nil)
+        try log.settle(b, cardUsed: "x", observedCategory: "other", missClass: .wrongCategory, note: nil)
         XCTAssertEqual(try log.metrics().missBreakdown[.wrongCategory], 2)
     }
 
@@ -134,15 +151,15 @@ final class PredictionLogTests: XCTestCase {
                                                                     winnerValueCad: 1.25,
                                                                     defaultCardValueCad: nil))
 
-        try log.confirm(confirmed, cardUsed: "amex-cobalt", observedCategory: "grocery",
+        try log.settle(confirmed, cardUsed: "amex-cobalt", observedCategory: "grocery",
                         missClass: nil, note: nil)
-        try log.confirm(estimatedAmount, cardUsed: "amex-cobalt", observedCategory: "grocery",
+        try log.settle(estimatedAmount, cardUsed: "amex-cobalt", observedCategory: "grocery",
                         missClass: nil, note: nil)
-        try log.confirm(missingCounterfactual, cardUsed: "amex-cobalt", observedCategory: "grocery",
+        try log.settle(missingCounterfactual, cardUsed: "amex-cobalt", observedCategory: "grocery",
                         missClass: nil, note: nil)
 
         _ = unconfirmed
-        XCTAssertEqual(try log.valueRecovered(), 4.20, accuracy: 0.005)
+        XCTAssertEqual(try log.valueRecovered().confirmedCad, 4.20, accuracy: 0.005)
     }
 
     func testDefaultNotAcceptedContributesZeroValueRecovered() throws {
@@ -152,8 +169,10 @@ final class PredictionLogTests: XCTestCase {
         let costco = try log.record(samplePrediction(amountCad: 220,
                                                      winnerValueCad: 3.30,
                                                      defaultCardValueCad: 3.30))
-        try log.confirm(costco, cardUsed: "rogers-red-we", observedCategory: "wholesaleClub",
+        // Must be the WINNING card: passing a card that was never recommended would return zero
+        // through the card guard and never reach the equal-counterfactual case this test names.
+        try log.settle(costco, cardUsed: costco.winnerCardId, observedCategory: "wholesaleClub",
                         missClass: nil, note: nil)
-        XCTAssertEqual(try log.valueRecovered(), 0, accuracy: 0.005)
+        XCTAssertEqual(try log.valueRecovered().confirmedCad, 0, accuracy: 0.005)
     }
 }

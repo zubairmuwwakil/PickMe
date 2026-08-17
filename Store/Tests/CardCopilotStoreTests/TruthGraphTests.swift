@@ -14,7 +14,7 @@ final class TruthGraphTests: XCTestCase {
 
     override func setUpWithError() throws {
         container = try ModelContainer(
-            for: StoredPrediction.self, StoredObservation.self, StoredMerchant.self,
+            for: StoredPrediction.self, StoredPurchase.self, StoredObservation.self, StoredMerchant.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         service = CheckoutService(catalogue: try SeedLoader.loadCatalogue(),
                                   ownerState: try SeedLoader.loadOwnerState(),
@@ -32,8 +32,10 @@ final class TruthGraphTests: XCTestCase {
     }
 
     private func reconcileLatest(as category: String, units: Double? = 500) throws {
-        let latest = try XCTUnwrap(try service.log.awaitingConfirmation().first)
-        try service.log.confirm(latest, cardUsed: latest.winnerCardId, observedCategory: category,
+        // A fresh checkout leaves an INCOMPLETE purchase — the card and the real charge are both
+        // still unknown at that point — so it waits in the completion queue, not the reconcile one.
+        let latest = try XCTUnwrap(try service.log.awaitingCompletion().first)
+        try service.log.settle(latest, cardUsed: latest.winnerCardId, observedCategory: category,
                                 observedRewardUnits: units, missClass: nil, note: nil)
     }
 
@@ -56,8 +58,8 @@ final class TruthGraphTests: XCTestCase {
         try checkout(walmart(id: "poi-walmart-dufferin"))
         try checkout(walmart(id: "poi-walmart-stockyards"))
         // Reconcile only the Dufferin visit (the older of the two unconfirmed rows).
-        let dufferin = try XCTUnwrap(try service.log.awaitingConfirmation().last)
-        try service.log.confirm(dufferin, cardUsed: dufferin.winnerCardId,
+        let dufferin = try XCTUnwrap(try service.log.awaitingCompletion().last)
+        try service.log.settle(dufferin, cardUsed: dufferin.winnerCardId,
                                 observedCategory: "grocery", observedRewardUnits: 500,
                                 missClass: nil, note: nil)
 

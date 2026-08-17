@@ -39,10 +39,12 @@ extension StoredPrediction {
     /// against an old row would measure today's catalogue and today's valuation, not the advice
     /// that was actually given — which is the entire reason the snapshot exists.
     public var arithmeticVerdict: ArithmeticVerdict {
-        guard let observation,
+        guard let purchase, let observation = purchase.observation,
               observation.observedCategory == predictedCategory,
-              observation.cardUsed == winnerCardId,
-              amountCad != nil,
+              purchase.cardUsedId == winnerCardId,
+              // The *actual* charge, not the pre-purchase estimate: reward units predicted from
+              // a preset button cannot meaningfully disagree with a statement.
+              purchase.amountCad != nil,
               let predicted = predictedRewardUnits,
               let observed = observation.observedRewardUnits else { return .notEligible }
         let tolerance = rewardUnitTolerance(predictedRewardUnitKind)
@@ -110,17 +112,61 @@ public struct PredictionLog {
         return prediction
     }
 
-    public func confirm(_ prediction: StoredPrediction, cardUsed: String,
+    /// Creates the till record for a prediction, or returns the one already there.
+    ///
+    /// Get-or-create rather than insert: the same purchase can be reached from a notification
+    /// action, from the app, and from reconcile. A second call must never orphan the first
+    /// record — that would silently discard a card the owner already told us about.
+    @discardableResult
+    public func recordPurchase(for prediction: StoredPrediction,
+                               cardUsedId: String? = nil, cardSource: CaptureSource? = nil,
+                               at date: Date = Date()) throws -> StoredPurchase {
+        let purchase: StoredPurchase
+        if let existing = prediction.purchase {
+            purchase = existing
+        } else {
+            purchase = StoredPurchase(createdAt: date)
+            context.insert(purchase)
+            purchase.prediction = prediction
+        }
+        if let cardUsedId {
+            purchase.cardUsedId = cardUsedId
+            purchase.cardSourceRaw = cardSource?.rawValue
+        }
+        refreshCompletion(purchase, at: date)
+        try context.save()
+        return purchase
+    }
+
+    public func recordAmount(_ amountCad: Double, source: CaptureSource,
+                             on purchase: StoredPurchase, at date: Date = Date()) throws {
+        purchase.amountCad = amountCad
+        purchase.amountSourceRaw = source.rawValue
+        refreshCompletion(purchase, at: date)
+        try context.save()
+    }
+
+    /// Completion is derived, never asserted by a caller — a purchase is complete exactly when
+    /// both facts are present, and no code path gets to claim otherwise.
+    private func refreshCompletion(_ purchase: StoredPurchase, at date: Date) {
+        let hasBoth = purchase.cardUsedId != nil && purchase.amountCad != nil
+        if hasBoth, purchase.completedAt == nil { purchase.completedAt = date }
+        if !hasBoth { purchase.completedAt = nil }
+    }
+
+    public func confirm(_ purchase: StoredPurchase,
                         observedCategory: String, observedRewardUnits: Double? = nil,
                         missClass: MissClass?,
                         note: String?, confirmedAt: Date = Date()) throws {
-        let observation = StoredObservation(cardUsed: cardUsed, observedCategory: observedCategory,
+        let observation = StoredObservation(observedCategory: observedCategory,
                                             observedRewardUnits: observedRewardUnits,
                                             missClass: missClass, note: note,
                                             confirmedAt: confirmedAt)
         context.insert(observation)
-        observation.prediction = prediction
-        try promoteMerchant(for: prediction, observedCategory: observedCategory)
+        observation.purchase = purchase
+        if let prediction = purchase.prediction {
+            try promoteMerchant(for: prediction, observedCategory: observedCategory)
+        }
         try context.save()
     }
 
@@ -148,14 +194,30 @@ public struct PredictionLog {
             sortBy: [SortDescriptor(\.recordedAt, order: .reverse)]))
     }
 
-    /// Predictions still waiting on a statement — the weekly reconcile queue.
+    /// Purchases missing a card or an amount — the "finish these" queue. One field each, and no
+    /// statement required, so this is deliberately a different ritual from reconciling.
+    public func awaitingCompletion() throws -> [StoredPrediction] {
+        try allPredictions().filter { prediction in
+            guard let purchase = prediction.purchase else { return false }
+            return !purchase.isComplete
+        }
+    }
+
+    /// Complete purchases still waiting on a statement — the weekly reconcile queue.
+    ///
+    /// A prediction with no purchase appears in neither queue. That is the point: advice the
+    /// owner never acted on is a real outcome, not an unfinished chore, and dropping it into a
+    /// to-do list would make the queue a measure of walking past shops.
     public func awaitingConfirmation() throws -> [StoredPrediction] {
-        try allPredictions().filter { $0.observation == nil }
+        try allPredictions().filter { prediction in
+            guard let purchase = prediction.purchase else { return false }
+            return purchase.isComplete && purchase.observation == nil
+        }
     }
 
     public func metrics() throws -> ExperimentMetrics {
         let predictions = try allPredictions()
-        let confirmed = predictions.compactMap(\.observation)
+        let confirmed = predictions.compactMap { $0.purchase?.observation }
         var breakdown: [MissClass: Int] = [:]
         for miss in confirmed.compactMap(\.missClass) {
             breakdown[miss, default: 0] += 1
@@ -169,14 +231,52 @@ public struct PredictionLog {
                                  arithmeticCorrectCount: verdicts.filter { $0 == .matches }.count)
     }
 
-    public func valueRecovered() throws -> Double {
-        try allPredictions().reduce(0) { total, prediction in
-            guard prediction.observation != nil,
-                  prediction.amountCad != nil,
-                  let defaultCardValueCad = prediction.defaultCardValueCad else {
-                return total
-            }
-            return total + (prediction.winnerValueCad - defaultCardValueCad)
+    /// Value recovered, split by whether a statement has backed it up yet.
+    ///
+    /// Reporting one number would force a choice between honest and motivating. Requiring
+    /// reconciliation is the honest reading — until the statement lands, "it coded as grocery"
+    /// is an assumption — but it would hold the scoreboard at $0 for weeks on a feature whose
+    /// whole job is getting purchases logged. Two labelled numbers keep the strong claim strong.
+    public struct ValueRecovered: Equatable, Sendable {
+        public let confirmedCad: Double
+        public let pendingCad: Double
+
+        public static let zero = ValueRecovered(confirmedCad: 0, pendingCad: 0)
+    }
+
+    public func valueRecovered() throws -> ValueRecovered {
+        var confirmed: Double = 0
+        var pending: Double = 0
+        for prediction in try allPredictions() {
+            guard let purchase = prediction.purchase,
+                  let advantage = Self.advantageRealised(prediction, purchase) else { continue }
+            if purchase.observation != nil { confirmed += advantage } else { pending += advantage }
         }
+        return ValueRecovered(confirmedCad: confirmed, pendingCad: pending)
+    }
+
+    /// What taking the advice was actually worth on this purchase, or nil when the question does
+    /// not apply.
+    ///
+    /// The card check is the one this shipped without, and its absence was not cosmetic: value
+    /// recovered means "I earned more BECAUSE I took the advice", so a purchase paid on the
+    /// habitual default card recovered nothing, however large the advantage on offer was.
+    ///
+    /// The advantage is scaled from the scored amount to the real one. `winnerValueCad` and
+    /// `defaultCardValueCad` are absolute figures the engine computed against whatever amount it
+    /// was given, so a $50 preset standing in for a $47.83 charge overstates by 4.5%. Scaling
+    /// assumes reward rates are linear in amount, which is true away from cap boundaries and
+    /// approximate at them — better than multiplying through a button the owner tapped, and the
+    /// residual error is bounded by how close the purchase sat to a cap.
+    private static func advantageRealised(_ prediction: StoredPrediction,
+                                          _ purchase: StoredPurchase) -> Double? {
+        guard purchase.cardUsedId == prediction.winnerCardId,
+              let actualAmount = purchase.amountCad,
+              let defaultCardValueCad = prediction.defaultCardValueCad,
+              // No scored amount means the engine priced a category estimate. There is no
+              // per-dollar advantage to rescale, so the row is excluded rather than guessed at.
+              let scoredAmount = prediction.scoredAmountCad, scoredAmount > 0 else { return nil }
+        let advantagePerDollar = (prediction.winnerValueCad - defaultCardValueCad) / scoredAmount
+        return advantagePerDollar * actualAmount
     }
 }

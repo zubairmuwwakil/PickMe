@@ -28,6 +28,18 @@ public enum MissClass: String, Codable, Sendable, CaseIterable {
     case networkNotAccepted
 }
 
+/// Where a recorded fact came from. The distinction is not bookkeeping: a card named at the till
+/// and a card recalled a week later are different evidence, and averaging them into one
+/// confidence is how a log starts lying about itself.
+public enum CaptureSource: String, Codable, Sendable, CaseIterable {
+    /// Stated during the visit — fresh, and the strongest a manual record gets.
+    case atTill
+    /// Stated later, during reconcile. Recalled rather than observed.
+    case recalledLater
+    /// Read off an Apple Wallet transaction by the Shortcut (Path B).
+    case walletCapture
+}
+
 /// What the app said at the moment of payment. Never edited after it is written:
 /// corrections arrive as a separate `StoredObservation`. Accuracy measured against a
 /// log that could be rewritten would measure nothing.
@@ -55,14 +67,21 @@ public final class StoredPrediction {
     public private(set) var winnerRuleId: String?
     public private(set) var runnerUpCardId: String?
     public private(set) var runnerUpValueCad: Double?
-    public private(set) var amountCad: Double?
+    /// The amount the engine scored against, stated by the owner before paying — nil when they
+    /// skipped and a category estimate was used instead. NOT what the purchase cost: that is
+    /// `StoredPurchase.amountCad`, and conflating the two is what let value-recovered quietly
+    /// multiply through a preset button.
+    public private(set) var scoredAmountCad: Double?
     /// The point valuation in force when this advice was given — without it, a later
     /// valuation change would silently invalidate the arithmetic check.
     public private(set) var valuationCentsPerPoint: Double?
     public private(set) var headline: String = ""
 
-    @Relationship(deleteRule: .cascade, inverse: \StoredObservation.prediction)
-    public var observation: StoredObservation?
+    /// The till record, created when the owner states they bought something here. A prediction
+    /// with no purchase is advice that was given and not acted on — which is a real outcome, not
+    /// a missing row.
+    @Relationship(deleteRule: .cascade, inverse: \StoredPurchase.prediction)
+    public var purchase: StoredPurchase?
 
     public var confidenceSource: ConfidenceSource {
         ConfidenceSource(rawValue: confidenceSourceRaw) ?? .fallback
@@ -74,7 +93,7 @@ public final class StoredPrediction {
                 predictedRewardUnits: Double? = nil, predictedRewardUnitKind: String? = nil,
                 defaultCardValueCad: Double? = nil, winnerRuleId: String? = nil,
                 runnerUpCardId: String? = nil, runnerUpValueCad: Double? = nil,
-                amountCad: Double? = nil, valuationCentsPerPoint: Double? = nil,
+                scoredAmountCad: Double? = nil, valuationCentsPerPoint: Double? = nil,
                 headline: String, recordedAt: Date = Date()) {
         self.id = UUID()
         self.recordedAt = recordedAt
@@ -90,18 +109,62 @@ public final class StoredPrediction {
         self.winnerRuleId = winnerRuleId
         self.runnerUpCardId = runnerUpCardId
         self.runnerUpValueCad = runnerUpValueCad
-        self.amountCad = amountCad
+        self.scoredAmountCad = scoredAmountCad
         self.valuationCentsPerPoint = valuationCentsPerPoint
         self.headline = headline
     }
 }
 
-/// What actually happened, recorded after the transaction posts.
+/// The till: what the owner tapped, and what it came to.
+///
+/// This exists because the world has three moments and the model had two. At the till the card
+/// is certain and the amount is on the terminal screen; neither is knowable from a statement that
+/// does not exist yet, and both are guesses by the time one does. Path B's `WalletEvent` is this
+/// same record captured automatically — which is why the shape is source-agnostic.
+///
+/// Unlike its neighbours this record is mutable, and deliberately so: it is the one thing here
+/// that is *incomplete* rather than merely unknown. The advice is whole the instant it is given
+/// and the statement is whole the instant it is read, but a purchase legitimately arrives in two
+/// pieces, sometimes days apart.
+@Model
+public final class StoredPurchase {
+    public private(set) var id: UUID = UUID()
+    public private(set) var createdAt: Date = Date()
+
+    /// nil until stated. Never defaulted to the recommended card — that assumption is exactly
+    /// what made value-recovered credit advice the owner ignored.
+    public var cardUsedId: String?
+    public var cardSourceRaw: String?
+
+    /// What the charge actually came to.
+    public var amountCad: Double?
+    public var amountSourceRaw: String?
+
+    /// Set once both facts are known. Drives the "finish these" queue, and gates entry to the
+    /// reconcile queue — a purchase missing its card cannot be checked against a statement.
+    public var completedAt: Date?
+
+    public var prediction: StoredPrediction?
+
+    @Relationship(deleteRule: .cascade, inverse: \StoredObservation.purchase)
+    public var observation: StoredObservation?
+
+    public var cardSource: CaptureSource? { cardSourceRaw.flatMap(CaptureSource.init(rawValue:)) }
+    public var amountSource: CaptureSource? { amountSourceRaw.flatMap(CaptureSource.init(rawValue:)) }
+    public var isComplete: Bool { completedAt != nil }
+
+    public init(createdAt: Date = Date()) {
+        self.id = UUID()
+        self.createdAt = createdAt
+    }
+}
+
+/// What the statement says: how the charge coded, and what it paid. Purely statement-derived
+/// since the card moved to `StoredPurchase` — this type now means exactly one thing.
 @Model
 public final class StoredObservation {
     public private(set) var id: UUID = UUID()
     public private(set) var confirmedAt: Date = Date()
-    public private(set) var cardUsed: String = ""
     public private(set) var observedCategory: String = ""
     /// Reward units the statement actually posted for this transaction — points for a points
     /// card, dollars for cash back. Optional and never inferred: a statement that shows no
@@ -110,18 +173,17 @@ public final class StoredObservation {
     public private(set) var observedRewardUnits: Double?
     public private(set) var missClassRaw: String?
     public private(set) var note: String?
-    public var prediction: StoredPrediction?
+    public var purchase: StoredPurchase?
 
     public var missClass: MissClass? { missClassRaw.flatMap(MissClass.init(rawValue:)) }
     /// A confirmation with no miss class is a correct prediction.
     public var wasCorrect: Bool { missClassRaw == nil }
 
-    public init(cardUsed: String, observedCategory: String, observedRewardUnits: Double? = nil,
+    public init(observedCategory: String, observedRewardUnits: Double? = nil,
                 missClass: MissClass? = nil,
                 note: String? = nil, confirmedAt: Date = Date()) {
         self.id = UUID()
         self.confirmedAt = confirmedAt
-        self.cardUsed = cardUsed
         self.observedCategory = observedCategory
         self.observedRewardUnits = observedRewardUnits
         self.missClassRaw = missClass?.rawValue

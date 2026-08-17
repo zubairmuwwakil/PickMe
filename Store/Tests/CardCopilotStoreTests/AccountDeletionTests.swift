@@ -106,7 +106,7 @@ final class LocalDataEraserTests: XCTestCase {
 
     override func setUpWithError() throws {
         container = try ModelContainer(
-            for: StoredPrediction.self, StoredObservation.self, StoredMerchant.self,
+            for: StoredPrediction.self, StoredPurchase.self, StoredObservation.self, StoredMerchant.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         context = ModelContext(container)
     }
@@ -121,7 +121,7 @@ final class LocalDataEraserTests: XCTestCase {
             predictedCategory: "grocery", confidenceSource: .brandPrior,
             winnerCardId: "amex-cobalt", winnerValueCad: 7.0,
             headline: "Use American Express Cobalt Card."))
-        try log.confirm(prediction, cardUsed: "amex-cobalt", observedCategory: "grocery",
+        try log.settle(prediction, cardUsed: "amex-cobalt", observedCategory: "grocery",
                         missClass: nil, note: nil)
     }
 

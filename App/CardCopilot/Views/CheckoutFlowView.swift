@@ -15,6 +15,11 @@ struct CheckoutFlowView: View {
     @State private var cachedLocation: CachedLocation?
     @State private var homeMerchants: [StoredMerchant] = []
     @State private var valueRecoveredCad: Double = 0
+    /// Complete purchases not yet checked against a statement. Shown beside the confirmed figure
+    /// rather than added to it — see PredictionLog.ValueRecovered.
+    @State private var pendingValueCad: Double = 0
+    /// Purchases missing a card or a charge: one field each, no statement needed.
+    @State private var completionQueue: [StoredPrediction] = []
     @State private var reconcileQueue: [StoredPrediction] = []
     @State private var metrics: ExperimentMetrics?
     @State private var lastSyncedAt: Date?
@@ -265,13 +270,23 @@ struct CheckoutFlowView: View {
                                                  distanceMeters: nil))
     }
 
-    /// Attaching an observation to a prediction. The prediction is never touched — the store
-    /// offers no way to touch it — so this reads as "record what happened", not "fix the guess".
+    /// Recording what happened. The prediction is never touched — the store offers no way to
+    /// touch it — so this reads as "record what happened", not "fix the guess".
+    ///
+    /// Three writes rather than one, because reconcile is now filling in two different records:
+    /// the till facts the owner is recalling (card, charge) and the statement facts they are
+    /// reading (category, reward units). Provenance is `.recalledLater` for the first pair and
+    /// says so, which is what keeps a week-old recollection from being counted as an observation.
     private func confirm(_ prediction: StoredPrediction, entry: ReconcileEntry) {
         guard let deps else { return }
         do {
-            try deps.service.log.confirm(prediction,
-                                         cardUsed: entry.cardUsed,
+            let purchase = try deps.service.log.recordPurchase(for: prediction,
+                                                               cardUsedId: entry.cardUsed,
+                                                               cardSource: .recalledLater)
+            if let amount = entry.actualAmountCad {
+                try deps.service.log.recordAmount(amount, source: .recalledLater, on: purchase)
+            }
+            try deps.service.log.confirm(purchase,
                                          observedCategory: entry.observedCategory,
                                          observedRewardUnits: entry.observedRewardUnits,
                                          missClass: entry.missClass,
@@ -285,8 +300,11 @@ struct CheckoutFlowView: View {
     private func refreshHome() {
         guard let deps else { return }
         do {
-            valueRecoveredCad = try deps.service.log.valueRecovered()
+            let recovered = try deps.service.log.valueRecovered()
+            valueRecoveredCad = recovered.confirmedCad
+            pendingValueCad = recovered.pendingCad
             homeMerchants = sortedHomeMerchants(try deps.service.knownMerchants())
+            completionQueue = try deps.service.log.awaitingCompletion()
             reconcileQueue = try deps.service.log.awaitingConfirmation()
             metrics = try deps.service.log.metrics()
         } catch {
