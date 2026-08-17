@@ -47,9 +47,9 @@ public enum MoneyTalksAPIError: Error, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .unavailableConfiguration: "MoneyTalks sync has not been configured."
-        case .unauthenticated: "Sign in to sync with MoneyTalks."
-        case .unexpectedResponse(let status): "MoneyTalks returned HTTP \(status)."
+        case .unavailableConfiguration: "PickMe sync has not been configured."
+        case .unauthenticated: "Sign in to sync with PickMe."
+        case .unexpectedResponse(let status): "PickMe returned HTTP \(status)."
         }
     }
 }

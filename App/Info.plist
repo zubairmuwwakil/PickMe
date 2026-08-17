@@ -4,6 +4,8 @@
 <dict>
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
+    <key>CFBundleDisplayName</key>
+    <string>PickMe</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -23,7 +25,7 @@
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.finance</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Your location is used only on this device to detect arrival at merchants you have saved, so Card Copilot can suggest a card before you pay. It never tracks your route or leaves your phone.</string>
+    <string>Your location is used only on this device to detect arrival at merchants you have saved, so PickMe can suggest a card before you pay. It never tracks your route or leaves your phone.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Your location is used only on this device to identify a nearby merchant when you ask, or to detect arrival at merchants you have saved. It never tracks your route or leaves your phone.</string>
     <key>UIBackgroundModes</key>

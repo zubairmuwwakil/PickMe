@@ -63,7 +63,7 @@ struct CheckoutFlowView: View {
     var body: some View {
         NavigationStack {
             content
-                .navigationTitle("Card Copilot")
+                .navigationTitle("PickMe")
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button { stage = .sync } label: {

@@ -65,7 +65,7 @@ struct MerchantConfirmView: View {
                 Text("Select your location")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
             } footer: {
-                Text("Selecting the exact merchant helps Card Copilot determine the precise MCC and terminal rules.")
+                Text("Selecting the exact merchant helps PickMe determine the precise MCC and terminal rules.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

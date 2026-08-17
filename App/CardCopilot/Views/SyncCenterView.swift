@@ -35,14 +35,14 @@ struct SyncCenterView: View {
 
     private var configurationRequired: some View {
         ContentUnavailableView("Sync setup required", systemImage: "key.horizontal",
-                               description: Text("Checkout stays available. Add the dedicated MoneyTalks Clerk key and API URL to MoneyTalksConfiguration.swift, then return here to sign in."))
+                               description: Text("Checkout stays available. Add the dedicated PickMe Clerk key and API URL to MoneyTalksConfiguration.swift, then return here to sign in."))
     }
 
     private var signInRequired: some View {
         VStack(alignment: .leading, spacing: 16) {
             Label("Keep your caps in sync", systemImage: "arrow.triangle.2.circlepath").font(.title3.weight(.bold))
             Text("Sign in only to sync cap usage, view capture feedback, and create a Wallet Shortcut installation token. Checkout recommendations work without an account or connection.").foregroundStyle(.secondary)
-            Button("Sign in to MoneyTalks") { authIsPresented = true }.buttonStyle(.borderedProminent)
+            Button("Sign in to PickMe") { authIsPresented = true }.buttonStyle(.borderedProminent)
         }.padding(18).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
     }
 

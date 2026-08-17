@@ -18,7 +18,7 @@ struct AmbientLocationExplainerView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Get advice when you arrive")
                         .font(.title2.bold())
-                    Text("Card Copilot can recognize arrival at up to 20 merchants you have already saved, then suggest a card before you pay.")
+                    Text("PickMe can recognize arrival at up to 20 merchants you have already saved, then suggest a card before you pay.")
                         .foregroundStyle(.secondary)
                 }
 
