@@ -201,14 +201,17 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Used once, only when you tap to find nearby shops, so the app can tell which merchant you are at. Your location never leaves your phone.";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Your location is used only on this device to detect arrival at merchants you have saved, so Card Copilot can suggest a card before you pay. It never tracks your route or leaves your phone.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Your location is used only on this device to identify a nearby merchant when you ask, or to detect arrival at merchants you have saved. It never tracks your route or leaves your phone.";
+				INFOPLIST_KEY_UIBackgroundModes = location;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1;
+				MARKETING_VERSION = 0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = ca.pickme.cardcopilot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -220,20 +223,24 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = CardCopilot/CardCopilotRelease.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = MC8XJ6GXBM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Used once, only when you tap to find nearby shops, so the app can tell which merchant you are at. Your location never leaves your phone.";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Your location is used only on this device to detect arrival at merchants you have saved, so Card Copilot can suggest a card before you pay. It never tracks your route or leaves your phone.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Your location is used only on this device to identify a nearby merchant when you ask, or to detect arrival at merchants you have saved. It never tracks your route or leaves your phone.";
+				INFOPLIST_KEY_UIBackgroundModes = location;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1;
+				MARKETING_VERSION = 0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = ca.pickme.cardcopilot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -275,6 +282,17 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		A1000044 /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/clerk/clerk-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.9;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		A1000009 /* CardCopilotEngine */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -295,17 +313,6 @@
 			productName = ClerkKitUI;
 		};
 /* End XCSwiftPackageProductDependency section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		A1000044 /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/clerk/clerk-ios";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.3.9;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
 	};
 	rootObject = A1000000 /* Project object */;
 }

@@ -19,6 +19,8 @@ struct CheckoutFlowView: View {
     @State private var lastSyncedAt: Date?
     @State private var walletFeedback: [WalletFeedback] = []
     @State private var isSyncing = false
+    @State private var ambient = AmbientLocationService()
+    @State private var ambientDiagnostics = SuppressionLog()
 
     enum Stage {
         case idle
@@ -32,6 +34,7 @@ struct CheckoutFlowView: View {
         case benefitsReference
         case walletHealth
         case sync
+        case ambientSetup
         case failed(String)
     }
 
@@ -82,6 +85,8 @@ struct CheckoutFlowView: View {
                      locationDenied: locationDenied,
                      reconcileCount: reconcileQueue.count,
                      confirmedCount: metrics?.confirmedCount ?? 0,
+                     ambientDiagnostics: ambientDiagnostics,
+                     ambientEnabled: ambient.isEnabled,
                      onInstantRepeat: { merchant in startInstantRepeat(merchant) },
                      onFindNearby: { Task { await findNearby() } },
                      onSearch: { text in Task { await search(text) } },
@@ -89,7 +94,8 @@ struct CheckoutFlowView: View {
                      onDashboard: { stage = .dashboard },
                      onProtectionLens: { stage = .protectionLens(BenefitContext(kind: .flight)) },
                      onBenefits: { stage = .benefitsReference },
-                     onWalletHealth: { stage = .walletHealth })
+                     onWalletHealth: { stage = .walletHealth },
+                     onConfigureAmbient: { stage = .ambientSetup })
         case .locating:
             ProgressView("Finding nearby merchants…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -142,6 +148,12 @@ struct CheckoutFlowView: View {
                            onSync: { Task { await syncCapsSilently() } },
                            onCreateInstallation: { label in try await createInstallation(label: label) },
                            onDone: { stage = .idle })
+        case .ambientSetup:
+            AmbientLocationExplainerView(onEnable: {
+                ambient.requestAlwaysAuthorization()
+                ambientDiagnostics = ambient.diagnostics
+                stage = .idle
+            }, onDone: { stage = .idle })
         case .failed(let message):
             ContentUnavailableView("Something went wrong", systemImage: "exclamationmark.triangle",
                                    description: Text(message))
@@ -157,6 +169,7 @@ struct CheckoutFlowView: View {
             let owner = try SeedLoader.loadOwnerState()
             let benefits = try SeedLoader.loadBenefitsCatalogue()
             deps = makeDependencies(catalogue: catalogue, candidates: candidates, owner: owner, benefits: benefits)
+            configureAmbient(catalogue: catalogue, owner: owner)
             refreshHome()
         } catch {
             stage = .failed("Seed data failed to load: \(error.localizedDescription)")
@@ -261,6 +274,7 @@ struct CheckoutFlowView: View {
             let result = try await OwnerStateSyncService(client: client).sync(ownerState: deps.ownerState, catalogue: deps.catalogue)
             self.deps = makeDependencies(catalogue: deps.catalogue, candidates: deps.candidateCatalogue,
                                          owner: result.ownerState, benefits: deps.benefits)
+            configureAmbient(catalogue: deps.catalogue, owner: result.ownerState)
             walletFeedback = result.feedback
             lastSyncedAt = result.lastSyncedAt
         } catch {
@@ -284,6 +298,11 @@ struct CheckoutFlowView: View {
                      service: CheckoutService(catalogue: catalogue, ownerState: owner, context: modelContext),
                      explainer: RecommendationExplainer(catalogue: catalogue),
                      engine: RecommendationEngine(catalogue: catalogue, ownerState: owner), provider: LiveMerchantProvider())
+    }
+
+    private func configureAmbient(catalogue: Catalogue, owner: OwnerState) {
+        ambient.configure(modelContainer: modelContext.container, catalogue: catalogue, ownerState: owner)
+        ambientDiagnostics = ambient.diagnostics
     }
 
 

@@ -90,6 +90,20 @@ public func predict(poiCategoryRaw: String?, merchantName: String) -> CategoryPr
     }
 }
 
+/// Resolves a learned terminal through the truth graph before falling back to the ordinary
+/// category mapper. The confidence source is intentionally preserved so an ambient caller can
+/// apply its silence-first gate without duplicating the graph's promotion rules.
+public func predictionForKnownMerchant(_ merchant: StoredMerchant) -> CategoryPrediction {
+    if let category = merchant.confirmedCategory {
+        return CategoryPrediction(
+            category: category,
+            confidenceSource: merchant.confirmationCount >= 2 ? .repeatedTerminal
+                                                              : .ownerConfirmedTerminal,
+            candidates: [category])
+    }
+    return predict(poiCategoryRaw: merchant.poiCategoryRaw, merchantName: merchant.name)
+}
+
 private func isWalmart(_ normalizedMerchant: String) -> Bool {
     normalizedMerchant.contains("walmart")
 }

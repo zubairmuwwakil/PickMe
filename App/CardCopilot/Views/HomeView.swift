@@ -1,4 +1,5 @@
 import SwiftUI
+import CardCopilotEngine
 import CardCopilotStore
 
 struct HomeView: View {
@@ -8,6 +9,8 @@ struct HomeView: View {
     let locationDenied: Bool
     let reconcileCount: Int
     let confirmedCount: Int
+    let ambientDiagnostics: SuppressionLog
+    let ambientEnabled: Bool
     let onInstantRepeat: (StoredMerchant) -> Void
     let onFindNearby: () -> Void
     let onSearch: (String) -> Void
@@ -16,6 +19,7 @@ struct HomeView: View {
     let onProtectionLens: () -> Void
     let onBenefits: () -> Void
     let onWalletHealth: () -> Void
+    let onConfigureAmbient: () -> Void
 
     @State private var searchText = ""
     @FocusState private var isSearchFocused: Bool
@@ -25,6 +29,7 @@ struct HomeView: View {
             VStack(spacing: 20) {
                 valueRecoveredCard
                 primaryCheckoutSection
+                ambientDiagnosticsRow
                 instantRepeatsSection
                 toolsAndExperimentSection
             }
@@ -32,6 +37,39 @@ struct HomeView: View {
             .padding(.vertical, 12)
         }
         .background(Color(.systemGroupedBackground))
+    }
+
+    private var ambientDiagnosticsRow: some View {
+        Button(action: onConfigureAmbient) {
+            HStack(spacing: 12) {
+                Image(systemName: ambientEnabled ? "location.circle.fill" : "location.circle")
+                    .font(.title3)
+                    .foregroundStyle(ambientEnabled ? .blue : .secondary)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Arrival alerts")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text(ambientEnabled
+                         ? "Last 7 days: \(ambientDiagnostics.fired) fired · \(ambientDiagnostics.suppressed) suppressed"
+                         : "Set up on-device arrival detection")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if !ambientEnabled {
+                    Text("Set up")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.blue)
+                }
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Value Recovered & Experiment Banner
