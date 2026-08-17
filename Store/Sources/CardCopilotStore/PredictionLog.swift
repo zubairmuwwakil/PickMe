@@ -28,10 +28,12 @@ extension StoredPrediction {
     /// 1. The category was right — `observedCategory == predictedCategory`. Deliberately NOT
     ///    "carries no miss class": a `capExceeded` row has the right category and the wrong
     ///    math, which is precisely the failure this metric exists to catch.
-    /// 2. `amountCad != nil` — the engine scored a real amount, not a category estimate. Units
-    ///    predicted from a guessed basket cannot meaningfully disagree with a statement.
-    /// 3. The card tapped is the card recommended. The predicted units belong to the winner;
-    ///    another card's posting is a different sum, not a catalogue error.
+    /// 2. `purchase.amountCad != nil` — a real charge, not a category estimate and not the
+    ///    preset the owner tapped before paying. Units predicted from a guessed basket cannot
+    ///    meaningfully disagree with a statement.
+    /// 3. The card tapped is the card recommended — now read from the purchase, where the till
+    ///    fact belongs. The predicted units belong to the winner; another card's posting is a
+    ///    different sum, not a catalogue error.
     /// 4. Both reward-unit figures exist. Missing means unknown, never assumed-correct — rows
     ///    predating the fields drop out instead of inflating the numerator.
     ///
@@ -197,7 +199,11 @@ public struct PredictionLog {
     /// Purchases missing a card or an amount — the "finish these" queue. One field each, and no
     /// statement required, so this is deliberately a different ritual from reconciling.
     public func awaitingCompletion() throws -> [StoredPrediction] {
-        try allPredictions().filter { prediction in
+        Self.awaitingCompletion(from: try allPredictions())
+    }
+
+    private static func awaitingCompletion(from predictions: [StoredPrediction]) -> [StoredPrediction] {
+        predictions.filter { prediction in
             guard let purchase = prediction.purchase else { return false }
             return !purchase.isComplete
         }
@@ -209,14 +215,42 @@ public struct PredictionLog {
     /// owner never acted on is a real outcome, not an unfinished chore, and dropping it into a
     /// to-do list would make the queue a measure of walking past shops.
     public func awaitingConfirmation() throws -> [StoredPrediction] {
-        try allPredictions().filter { prediction in
+        Self.awaitingConfirmation(from: try allPredictions())
+    }
+
+    private static func awaitingConfirmation(from predictions: [StoredPrediction]) -> [StoredPrediction] {
+        predictions.filter { prediction in
             guard let purchase = prediction.purchase else { return false }
             return purchase.isComplete && purchase.observation == nil
         }
     }
 
-    public func metrics() throws -> ExperimentMetrics {
+    /// Everything the home screen needs, from one fetch.
+    ///
+    /// The four accessors below stay — they are the readable unit and every test asserts against
+    /// them — but calling all four in sequence runs three unfiltered fetches and filters each in
+    /// memory. That was fine against a 30-row target; ambient capture exists to raise the row
+    /// count, and a third record type with relationships to walk makes every pass heavier.
+    public struct LogSnapshot {
+        public let valueRecovered: ValueRecovered
+        public let awaitingCompletion: [StoredPrediction]
+        public let awaitingConfirmation: [StoredPrediction]
+        public let metrics: ExperimentMetrics
+    }
+
+    public func snapshot() throws -> LogSnapshot {
         let predictions = try allPredictions()
+        return LogSnapshot(valueRecovered: Self.valueRecovered(from: predictions),
+                           awaitingCompletion: Self.awaitingCompletion(from: predictions),
+                           awaitingConfirmation: Self.awaitingConfirmation(from: predictions),
+                           metrics: Self.metrics(from: predictions))
+    }
+
+    public func metrics() throws -> ExperimentMetrics {
+        Self.metrics(from: try allPredictions())
+    }
+
+    private static func metrics(from predictions: [StoredPrediction]) -> ExperimentMetrics {
         let confirmed = predictions.compactMap { $0.purchase?.observation }
         var breakdown: [MissClass: Int] = [:]
         for miss in confirmed.compactMap(\.missClass) {
@@ -245,11 +279,15 @@ public struct PredictionLog {
     }
 
     public func valueRecovered() throws -> ValueRecovered {
+        Self.valueRecovered(from: try allPredictions())
+    }
+
+    private static func valueRecovered(from predictions: [StoredPrediction]) -> ValueRecovered {
         var confirmed: Double = 0
         var pending: Double = 0
-        for prediction in try allPredictions() {
+        for prediction in predictions {
             guard let purchase = prediction.purchase,
-                  let advantage = Self.advantageRealised(prediction, purchase) else { continue }
+                  let advantage = advantageRealised(prediction, purchase) else { continue }
             if purchase.observation != nil { confirmed += advantage } else { pending += advantage }
         }
         return ValueRecovered(confirmedCad: confirmed, pendingCad: pending)

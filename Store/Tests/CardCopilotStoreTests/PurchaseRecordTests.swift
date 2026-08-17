@@ -156,3 +156,87 @@ final class PurchaseRecordTests: XCTestCase {
         XCTAssertEqual(try log.awaitingConfirmation().count, 1)
     }
 }
+
+/// One fetch instead of four (design §9). `refreshHome()` called valueRecovered, awaitingCompletion,
+/// awaitingConfirmation and metrics, three of which each ran an unfiltered fetch and filtered in
+/// memory. Fine at the 30-row target; the entire point of ambient capture is to raise the row count,
+/// and a third record type with relationships to walk makes every pass heavier.
+final class LogSnapshotTests: XCTestCase {
+    var container: ModelContainer!
+    var log: PredictionLog!
+
+    override func setUpWithError() throws {
+        container = try ModelContainer(
+            for: StoredPrediction.self, StoredPurchase.self, StoredObservation.self,
+            StoredMerchant.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        log = PredictionLog(context: ModelContext(container))
+    }
+
+    private func prediction() -> StoredPrediction {
+        StoredPrediction(
+            merchantName: "Loblaws", merchantIdentifier: "poi-123",
+            predictedCategory: "grocery", confidenceSource: .brandPrior,
+            winnerCardId: "amex-cobalt", winnerValueCad: 7.00,
+            predictedRewardUnits: 700, predictedRewardUnitKind: "point",
+            defaultCardValueCad: 2.80,
+            scoredAmountCad: 140, valuationCentsPerPoint: 1.0,
+            headline: "Use American Express Cobalt Card.")
+    }
+
+    /// Every state the store can hold, so the equivalence check is not trivially satisfied by an
+    /// empty database.
+    private func populate() throws {
+        _ = try log.record(prediction())                      // advice never acted on
+
+        let incomplete = try log.record(prediction())         // card known, charge not
+        _ = try log.recordPurchase(for: incomplete, cardUsedId: "amex-cobalt", cardSource: .atTill)
+
+        let unreconciled = try log.record(prediction())       // complete, no statement yet
+        let up = try log.recordPurchase(for: unreconciled, cardUsedId: "amex-cobalt",
+                                        cardSource: .atTill)
+        try log.recordAmount(140, source: .atTill, on: up)
+
+        let correct = try log.record(prediction())            // reconciled, matching
+        let cp = try log.recordPurchase(for: correct, cardUsedId: "amex-cobalt", cardSource: .atTill)
+        try log.recordAmount(140, source: .atTill, on: cp)
+        try log.confirm(cp, observedCategory: "grocery", observedRewardUnits: 700,
+                        missClass: nil, note: nil)
+
+        let missed = try log.record(prediction())             // reconciled, wrong category
+        let mp = try log.recordPurchase(for: missed, cardUsedId: "amex-cobalt", cardSource: .atTill)
+        try log.recordAmount(140, source: .atTill, on: mp)
+        try log.confirm(mp, observedCategory: "wholesaleClub", missClass: .wrongCategory, note: nil)
+    }
+
+    func testSnapshotMatchesTheFourSeparateQueries() throws {
+        try populate()
+        let snapshot = try log.snapshot()
+
+        XCTAssertEqual(snapshot.valueRecovered, try log.valueRecovered())
+        XCTAssertEqual(snapshot.metrics, try log.metrics())
+        XCTAssertEqual(snapshot.awaitingCompletion.map(\.id), try log.awaitingCompletion().map(\.id))
+        XCTAssertEqual(snapshot.awaitingConfirmation.map(\.id),
+                       try log.awaitingConfirmation().map(\.id))
+    }
+
+    /// Guards the guard: if populate() ever stops covering the interesting states, the equivalence
+    /// assertion above would still pass against empty collections and prove nothing.
+    func testTheFixtureActuallyExercisesEveryState() throws {
+        try populate()
+        let snapshot = try log.snapshot()
+        XCTAssertEqual(snapshot.awaitingCompletion.count, 1)
+        XCTAssertEqual(snapshot.awaitingConfirmation.count, 1)
+        XCTAssertEqual(snapshot.metrics.confirmedCount, 2)
+        XCTAssertGreaterThan(snapshot.valueRecovered.confirmedCad, 0)
+        XCTAssertGreaterThan(snapshot.valueRecovered.pendingCad, 0)
+    }
+
+    func testAnEmptyStoreSnapshotsToEmptyRatherThanFailing() throws {
+        let snapshot = try log.snapshot()
+        XCTAssertEqual(snapshot.valueRecovered, .zero)
+        XCTAssertTrue(snapshot.awaitingCompletion.isEmpty)
+        XCTAssertTrue(snapshot.awaitingConfirmation.isEmpty)
+        XCTAssertNil(snapshot.metrics.categoryAccuracy)
+    }
+}

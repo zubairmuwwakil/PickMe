@@ -300,13 +300,15 @@ struct CheckoutFlowView: View {
     private func refreshHome() {
         guard let deps else { return }
         do {
-            let recovered = try deps.service.log.valueRecovered()
-            valueRecoveredCad = recovered.confirmedCad
-            pendingValueCad = recovered.pendingCad
+            // One fetch, four answers. Calling the individual accessors here ran three unfiltered
+            // fetches per screen refresh, each walking the same rows again.
+            let snapshot = try deps.service.log.snapshot()
+            valueRecoveredCad = snapshot.valueRecovered.confirmedCad
+            pendingValueCad = snapshot.valueRecovered.pendingCad
+            completionQueue = snapshot.awaitingCompletion
+            reconcileQueue = snapshot.awaitingConfirmation
+            metrics = snapshot.metrics
             homeMerchants = sortedHomeMerchants(try deps.service.knownMerchants())
-            completionQueue = try deps.service.log.awaitingCompletion()
-            reconcileQueue = try deps.service.log.awaitingConfirmation()
-            metrics = try deps.service.log.metrics()
         } catch {
             stage = .failed(error.localizedDescription)
         }

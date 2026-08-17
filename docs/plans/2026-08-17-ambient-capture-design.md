@@ -111,7 +111,21 @@ meaning "guess before paying" and "what it actually cost" — the exact ambiguit
 
 `StoredPrediction` keeps its `private(set)` discipline and gains no mutable fields.
 
-### 3.3 Migration
+### 3.3 Migration — RESOLVED 2026-08-17: none
+
+**Decision: no migration code.** The owner confirmed the installed build holds no data worth
+preserving, so the schema change ships as a breaking one: delete the app once before the next run
+and the store is recreated empty.
+
+This is deliberately *not* implemented as an auto-wipe-on-open-failure fallback. That pattern reads
+as harmless while there is no data and becomes a silent data-loss landmine the moment there is —
+a future schema mistake would quietly erase a real prediction log instead of failing loudly. When
+the app has users, the answer is a real `VersionedSchema` chain, not a rescue path.
+
+The rest of this section records what the migration *would* have been, for whenever a schema change
+has to preserve data.
+
+---
 
 A SwiftData `VersionedSchema` + custom `MigrationStage`. For each existing `StoredPrediction`:
 
