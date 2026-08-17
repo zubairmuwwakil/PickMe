@@ -21,6 +21,7 @@ struct CardCopilotApp: App {
                 CheckoutFlowView()
             }
         }
-        .modelContainer(for: [StoredPrediction.self, StoredPurchase.self, StoredObservation.self, StoredMerchant.self])
+        .modelContainer(for: [StoredPrediction.self, StoredPurchase.self, StoredObservation.self, StoredMerchant.self,
+               ExploredCell.self, ShoppingArea.self, AreaMember.self])
     }
 }
