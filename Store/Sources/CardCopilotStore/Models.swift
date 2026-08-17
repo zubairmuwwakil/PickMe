@@ -221,3 +221,21 @@ public final class StoredMerchant {
         self.lastSeenAt = lastSeenAt
     }
 }
+
+/// A fact a purchase is still missing. Derived from the record rather than tracked alongside it,
+/// so the finish queue and the finish screen can never disagree about what is outstanding.
+public enum MissingPurchaseFact: String, Sendable, CaseIterable {
+    case card
+    case amount
+}
+
+extension StoredPurchase {
+    /// Empty exactly when `isComplete`. Both derive from the same two optionals rather than from
+    /// a stored flag, because a flag is a second source of truth that gets to be wrong.
+    public var missingFacts: Set<MissingPurchaseFact> {
+        var missing: Set<MissingPurchaseFact> = []
+        if cardUsedId == nil { missing.insert(.card) }
+        if amountCad == nil { missing.insert(.amount) }
+        return missing
+    }
+}

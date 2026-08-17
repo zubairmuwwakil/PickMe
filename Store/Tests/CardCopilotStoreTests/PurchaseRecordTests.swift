@@ -240,3 +240,64 @@ final class LogSnapshotTests: XCTestCase {
         XCTAssertNil(snapshot.metrics.categoryAccuracy)
     }
 }
+
+/// What a purchase still needs, as data rather than as view logic. The finish screen renders one
+/// control per missing fact, and "which controls" is exactly the kind of rule that drifts once it
+/// lives inside a SwiftUI body where nothing can assert on it.
+final class MissingFactsTests: XCTestCase {
+    var container: ModelContainer!
+    var log: PredictionLog!
+
+    override func setUpWithError() throws {
+        container = try ModelContainer(
+            for: StoredPrediction.self, StoredPurchase.self, StoredObservation.self,
+            StoredMerchant.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        log = PredictionLog(context: ModelContext(container))
+    }
+
+    private func prediction() throws -> StoredPrediction {
+        try log.record(StoredPrediction(
+            merchantName: "Loblaws", predictedCategory: "grocery", confidenceSource: .brandPrior,
+            winnerCardId: "amex-cobalt", winnerValueCad: 7.00,
+            scoredAmountCad: 140, headline: "Use American Express Cobalt Card."))
+    }
+
+    func testAFreshPurchaseNeedsBothFacts() throws {
+        let purchase = try log.recordPurchase(for: try prediction())
+        XCTAssertEqual(purchase.missingFacts, [.card, .amount])
+    }
+
+    func testAPurchaseWithACardStillNeedsTheCharge() throws {
+        let purchase = try log.recordPurchase(for: try prediction(), cardUsedId: "amex-cobalt",
+                                              cardSource: .atTill)
+        XCTAssertEqual(purchase.missingFacts, [.amount])
+    }
+
+    func testAPurchaseWithAChargeStillNeedsTheCard() throws {
+        let purchase = try log.recordPurchase(for: try prediction())
+        try log.recordAmount(47.83, source: .atTill, on: purchase)
+        XCTAssertEqual(purchase.missingFacts, [.card])
+    }
+
+    func testACompletePurchaseNeedsNothing() throws {
+        let purchase = try log.recordPurchase(for: try prediction(), cardUsedId: "amex-cobalt",
+                                              cardSource: .atTill)
+        try log.recordAmount(47.83, source: .atTill, on: purchase)
+        XCTAssertTrue(purchase.missingFacts.isEmpty)
+    }
+
+    /// The finish queue and the missing-facts set must never disagree: a row on that screen with
+    /// nothing to fill in is a dead end, and a complete row that stays queued never clears.
+    func testTheCompletionQueueContainsExactlyTheRowsWithMissingFacts() throws {
+        let incomplete = try log.recordPurchase(for: try prediction(), cardUsedId: "amex-cobalt",
+                                                cardSource: .atTill)
+        let complete = try log.recordPurchase(for: try prediction(), cardUsedId: "amex-cobalt",
+                                              cardSource: .atTill)
+        try log.recordAmount(140, source: .atTill, on: complete)
+
+        let queued = try log.awaitingCompletion().compactMap(\.purchase)
+        XCTAssertEqual(queued.map(\.id), [incomplete.id])
+        XCTAssertTrue(queued.allSatisfy { !$0.missingFacts.isEmpty })
+    }
+}

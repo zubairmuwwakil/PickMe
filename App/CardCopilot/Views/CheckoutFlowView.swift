@@ -34,6 +34,7 @@ struct CheckoutFlowView: View {
         case confirming(merchants: [NearbyMerchant])
         case amount(merchant: NearbyMerchant)
         case recommendation(CheckoutResult)
+        case finish
         case reconcile
         case dashboard
         case protectionLens(BenefitContext)
@@ -107,6 +108,7 @@ struct CheckoutFlowView: View {
                      merchants: homeMerchants,
                      isSortedByRecentLocation: cachedLocation?.isRecent == true,
                      locationDenied: locationDenied,
+                     finishCount: completionQueue.count,
                      reconcileCount: reconcileQueue.count,
                      confirmedCount: metrics?.confirmedCount ?? 0,
                      ambientDiagnostics: ambientDiagnostics,
@@ -114,6 +116,7 @@ struct CheckoutFlowView: View {
                      onInstantRepeat: { merchant in startInstantRepeat(merchant) },
                      onFindNearby: { Task { await findNearby() } },
                      onSearch: { text in Task { await search(text) } },
+                     onFinish: { stage = .finish },
                      onReconcile: { stage = .reconcile },
                      onDashboard: { stage = .dashboard },
                      onProtectionLens: { stage = .protectionLens(BenefitContext(kind: .flight)) },
@@ -140,6 +143,11 @@ struct CheckoutFlowView: View {
                                    refreshHome()
                                    stage = .idle
                                })
+        case .finish:
+            FinishPurchaseView(queue: completionQueue,
+                               cards: deps?.catalogue.cards ?? [],
+                               onFinish: { prediction, entry in finish(prediction, entry: entry) },
+                               onDone: { stage = .idle })
         case .reconcile:
             ReconcileView(queue: reconcileQueue,
                           cards: deps?.catalogue.cards ?? [],
@@ -268,6 +276,26 @@ struct CheckoutFlowView: View {
                                                  latitude: merchant.latitude,
                                                  longitude: merchant.longitude,
                                                  distanceMeters: nil))
+    }
+
+    /// Supplying the till facts, without touching anything already recorded.
+    ///
+    /// `.recalledLater` throughout: this screen is reached from the app, after the fact. The
+    /// lock-screen path records the same fields as `.atTill`, and the difference between the two
+    /// is the whole reason provenance is stored per field rather than per record.
+    private func finish(_ prediction: StoredPrediction, entry: FinishEntry) {
+        guard let deps else { return }
+        do {
+            let purchase = try deps.service.log.recordPurchase(for: prediction,
+                                                               cardUsedId: entry.cardUsedId,
+                                                               cardSource: entry.cardUsedId == nil ? nil : .recalledLater)
+            if let amount = entry.actualAmountCad {
+                try deps.service.log.recordAmount(amount, source: .recalledLater, on: purchase)
+            }
+            refreshHome()
+        } catch {
+            stage = .failed(error.localizedDescription)
+        }
     }
 
     /// Recording what happened. The prediction is never touched — the store offers no way to

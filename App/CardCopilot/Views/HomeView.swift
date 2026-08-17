@@ -7,6 +7,7 @@ struct HomeView: View {
     let merchants: [StoredMerchant]
     let isSortedByRecentLocation: Bool
     let locationDenied: Bool
+    let finishCount: Int
     let reconcileCount: Int
     let confirmedCount: Int
     let ambientDiagnostics: SuppressionLog
@@ -14,6 +15,7 @@ struct HomeView: View {
     let onInstantRepeat: (StoredMerchant) -> Void
     let onFindNearby: () -> Void
     let onSearch: (String) -> Void
+    let onFinish: () -> Void
     let onReconcile: () -> Void
     let onDashboard: () -> Void
     let onProtectionLens: () -> Void
@@ -355,6 +357,20 @@ struct HomeView: View {
                         subtitle: "What to keep, cancel, or add — marginal, not gross",
                         badge: "Estimate",
                         badgeColor: .mint
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Finish Purchases Row. Placed above Reconcile because it gates it: a purchase
+                // missing its card or its charge cannot be checked against a statement yet.
+                Button(action: onFinish) {
+                    toolRow(
+                        icon: "square.and.pencil",
+                        iconColor: finishCount > 0 ? .blue : .green,
+                        title: finishCount == 0 ? "Finish Purchases" : "\(finishCount) to Finish",
+                        subtitle: finishCount == 0 ? "Every purchase has its card and amount" : "Add the card you tapped and what it cost",
+                        badge: finishCount > 0 ? "\(finishCount)" : nil,
+                        badgeColor: .blue
                     )
                 }
                 .buttonStyle(.plain)
