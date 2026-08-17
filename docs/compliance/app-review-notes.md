@@ -214,8 +214,18 @@ it in a rejection appeal costs a week. §5 of the labels document has a longer r
 
 **[verified]** Guideline 2.1(a): *"include demo account info (and turn on your back-end service!)
 if your app includes a login."* **Both halves now apply.** There is a login (Clerk) and a backend,
-so a working demo account must be supplied and the server must be up for the review window. This
-was not true in the 2026-08-15 draft and is the single most likely cause of an avoidable rejection.
+and the two halves carry different weight.
+
+**"Turn on your back-end service" is the non-negotiable half.** The server must be up and serving
+throughout the review window. A reviewer tapping Sync against a dead host is a functional failure
+under Guideline 2.1, and that is a rejection.
+
+**The demo account is strongly advisable rather than strictly required.** Clerk registration is
+open, so a reviewer *can* self-register — the guideline's purpose is ensuring they can reach every
+feature, and they can. Supply one anyway: sign-up may involve email verification a reviewer using a
+throwaway address will not bother to complete, and leaving the field blank on an app that has a
+login invites a "please provide credentials" round-trip that costs a full review cycle. Two minutes
+against a week.
 
 The walkthrough still leads with the signed-out path, because that is genuinely the primary
 experience and a reviewer who sees the core flow work without an account understands the product
@@ -242,9 +252,11 @@ Three specific frictions the walkthrough defuses, all of them real:
       with the permission refused**, not in the simulator with a simulated location.
 - [ ] Confirm the App Privacy answers match §2 of the labels document — five data types, all
       Linked, none Tracking — so the notes and the label agree.
-- [ ] **Replace `[[DEMO EMAIL]]` / `[[DEMO PASSWORD]]` with a working account, and confirm the
-      backend is up.** Guideline 2.1(a). An app with a login and no demo credentials is rejected
-      without further review.
+- [ ] **Confirm the backend is up and stays up for the review window.** Guideline 2.1(a),
+      non-negotiable half — a reviewer tapping Sync against a dead host is a Guideline 2.1
+      functional failure.
+- [ ] Replace `[[DEMO EMAIL]]` / `[[DEMO PASSWORD]]` with a working account. Advisable rather than
+      strictly required, since Clerk sign-up is open — but it removes a likely round-trip.
 - [ ] Test the signed-out path end to end. It is what the walkthrough leads with and what most
       users will run.
 - [ ] Confirm the build is submitted from the **organization** account (§B2).

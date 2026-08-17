@@ -323,10 +323,22 @@ Three specific facts drive the analysis:
    both apply.
 6. **Language.** Must the policy be published in French for Quebec users? Carried over from v1's
    B5 and still open.
-7. **Data residency.** Where does the server actually run? Not addressed in the policy above
-   because we have not confirmed it. **[uncertain]** — if outside Canada, Law 25 s. 17 imposes a
-   privacy impact assessment before communicating personal information outside Quebec. **This is a
-   gap in the policy text and must be resolved before publication.**
+7. **Data residency — resolved 2026-08-17, and it needs counsel's attention.** **[verified]**
+   `moneytalks.zubairmuwwakil.com` is a CNAME to `vercel-dns-017.com`, so the API runs on Vercel;
+   `.env.example` shows the database is Neon Postgres (`/neondb`). Neither is region-pinned — the
+   repo has no `vercel.json`, so functions run in Vercel's default `iad1` (Washington DC) and Neon
+   defaults to US East. **[inference]** Captured transactions and their coordinates are therefore
+   stored in the United States.
+
+   **[verified]** Law 25 s. 17 requires a privacy impact assessment before communicating personal
+   information outside Quebec, and that the information receive protection equivalent to that
+   afforded under Quebec law. Precise location joined to purchase history joined to identity is the
+   kind of payload that makes this assessment substantive rather than a formality.
+
+   Two routes: perform the assessment, or move the workloads. Vercel offers `yyz1` (Toronto) and
+   Neon offers a Montreal region, so relocation is a configuration change rather than a migration
+   of architecture. **Counsel should advise which, and the policy text needs a residency paragraph
+   either way — it currently has none.**
 
 ## B3. Statutory anchors carried forward from v1
 
