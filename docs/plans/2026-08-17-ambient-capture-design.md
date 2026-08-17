@@ -408,8 +408,14 @@ Deliberately excluded, with the seam noted where one exists.
 - **`OwnerState` persistence.** Card settings and valuations are read from the bundled seed on every
   launch and never written back; synced cap progress is lost on relaunch. A real gap, unrelated to
   this design, tracked separately.
-- **Compliance doc rewrite.** §10 states what becomes false. Rewriting `privacy-policy.md` and
-  `app-privacy-labels.md` — which also need the Clerk/server changes folded in — is its own task.
+- ~~**Compliance doc rewrite.**~~ **Done 2026-08-17.** `app-privacy-labels.md` and
+  `privacy-policy.md` are at v2: Q1 flipped to Yes with five declared data types, and the policy is
+  restructured around the account being optional. `app-review-notes.md` Part A was rewritten — its
+  2026-08-15 text told Apple "there is no account system and no server," which had become a false
+  statement to App Review. Three new blockers surfaced and are recorded in the policy's B2: a
+  **demo account** is now required by Guideline 2.1(a), captured transactions have **no defined
+  server-side retention period**, and **server location is unconfirmed** (Law 25 s. 17 requires a
+  privacy impact assessment for personal information communicated outside Quebec).
 
 ## 12. Testing
 

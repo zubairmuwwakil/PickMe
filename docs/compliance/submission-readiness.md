@@ -1,5 +1,18 @@
 # Submission Readiness — Canadian Card Copilot
 
+> ## 🔴 AMENDED 2026-08-17 — re-verify every privacy item
+>
+> Accounts (Clerk), a backend, Apple Wallet transaction capture, and background arrival detection
+> all shipped after this document was written. Every checklist item touching privacy, location,
+> networking, or App Review notes must be re-verified against
+> [`app-privacy-labels.md`](app-privacy-labels.md) v2 and [`privacy-policy.md`](privacy-policy.md)
+> v2, both of which now declare collection rather than denying it.
+>
+> Newly required and not tracked below: a **demo account** for Guideline 2.1(a), a **defined
+> server-side retention period** for captured transactions, and **confirmation of where the server
+> runs** (Law 25 s. 17 imposes a privacy impact assessment for personal information communicated
+> outside Quebec).
+
 > ## ⚠ Draft for review — not a legal opinion
 >
 > Written by Zubair with Claude; **neither of us is a lawyer.** Section A commits real money and
@@ -436,7 +449,7 @@ therefore "build the thing," and the compliance-specific items are called out as
 > [`privacy-policy.md`](privacy-policy.md) before they ship turns a draft into a false statement.
 
 - [ ] **B10. Automated guard that the app makes no network call except MapKit.** The entire
-      privacy posture — the "Data Not Collected" label, the review notes, the policy — rests on
+      privacy posture — the App Privacy label, the review notes, the policy — rests on
       this one claim. It is currently guaranteed only by nobody having added a dependency yet. A
       test or a CI check makes it a property of the codebase rather than of everyone's memory.
 

@@ -7,11 +7,22 @@
 > **[verified]** = quoted from Apple's guidelines, checked 2026-08-15 · **[inference]** = our
 > reasoning · **[uncertain]** = unresolved.
 >
-> **Not submittable yet.** As of 2026-08-15 the app is at Task 1–2 of the iOS implementation plan:
-> the engine links and the SwiftData models exist, but there is no location, MapKit, merchant
-> confirm, or recommendation UI. Part A describes flows that must exist before it is pasted —
-> Guideline 2.1 requires final, fully functional builds. See
+> **Not submittable yet.** Part A describes flows that must exist before it is pasted — Guideline
+> 2.1 requires final, fully functional builds. See
 > [`submission-readiness.md`](submission-readiness.md).
+>
+> ## 🔴 AMENDED 2026-08-17 — Part A contained false statements to App Review
+>
+> The version written 2026-08-15 told Apple *"There is no account system and no server"*,
+> *"NOTHING LEAVES THE DEVICE"*, *"'When In Use' only; 'Always' is never requested"*, and
+> *"no demo account is required because there are no accounts."*
+>
+> **Every one of those is now false.** The app has Clerk accounts, a backend, optional Wallet
+> transaction capture that transmits precise location, and it requests Always authorization for
+> geofenced arrival detection. Pasting the old text would have been a misrepresentation to App
+> Review on the exact document meant to establish good faith.
+>
+> Part A is rewritten below. **Guideline 2.1(a) now applies: a demo account is required.**
 
 **Source:** [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/),
 checked 2026-08-15.
@@ -48,18 +59,23 @@ shows a result. It is closer to a unit-price comparison tool than to a banking a
 
 There are no in-app purchases and the app takes no payments.
 
-PRIVACY: NOTHING LEAVES THE DEVICE
+PRIVACY: THE APP WORKS FULLY WITHOUT AN ACCOUNT
 
-There is no account system and no server. The user's card list, settings, confirmed
-merchants and past recommendations are stored only in a local SwiftData database on
-the device, and are never transmitted to us. We operate no backend that could
-receive them.
+Card recommendations, the local history, and arrival alerts all run entirely on
+device. Card list, settings, saved shops, purchases and past recommendations are
+stored in a local SwiftData database and are never transmitted anywhere.
 
-There is no analytics SDK, no crash-reporting SDK, no advertising and no tracking,
-so there is no AppTrackingTransparency prompt. The App Privacy declaration is "Data
-Not Collected", which is accurate under Apple's definition: data processed only on
-device is not collected. The only outbound network activity in the entire app is
-MapKit POI and local search.
+Signing in is optional and nothing gates on it. If the user does sign in, we
+receive their email address (via Clerk) and their bonus-cap usage. If they
+additionally set up the optional Apple Wallet capture shortcut, we receive their
+captured transactions - merchant, amount, card, time, and the location at which
+the transaction occurred. Our App Privacy declaration covers all of this: Contact
+Info, Identifiers, Purchase History, Precise Location and Other Financial Info,
+all linked to the user, all for App Functionality, none used for tracking.
+
+There is no analytics SDK, no crash-reporting SDK, no advertising and no ad
+identifier, so there is no AppTrackingTransparency prompt. We share nothing with
+other companies and use no data brokers.
 
 LOCATION IS OPTIONAL, ONE-TIME, AND HAS A FULL MANUAL ALTERNATIVE (5.1.1)
 
@@ -67,9 +83,17 @@ Location is used for one purpose: a single CoreLocation fix, taken only when the
 user taps to find nearby shops, to run a MapKit search so they can confirm the
 store they are in.
 
-- "When In Use" only; "Always" is never requested.
-- Single fixes (requestLocation) only. No continuous or background location.
-- Off until the user turns it on; not requested at first launch.
+The app also offers optional arrival alerts: it monitors a small number of geofenced
+shopping areas so it can suggest a card as the user walks in, and ask what they spent
+as they leave. This requires "Always" authorization and the location background mode,
+because region monitoring must fire while the app is not running.
+
+- Location is off until the user turns it on; nothing is requested at first launch.
+- Arrival alerts are separately optional, behind their own explainer screen shown
+  before either system prompt appears.
+- The app NEVER streams position. It uses one-time fixes, significant-location-change
+  monitoring, and geofences - never continuous GPS.
+- No route or movement trail is recorded.
 
 If location is declined the app remains fully functional: manual merchant search
 reaches every feature, including the whole recommendation flow. Nothing is gated
@@ -78,9 +102,14 @@ not degraded.
 
 REVIEWING THIS WITHOUT A CANADIAN CREDIT CARD
 
-No credit card is needed, and no demo account is required because there are no
-accounts. The app never verifies that a user holds the cards they select. Cards
-are picked from a built-in catalogue.
+No credit card is needed. The app never verifies that a user holds the cards they
+select; cards are picked from a built-in catalogue.
+
+A demo account is provided below for the optional sync features, but note that the
+ENTIRE core flow - steps 1 to 4 - works signed out. Please do review it signed out
+first; that is how most users will run it.
+
+Demo account: [[DEMO EMAIL]] / [[DEMO PASSWORD]]
 
 To exercise the main flow from a fresh install, anywhere in the world:
 
@@ -176,15 +205,21 @@ true, delete the sentence rather than soften it.**
 ## B4. The privacy paragraph
 
 Mirrors [`app-privacy-labels.md`](app-privacy-labels.md). It is in the review notes because
-an app that prompts for location while declaring "Data Not Collected" is exactly the pattern a
-reviewer flags. Answering it before it is asked costs four lines; answering it in a rejection
-appeal costs a week. §4 of the labels document has a longer reply ready if it is asked anyway.
+an app requesting Always location while collecting purchase history and precise coordinates is
+exactly the pattern a reviewer probes. Answering it before it is asked costs a few lines; answering
+it in a rejection appeal costs a week. §5 of the labels document has a longer reply ready for the
+"why does a card calculator need Always?" question specifically.
 
 ## B5. The reviewer walkthrough
 
 **[verified]** Guideline 2.1(a): *"include demo account info (and turn on your back-end service!)
-if your app includes a login."* There is no login and no backend, so neither applies — but saying
-so explicitly stops a reviewer from waiting for credentials that will never arrive.
+if your app includes a login."* **Both halves now apply.** There is a login (Clerk) and a backend,
+so a working demo account must be supplied and the server must be up for the review window. This
+was not true in the 2026-08-15 draft and is the single most likely cause of an avoidable rejection.
+
+The walkthrough still leads with the signed-out path, because that is genuinely the primary
+experience and a reviewer who sees the core flow work without an account understands the product
+faster.
 
 Three specific frictions the walkthrough defuses, all of them real:
 
@@ -205,7 +240,13 @@ Three specific frictions the walkthrough defuses, all of them real:
       carelessness on the exact document meant to establish care.
 - [ ] Confirm the manual-search path really is complete with location denied. **Test it on device
       with the permission refused**, not in the simulator with a simulated location.
-- [ ] Confirm the App Privacy answers say Data Not Collected, so the notes and the label agree.
+- [ ] Confirm the App Privacy answers match §2 of the labels document — five data types, all
+      Linked, none Tracking — so the notes and the label agree.
+- [ ] **Replace `[[DEMO EMAIL]]` / `[[DEMO PASSWORD]]` with a working account, and confirm the
+      backend is up.** Guideline 2.1(a). An app with a login and no demo credentials is rejected
+      without further review.
+- [ ] Test the signed-out path end to end. It is what the walkthrough leads with and what most
+      users will run.
 - [ ] Confirm the build is submitted from the **organization** account (§B2).
 - [ ] **Check the length against App Store Connect's own limit for the notes field.** We could not
       verify a documented maximum from an Apple primary source (**[uncertain]**), so the block above

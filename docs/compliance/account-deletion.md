@@ -37,9 +37,14 @@ models. The app's complete outbound payload surface is `{"label": …}` when cre
 Shortcut token, `{"scope": "account"}` when deleting an account, and the Clerk bearer token. Cap
 sync is a *pull*.
 
-For Apple's App Privacy labels this local store is legitimately **Data Not Collected** — Apple
-treats data processed only on device and never sent off device as uncollected. That is a labelling
+For Apple's App Privacy labels this local store is legitimately **not collected** — Apple treats
+data processed only on device and never sent off device as uncollected. That is a labelling
 conclusion, not a licence to say the app holds nothing.
+
+**This is a statement about the local store only, not the app-wide label answer.** The app as a
+whole declares collection, because the account and the Wallet capture path do transmit — see
+[`app-privacy-labels.md`](app-privacy-labels.md) §2. Reading this paragraph as "the app declares
+Data Not Collected" would be reading it backwards.
 
 ### MoneyTalks on the server — the account
 
