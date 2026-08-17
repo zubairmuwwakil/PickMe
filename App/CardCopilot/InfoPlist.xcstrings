@@ -1,9 +1,52 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "Your location is used only on this device to detect arrival at merchants you have saved, so PickMe can suggest a card before you pay. It never tracks your route or leaves your phone." : {
-      "comment" : "human review before public launch",
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "extractionState" : "manual",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PickMe"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PickMe"
+          }
+        }
+      }
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CardCopilot"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CardCopilot"
+          }
+        }
+      }
+    },
+    "NSLocationAlwaysAndWhenInUseUsageDescription" : {
+      "comment" : "Privacy - Location Always and When In Use Usage Description",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your location is used only on this device to detect arrival at merchants you have saved, so PickMe can suggest a card before you pay. It never tracks your route or leaves your phone."
+          }
+        },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12,9 +55,16 @@
         }
       }
     },
-    "Your location is used only on this device to identify a nearby merchant when you ask, or to detect arrival at merchants you have saved. It never tracks your route or leaves your phone." : {
-      "comment" : "human review before public launch",
+    "NSLocationWhenInUseUsageDescription" : {
+      "comment" : "Privacy - Location When In Use Usage Description",
+      "extractionState" : "manual",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your location is used only on this device to identify a nearby merchant when you ask, or to detect arrival at merchants you have saved. It never tracks your route or leaves your phone."
+          }
+        },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
