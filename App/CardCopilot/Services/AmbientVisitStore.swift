@@ -1,4 +1,5 @@
 import Foundation
+import CardCopilotStore
 
 /// One in-progress visit to a monitored area.
 ///
