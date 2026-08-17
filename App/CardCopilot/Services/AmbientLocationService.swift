@@ -483,7 +483,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         let titleTemplate = String(localized: "ambient.notification.title",
                                    defaultValue: "%@ — use %@ (%@)")
         content.title = String(format: titleTemplate, locale: .current,
-                               arrival.merchant.name, shortCardName(card),
+                               notificationMerchantName(arrival.merchant.name), shortCardName(card),
                                rewardReason(card, recommendation))
         content.body = String(localized: "ambient.notification.body",
                               defaultValue: "On-device advice for this saved merchant.")
@@ -633,8 +633,25 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private func shortCardName(_ card: CardProduct) -> String {
         switch card.cardId {
         case "amex-cobalt": return "Amex Cobalt"
+        case "amex-platinum": return "Amex Platinum"
+        case "scotia-momentum-vi": return "Scotia Momentum"
+        case "mbna-rewards-we": return "MBNA Rewards"
+        case "marriott-bonvoy-amex": return "Marriott Bonvoy"
+        case "triangle-we": return "Triangle"
+        case "wealthsimple-vip": return "Wealthsimple VIP"
+        case "rogers-red-we": return "Rogers Red"
+        case "tangerine-moneyback": return "Tangerine Money-Back"
+        case "cryptocom-ruby": return "Crypto.com Ruby"
         default: return card.officialName.replacingOccurrences(of: " Credit Card", with: "")
         }
+    }
+
+    /// Keeps the time-sensitive alert readable on a lock screen while retaining the full merchant
+    /// name in the action payload and purchase record.
+    private func notificationMerchantName(_ name: String) -> String {
+        let maximumLength = 28
+        guard name.count > maximumLength else { return name }
+        return String(name.prefix(maximumLength - 1)) + "…"
     }
 
     private func rewardReason(_ card: CardProduct, _ recommendation: Recommendation) -> String {
