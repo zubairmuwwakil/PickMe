@@ -87,6 +87,16 @@ public actor MoneyTalksAPIClient {
         return try await send(request)
     }
 
+    /// Apple 5.1.1(v) account deletion. The same route wipes data without touching the account
+    /// when no scope is sent, so the scope is stated explicitly rather than defaulted into.
+    public func deleteAccount() async throws {
+        var request = try await authenticatedRequest(path: "api/data/delete")
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(["scope": "account"])
+        try await sendIgnoringBody(request)
+    }
+
     private func get<Response: Decodable>(_ path: String) async throws -> Response {
         var request = try await authenticatedRequest(path: path)
         request.httpMethod = "GET"
@@ -111,6 +121,12 @@ public actor MoneyTalksAPIClient {
         guard let http = response as? HTTPURLResponse else { throw MoneyTalksAPIError.unexpectedResponse(-1) }
         guard 200..<300 ~= http.statusCode else { throw MoneyTalksAPIError.unexpectedResponse(http.statusCode) }
         return try decoder.decode(Response.self, from: data)
+    }
+
+    private func sendIgnoringBody(_ request: URLRequest) async throws {
+        let (_, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw MoneyTalksAPIError.unexpectedResponse(-1) }
+        guard 200..<300 ~= http.statusCode else { throw MoneyTalksAPIError.unexpectedResponse(http.statusCode) }
     }
 
     private struct CapsResponse: Decodable { let caps: [String: SpineCap] }

@@ -35,6 +35,7 @@ struct CheckoutFlowView: View {
         case benefitsReference
         case walletHealth
         case sync
+        case settings
         case ambientSetup
         case failed(String)
     }
@@ -65,11 +66,20 @@ struct CheckoutFlowView: View {
             content
                 .navigationTitle("PickMe")
                 .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button { stage = .sync } label: {
-                            Image(systemName: lastSyncedAt == nil ? "icloud" : "checkmark.icloud")
+                    // Only the root screen owns these. Every other stage supplies its own Done
+                    // button, and leaving the root buttons visible offered a reviewer a gear that
+                    // led back to the screen they were already on.
+                    if isAtRoot {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button { stage = .sync } label: {
+                                Image(systemName: lastSyncedAt == nil ? "icloud" : "checkmark.icloud")
+                            }
+                            .accessibilityLabel("Sync and Wallet Capture")
                         }
-                        .accessibilityLabel("Sync and Wallet Capture")
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button { stage = .settings } label: { Image(systemName: "gearshape") }
+                                .accessibilityLabel("Settings")
+                        }
                     }
                 }
         }
@@ -77,6 +87,11 @@ struct CheckoutFlowView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { ambientDiagnostics = ambient.diagnostics }
         }
+    }
+
+    private var isAtRoot: Bool {
+        if case .idle = stage { return true }
+        return false
     }
 
     @ViewBuilder
@@ -152,6 +167,16 @@ struct CheckoutFlowView: View {
                            onSync: { Task { await syncCapsSilently() } },
                            onCreateInstallation: { label in try await createInstallation(label: label) },
                            onDone: { stage = .idle })
+        case .settings:
+            SettingsView(isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
+                         accountEmail: Clerk.shared.user?.primaryEmailAddress?.emailAddress,
+                         lastSyncedAt: lastSyncedAt,
+                         ambientEnabled: ambient.isEnabled,
+                         onOpenSync: { stage = .sync },
+                         onOpenAmbient: { stage = .ambientSetup },
+                         onSignIn: { stage = .sync },
+                         onDeleteAccount: { erase in try await deleteAccount(eraseLocalHistory: erase) },
+                         onDone: { stage = .idle })
         case .ambientSetup:
             AmbientLocationExplainerView(onEnable: {
                 ambient.requestAlwaysAuthorization()
@@ -284,6 +309,39 @@ struct CheckoutFlowView: View {
         } catch {
             // A1: existing local state is usable; connectivity must never interrupt checkout.
         }
+    }
+
+    /// Order matters and is not cosmetic. The server call comes first and everything after it is
+    /// local cleanup: if the deletion fails, the account and this iPhone are untouched and the
+    /// sheet says so. Once the server has confirmed, the local steps must not be able to fail the
+    /// operation — the account is already gone.
+    private func deleteAccount(eraseLocalHistory: Bool) async throws {
+        guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL else {
+            throw MoneyTalksAPIError.unavailableConfiguration
+        }
+        let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+        try await client.deleteAccount()
+
+        if eraseLocalHistory {
+            try? LocalDataEraser(context: modelContext).eraseLocalHistory()
+            // Geofences are refreshed from the store on the next significant location change,
+            // which could be hours away. Arrival monitoring for merchants the owner just erased
+            // stops now instead.
+            ambient.forgetLocalHistory()
+        }
+        try? await Clerk.shared.auth.signOut()
+        resetSyncedState()
+        stage = .idle
+    }
+
+    /// Drops everything the server contributed: cap progress merged into OwnerState, the capture
+    /// feedback list, and the sync timestamp. Reloading from the bundled seed is what makes this
+    /// exact rather than approximate — there is no partially-synced state left to reason about.
+    private func resetSyncedState() {
+        lastSyncedAt = nil
+        walletFeedback = []
+        deps = nil
+        loadDependencies()
     }
 
     private func createInstallation(label: String) async throws -> String {

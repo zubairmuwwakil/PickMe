@@ -49,6 +49,10 @@ final class AmbientDiagnosticsStore {
         defaults.set(data, forKey: key)
     }
 
+    func forgetAll() {
+        defaults.removeObject(forKey: key)
+    }
+
     private func dayKey(for date: Date) -> String {
         let components = calendar.dateComponents([.year, .month, .day], from: date)
         return String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 0,
@@ -73,6 +77,10 @@ final class AmbientMerchantMuteStore {
         var ids = mutedIDs
         ids.insert(merchantID.uuidString)
         defaults.set(Array(ids), forKey: key)
+    }
+
+    func forgetAll() {
+        defaults.removeObject(forKey: key)
     }
 
     private var mutedIDs: Set<String> {
@@ -123,6 +131,18 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
     var isEnabled: Bool { authorizationStatus == .authorizedAlways }
     var diagnostics: SuppressionLog { diagnosticsStore.lastSevenDays() }
+
+    /// Called when the owner erases this iPhone's history. Regions are otherwise only refreshed
+    /// on the next significant location change, so without this the app would keep monitoring
+    /// arrivals at merchants that no longer exist — geofences outliving the data that justified
+    /// them. The mute list and the daily counters go too: both are keyed to erased rows.
+    func forgetLocalHistory() {
+        for region in manager.monitoredRegions where region.identifier.hasPrefix(Self.regionPrefix) {
+            manager.stopMonitoring(for: region)
+        }
+        muteStore.forgetAll()
+        diagnosticsStore.forgetAll()
+    }
 
     /// Called only from the dedicated explainer screen, before either system prompt appears.
     func requestAlwaysAuthorization() {
