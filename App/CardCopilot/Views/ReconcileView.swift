@@ -185,7 +185,9 @@ struct ReconcileView: View {
     }
 
     private func amountText(_ prediction: StoredPrediction) -> String {
-        prediction.amountCad.map { String(format: "$%.2f", $0) } ?? "amount not captured"
+        // The actual charge, not the figure tapped before paying. "Not captured" is the honest
+        // label while the purchase is still missing it.
+        prediction.purchase?.amountCad.map { String(format: "$%.2f", $0) } ?? "amount not captured"
     }
 }
 
@@ -237,13 +239,15 @@ struct ReconcileEntryView: View {
                 .pickerStyle(.segmented)
             }
 
-            Section("What you actually paid") {
+            Section {
                 HStack {
                     Text("$")
                         .foregroundStyle(.secondary)
                     TextField("Amount charged", text: $actualAmountText)
                         .keyboardType(.decimalPad)
                 }
+            } header: {
+                Text("What you actually paid")
             } footer: {
                 Text("The amount on your receipt, not what you entered before paying. This is what the value-recovered figure is calculated from.")
                     .font(.caption)
@@ -253,7 +257,7 @@ struct ReconcileEntryView: View {
                 LabeledContent("Merchant", value: prediction.merchantName)
                 LabeledContent("Predicted Category", value: CategoryVisuals.meta(for: prediction.predictedCategory).displayName)
                 LabeledContent("Recommended Card", value: cardName(prediction.winnerCardId))
-                LabeledContent("Purchase Amount", value: prediction.amountCad.map { String(format: "$%.2f", $0) } ?? "not captured")
+                LabeledContent("Amount Scored", value: prediction.scoredAmountCad.map { String(format: "$%.2f", $0) } ?? "estimated from category")
             }
 
             if mode == .matched {
