@@ -2,6 +2,34 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-18 — catalogueVersion / benefitsCatalogueVersion bumped to 1.1 (MINOR)
+
+- `catalogueVersion` in `card-catalogue.json` and `benefitsCatalogueVersion` in
+  `benefits-catalogue.json` both bump `1.0` → `1.1`. No shape change; this is a
+  catch-up bump. Both fields sat at `1.0` through the two batches below (10
+  cards added, `program.programId` schema enum extended by 8 values) with no
+  version bump either time, which is the reason MoneyTalks' vendored copy
+  could drift silently for two syncs running: `catalogueVersion` was the one
+  signal that could have told MoneyTalks its copy was stale, and it never
+  moved. See `MoneyTalks/docs/superpowers/specs/2026-08-18-annual-fee-renewal-calendar-design.md`
+  §12.1 for the full diagnosis and §12.2 for the fix (MoneyTalks' manifest now
+  also records PickMe's git ref/commit directly, so this repeat cause and the
+  version field are now two independent tripwires instead of one).
+- The 10 cards this MINOR covers (both already-shipped batches, listed here
+  once against the version they should have bumped):
+  - `scotia-gold-amex`, `td-aeroplan-visa-infinite`, `rbc-avion-visa-infinite`,
+    `cibc-dividend-visa-infinite`, `scotia-passport-visa-infinite-plus`
+    (2026-08-17 batch 1)
+  - `td-first-class-travel-visa-infinite`, `bmo-eclipse-visa-infinite`,
+    `cibc-aventura-visa-infinite`, `national-bank-world-elite`,
+    `pc-insiders-world-elite` (2026-08-17 batch 2)
+- MAJOR stays reserved for a breaking shape change (spec §3); `SeedLoader.validate(catalogueVersion:)`
+  gates on MAJOR only, so this MINOR bump requires no Engine code change —
+  verified against `Engine/Sources/CardCopilotEngine/Loading/SeedLoader.swift`
+  rather than assumed.
+- Ran `scripts/sync-contracts-into-engine.sh` to carry both version bumps into
+  the checked-in `Engine/Sources/CardCopilotEngine/Resources/` copies.
+
 ## 2026-08-17 — Added Batch 2 of 5 Canadian Card Products & Insurance Certificates
 
 - Added 5 researched Canadian credit cards to `card-catalogue.json`:
