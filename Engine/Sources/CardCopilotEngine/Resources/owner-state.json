@@ -16,7 +16,12 @@
     "td-aeroplan-visa-infinite",
     "rbc-avion-visa-infinite",
     "cibc-dividend-visa-infinite",
-    "scotia-passport-visa-infinite-plus"
+    "scotia-passport-visa-infinite-plus",
+    "td-first-class-travel-visa-infinite",
+    "bmo-eclipse-visa-infinite",
+    "cibc-aventura-visa-infinite",
+    "national-bank-world-elite",
+    "pc-insiders-world-elite"
   ],
   "defaultCardId": "wealthsimple-vip",
   "switchThreshold": {

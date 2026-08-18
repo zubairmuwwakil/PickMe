@@ -86,6 +86,49 @@ final class RuleMatcherTests: XCTestCase {
         XCTAssertEqual(rule.ruleId, "tangerine-base")
     }
 
+    func testEveryTangerineSelectionMatchesItsPurchaseFacts() {
+        let cases: [(TangerineMoneyBackCategory, PurchaseContext)] = [
+            (.grocery, .init(amountCad: 30, category: "grocery", mcc: 5411)),
+            (.dining, .init(amountCad: 30, category: "dining", mcc: 5812)),
+            (.gasStation, .init(amountCad: 30, category: "gasStation", mcc: 5541)),
+            (.entertainment, .init(amountCad: 30, category: "entertainment")),
+            (.furniture, .init(amountCad: 30, category: "furniture")),
+            (.lodging, .init(amountCad: 30, category: "lodging", mcc: 3501)),
+            (.drugStore, .init(amountCad: 30, category: "drugStore", mcc: 5912)),
+            (.recurring, .init(amountCad: 30, category: "insurance", recurringIndicator: true)),
+            (.homeImprovement, .init(amountCad: 30, category: "homeImprovement")),
+            (.transit, .init(amountCad: 30, category: "transit", mcc: 4121)),
+            (.eGames, .init(amountCad: 30, category: "eGames")),
+            (.fitness, .init(amountCad: 30, category: "fitness")),
+            (.foreignCurrency, .init(amountCad: 30, currency: "USD", category: "other")),
+        ]
+
+        XCTAssertEqual(TangerineMoneyBackCategory.allCases.count, 13)
+        for (selection, purchase) in cases {
+            var state = owner.cardStates["tangerine-moneyback-world"] ?? CardState()
+            state.selectedCategories = [selection.rawValue]
+            state.treatAsAllSelected = false
+            owner.cardStates["tangerine-moneyback-world"] = state
+
+            XCTAssertEqual(appliedRuleId("tangerine-moneyback-world", purchase),
+                           "tangerine-selected-2pct", selection.rawValue)
+        }
+    }
+
+    func testTangerineSpecialSelectionsDoNotMatchUnrelatedPurchases() {
+        var state = owner.cardStates["tangerine-moneyback-world"] ?? CardState()
+        state.selectedCategories = [
+            TangerineMoneyBackCategory.recurring.rawValue,
+            TangerineMoneyBackCategory.foreignCurrency.rawValue,
+        ]
+        state.treatAsAllSelected = false
+        owner.cardStates["tangerine-moneyback-world"] = state
+
+        let ordinaryCadPurchase = PurchaseContext(amountCad: 30, category: "other")
+        XCTAssertEqual(appliedRuleId("tangerine-moneyback-world", ordinaryCadPurchase),
+                       "tangerine-base")
+    }
+
     func testMarriottDirectInheritsLodging() {
         let p = PurchaseContext(amountCad: 300, category: "marriottDirect", mcc: 3509,
                                 merchantBrand: "marriott")

@@ -18,6 +18,27 @@ public struct Carry: Codable, Equatable, Sendable {
     public init(drawerCards: [String]) { self.drawerCards = drawerCards }
 }
 
+/// The Tangerine Money-Back categories an owner can select on their account.
+///
+/// Raw values use the engine's purchase vocabulary. Categories that depend on purchase facts
+/// rather than a merchant category (`recurring` and `foreignCurrency`) are resolved explicitly
+/// by `RuleMatcher`.
+public enum TangerineMoneyBackCategory: String, CaseIterable, Codable, Sendable {
+    case grocery
+    case dining
+    case gasStation
+    case entertainment
+    case furniture
+    case lodging
+    case drugStore
+    case recurring
+    case homeImprovement
+    case transit
+    case eGames
+    case fitness
+    case foreignCurrency
+}
+
 /// Layer 2 of the three-layer model: per-card owner/account state.
 /// A `nil` field means unresolved — the engine skips rules that depend on it rather than guessing.
 public struct CardState: Codable, Equatable, Sendable {

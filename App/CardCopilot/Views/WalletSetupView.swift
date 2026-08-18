@@ -18,8 +18,6 @@ struct WalletSetupView: View {
     @State private var cardName = ""
     @State private var requestMessage: String?
 
-    private let tangerineCategories = ["Grocery", "Dining", "Gas station", "Recurring bills", "Transit", "Drug store", "Entertainment", "Home improvement"]
-
     init(catalogue: Catalogue, seed: OwnerState, existing: OwnerState?, isFirstRun: Bool,
          onSave: @escaping (WalletSetup) async -> Void,
          onRequestCard: @escaping (PendingCardRequest) async -> Bool, onDone: @escaping () -> Void) {
@@ -132,8 +130,10 @@ struct WalletSetupView: View {
             if setup.ownedCardIds.contains("tangerine-moneyback-world") {
                 Section("Tangerine Money-Back") {
                     Text("Choose up to three categories currently selected on your Tangerine account. Leave all unselected if you are not sure.")
-                    ForEach(tangerineCategories, id: \.self) { category in
-                        Toggle(category, isOn: categoryBinding(category))
+                    ForEach(TangerineMoneyBackCategory.allCases, id: \.rawValue) { category in
+                        Toggle(category.setupLabel, isOn: categoryBinding(category))
+                            .disabled(!isTangerineCategorySelected(category)
+                                      && (setup.tangerineSelectedCategories?.count ?? 0) >= 3)
                     }
                 }
             }
@@ -186,15 +186,13 @@ struct WalletSetupView: View {
         Picker(title, selection: value) { Text("I’m not sure").tag("unknown"); Text("Yes").tag("yes"); Text("No").tag("no") }
     }
 
-    private func categoryBinding(_ category: String) -> Binding<Bool> {
-        Binding(get: { setup.tangerineSelectedCategories?.contains(category.lowercased().replacingOccurrences(of: " ", with: "")) == true }, set: { selected in
-            let id = switch category {
-            case "Gas station": "gasStation"
-            case "Recurring bills": "recurring"
-            case "Drug store": "drugStore"
-            case "Home improvement": "homeImprovement"
-            default: category.lowercased()
-            }
+    private func isTangerineCategorySelected(_ category: TangerineMoneyBackCategory) -> Bool {
+        setup.tangerineSelectedCategories?.contains(category.rawValue) == true
+    }
+
+    private func categoryBinding(_ category: TangerineMoneyBackCategory) -> Binding<Bool> {
+        Binding(get: { isTangerineCategorySelected(category) }, set: { selected in
+            let id = category.rawValue
             var categories = setup.tangerineSelectedCategories ?? []
             if selected, !categories.contains(id), categories.count < 3 { categories.append(id) }
             else { categories.removeAll { $0 == id } }
@@ -204,5 +202,25 @@ struct WalletSetupView: View {
 
     private func valuationRow(_ name: String, value: Binding<Double>) -> some View {
         Stepper("\(name): \(value.wrappedValue, specifier: "%.2f")¢ / point", value: value, in: 0...10, step: 0.05)
+    }
+}
+
+private extension TangerineMoneyBackCategory {
+    var setupLabel: LocalizedStringKey {
+        switch self {
+        case .grocery: "Grocery"
+        case .dining: "Restaurants"
+        case .gasStation: "Gas"
+        case .entertainment: "Entertainment"
+        case .furniture: "Furniture"
+        case .lodging: "Hotel-Motel"
+        case .drugStore: "Drug Store"
+        case .recurring: "Recurring Bill Payments"
+        case .homeImprovement: "Home Improvement"
+        case .transit: "Public Transportation and Parking"
+        case .eGames: "E-Games"
+        case .fitness: "Fitness and Sports Clubs"
+        case .foreignCurrency: "Foreign Currency Spend"
+        }
     }
 }

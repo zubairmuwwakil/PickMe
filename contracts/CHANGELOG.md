@@ -2,6 +2,18 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-17 — Added Batch 2 of 5 Canadian Card Products & Insurance Certificates
+
+- Added 5 researched Canadian credit cards to `card-catalogue.json`:
+  1. `td-first-class-travel-visa-infinite` (TD First Class Travel Visa Infinite Card)
+  2. `bmo-eclipse-visa-infinite` (BMO eclipse Visa Infinite Card)
+  3. `cibc-aventura-visa-infinite` (CIBC Aventura Visa Infinite Card)
+  4. `national-bank-world-elite` (National Bank World Elite Mastercard)
+  5. `pc-insiders-world-elite` (PC Insiders World Elite Mastercard)
+- Extended `program.programId` enum in `card-catalogue.schema.json` with `"tdRewards"`, `"bmoRewards"`, `"aventura"`, `"nbcRewards"`, and `"pcOptimum"`.
+- Sourced and added verified Certificates of Insurance for all 5 cards at `issuerPage` verification status in `benefits-catalogue.json`.
+- Accelerators set to `scoredInV1: false` fail closed safely pending dynamic points-program valuation, strict MCC predicate matching, and statement-period/global cap engine support.
+
 ## 2026-08-17 — Added 5 Canadian Card Products & Insurance Certificates
 
 - Added 5 researched Canadian credit cards to `card-catalogue.json`:

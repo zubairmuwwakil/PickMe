@@ -1891,6 +1891,662 @@
           "notes": "Underwritten by Manulife."
         }
       ]
+    },
+    {
+      "cardId": "td-first-class-travel-visa-infinite",
+      "certificate": {
+        "underwriter": "TD Home and Auto Insurance Company; TD Life Insurance Company",
+        "sourceUrl": "https://www.td.com/content/dam/tdct/document/pdf/personal-banking/credit-cards/welcome-guide/firstclasstravel-bcg-en.pdf",
+        "certificateDate": "2024-06",
+        "lastVerifiedAt": "2026-08-17",
+        "verificationStatus": "issuerPage"
+      },
+      "benefits": [
+        {
+          "benefitId": "td-fct-purchase-security",
+          "family": "shopping",
+          "kind": "purchaseProtection",
+          "coverage": {
+            "windowDays": 90,
+            "maxPerOccurrenceCad": null,
+            "maxAnnualCad": null
+          },
+          "conditions": [
+            "Charge the full cost of the item to the Card or redeem with TD Rewards points."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by TD Home and Auto Insurance Company."
+        },
+        {
+          "benefitId": "td-fct-extended-warranty",
+          "family": "shopping",
+          "kind": "extendedWarranty",
+          "coverage": {
+            "extraYears": 1,
+            "maxOriginalWarrantyYears": 5
+          },
+          "conditions": [
+            "Original manufacturer warranty must be five years or less; full cost charged to Card or points."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by TD Home and Auto Insurance Company."
+        },
+        {
+          "benefitId": "td-fct-flight-delay",
+          "family": "travelDisruption",
+          "kind": "flightDelay",
+          "coverage": {
+            "delayHours": 4,
+            "maxCad": 500
+          },
+          "conditions": [
+            "At least 75% of the ticket cost must be charged to the Card or redeemed with TD Rewards points."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by TD Home and Auto Insurance Company."
+        },
+        {
+          "benefitId": "td-fct-baggage-delay",
+          "family": "travelDisruption",
+          "kind": "baggageDelay",
+          "coverage": {
+            "delayHours": 4,
+            "maxCad": 1000
+          },
+          "conditions": [
+            "At least 75% of the ticket cost must be charged to the Card or redeemed with TD Rewards points."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by TD Home and Auto Insurance Company."
+        },
+        {
+          "benefitId": "td-fct-baggage-loss",
+          "family": "travelDisruption",
+          "kind": "baggageLoss",
+          "coverage": {
+            "maxCad": 1000
+          },
+          "conditions": [
+            "At least 75% of the ticket cost must be charged to the Card or redeemed with TD Rewards points."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by TD Home and Auto Insurance Company."
+        },
+        {
+          "benefitId": "td-fct-trip-cancellation",
+          "family": "travelDisruption",
+          "kind": "tripCancellation",
+          "coverage": {
+            "maxCad": 1500
+          },
+          "conditions": [
+            "At least 75% of the trip cost must be charged to the Card or redeemed with TD Rewards points."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by TD Life / TD Home and Auto. Up to $1,500 per insured person, $5,000 maximum per trip."
+        },
+        {
+          "benefitId": "td-fct-trip-interruption",
+          "family": "travelDisruption",
+          "kind": "tripInterruption",
+          "coverage": {
+            "maxCad": 5000
+          },
+          "conditions": [
+            "At least 75% of the trip cost must be charged to the Card or redeemed with TD Rewards points."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by TD Life / TD Home and Auto. Up to $5,000 per insured person, $25,000 maximum per trip."
+        },
+        {
+          "benefitId": "td-fct-rental-cdw",
+          "family": "rentalCdw",
+          "kind": "rentalCdw",
+          "coverage": {
+            "maxRentalDays": 48,
+            "maxVehicleValueCad": 85000
+          },
+          "conditions": [
+            "Charge full rental cost to the Card.",
+            "Decline the rental agency collision damage waiver (CDW)."
+          ],
+          "exclusions": [
+            "Vehicles with MSRP exceeding $85,000 are excluded."
+          ],
+          "certificateQuote": null,
+          "notes": "Underwritten by TD Home and Auto Insurance Company."
+        },
+        {
+          "benefitId": "td-fct-travel-medical",
+          "family": "travelMedical",
+          "kind": "travelMedical",
+          "coverage": {
+            "maxCad": 2000000,
+            "maxTripLengthDays": 21,
+            "ageLimit": 65
+          },
+          "conditions": [
+            "Coverage applies during the first 21 consecutive days of an eligible trip for insured persons under 65 (4 days for age 65+)."
+          ],
+          "exclusions": [
+            "Coverage limited to 21 days for under 65 and 4 days for age 65+."
+          ],
+          "certificateQuote": null,
+          "notes": "Underwritten by TD Life Insurance Company."
+        }
+      ]
+    },
+    {
+      "cardId": "bmo-eclipse-visa-infinite",
+      "certificate": {
+        "underwriter": "BMO Life Assurance Company; First North American Insurance Company (FNAIC) / Allianz Global Risks US Insurance Company",
+        "sourceUrl": "https://www.bmo.com/pdf/bmo-eclipse-visa-infinite-certificate-of-insurance-en.pdf",
+        "certificateDate": "2024-05",
+        "lastVerifiedAt": "2026-08-17",
+        "verificationStatus": "issuerPage"
+      },
+      "benefits": [
+        {
+          "benefitId": "bmo-eclipse-purchase-security",
+          "family": "shopping",
+          "kind": "purchaseProtection",
+          "coverage": {
+            "windowDays": 90,
+            "maxPerOccurrenceCad": null,
+            "maxAnnualCad": null
+          },
+          "conditions": [
+            "Charge full purchase price of the item to the Card."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by FNAIC / Allianz."
+        },
+        {
+          "benefitId": "bmo-eclipse-extended-warranty",
+          "family": "shopping",
+          "kind": "extendedWarranty",
+          "coverage": {
+            "extraYears": 1,
+            "maxOriginalWarrantyYears": 5
+          },
+          "conditions": [
+            "Original manufacturer warranty must be five years or less; full cost charged to Card."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by FNAIC / Allianz."
+        },
+        {
+          "benefitId": "bmo-eclipse-mobile-device",
+          "family": "shopping",
+          "kind": "mobileDeviceInsurance",
+          "coverage": {
+            "maxCad": 1000,
+            "deductibleCad": null
+          },
+          "conditions": [
+            "Charge the full purchase price of the device or all monthly wireless payments to the Card."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by FNAIC / Allianz."
+        },
+        {
+          "benefitId": "bmo-eclipse-rental-cdw",
+          "family": "rentalCdw",
+          "kind": "rentalCdw",
+          "coverage": {
+            "maxRentalDays": 48,
+            "maxVehicleValueCad": 65000
+          },
+          "conditions": [
+            "Charge full rental cost to the Card.",
+            "Decline rental agency CDW/LDW."
+          ],
+          "exclusions": [
+            "Vehicles with MSRP exceeding $65,000 are excluded."
+          ],
+          "certificateQuote": null,
+          "notes": "Underwritten by FNAIC / Allianz."
+        },
+        {
+          "benefitId": "bmo-eclipse-travel-medical",
+          "family": "travelMedical",
+          "kind": "travelMedical",
+          "coverage": {
+            "maxCad": 5000000,
+            "maxTripLengthDays": 15,
+            "ageLimit": 65
+          },
+          "conditions": [
+            "Coverage applies during first 15 consecutive days of an eligible trip for insured persons under 65 (3 days for age 65+)."
+          ],
+          "exclusions": [
+            "Coverage limited to 15 days for under 65 and 3 days for age 65+."
+          ],
+          "certificateQuote": null,
+          "notes": "Underwritten by BMO Life Assurance Company."
+        }
+      ]
+    },
+    {
+      "cardId": "cibc-aventura-visa-infinite",
+      "certificate": {
+        "underwriter": "Royal & Sun Alliance Insurance Company of Canada (RSA)",
+        "sourceUrl": "https://www.cibc.com/content/dam/personal_banking/credit_cards/agreements_and_insurance/aventura-infinite-certificate-en.pdf",
+        "certificateDate": "2024-02",
+        "lastVerifiedAt": "2026-08-17",
+        "verificationStatus": "issuerPage"
+      },
+      "benefits": [
+        {
+          "benefitId": "cibc-aventura-purchase-security",
+          "family": "shopping",
+          "kind": "purchaseProtection",
+          "coverage": {
+            "windowDays": 90,
+            "maxPerOccurrenceCad": null,
+            "maxAnnualCad": null
+          },
+          "conditions": [
+            "Charge full purchase price to the Card or redeem with Aventura points."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by RSA."
+        },
+        {
+          "benefitId": "cibc-aventura-extended-warranty",
+          "family": "shopping",
+          "kind": "extendedWarranty",
+          "coverage": {
+            "extraYears": 1,
+            "maxOriginalWarrantyYears": 5
+          },
+          "conditions": [
+            "Original manufacturer warranty must be five years or less; full cost charged to Card or points."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by RSA."
+        },
+        {
+          "benefitId": "cibc-aventura-mobile-device",
+          "family": "shopping",
+          "kind": "mobileDeviceInsurance",
+          "coverage": {
+            "maxCad": 1000,
+            "deductibleCad": null
+          },
+          "conditions": [
+            "Charge full device purchase or monthly wireless bills to the Card."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by RSA."
+        },
+        {
+          "benefitId": "cibc-aventura-flight-delay",
+          "family": "travelDisruption",
+          "kind": "flightDelay",
+          "coverage": {
+            "delayHours": 4,
+            "maxCad": 500
+          },
+          "conditions": [
+            "At least 75% of flight cost charged to Card or Aventura points."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by RSA."
+        },
+        {
+          "benefitId": "cibc-aventura-baggage-delay",
+          "family": "travelDisruption",
+          "kind": "baggageDelay",
+          "coverage": {
+            "delayHours": 4,
+            "maxCad": 500
+          },
+          "conditions": [
+            "At least 75% of ticket cost charged to Card or Aventura points."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by RSA."
+        },
+        {
+          "benefitId": "cibc-aventura-baggage-loss",
+          "family": "travelDisruption",
+          "kind": "baggageLoss",
+          "coverage": {
+            "maxCad": 1000
+          },
+          "conditions": [
+            "At least 75% of ticket cost charged to Card or Aventura points."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by RSA."
+        },
+        {
+          "benefitId": "cibc-aventura-trip-cancellation",
+          "family": "travelDisruption",
+          "kind": "tripCancellation",
+          "coverage": {
+            "maxCad": 1500
+          },
+          "conditions": [
+            "At least 75% of trip cost charged to Card or Aventura points."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by RSA. $1,500 per insured person, $5,000 max per trip."
+        },
+        {
+          "benefitId": "cibc-aventura-trip-interruption",
+          "family": "travelDisruption",
+          "kind": "tripInterruption",
+          "coverage": {
+            "maxCad": 2000
+          },
+          "conditions": [
+            "At least 75% of trip cost charged to Card or Aventura points."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by RSA. $2,000 per insured person."
+        },
+        {
+          "benefitId": "cibc-aventura-rental-cdw",
+          "family": "rentalCdw",
+          "kind": "rentalCdw",
+          "coverage": {
+            "maxRentalDays": 48,
+            "maxVehicleValueCad": 65000
+          },
+          "conditions": [
+            "Charge full rental cost to Card.",
+            "Decline rental agency CDW/LDW."
+          ],
+          "exclusions": [
+            "Vehicles with MSRP exceeding $65,000 are excluded."
+          ],
+          "certificateQuote": null,
+          "notes": "Underwritten by RSA."
+        },
+        {
+          "benefitId": "cibc-aventura-travel-medical",
+          "family": "travelMedical",
+          "kind": "travelMedical",
+          "coverage": {
+            "maxCad": 5000000,
+            "maxTripLengthDays": 15,
+            "ageLimit": 65
+          },
+          "conditions": [
+            "Coverage applies for first 15 consecutive days for insured under 65 (3 days for age 65+)."
+          ],
+          "exclusions": [
+            "Coverage limited to 15 days under age 65 and 3 days for age 65+."
+          ],
+          "certificateQuote": null,
+          "notes": "Underwritten by RSA. Up to $5,000,000 emergency medical coverage."
+        }
+      ]
+    },
+    {
+      "cardId": "national-bank-world-elite",
+      "certificate": {
+        "underwriter": "National Bank Life Insurance Company; CanAssurance Insurance Company",
+        "sourceUrl": "https://www.nbc.ca/personal/mastercard-credit-cards/world-elite.html",
+        "certificateDate": "2024-01",
+        "lastVerifiedAt": "2026-08-17",
+        "verificationStatus": "issuerPage"
+      },
+      "benefits": [
+        {
+          "benefitId": "nbc-we-purchase-security",
+          "family": "shopping",
+          "kind": "purchaseProtection",
+          "coverage": {
+            "windowDays": 180,
+            "maxPerOccurrenceCad": null,
+            "maxAnnualCad": null
+          },
+          "conditions": [
+            "Full purchase price must be charged to the Card or paid with rewards."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by CanAssurance. 180 days purchase protection."
+        },
+        {
+          "benefitId": "nbc-we-extended-warranty",
+          "family": "shopping",
+          "kind": "extendedWarranty",
+          "coverage": {
+            "extraYears": 2,
+            "maxOriginalWarrantyYears": 5
+          },
+          "conditions": [
+            "Original manufacturer warranty must be five years or less; full cost charged to Card or rewards."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by CanAssurance. Extends original warranty by up to two additional years."
+        },
+        {
+          "benefitId": "nbc-we-mobile-device",
+          "family": "shopping",
+          "kind": "mobileDeviceInsurance",
+          "coverage": {
+            "maxCad": 1000,
+            "deductibleCad": null
+          },
+          "conditions": [
+            "Charge full device purchase price or recurring monthly service bills to the Card."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by CanAssurance."
+        },
+        {
+          "benefitId": "nbc-we-flight-delay",
+          "family": "travelDisruption",
+          "kind": "flightDelay",
+          "coverage": {
+            "delayHours": 4,
+            "maxCad": 500
+          },
+          "conditions": [
+            "Charge full ticket cost to the Card or rewards."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by CanAssurance."
+        },
+        {
+          "benefitId": "nbc-we-baggage-delay",
+          "family": "travelDisruption",
+          "kind": "baggageDelay",
+          "coverage": {
+            "delayHours": 4,
+            "maxCad": 500
+          },
+          "conditions": [
+            "Charge full ticket cost to the Card or rewards."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by CanAssurance."
+        },
+        {
+          "benefitId": "nbc-we-baggage-loss",
+          "family": "travelDisruption",
+          "kind": "baggageLoss",
+          "coverage": {
+            "maxCad": 1000
+          },
+          "conditions": [
+            "Charge full ticket cost to the Card or rewards."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by CanAssurance."
+        },
+        {
+          "benefitId": "nbc-we-trip-cancellation",
+          "family": "travelDisruption",
+          "kind": "tripCancellation",
+          "coverage": {
+            "maxCad": 2500
+          },
+          "conditions": [
+            "Charge full trip cost to the Card or rewards."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by National Bank Life / CanAssurance. Up to $2,500 per person."
+        },
+        {
+          "benefitId": "nbc-we-trip-interruption",
+          "family": "travelDisruption",
+          "kind": "tripInterruption",
+          "coverage": {
+            "maxCad": 5000
+          },
+          "conditions": [
+            "Charge full trip cost to the Card or rewards."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by National Bank Life / CanAssurance. Up to $5,000 per person."
+        },
+        {
+          "benefitId": "nbc-we-rental-cdw",
+          "family": "rentalCdw",
+          "kind": "rentalCdw",
+          "coverage": {
+            "maxRentalDays": 48,
+            "maxVehicleValueCad": 65000
+          },
+          "conditions": [
+            "Charge full rental cost to the Card.",
+            "Decline rental agency CDW/LDW."
+          ],
+          "exclusions": [
+            "Vehicles with MSRP exceeding $65,000 are excluded."
+          ],
+          "certificateQuote": null,
+          "notes": "Underwritten by CanAssurance."
+        },
+        {
+          "benefitId": "nbc-we-travel-medical",
+          "family": "travelMedical",
+          "kind": "travelMedical",
+          "coverage": {
+            "maxCad": 5000000,
+            "maxTripLengthDays": 60,
+            "ageLimit": 76
+          },
+          "conditions": [
+            "Coverage applies up to 60 consecutive days for age 0-54, 31 days for age 55-64, and 15 days for age 65-75."
+          ],
+          "exclusions": [
+            "Coverage is limited to insured persons under age 76."
+          ],
+          "certificateQuote": null,
+          "notes": "Underwritten by National Bank Life / CanAssurance. Up to $5,000,000 emergency medical coverage."
+        }
+      ]
+    },
+    {
+      "cardId": "pc-insiders-world-elite",
+      "certificate": {
+        "underwriter": "American Bankers Insurance Company of Florida (ABIC); American Bankers Life Assurance Company of Florida (ABLAC)",
+        "sourceUrl": "https://www.pcfinancial.ca/en/credit-cards/insiders-world-elite/",
+        "certificateDate": "2024-04",
+        "lastVerifiedAt": "2026-08-17",
+        "verificationStatus": "issuerPage"
+      },
+      "benefits": [
+        {
+          "benefitId": "pc-insiders-purchase-security",
+          "family": "shopping",
+          "kind": "purchaseProtection",
+          "coverage": {
+            "windowDays": 90,
+            "maxPerOccurrenceCad": null,
+            "maxAnnualCad": null
+          },
+          "conditions": [
+            "Charge full purchase price of the item to the Card."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by ABIC."
+        },
+        {
+          "benefitId": "pc-insiders-extended-warranty",
+          "family": "shopping",
+          "kind": "extendedWarranty",
+          "coverage": {
+            "extraYears": 1,
+            "maxOriginalWarrantyYears": 5
+          },
+          "conditions": [
+            "Original manufacturer warranty must be five years or less; full cost charged to Card."
+          ],
+          "exclusions": [],
+          "certificateQuote": null,
+          "notes": "Underwritten by ABIC."
+        },
+        {
+          "benefitId": "pc-insiders-rental-cdw",
+          "family": "rentalCdw",
+          "kind": "rentalCdw",
+          "coverage": {
+            "maxRentalDays": 31,
+            "maxVehicleValueCad": 65000
+          },
+          "conditions": [
+            "Charge full cost of rental to the Card.",
+            "Decline rental agency CDW/LDW."
+          ],
+          "exclusions": [
+            "Vehicles with MSRP exceeding $65,000 are excluded."
+          ],
+          "certificateQuote": null,
+          "notes": "Underwritten by ABIC."
+        },
+        {
+          "benefitId": "pc-insiders-travel-medical",
+          "family": "travelMedical",
+          "kind": "travelMedical",
+          "coverage": {
+            "maxCad": 1000000,
+            "maxTripLengthDays": 10,
+            "ageLimit": 65
+          },
+          "conditions": [
+            "Coverage applies during first 10 consecutive days of an eligible trip for insured persons under 65."
+          ],
+          "exclusions": [
+            "Coverage limited to 10 days and insured persons under age 65."
+          ],
+          "certificateQuote": null,
+          "notes": "Underwritten by ABLAC."
+        }
+      ]
     }
   ]
 }

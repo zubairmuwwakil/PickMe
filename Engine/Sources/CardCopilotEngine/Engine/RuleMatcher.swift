@@ -74,7 +74,7 @@ public enum RuleMatcher {
             case "recurring":
                 return purchase.recurringIndicator
             case "ownerSelectedTangerineCategory":
-                return state.selectedCategories?.contains(purchase.category) ?? false
+                return matchesTangerineSelection(purchase: purchase, state: state)
             default:
                 let selfOrParents = [purchase.category] + (categoryParents[purchase.category] ?? [])
                 guard selfOrParents.contains(category) else { return false }
@@ -84,6 +84,30 @@ public enum RuleMatcher {
                 return true
             }
         }
+    }
+
+    private static func matchesTangerineSelection(purchase: PurchaseContext,
+                                                   state: CardState) -> Bool {
+        guard let selections = state.selectedCategories else { return false }
+        let selected = Set(selections)
+        let purchaseCategories = Set(
+            [purchase.category] + (categoryParents[purchase.category] ?? [])
+        )
+
+        if !selected.isDisjoint(with: purchaseCategories) { return true }
+        if purchase.recurringIndicator,
+           selected.contains(TangerineMoneyBackCategory.recurring.rawValue) {
+            return true
+        }
+        if purchase.currency.uppercased() != "CAD",
+           selected.contains(TangerineMoneyBackCategory.foreignCurrency.rawValue) {
+            return true
+        }
+
+        // Backward compatibility for owner-state files that used Tangerine's label-shaped id
+        // before the setup screen adopted the engine's canonical `lodging` category.
+        return purchaseCategories.contains(TangerineMoneyBackCategory.lodging.rawValue)
+            && selected.contains("hotelMotel")
     }
 
     /// Comparable only within one card — a card never mixes points and cashback earn rules.
