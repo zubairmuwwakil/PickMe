@@ -202,6 +202,7 @@ struct CheckoutFlowView: View {
                          onOpenAmbient: { stage = .ambientSetup },
                          onEditWallet: { stage = .walletSetup },
                          onSignIn: { stage = .sync },
+                         onSignOut: { Task { await signOut() } },
                          onEraseLocalHistory: { eraseLocalHistory() },
                          onDeleteAccount: { erase in try await deleteAccount(eraseLocalHistory: erase) },
                          onDone: { stage = .idle })
@@ -461,6 +462,12 @@ struct CheckoutFlowView: View {
         // Geofences are refreshed from the store on the next significant location change, which
         // could be hours away. Arrival monitoring for merchants the owner just erased stops now.
         if eraseLocalHistory { self.eraseLocalHistory() }
+        try? await Clerk.shared.auth.signOut()
+        resetSyncedState()
+        stage = .idle
+    }
+
+    private func signOut() async {
         try? await Clerk.shared.auth.signOut()
         resetSyncedState()
         stage = .idle

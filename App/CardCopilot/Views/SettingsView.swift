@@ -18,12 +18,14 @@ struct SettingsView: View {
     let onOpenAmbient: () -> Void
     let onEditWallet: () -> Void
     let onSignIn: () -> Void
+    let onSignOut: () -> Void
     let onEraseLocalHistory: () -> Void
     let onDeleteAccount: (_ eraseLocalHistory: Bool) async throws -> Void
     let onDone: () -> Void
 
     @State private var deleteIsPresented = false
     @State private var eraseIsPresented = false
+    @State private var signOutIsPresented = false
     @State private var didErase = false
 
     /// The published policy, served without authentication so it resolves for a signed-out
@@ -38,6 +40,7 @@ struct SettingsView: View {
                     Button("Sync & Wallet Capture", action: onOpenSync)
                     LabeledContent("Last synced",
                                    value: lastSyncedAt.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "Never")
+                    Button("Sign Out", role: .destructive) { signOutIsPresented = true }
                 } else {
                     Text("Checkout works without an account. Sign in only to sync cap usage and capture feedback.")
                         .font(.footnote).foregroundStyle(.secondary)
@@ -90,6 +93,15 @@ struct SettingsView: View {
                     Text("Deletes your PickMe account and everything stored for it on the server. You choose separately what happens to this iPhone's history.")
                 }
             }
+        }
+        .confirmationDialog("Sign out of PickMe?", isPresented: $signOutIsPresented,
+                            titleVisibility: .visible) {
+            Button("Sign Out", role: .destructive) {
+                onSignOut()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Signing out stops cap and feedback sync. Checkout will continue to work offline with your on-device history.")
         }
         .confirmationDialog("Erase this iPhone's history?", isPresented: $eraseIsPresented,
                             titleVisibility: .visible) {
