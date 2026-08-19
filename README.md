@@ -1,10 +1,32 @@
-# PickMe
+# PickMe (Canadian Card Copilot)
 
-PickMe is the repository for **Canadian Card Copilot**, a privacy-first SwiftUI app that tells a Canadian multi-card holder which card in their wallet should earn the most for a specific purchase.
+**PickMe** is a 100% offline, privacy-first native iOS / SwiftUI app that tells multi-card holders exactly which credit card in their wallet to swipe at checkout to maximize points, cashback, and rewards.
 
-The project is currently a **personal, engine-first MVP**. Its bundled catalogue and owner state model one 10-card wallet so the recommendation logic can be validated over 30 real checkouts before the product is expanded for public use.
+- **Stack:** Swift 6 · SwiftUI (iOS 18) · SwiftData · MapKit / CoreLocation · Apple Maps
+- **Privacy by Construction:** Runs entirely on-device with zero accounts, zero analytics trackers, zero bank credential scrapers, and zero cloud dependencies.
 
-## What it does
+---
+
+## 1. Standalone Product Capabilities
+
+PickMe functions independently as a dedicated, on-device checkout optimizer:
+
+- **Ambient Merchant Discovery**: One-time location fix detects nearby merchants with an offline/location-free Apple Maps search fallback.
+- **Deterministic Card Evaluation**: Evaluates every card in your physical/digital wallet against issuer earn rules, category bonus caps, foreign-exchange fees, network acceptance rules (e.g. Costco = Mastercard only), and personalized point valuations.
+- **Smart Switch Thresholds**: Only prompts you to switch cards when the projected reward improvement exceeds a sensible threshold (e.g. ≥ C$0.25 and 0.5 percentage points).
+- **Keep, Downgrade & Cancel Audits**: Evaluates each card's recurring annual fee against your actual category spending to deliver empirical keep/cancel portfolio verdicts.
+- **Acquisition Analysis**: Ranks non-owned Canadian credit cards by the net value they would add to your existing wallet after fees.
+
+---
+
+## 2. Ecosystem Unification (Optional)
+
+PickMe can operate completely standalone or optionally connect to **Inunity** ([`inunity.ca`](https://inunity.ca)):
+
+- **Cross-Language Shared Twin Contract**: PickMe's pure Swift deterministic calculation engine (`Engine/`) defines the canonical card-decision standard. A synchronized TypeScript twin in Inunity (`src/engine/cards-twin/`) is gated by shared test fixtures (`engine-fixtures.json`).
+- **Closed-Loop Reconciliation**: Inunity can consume PickMe predictions to compare checkout recommendations against actual settled transactions captured via Apple Pay or statement imports.
+
+---
 
 - Finds nearby merchants from a one-time location request, with manual Apple Maps search as a location-free fallback.
 - Accepts a rough purchase amount through presets, custom entry, or a skippable category estimate.
