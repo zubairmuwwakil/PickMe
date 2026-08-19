@@ -7,6 +7,7 @@ struct SyncCenterView: View {
     let isSignedIn: Bool
     let lastSyncedAt: Date?
     let feedback: [WalletFeedback]
+    let installations: [WalletInstallation]
     let isSyncing: Bool
     let onSync: () -> Void
     let onCreateInstallation: (String) async throws -> String
@@ -17,6 +18,11 @@ struct SyncCenterView: View {
     @State private var installationToken: String?
     @State private var tokenError: String?
     @State private var isCreatingToken = false
+    @State private var isShowingCreateForm = false
+
+    private var activeInstallations: [WalletInstallation] {
+        installations.filter { $0.revokedAt == nil }
+    }
 
     var body: some View {
         ScrollView {
@@ -35,14 +41,14 @@ struct SyncCenterView: View {
 
     private var configurationRequired: some View {
         ContentUnavailableView("Sync setup required", systemImage: "key.horizontal",
-                               description: Text("Checkout stays available. Add the dedicated PickMe Clerk key and API URL to MoneyTalksConfiguration.swift, then return here to sign in."))
+                               description: Text("Checkout stays available. Add the dedicated Inunity Clerk key and API URL to MoneyTalksConfiguration.swift, then return here to sign in."))
     }
 
     private var signInRequired: some View {
         VStack(alignment: .leading, spacing: 16) {
             Label("Keep your caps in sync", systemImage: "arrow.triangle.2.circlepath").font(.title3.weight(.bold))
             Text("Sign in only to sync cap usage, view capture feedback, and create a Wallet Shortcut installation token. Checkout recommendations work without an account or connection.").foregroundStyle(.secondary)
-            Button("Sign in to PickMe") { authIsPresented = true }.buttonStyle(.borderedProminent)
+            Button("Sign in to Inunity") { authIsPresented = true }.buttonStyle(.borderedProminent)
         }.padding(18).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
     }
 
@@ -78,10 +84,41 @@ struct SyncCenterView: View {
                 Text(installationToken).font(.footnote.monospaced()).textSelection(.enabled).padding(12).frame(maxWidth: .infinity, alignment: .leading).background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10))
                 Button("Copy token") { UIPasteboard.general.string = installationToken }.buttonStyle(.bordered)
                 Text("This is the only time PickMe displays this token. Store it in the Shortcut, not a note.").font(.caption).foregroundStyle(.secondary)
+            } else if !activeInstallations.isEmpty && !isShowingCreateForm {
+                VStack(alignment: .leading, spacing: 10) {
+                    Label("Connected", systemImage: "checkmark.circle.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.green)
+                    ForEach(activeInstallations) { item in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.label).font(.subheadline.weight(.semibold))
+                            Text("Created \(item.createdAt.formatted(date: .abbreviated, time: .shortened))")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                        if item.id != activeInstallations.last?.id { Divider() }
+                    }
+                    Button("Create another token") {
+                        withAnimation { isShowingCreateForm = true }
+                    }
+                    .buttonStyle(.bordered)
+                    .padding(.top, 4)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10))
             } else {
                 TextField("Installation name", text: $installationName).textFieldStyle(.roundedBorder)
-                Button(isCreatingToken ? "Creating…" : "Create installation token") { Task { await createInstallationToken() } }
-                    .buttonStyle(.bordered).disabled(isCreatingToken || installationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                HStack {
+                    Button(isCreatingToken ? "Creating…" : "Create installation token") { Task { await createInstallationToken() } }
+                        .buttonStyle(.bordered).disabled(isCreatingToken || installationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    if !activeInstallations.isEmpty {
+                        Button("Cancel") {
+                            withAnimation { isShowingCreateForm = false }
+                        }
+                        .buttonStyle(.borderless)
+                        .padding(.leading, 8)
+                    }
+                }
             }
             if let tokenError { Text(tokenError).font(.caption).foregroundStyle(.red) }
         }.padding(16).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
@@ -90,7 +127,11 @@ struct SyncCenterView: View {
     private func createInstallationToken() async {
         isCreatingToken = true; tokenError = nil
         defer { isCreatingToken = false }
-        do { installationToken = try await onCreateInstallation(installationName) }
+        do {
+            installationToken = try await onCreateInstallation(installationName)
+            isShowingCreateForm = false
+            installationName = "My iPhone"
+        }
         catch { tokenError = "Couldn’t create a token. Check your connection and try again." }
     }
 }

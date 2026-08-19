@@ -7,6 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9FE3B672303615C300ACCA56 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FE3B671303615C300ACCA56 /* WidgetKit.framework */; };
+		9FE3B674303615C300ACCA56 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FE3B673303615C300ACCA56 /* SwiftUI.framework */; };
+		9FE3B685303615C600ACCA56 /* Pick MeExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9FE3B66F303615C200ACCA56 /* Pick MeExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9FE3B690303616D200ACCA56 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FE3B671303615C300ACCA56 /* WidgetKit.framework */; };
+		9FE3B691303616D200ACCA56 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FE3B673303615C300ACCA56 /* SwiftUI.framework */; };
+		9FE3B6A2303616D500ACCA56 /* CardCopilotWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9FE3B68F303616D200ACCA56 /* CardCopilotWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9FE3B6C03036171C00ACCA56 /* CardCopilotShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9FE3B6B63036171C00ACCA56 /* CardCopilotShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9FE3B6D1303617AB00ACCA56 /* CardCopilotWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 9FE3B6D0303617AB00ACCA56 /* CardCopilotWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9FE3B6EB303618DB00ACCA56 /* CardCopilotEngine in Frameworks */ = {isa = PBXBuildFile; productRef = 9FE3B6EA303618DB00ACCA56 /* CardCopilotEngine */; };
+		9FE3B6ED303618DF00ACCA56 /* CardCopilotStore in Frameworks */ = {isa = PBXBuildFile; productRef = 9FE3B6EC303618DF00ACCA56 /* CardCopilotStore */; };
+		9FE3B6EF303618F600ACCA56 /* CardCopilotEngine in Frameworks */ = {isa = PBXBuildFile; productRef = 9FE3B6EE303618F600ACCA56 /* CardCopilotEngine */; };
+		9FE3B6F1303618F800ACCA56 /* CardCopilotStore in Frameworks */ = {isa = PBXBuildFile; productRef = 9FE3B6F0303618F800ACCA56 /* CardCopilotStore */; };
+		9FE3B6F33036190200ACCA56 /* CardCopilotEngine in Frameworks */ = {isa = PBXBuildFile; productRef = 9FE3B6F23036190200ACCA56 /* CardCopilotEngine */; };
+		9FE3B6F53036190500ACCA56 /* CardCopilotStore in Frameworks */ = {isa = PBXBuildFile; productRef = 9FE3B6F43036190500ACCA56 /* CardCopilotStore */; };
 		A1000010 /* CardCopilotEngine in Frameworks */ = {isa = PBXBuildFile; productRef = A1000009 /* CardCopilotEngine */; };
 		A1000031 /* CardCopilotStore in Frameworks */ = {isa = PBXBuildFile; productRef = A1000030 /* CardCopilotStore */; };
 		A1000041 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1000040 /* ClerkKit */; };
@@ -14,6 +28,34 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		9FE3B683303615C600ACCA56 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9FE3B66E303615C200ACCA56;
+			remoteInfo = "Pick MeExtension";
+		};
+		9FE3B6A0303616D500ACCA56 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9FE3B68E303616D200ACCA56;
+			remoteInfo = CardCopilotWidgetsExtension;
+		};
+		9FE3B6BE3036171C00ACCA56 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9FE3B6B53036171C00ACCA56;
+			remoteInfo = CardCopilotShare;
+		};
+		9FE3B6D2303617AB00ACCA56 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9FE3B6CF303617AB00ACCA56;
+			remoteInfo = "CardCopilotWatch Watch App";
+		};
 		A1000057 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A1000000 /* Project object */;
@@ -23,12 +65,101 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		9FE3B686303615C600ACCA56 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				9FE3B685303615C600ACCA56 /* Pick MeExtension.appex in Embed Foundation Extensions */,
+				9FE3B6A2303616D500ACCA56 /* CardCopilotWidgetsExtension.appex in Embed Foundation Extensions */,
+				9FE3B6C03036171C00ACCA56 /* CardCopilotShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FE3B6DE303617AD00ACCA56 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				9FE3B6D1303617AB00ACCA56 /* CardCopilotWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		9FE3B66F303615C200ACCA56 /* Pick MeExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Pick MeExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9FE3B671303615C300ACCA56 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		9FE3B673303615C300ACCA56 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		9FE3B68F303616D200ACCA56 /* CardCopilotWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CardCopilotWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		9FE3B6B1303616E900ACCA56 /* CardCopilotWidgetsExtensionDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CardCopilotWidgetsExtensionDebug.entitlements; sourceTree = "<group>"; };
+		9FE3B6B63036171C00ACCA56 /* CardCopilotShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CardCopilotShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		9FE3B6C83036174C00ACCA56 /* CardCopilotWidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CardCopilotWidgetsExtension.entitlements; sourceTree = "<group>"; };
+		9FE3B6CB303617AB00ACCA56 /* CardCopilotWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CardCopilotWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9FE3B6D0303617AB00ACCA56 /* CardCopilotWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "CardCopilotWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000003 /* CardCopilot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CardCopilot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000050 /* CardCopilotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CardCopilotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9FE3B689303615C600ACCA56 /* Exceptions for "Pick Me" folder in "Pick MeExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9FE3B66E303615C200ACCA56 /* Pick MeExtension */;
+		};
+		9FE3B6A3303616D500ACCA56 /* Exceptions for "CardCopilotWidgets" folder in "CardCopilotWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9FE3B68E303616D200ACCA56 /* CardCopilotWidgetsExtension */;
+		};
+		9FE3B6C13036171C00ACCA56 /* Exceptions for "CardCopilotShare" folder in "CardCopilotShare" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9FE3B6B53036171C00ACCA56 /* CardCopilotShare */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		9FE3B675303615C300ACCA56 /* Pick Me */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9FE3B689303615C600ACCA56 /* Exceptions for "Pick Me" folder in "Pick MeExtension" target */,
+			);
+			path = "Pick Me";
+			sourceTree = "<group>";
+		};
+		9FE3B692303616D200ACCA56 /* CardCopilotWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9FE3B6A3303616D500ACCA56 /* Exceptions for "CardCopilotWidgets" folder in "CardCopilotWidgetsExtension" target */,
+			);
+			path = CardCopilotWidgets;
+			sourceTree = "<group>";
+		};
+		9FE3B6B73036171C00ACCA56 /* CardCopilotShare */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9FE3B6C13036171C00ACCA56 /* Exceptions for "CardCopilotShare" folder in "CardCopilotShare" target */,
+			);
+			path = CardCopilotShare;
+			sourceTree = "<group>";
+		};
+		9FE3B6D4303617AB00ACCA56 /* CardCopilotWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "CardCopilotWatch Watch App";
+			sourceTree = "<group>";
+		};
 		A1000004 /* CardCopilot */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = CardCopilot;
@@ -42,6 +173,44 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		9FE3B66C303615C200ACCA56 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9FE3B674303615C300ACCA56 /* SwiftUI.framework in Frameworks */,
+				9FE3B672303615C300ACCA56 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FE3B68C303616D200ACCA56 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9FE3B6EB303618DB00ACCA56 /* CardCopilotEngine in Frameworks */,
+				9FE3B6ED303618DF00ACCA56 /* CardCopilotStore in Frameworks */,
+				9FE3B691303616D200ACCA56 /* SwiftUI.framework in Frameworks */,
+				9FE3B690303616D200ACCA56 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FE3B6B33036171C00ACCA56 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9FE3B6EF303618F600ACCA56 /* CardCopilotEngine in Frameworks */,
+				9FE3B6F1303618F800ACCA56 /* CardCopilotStore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FE3B6CD303617AB00ACCA56 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9FE3B6F33036190200ACCA56 /* CardCopilotEngine in Frameworks */,
+				9FE3B6F53036190500ACCA56 /* CardCopilotStore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A1000005 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -63,11 +232,27 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9FE3B670303615C300ACCA56 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9FE3B671303615C300ACCA56 /* WidgetKit.framework */,
+				9FE3B673303615C300ACCA56 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		A1000001 = {
 			isa = PBXGroup;
 			children = (
+				9FE3B6C83036174C00ACCA56 /* CardCopilotWidgetsExtension.entitlements */,
+				9FE3B6B1303616E900ACCA56 /* CardCopilotWidgetsExtensionDebug.entitlements */,
 				A1000004 /* CardCopilot */,
 				A1000051 /* CardCopilotTests */,
+				9FE3B675303615C300ACCA56 /* Pick Me */,
+				9FE3B692303616D200ACCA56 /* CardCopilotWidgets */,
+				9FE3B6B73036171C00ACCA56 /* CardCopilotShare */,
+				9FE3B6D4303617AB00ACCA56 /* CardCopilotWatch Watch App */,
+				9FE3B670303615C300ACCA56 /* Frameworks */,
 				A1000002 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -77,6 +262,11 @@
 			children = (
 				A1000003 /* CardCopilot.app */,
 				A1000050 /* CardCopilotTests.xctest */,
+				9FE3B66F303615C200ACCA56 /* Pick MeExtension.appex */,
+				9FE3B68F303616D200ACCA56 /* CardCopilotWidgetsExtension.appex */,
+				9FE3B6B63036171C00ACCA56 /* CardCopilotShare.appex */,
+				9FE3B6CB303617AB00ACCA56 /* CardCopilotWatch.app */,
+				9FE3B6D0303617AB00ACCA56 /* CardCopilotWatch Watch App.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -84,6 +274,119 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		9FE3B66E303615C200ACCA56 /* Pick MeExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9FE3B68A303615C600ACCA56 /* Build configuration list for PBXNativeTarget "Pick MeExtension" */;
+			buildPhases = (
+				9FE3B66B303615C200ACCA56 /* Sources */,
+				9FE3B66C303615C200ACCA56 /* Frameworks */,
+				9FE3B66D303615C200ACCA56 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9FE3B675303615C300ACCA56 /* Pick Me */,
+			);
+			name = "Pick MeExtension";
+			packageProductDependencies = (
+			);
+			productName = "Pick MeExtension";
+			productReference = 9FE3B66F303615C200ACCA56 /* Pick MeExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		9FE3B68E303616D200ACCA56 /* CardCopilotWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9FE3B6A4303616D500ACCA56 /* Build configuration list for PBXNativeTarget "CardCopilotWidgetsExtension" */;
+			buildPhases = (
+				9FE3B68B303616D200ACCA56 /* Sources */,
+				9FE3B68C303616D200ACCA56 /* Frameworks */,
+				9FE3B68D303616D200ACCA56 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9FE3B692303616D200ACCA56 /* CardCopilotWidgets */,
+			);
+			name = CardCopilotWidgetsExtension;
+			packageProductDependencies = (
+				9FE3B6EA303618DB00ACCA56 /* CardCopilotEngine */,
+				9FE3B6EC303618DF00ACCA56 /* CardCopilotStore */,
+			);
+			productName = CardCopilotWidgetsExtension;
+			productReference = 9FE3B68F303616D200ACCA56 /* CardCopilotWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		9FE3B6B53036171C00ACCA56 /* CardCopilotShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9FE3B6C23036171C00ACCA56 /* Build configuration list for PBXNativeTarget "CardCopilotShare" */;
+			buildPhases = (
+				9FE3B6B23036171C00ACCA56 /* Sources */,
+				9FE3B6B33036171C00ACCA56 /* Frameworks */,
+				9FE3B6B43036171C00ACCA56 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9FE3B6B73036171C00ACCA56 /* CardCopilotShare */,
+			);
+			name = CardCopilotShare;
+			packageProductDependencies = (
+				9FE3B6EE303618F600ACCA56 /* CardCopilotEngine */,
+				9FE3B6F0303618F800ACCA56 /* CardCopilotStore */,
+			);
+			productName = CardCopilotShare;
+			productReference = 9FE3B6B63036171C00ACCA56 /* CardCopilotShare.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		9FE3B6CA303617AB00ACCA56 /* CardCopilotWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9FE3B6DF303617AD00ACCA56 /* Build configuration list for PBXNativeTarget "CardCopilotWatch" */;
+			buildPhases = (
+				9FE3B6C9303617AB00ACCA56 /* Resources */,
+				9FE3B6DE303617AD00ACCA56 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9FE3B6D3303617AB00ACCA56 /* PBXTargetDependency */,
+			);
+			name = CardCopilotWatch;
+			packageProductDependencies = (
+			);
+			productName = CardCopilotWatch;
+			productReference = 9FE3B6CB303617AB00ACCA56 /* CardCopilotWatch.app */;
+			productType = "com.apple.product-type.application.watchapp2-container";
+		};
+		9FE3B6CF303617AB00ACCA56 /* CardCopilotWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9FE3B6DB303617AD00ACCA56 /* Build configuration list for PBXNativeTarget "CardCopilotWatch Watch App" */;
+			buildPhases = (
+				9FE3B6CC303617AB00ACCA56 /* Sources */,
+				9FE3B6CD303617AB00ACCA56 /* Frameworks */,
+				9FE3B6CE303617AB00ACCA56 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9FE3B6D4303617AB00ACCA56 /* CardCopilotWatch Watch App */,
+			);
+			name = "CardCopilotWatch Watch App";
+			packageProductDependencies = (
+				9FE3B6F23036190200ACCA56 /* CardCopilotEngine */,
+				9FE3B6F43036190500ACCA56 /* CardCopilotStore */,
+			);
+			productName = "CardCopilotWatch Watch App";
+			productReference = 9FE3B6D0303617AB00ACCA56 /* CardCopilotWatch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
 		A1000006 /* CardCopilot */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A1000012 /* Build configuration list for PBXNativeTarget "CardCopilot" */;
@@ -91,10 +394,16 @@
 				A1000007 /* Sources */,
 				A1000005 /* Frameworks */,
 				A1000008 /* Resources */,
+				9FE3B686303615C600ACCA56 /* Embed Foundation Extensions */,
+				9FE3B6DE303617AD00ACCA56 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				9FE3B684303615C600ACCA56 /* PBXTargetDependency */,
+				9FE3B6A1303616D500ACCA56 /* PBXTargetDependency */,
+				9FE3B6BF3036171C00ACCA56 /* PBXTargetDependency */,
+				9FE3B6D3303617AB00ACCA56 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A1000004 /* CardCopilot */,
@@ -143,6 +452,21 @@
 				LastSwiftUpdateCheck = 2630;
 				LastUpgradeCheck = 2630;
 				TargetAttributes = {
+					9FE3B66E303615C200ACCA56 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					9FE3B68E303616D200ACCA56 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					9FE3B6B53036171C00ACCA56 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					9FE3B6CA303617AB00ACCA56 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					9FE3B6CF303617AB00ACCA56 = {
+						CreatedOnToolsVersion = 26.3;
+					};
 					A1000006 = {
 						CreatedOnToolsVersion = 26.3;
 					};
@@ -173,11 +497,51 @@
 			targets = (
 				A1000006 /* CardCopilot */,
 				A1000055 /* CardCopilotTests */,
+				9FE3B66E303615C200ACCA56 /* Pick MeExtension */,
+				9FE3B68E303616D200ACCA56 /* CardCopilotWidgetsExtension */,
+				9FE3B6B53036171C00ACCA56 /* CardCopilotShare */,
+				9FE3B6CA303617AB00ACCA56 /* CardCopilotWatch */,
+				9FE3B6CF303617AB00ACCA56 /* CardCopilotWatch Watch App */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		9FE3B66D303615C200ACCA56 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FE3B68D303616D200ACCA56 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FE3B6B43036171C00ACCA56 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FE3B6C9303617AB00ACCA56 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FE3B6CE303617AB00ACCA56 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A1000008 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -195,6 +559,34 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		9FE3B66B303615C200ACCA56 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FE3B68B303616D200ACCA56 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FE3B6B23036171C00ACCA56 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FE3B6CC303617AB00ACCA56 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A1000007 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -212,6 +604,26 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		9FE3B684303615C600ACCA56 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9FE3B66E303615C200ACCA56 /* Pick MeExtension */;
+			targetProxy = 9FE3B683303615C600ACCA56 /* PBXContainerItemProxy */;
+		};
+		9FE3B6A1303616D500ACCA56 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9FE3B68E303616D200ACCA56 /* CardCopilotWidgetsExtension */;
+			targetProxy = 9FE3B6A0303616D500ACCA56 /* PBXContainerItemProxy */;
+		};
+		9FE3B6BF3036171C00ACCA56 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9FE3B6B53036171C00ACCA56 /* CardCopilotShare */;
+			targetProxy = 9FE3B6BE3036171C00ACCA56 /* PBXContainerItemProxy */;
+		};
+		9FE3B6D3303617AB00ACCA56 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9FE3B6CF303617AB00ACCA56 /* CardCopilotWatch Watch App */;
+			targetProxy = 9FE3B6D2303617AB00ACCA56 /* PBXContainerItemProxy */;
+		};
 		A1000056 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A1000006 /* CardCopilot */;
@@ -220,6 +632,669 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		9FE3B687303615C600ACCA56 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = MC8XJ6GXBM;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Pick Me/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Pick Me";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "ca.pickme.cardcopilot.Pick-Me";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		9FE3B688303615C600ACCA56 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = MC8XJ6GXBM;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Pick Me/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Pick Me";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "ca.pickme.cardcopilot.Pick-Me";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		9FE3B6A5303616D500ACCA56 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = CardCopilotWidgetsExtensionDebug.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = MC8XJ6GXBM;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CardCopilotWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CardCopilotWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = ca.pickme.cardcopilot.CardCopilotWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		9FE3B6A6303616D500ACCA56 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = CardCopilotWidgetsExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = MC8XJ6GXBM;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CardCopilotWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CardCopilotWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = ca.pickme.cardcopilot.CardCopilotWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		9FE3B6C33036171C00ACCA56 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = CardCopilotShare/CardCopilotShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = MC8XJ6GXBM;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CardCopilotShare/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CardCopilotShare;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = ca.pickme.cardcopilot.CardCopilotShare;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		9FE3B6C43036171C00ACCA56 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = CardCopilotShare/CardCopilotShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = MC8XJ6GXBM;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CardCopilotShare/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CardCopilotShare;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = ca.pickme.cardcopilot.CardCopilotShare;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		9FE3B6DC303617AD00ACCA56 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = "CardCopilotWatch Watch App/CardCopilotWatch Watch App.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = MC8XJ6GXBM;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = CardCopilotWatch;
+				INFOPLIST_KEY_CFBundleIconName = AppIcon;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKWatchOnly = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = ca.pickme.cardcopilot.CardCopilotWatch.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Debug;
+		};
+		9FE3B6DD303617AD00ACCA56 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = "CardCopilotWatch Watch App/CardCopilotWatch Watch App.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = MC8XJ6GXBM;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = CardCopilotWatch;
+				INFOPLIST_KEY_CFBundleIconName = AppIcon;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKWatchOnly = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = ca.pickme.cardcopilot.CardCopilotWatch.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Release;
+		};
+		9FE3B6E0303617AD00ACCA56 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = MC8XJ6GXBM;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = CardCopilotWatch;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = ca.pickme.cardcopilot.CardCopilotWatch;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9FE3B6E1303617AD00ACCA56 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = MC8XJ6GXBM;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = CardCopilotWatch;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = ca.pickme.cardcopilot.CardCopilotWatch;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		A1000020 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -270,8 +1345,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = CardCopilot/CardCopilot.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = MC8XJ6GXBM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -296,7 +1372,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CardCopilot/CardCopilotRelease.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = MC8XJ6GXBM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -352,6 +1428,51 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		9FE3B68A303615C600ACCA56 /* Build configuration list for PBXNativeTarget "Pick MeExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9FE3B687303615C600ACCA56 /* Debug */,
+				9FE3B688303615C600ACCA56 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9FE3B6A4303616D500ACCA56 /* Build configuration list for PBXNativeTarget "CardCopilotWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9FE3B6A5303616D500ACCA56 /* Debug */,
+				9FE3B6A6303616D500ACCA56 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9FE3B6C23036171C00ACCA56 /* Build configuration list for PBXNativeTarget "CardCopilotShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9FE3B6C33036171C00ACCA56 /* Debug */,
+				9FE3B6C43036171C00ACCA56 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9FE3B6DB303617AD00ACCA56 /* Build configuration list for PBXNativeTarget "CardCopilotWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9FE3B6DC303617AD00ACCA56 /* Debug */,
+				9FE3B6DD303617AD00ACCA56 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9FE3B6DF303617AD00ACCA56 /* Build configuration list for PBXNativeTarget "CardCopilotWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9FE3B6E0303617AD00ACCA56 /* Debug */,
+				9FE3B6E1303617AD00ACCA56 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		A1000011 /* Build configuration list for PBXProject "CardCopilot" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -404,6 +1525,36 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		9FE3B6EA303618DB00ACCA56 /* CardCopilotEngine */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1000013 /* XCLocalSwiftPackageReference "../Engine" */;
+			productName = CardCopilotEngine;
+		};
+		9FE3B6EC303618DF00ACCA56 /* CardCopilotStore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1000032 /* XCLocalSwiftPackageReference "../Store" */;
+			productName = CardCopilotStore;
+		};
+		9FE3B6EE303618F600ACCA56 /* CardCopilotEngine */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1000013 /* XCLocalSwiftPackageReference "../Engine" */;
+			productName = CardCopilotEngine;
+		};
+		9FE3B6F0303618F800ACCA56 /* CardCopilotStore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1000032 /* XCLocalSwiftPackageReference "../Store" */;
+			productName = CardCopilotStore;
+		};
+		9FE3B6F23036190200ACCA56 /* CardCopilotEngine */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1000013 /* XCLocalSwiftPackageReference "../Engine" */;
+			productName = CardCopilotEngine;
+		};
+		9FE3B6F43036190500ACCA56 /* CardCopilotStore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1000032 /* XCLocalSwiftPackageReference "../Store" */;
+			productName = CardCopilotStore;
+		};
 		A1000009 /* CardCopilotEngine */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CardCopilotEngine;

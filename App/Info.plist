@@ -34,6 +34,8 @@
     </array>
     <key>UILaunchScreen</key>
     <dict/>
+    <key>NSSupportsLiveActivities</key>
+    <true/>
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>

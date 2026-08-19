@@ -39,4 +39,28 @@ final class SpendDistributionTests: XCTestCase {
                           + "profile — that card's marginal value is understated by construction")
         }
     }
+
+    func testFrugalStudentAndFrequentTravelerProfiles() {
+        let student = SpendDistribution.frugalStudent
+        XCTAssertEqual(student.profileId, "frugal-student-2026")
+        XCTAssertEqual(student.totalAnnualCad, 18_500, accuracy: 0.01)
+
+        let traveler = SpendDistribution.frequentTraveler
+        XCTAssertEqual(traveler.profileId, "frequent-traveler-2026")
+        XCTAssertEqual(traveler.totalAnnualCad, 84_000, accuracy: 0.01)
+    }
+
+    func testApplyingOverridesModifiesTargetBuckets() {
+        let base = SpendDistribution.placeholderCanadianHousehold
+        let modified = base.applyingOverrides(["dining": 20_000, "grocery": 15_000], profileId: "custom-test")
+        XCTAssertEqual(modified.profileId, "custom-test")
+
+        let diningBucket = modified.buckets.first { $0.context.category == "dining" }
+        XCTAssertNotNil(diningBucket)
+        XCTAssertEqual(diningBucket!.annualCad, 20_000)
+
+        let groceryBucket = modified.buckets.first { $0.context.category == "grocery" }
+        XCTAssertNotNil(groceryBucket)
+        XCTAssertEqual(groceryBucket!.annualCad, 15_000)
+    }
 }

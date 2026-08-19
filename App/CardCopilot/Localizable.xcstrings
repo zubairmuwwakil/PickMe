@@ -53,6 +53,16 @@
         }
       }
     },
+    "%@ ($%lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ ($%2$lld)"
+          }
+        }
+      }
+    },
     "%@ adds %@ — compare" : {
       "localizations" : {
         "en" : {
@@ -134,6 +144,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld"
+          }
+        }
+      }
+    },
+    "%lld alerts fired · %lld suppressed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld alerts fired · %2$lld suppressed"
           }
         }
       }
@@ -356,6 +376,9 @@
           }
         }
       }
+    },
+    "advantage" : {
+
     },
     "Against this wallet and spend profile, keeping the wallet unchanged beats every researched candidate on recurring earn after fees." : {
       "localizations" : {
@@ -693,6 +716,12 @@
         }
       }
     },
+    "Arrival alerts are active" : {
+
+    },
+    "Arrival alerts enabled" : {
+
+    },
     "At least %.1f percentage points better" : {
       "localizations" : {
         "fr-CA" : {
@@ -742,6 +771,9 @@
           }
         }
       }
+    },
+    "Battery-efficient geofencing with no continuous route tracking." : {
+
     },
     "Below Target" : {
       "localizations" : {
@@ -924,12 +956,12 @@
         }
       }
     },
-    "Checkout stays available. Add the dedicated PickMe Clerk key and API URL to MoneyTalksConfiguration.swift, then return here to sign in." : {
+    "Checkout stays available. Add the dedicated Inunity Clerk key and API URL to MoneyTalksConfiguration.swift, then return here to sign in." : {
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Le paiement reste disponible. Ajoutez la clé Clerk et l’URL d’API PickMe dans MoneyTalksConfiguration.swift, puis revenez ici pour ouvrir une session."
+            "value" : "Le paiement reste disponible. Ajoutez la clé Clerk et l’URL d’API Inunity dans MoneyTalksConfiguration.swift, puis revenez ici pour ouvrir une session."
           }
         }
       }
@@ -1181,35 +1213,35 @@
         }
       }
     },
-    "Delete your PickMe account" : {
+    "Delete your Inunity account" : {
       "comment" : "human review before public launch",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Delete your PickMe account"
+            "value" : "Supprimer votre compte Inunity"
           }
         }
       }
     },
-    "Delete your PickMe account permanently?" : {
+    "Delete your Inunity account permanently?" : {
       "comment" : "human review before public launch",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Delete your PickMe account permanently?"
+            "value" : "Supprimer définitivement votre compte Inunity?"
           }
         }
       }
     },
-    "Deletes your PickMe account and everything stored for it on the server. You choose separately what happens to this iPhone's history." : {
+    "Deletes your Inunity account and everything stored for it on the server. You choose separately what happens to this iPhone's history." : {
       "comment" : "human review before public launch",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deletes your PickMe account and everything stored for it on the server. You choose separately what happens to this iPhone's history."
+            "value" : "Supprime votre compte Inunity et tout ce qui est stocké pour lui sur le serveur. Vous choisissez séparément le sort de l’historique de cet iPhone."
           }
         }
       }
@@ -1413,13 +1445,13 @@
         }
       }
     },
-    "Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to PickMe are not affected." : {
+    "Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to Inunity are not affected." : {
       "comment" : "human review before public launch",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to PickMe are not affected."
+            "value" : "Efface votre journal de prédictions, vos confirmations et les emplacements de commerces enregistrés de cet iPhone. Votre compte et tout ce qui est déjà synchronisé avec Inunity ne sont pas affectés."
           }
         }
       }
@@ -1468,6 +1500,7 @@
       }
     },
     "Every verdict below runs against a documented guess at a %@/yr Canadian household — not your real spending. No statement history exists yet to replace it." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -1477,14 +1510,14 @@
         }
       }
     },
-    "Everything PickMe stores for you on the server: captured wallet events, cap usage, your saved card setup, and the account record itself." : {
+    "Everything Inunity stores for you on the server: captured wallet events, cap usage, your saved card setup, and the account record itself." : {
       "comment" : "human review before public launch",
       "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Everything PickMe stores for you on the server: captured wallet events, cap usage, your saved card setup, and the account record itself."
+            "value" : "Tout ce qu’Inunity stocke pour vous sur le serveur : événements de portefeuille collectés, utilisation des plafonds, configuration de vos cartes et le compte lui-même."
           }
         }
       }
@@ -1888,6 +1921,9 @@
         }
       }
     },
+    "Live evaluation using your active cards and customized point valuations." : {
+
+    },
     "Location is used only for arrival detection at your saved merchants." : {
       "comment" : "human review before public launch",
       "localizations" : {
@@ -1908,6 +1944,9 @@
           }
         }
       }
+    },
+    "Manage in iOS Settings" : {
+
     },
     "marginal" : {
       "localizations" : {
@@ -1962,6 +2001,9 @@
         }
       }
     },
+    "Merchant or Category" : {
+
+    },
     "Miss Taxonomy" : {
       "localizations" : {
         "fr-CA" : {
@@ -1981,6 +2023,9 @@
           }
         }
       }
+    },
+    "Monitoring arrival at up to 20 saved merchants." : {
+
     },
     "My card isn't listed" : {
       "localizations" : {
@@ -2254,6 +2299,9 @@
         }
       }
     },
+    "Open PickMe at checkout or specify a store like Costco, Tim Hortons, or Groceries." : {
+
+    },
     "Optional ($)" : {
       "localizations" : {
         "fr-CA" : {
@@ -2303,6 +2351,9 @@
           }
         }
       }
+    },
+    "Pay with" : {
+
     },
     "Per Card" : {
       "localizations" : {
@@ -2355,6 +2406,9 @@
         }
       }
     },
+    "PickMe is actively monitoring when you arrive at your saved merchants to suggest the best card before you pay." : {
+
+    },
     "Planned Amount" : {
       "localizations" : {
         "fr-CA" : {
@@ -2376,6 +2430,9 @@
         }
       }
     },
+    "Point Valuation Sandbox" : {
+
+    },
     "Point valuations" : {
       "localizations" : {
         "fr-CA" : {
@@ -2385,6 +2442,9 @@
           }
         }
       }
+    },
+    "Points don't have a fixed face value — their return depends on how you redeem them (e.g. transfer to airlines vs statement credits). Adjust the sliders below to see which card wins at each valuation." : {
+
     },
     "Points posted (e.g. 700)" : {
       "extractionState" : "stale",
@@ -2479,6 +2539,9 @@
           }
         }
       }
+    },
+    "Recent Activity (Last 7 Days)" : {
+
     },
     "Recent capture feedback" : {
       "localizations" : {
@@ -2575,6 +2638,9 @@
           }
         }
       }
+    },
+    "Reward Currency Valuations" : {
+
     },
     "REWARDS EARNED" : {
       "localizations" : {
@@ -2747,12 +2813,32 @@
         }
       }
     },
-    "Sign in to PickMe" : {
+    "Sign in to Inunity" : {
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sign in to PickMe"
+            "value" : "Se connecter à Inunity"
+          }
+        }
+      }
+    },
+    "Sign Out" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se déconnecter"
+          }
+        }
+      }
+    },
+    "Sign out of Inunity?" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se déconnecter d’Inunity?"
           }
         }
       }
@@ -2766,6 +2852,12 @@
           }
         }
       }
+    },
+    "Signing out stops cap and feedback sync. Checkout will continue to work offline with your on-device history." : {
+
+    },
+    "Simulated Checkout Outcomes" : {
+
     },
     "Skip — just tell me which card" : {
       "localizations" : {
@@ -2787,7 +2879,14 @@
         }
       }
     },
+    "Spend Profile" : {
+
+    },
+    "SPEND PROFILE: %@" : {
+
+    },
     "SPEND PROFILE: PLACEHOLDER" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -2826,6 +2925,9 @@
           }
         }
       }
+    },
+    "Suggests the optimal credit card for a given merchant or category." : {
+
     },
     "Switch recommendations" : {
       "localizations" : {
@@ -3007,6 +3109,9 @@
         }
       }
     },
+    "The store or category you are buying from (e.g. Costco, Groceries, Dining, Shell)." : {
+
+    },
     "The total on the receipt, not what you entered before paying." : {
       "localizations" : {
         "fr-CA" : {
@@ -3090,6 +3195,9 @@
         }
       }
     },
+    "To turn off arrival alerts or change location permissions, visit iPhone Settings." : {
+
+    },
     "TOP REWARD" : {
       "localizations" : {
         "fr-CA" : {
@@ -3160,6 +3268,9 @@
         }
       }
     },
+    "Valuation Sandbox" : {
+
+    },
     "VALUE RECOVERED" : {
       "localizations" : {
         "fr-CA" : {
@@ -3169,6 +3280,9 @@
           }
         }
       }
+    },
+    "Verdicts run against %@/yr Canadian spend profile. Switch profiles to test if verdicts hold under your spending style." : {
+
     },
     "Verified certificate coverage per card" : {
 
@@ -3327,6 +3441,12 @@
         }
       }
     },
+    "What-If sensitivity for MR, Aeroplan, Scene+, Avion" : {
+
+    },
+    "What-If Sensitivity Sandbox" : {
+
+    },
     "When" : {
       "localizations" : {
         "fr-CA" : {
@@ -3356,6 +3476,9 @@
           }
         }
       }
+    },
+    "Which Card Should I Use?" : {
+
     },
     "Which Card?" : {
       "localizations" : {
@@ -3387,6 +3510,9 @@
           }
         }
       }
+    },
+    "Winner: %@" : {
+
     },
     "Yes" : {
       "localizations" : {
@@ -3452,17 +3578,20 @@
         }
       }
     },
-    "Your PickMe sign-in. You will not be able to sign in again, here or on the web." : {
+    "Your Inunity sign-in. You will not be able to sign in again, here or on the web." : {
       "comment" : "human review before public launch",
       "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your PickMe sign-in. You will not be able to sign in again, here or on the web."
+            "value" : "Votre connexion Inunity. Vous ne pourrez plus vous connecter, ni ici ni sur le Web."
           }
         }
       }
+    },
+    "Your location is processed on-device and never leaves this phone." : {
+
     },
     "Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected." : {
       "comment" : "human review before public launch",

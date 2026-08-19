@@ -119,4 +119,53 @@ public extension SpendDistribution {
                   currency: "USD", channel: "online"),
             .init(label: "Everything else", annualCad: 6_800, category: "other"),
         ])
+
+    /// A focused profile for students or light spenders (~$18,500/yr) with high transit, grocery,
+    /// and dining emphasis and minimal airline/hotel spend.
+    static let frugalStudent = SpendDistribution(
+        profileId: "frugal-student-2026",
+        basis: "PROFILE: Student & Light Spender (~$18,500/yr) — groceries, transit, dining, streaming.",
+        buckets: [
+            .init(label: "Groceries", annualCad: 4_800, category: "grocery", mcc: 5411, merchantBrand: "loblaws"),
+            .init(label: "Restaurants & coffee", annualCad: 2_400, category: "dining", mcc: 5812),
+            .init(label: "Food delivery", annualCad: 600, category: "foodDelivery", mcc: 5814, channel: "online"),
+            .init(label: "Streaming", annualCad: 360, category: "streaming", mcc: 5968, channel: "online", recurring: true),
+            .init(label: "Digital media & apps", annualCad: 240, category: "digitalMedia", mcc: 5815, channel: "online"),
+            .init(label: "Phone & internet", annualCad: 1_200, category: "householdUtilities", mcc: 4814, recurring: true),
+            .init(label: "Transit & rideshare", annualCad: 1_800, category: "transit", mcc: 4121),
+            .init(label: "Everything else", annualCad: 7_100, category: "other"),
+        ])
+
+    /// A premium profile for frequent flyers and business travelers (~$84,000/yr) with high flight,
+    /// hotel, dining, and foreign exchange components.
+    static let frequentTraveler = SpendDistribution(
+        profileId: "frequent-traveler-2026",
+        basis: "PROFILE: Frequent Traveler (~$84,000/yr) — heavy airline, lodging, dining, and FX spend.",
+        buckets: [
+            .init(label: "Groceries", annualCad: 9_600, category: "grocery", mcc: 5411, merchantBrand: "loblaws"),
+            .init(label: "Restaurants & coffee", annualCad: 14_000, category: "dining", mcc: 5812),
+            .init(label: "Food delivery", annualCad: 1_800, category: "foodDelivery", mcc: 5814, channel: "online"),
+            .init(label: "Flights", annualCad: 15_000, category: "travel", mcc: 3000, channel: "online"),
+            .init(label: "Hotels (non-Marriott)", annualCad: 12_000, category: "lodging", mcc: 3501, channel: "online"),
+            .init(label: "Marriott stays", annualCad: 8_000, category: "marriottDirect", mcc: 3509, merchantBrand: "marriott"),
+            .init(label: "Transit & rideshare", annualCad: 3_600, category: "transit", mcc: 4121),
+            .init(label: "Gas", annualCad: 2_400, category: "gasStation", mcc: 5541),
+            .init(label: "Foreign currency (USD)", annualCad: 8_000, category: "other", currency: "USD", channel: "online"),
+            .init(label: "Streaming & subscriptions", annualCad: 1_200, category: "streaming", mcc: 5968, channel: "online", recurring: true),
+            .init(label: "Phone & utilities", annualCad: 2_400, category: "householdUtilities", mcc: 4814, recurring: true),
+            .init(label: "Everything else", annualCad: 6_000, category: "other"),
+        ])
+
+    /// Creates a customized distribution from a base template by applying category dollar overrides.
+    func applyingOverrides(_ overrides: [String: Double], profileId: String = "customized-profile") -> SpendDistribution {
+        let updatedBuckets = buckets.map { bucket -> Bucket in
+            if let customAmount = overrides[bucket.label] ?? overrides[bucket.context.category] {
+                return Bucket(label: bucket.label, annualCad: max(0, customAmount), context: bucket.context)
+            }
+            return bucket
+        }
+        return SpendDistribution(profileId: profileId,
+                                 basis: "Customized spend adjustments on base: \(self.profileId)",
+                                 buckets: updatedBuckets)
+    }
 }

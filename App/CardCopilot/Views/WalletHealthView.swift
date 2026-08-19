@@ -19,7 +19,26 @@ struct WalletHealthView: View {
         var id: String { rawValue }
     }
 
-    private let distribution = SpendDistribution.placeholderCanadianHousehold
+    private enum SpendProfileChoice: String, CaseIterable, Identifiable {
+        case standard = "Standard ($40k)"
+        case student = "Student ($18k)"
+        case traveler = "Traveler ($84k)"
+        var id: String { rawValue }
+
+        var distribution: SpendDistribution {
+            switch self {
+            case .standard: .placeholderCanadianHousehold
+            case .student: .frugalStudent
+            case .traveler: .frequentTraveler
+            }
+        }
+    }
+
+    @State private var selectedProfile: SpendProfileChoice = .standard
+
+    private var activeDistribution: SpendDistribution {
+        selectedProfile.distribution
+    }
 
     private var cardNames: [String: String] {
         Dictionary(uniqueKeysWithValues: deps.catalogue.cards.map { ($0.cardId, $0.officialName) })
@@ -35,6 +54,7 @@ struct WalletHealthView: View {
             VStack(alignment: .leading, spacing: 20) {
                 if let analysis, let acquisitionAnalysis {
                     assumptionBanner
+                    profileSwitcher
                     modePicker
                     if mode == .wallet {
                         summaryCard(analysis)
@@ -64,15 +84,33 @@ struct WalletHealthView: View {
             }
         }
         .task {
-            guard analysis == nil || acquisitionAnalysis == nil else { return }
-            let today = Date().formatted(.iso8601.year().month().day())
-            analysis = PortfolioAnalyzer(catalogue: deps.catalogue, ownerState: deps.ownerState)
-                .analyze(distribution, asOf: today)
-            acquisitionAnalysis = AcquisitionAnalyzer(
-                walletCatalogue: deps.catalogue,
-                candidateCatalogue: deps.candidateCatalogue,
-                ownerState: deps.ownerState)
-                .analyze(distribution, asOf: today)
+            recalculateAnalysis()
+        }
+    }
+
+    private func recalculateAnalysis() {
+        let today = Date().formatted(.iso8601.year().month().day())
+        analysis = PortfolioAnalyzer(catalogue: deps.catalogue, ownerState: deps.ownerState)
+            .analyze(activeDistribution, asOf: today)
+        acquisitionAnalysis = AcquisitionAnalyzer(
+            walletCatalogue: deps.catalogue,
+            candidateCatalogue: deps.candidateCatalogue,
+            ownerState: deps.ownerState)
+            .analyze(activeDistribution, asOf: today)
+    }
+
+    private var profileSwitcher: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Spend Profile").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+            Picker("Spend Profile", selection: $selectedProfile) {
+                ForEach(SpendProfileChoice.allCases) { profile in
+                    Text(profile.rawValue).tag(profile)
+                }
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: selectedProfile) { _, _ in
+                recalculateAnalysis()
+            }
         }
     }
 
@@ -90,22 +128,22 @@ struct WalletHealthView: View {
     private var assumptionBanner: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
-                Image(systemName: "exclamationmark.triangle.fill")
+                Image(systemName: "slider.horizontal.2.square")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.orange)
-                Text("SPEND PROFILE: PLACEHOLDER")
+                Text("SPEND PROFILE: \(selectedProfile.rawValue.uppercased())")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .tracking(1.0)
                     .foregroundStyle(.secondary)
             }
 
-            Text("Every verdict below runs against a documented guess at a \(WalletHealthFormatting.cad(distribution.totalAnnualCad))/yr Canadian household — not your real spending. No statement history exists yet to replace it.")
+            Text("Verdicts run against \(WalletHealthFormatting.cad(activeDistribution.totalAnnualCad))/yr Canadian spend profile. Switch profiles to test if verdicts hold under your spending style.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
-            DisclosureGroup("View the \(distribution.buckets.count) assumed categories") {
+            DisclosureGroup("View the \(activeDistribution.buckets.count) assumed categories") {
                 VStack(spacing: 6) {
-                    ForEach(distribution.buckets, id: \.label) { bucket in
+                    ForEach(activeDistribution.buckets, id: \.label) { bucket in
                         HStack {
                             Text(bucket.label)
                                 .font(.system(size: 13, weight: .medium))

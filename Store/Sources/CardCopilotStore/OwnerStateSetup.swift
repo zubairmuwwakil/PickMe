@@ -78,10 +78,14 @@ public enum OwnerStateBuilder {
 /// The device copy is the checkout source of truth while offline. A server copy is updated when
 /// the user is signed in, but failed network work never replaces this usable local wallet.
 public final class OwnerStateLocalStore: @unchecked Sendable {
+    public static var sharedDefaults: UserDefaults {
+        UserDefaults(suiteName: "group.ca.inunity.pickme") ?? .standard
+    }
+
     private let defaults: UserDefaults
     private let key: String
 
-    public init(defaults: UserDefaults = .standard, key: String = "ca.pickme.owner-state.v1") {
+    public init(defaults: UserDefaults = OwnerStateLocalStore.sharedDefaults, key: String = "ca.pickme.owner-state.v1") {
         self.defaults = defaults
         self.key = key
     }
@@ -114,7 +118,7 @@ public final class CardRequestQueue: @unchecked Sendable {
     private let defaults: UserDefaults
     private let key: String
 
-    public init(defaults: UserDefaults = .standard, key: String = "ca.pickme.pending-card-requests.v1") {
+    public init(defaults: UserDefaults = OwnerStateLocalStore.sharedDefaults, key: String = "ca.pickme.pending-card-requests.v1") {
         self.defaults = defaults
         self.key = key
     }

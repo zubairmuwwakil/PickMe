@@ -31,13 +31,21 @@ public struct SpineSnapshot: Sendable {
     public let feedback: [WalletFeedback]
 }
 
-public struct WalletInstallation: Codable, Equatable, Sendable {
+public struct WalletInstallation: Codable, Equatable, Sendable, Identifiable {
     public let id: String
     public let label: String
     public let createdAt: Date
     public let revokedAt: Date?
     /// Present only in the create response. It must never be persisted by the app.
     public let token: String?
+
+    public init(id: String, label: String, createdAt: Date, revokedAt: Date? = nil, token: String? = nil) {
+        self.id = id
+        self.label = label
+        self.createdAt = createdAt
+        self.revokedAt = revokedAt
+        self.token = token
+    }
 }
 
 public enum MoneyTalksAPIError: Error, LocalizedError {
@@ -47,9 +55,9 @@ public enum MoneyTalksAPIError: Error, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .unavailableConfiguration: "PickMe sync has not been configured."
-        case .unauthenticated: "Sign in to sync with PickMe."
-        case .unexpectedResponse(let status): "PickMe returned HTTP \(status)."
+        case .unavailableConfiguration: "Inunity sync has not been configured."
+        case .unauthenticated: "Sign in to sync with Inunity."
+        case .unexpectedResponse(let status): "Inunity returned HTTP \(status)."
         }
     }
 }
@@ -77,6 +85,10 @@ public actor MoneyTalksAPIClient {
         async let caps: CapsResponse = get("api/spine/caps")
         async let feedback: FeedbackResponse = get("api/spine/feedback")
         return try await SpineSnapshot(caps: caps.caps, feedback: feedback.feedback)
+    }
+
+    public func fetchWalletInstallations() async throws -> [WalletInstallation] {
+        return try await get("api/v1/wallet-installations")
     }
 
     public func createWalletInstallation(label: String) async throws -> WalletInstallation {
@@ -154,7 +166,15 @@ public actor MoneyTalksAPIClient {
 public struct OwnerStateSyncResult: Sendable {
     public let ownerState: OwnerState
     public let feedback: [WalletFeedback]
+    public let installations: [WalletInstallation]
     public let lastSyncedAt: Date
+
+    public init(ownerState: OwnerState, feedback: [WalletFeedback], installations: [WalletInstallation] = [], lastSyncedAt: Date) {
+        self.ownerState = ownerState
+        self.feedback = feedback
+        self.installations = installations
+        self.lastSyncedAt = lastSyncedAt
+    }
 }
 
 /// Sync owns the conversion from the server's minor-unit read model to the engine's existing
@@ -167,9 +187,14 @@ public actor OwnerStateSyncService {
     }
 
     public func sync(ownerState: OwnerState, catalogue: Catalogue, now: Date = Date()) async throws -> OwnerStateSyncResult {
-        let snapshot = try await client.fetchSnapshot()
-        return OwnerStateSyncResult(ownerState: Self.merging(snapshot.caps, into: ownerState, catalogue: catalogue),
-                                    feedback: snapshot.feedback, lastSyncedAt: now)
+        async let snapshot = client.fetchSnapshot()
+        async let installations = client.fetchWalletInstallations()
+        let snap = try await snapshot
+        let inst = (try? await installations) ?? []
+        return OwnerStateSyncResult(ownerState: Self.merging(snap.caps, into: ownerState, catalogue: catalogue),
+                                    feedback: snap.feedback,
+                                    installations: inst,
+                                    lastSyncedAt: now)
     }
 
     public static func merging(_ remoteCaps: [String: SpineCap], into ownerState: OwnerState,

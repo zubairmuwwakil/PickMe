@@ -113,4 +113,28 @@ final class AmbientLocalStateTests: XCTestCase {
 
         XCTAssertEqual(store.lastSevenDays(ending: day), SuppressionLog())
     }
+
+    // MARK: - Explainer View
+
+    func testExplainerViewInitializesInEnabledAndUnenabledStates() {
+        let unenabledView = AmbientLocationExplainerView(
+            isEnabled: false,
+            diagnostics: nil,
+            onEnable: {},
+            onDone: {}
+        )
+        XCTAssertFalse(unenabledView.isEnabled)
+        XCTAssertNil(unenabledView.diagnostics)
+
+        let diagnostics = SuppressionLog(fired: 3, suppressed: 1)
+        let enabledView = AmbientLocationExplainerView(
+            isEnabled: true,
+            diagnostics: diagnostics,
+            onEnable: {},
+            onDone: {}
+        )
+        XCTAssertTrue(enabledView.isEnabled)
+        XCTAssertEqual(enabledView.diagnostics?.fired, 3)
+        XCTAssertEqual(enabledView.diagnostics?.suppressed, 1)
+    }
 }

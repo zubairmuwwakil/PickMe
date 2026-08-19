@@ -26,6 +26,7 @@ struct HomeView: View {
     let onBenefits: () -> Void
     let onCategoryPicker: () -> Void
     let onWalletHealth: () -> Void
+    let onValuationSandbox: () -> Void
     let onConfigureAmbient: () -> Void
 
     @State private var searchText = ""
@@ -200,45 +201,92 @@ struct HomeView: View {
             .disabled(locationDenied)
 
             // Modern Integrated Search Bar
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(.secondary)
+            VStack(spacing: 6) {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(.secondary)
 
-                TextField("Search merchant (e.g. Costco, Loblaws)", text: $searchText)
-                    .font(.system(size: 15))
-                    .focused($isSearchFocused)
-                    .textInputAutocapitalization(.words)
-                    .disableAutocorrection(true)
-                    .onSubmit { submitSearch() }
+                    TextField("Search merchant (e.g. Costco, Loblaws)", text: $searchText)
+                        .font(.system(size: 15))
+                        .focused($isSearchFocused)
+                        .textInputAutocapitalization(.words)
+                        .disableAutocorrection(true)
+                        .onSubmit { submitSearch() }
 
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 14))
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+
+                        Button("Search") {
+                            submitSearch()
+                        }
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.blue)
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color(.secondarySystemGroupedBackground))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .strokeBorder(isSearchFocused ? Color.blue.opacity(0.6) : Color.clear, lineWidth: 1.5)
+                        )
+                )
+
+                // Instant Offline Pre-Index Autocomplete
                 if !searchText.isEmpty {
-                    Button {
-                        searchText = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.secondary)
+                    let preIndexMatches = CanadianMerchantPreIndex.search(searchText, limit: 3)
+                    if !preIndexMatches.isEmpty {
+                        VStack(spacing: 4) {
+                            ForEach(preIndexMatches) { match in
+                                Button {
+                                    searchText = ""
+                                    isSearchFocused = false
+                                    onSearch(match.name)
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "bolt.fill")
+                                            .font(.caption2)
+                                            .foregroundStyle(.orange)
+                                        Text(match.name)
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundStyle(.primary)
+                                        Text("•")
+                                            .foregroundStyle(.tertiary)
+                                        Text(match.category)
+                                            .font(.system(size: 12))
+                                            .foregroundStyle(.secondary)
+                                        Spacer()
+                                        if let notes = match.notes {
+                                            Text(notes)
+                                                .font(.caption2)
+                                                .foregroundStyle(.tertiary)
+                                                .lineLimit(1)
+                                        }
+                                        Image(systemName: "arrow.up.left")
+                                            .font(.caption2)
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.top, 2)
                     }
-                    .buttonStyle(.plain)
-
-                    Button("Search") {
-                        submitSearch()
-                    }
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.blue)
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 11)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .strokeBorder(isSearchFocused ? Color.blue.opacity(0.6) : Color.clear, lineWidth: 1.5)
-                    )
-            )
         }
     }
 
@@ -382,6 +430,19 @@ struct HomeView: View {
                         subtitle: "What to keep, cancel, or add — marginal, not gross",
                         badge: "Estimate",
                         badgeColor: .mint
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Point Valuation Sandbox
+                Button(action: onValuationSandbox) {
+                    toolRow(
+                        icon: "slider.horizontal.3",
+                        iconColor: .purple,
+                        title: "Valuation Sandbox",
+                        subtitle: "What-If sensitivity for MR, Aeroplan, Scene+, Avion",
+                        badge: "Live",
+                        badgeColor: .purple
                     )
                 }
                 .buttonStyle(.plain)

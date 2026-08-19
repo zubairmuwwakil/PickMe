@@ -24,6 +24,7 @@ struct CheckoutFlowView: View {
     @State private var metrics: ExperimentMetrics?
     @State private var lastSyncedAt: Date?
     @State private var walletFeedback: [WalletFeedback] = []
+    @State private var walletInstallations: [WalletInstallation] = []
     @State private var isSyncing = false
     @State private var ambient = AmbientLocationService()
     @State private var ambientDiagnostics = SuppressionLog()
@@ -45,6 +46,7 @@ struct CheckoutFlowView: View {
         case benefitsReference
         case categoryPicker
         case walletHealth
+        case valuationSandbox
         case sync
         case settings
         case walletSetup
@@ -130,6 +132,7 @@ struct CheckoutFlowView: View {
                      onBenefits: { stage = .benefitsReference },
                      onCategoryPicker: { stage = .categoryPicker },
                      onWalletHealth: { stage = .walletHealth },
+                     onValuationSandbox: { stage = .valuationSandbox },
                      onConfigureAmbient: { stage = .ambientSetup })
         case .locating:
             ProgressView("Finding nearby merchants…")
@@ -185,10 +188,15 @@ struct CheckoutFlowView: View {
             if let deps {
                 WalletHealthView(deps: deps, onDone: { stage = .idle })
             }
+        case .valuationSandbox:
+            if let deps {
+                ValuationSandboxView(deps: deps, onDone: { stage = .idle })
+            }
         case .sync:
             SyncCenterView(isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
                            lastSyncedAt: lastSyncedAt,
                            feedback: walletFeedback,
+                           installations: walletInstallations,
                            isSyncing: isSyncing,
                            onSync: { Task { await syncCapsSilently() } },
                            onCreateInstallation: { label in try await createInstallation(label: label) },
@@ -216,11 +224,16 @@ struct CheckoutFlowView: View {
                                 onDone: { stage = .idle })
             }
         case .ambientSetup:
-            AmbientLocationExplainerView(onEnable: {
-                ambient.requestAlwaysAuthorization()
-                ambientDiagnostics = ambient.diagnostics
-                stage = .idle
-            }, onDone: { stage = .idle })
+            AmbientLocationExplainerView(
+                isEnabled: ambient.isEnabled,
+                diagnostics: ambientDiagnostics,
+                onEnable: {
+                    ambient.requestAlwaysAuthorization()
+                    ambientDiagnostics = ambient.diagnostics
+                    stage = .idle
+                },
+                onDone: { stage = .idle }
+            )
         case .failed(let message):
             ContentUnavailableView("Something went wrong", systemImage: "exclamationmark.triangle",
                                    description: Text(message))
@@ -288,9 +301,37 @@ struct CheckoutFlowView: View {
         guard let deps else { return }
         do {
             let today = Date().formatted(.iso8601.year().month().day())
-            stage = .recommendation(try deps.service.recommend(merchant: merchant,
-                                                               amountCad: amount,
-                                                               asOf: today))
+            let result = try deps.service.recommend(merchant: merchant,
+                                                    amountCad: amount,
+                                                    asOf: today)
+            stage = .recommendation(result)
+
+            let (winnerCardId, headline, advantageCad, isFork): (String, String, Double?, Bool) = {
+                switch result.outcome {
+                case .single(let rec):
+                    let returnText = String(format: "$%.2f back", rec.winner.netValueCad)
+                    return (rec.winner.cardId, returnText, rec.advantageOverDefaultCad, false)
+                case .fork(let branches):
+                    if let first = branches.first {
+                        let returnText = String(format: "$%.2f back", first.recommendation.winner.netValueCad)
+                        return (first.recommendation.winner.cardId, returnText, first.recommendation.advantageOverDefaultCad, true)
+                    }
+                    return ("", "", nil, true)
+                }
+            }()
+            let cardName = deps.catalogue.cards.first { $0.cardId == winnerCardId }?.officialName ?? winnerCardId
+            let meta = CategoryVisuals.meta(for: result.prediction.category)
+            let advantageText = advantageCad.map { String(format: "+$%.2f", $0) } ?? ""
+            LiveActivityManager.shared.startRecommendationActivity(
+                merchantName: merchant.name,
+                cardName: cardName,
+                cardId: winnerCardId,
+                multiplierHeadline: headline,
+                advantageDescription: advantageText,
+                categoryDisplayName: meta.displayName,
+                categoryIcon: meta.icon,
+                isFork: isFork
+            )
         } catch {
             stage = .failed(error.localizedDescription)
         }
@@ -384,6 +425,7 @@ struct CheckoutFlowView: View {
             try? ownerStateLocalStore.save(result.ownerState)
             configureAmbient(catalogue: deps.catalogue, owner: result.ownerState)
             walletFeedback = result.feedback
+            walletInstallations = result.installations
             lastSyncedAt = result.lastSyncedAt
             try await flushQueuedCardRequests(using: client)
         } catch {
@@ -479,6 +521,7 @@ struct CheckoutFlowView: View {
     private func resetSyncedState() {
         lastSyncedAt = nil
         walletFeedback = []
+        walletInstallations = []
         deps = nil
         loadDependencies()
     }
@@ -490,6 +533,7 @@ struct CheckoutFlowView: View {
         let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
         let installation = try await client.createWalletInstallation(label: label)
         guard let token = installation.token else { throw MoneyTalksAPIError.unexpectedResponse(-1) }
+        walletInstallations.insert(installation, at: 0)
         return token
     }
 

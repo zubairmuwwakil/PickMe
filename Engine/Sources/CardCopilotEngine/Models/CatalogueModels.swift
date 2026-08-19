@@ -129,4 +129,14 @@ public struct Catalogue: Codable, Equatable, Sendable {
     public var catalogueVersion: String
     public var currency: String
     public var cards: [CardProduct]
+
+    public init(catalogueVersion: String = "1", currency: String = "CAD", cards: [CardProduct] = []) {
+        self.catalogueVersion = catalogueVersion
+        self.currency = currency
+        self.cards = cards
+    }
+
+    public static var empty: Catalogue {
+        Catalogue(catalogueVersion: "1", currency: "CAD", cards: [])
+    }
 }
