@@ -21,7 +21,14 @@
     "bmo-eclipse-visa-infinite",
     "cibc-aventura-visa-infinite",
     "national-bank-world-elite",
-    "pc-insiders-world-elite"
+    "pc-insiders-world-elite",
+    "rbc-ion-plus-visa",
+    "td-cash-back-visa-infinite",
+    "bmo-ascend-world-elite",
+    "westjet-rbc-world-elite",
+    "amazon-ca-rewards-mastercard",
+    "cibc-aventura-visa",
+    "amex-simplycash"
   ],
   "defaultCardId": "wealthsimple-vip",
   "switchThreshold": {

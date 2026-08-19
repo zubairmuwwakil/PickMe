@@ -4,3 +4,17 @@ build/
 DerivedData/
 *.xcuserstate
 xcuserdata/
+
+# Android & Gradle
+.gradle/
+.kotlin/
+**/build/
+android/app/build/
+android/core/engine/build/
+android/core/store/build/
+local.properties
+*.apk
+*.ap_
+*.dex
+*.class
+*.log

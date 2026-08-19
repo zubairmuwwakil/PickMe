@@ -2,6 +2,21 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-18 — Added Batch 3 of 7 Canadian Card Products & Insurance Certificates
+
+- Added 7 researched Canadian credit cards to `card-catalogue.json`:
+  1. `rbc-ion-plus-visa` (RBC ION+ Visa)
+  2. `td-cash-back-visa-infinite` (TD Cash Back Visa Infinite Card)
+  3. `bmo-ascend-world-elite` (BMO Ascend World Elite Mastercard)
+  4. `westjet-rbc-world-elite` (WestJet RBC World Elite Mastercard)
+  5. `amazon-ca-rewards-mastercard` (Amazon.ca Rewards Mastercard)
+  6. `cibc-aventura-visa` (CIBC Aventura Visa Card)
+  7. `amex-simplycash` (SimplyCash Card from American Express)
+- Extended `program.programId` enum in `card-catalogue.schema.json` with `"westJetPoints"` and `"amazonRewards"`.
+- Sourced and added verified Certificates of Insurance for all 7 cards at `issuerPage` verification status in `benefits-catalogue.json`.
+- Accelerators set to `scoredInV1: false` fail closed safely pending dynamic points-program valuation, strict MCC predicate matching, and multi-cap engine support.
+- Foreign purchases on `rbc-ion-plus-visa`, `bmo-ascend-world-elite`, and `cibc-aventura-visa` fail closed/suppressed due to unresolved card-specific FX rates.
+
 ## 2026-08-18 — catalogueVersion / benefitsCatalogueVersion bumped to 1.1 (MINOR)
 
 - `catalogueVersion` in `card-catalogue.json` and `benefitsCatalogueVersion` in

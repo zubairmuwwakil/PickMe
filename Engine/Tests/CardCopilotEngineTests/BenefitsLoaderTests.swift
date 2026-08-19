@@ -4,7 +4,7 @@ import XCTest
 final class BenefitsLoaderTests: XCTestCase {
     func testLoadsBenefitsCatalogue() throws {
         let benefits = try SeedLoader.loadBenefitsCatalogue()
-        XCTAssertEqual(benefits.cards.count, 20)
+        XCTAssertEqual(benefits.cards.count, 27)
         XCTAssertGreaterThan(benefits.triggers.bigTicketThresholdCad, 0)
         XCTAssertFalse(benefits.triggers.consumableCategories.isEmpty)
     }
@@ -38,8 +38,8 @@ final class BenefitsLoaderTests: XCTestCase {
 
         XCTAssertEqual(statusCounts["stub", default: 0], 1,
                        "expected only cryptocom-royal-indigo to remain stub")
-        XCTAssertEqual(statusCounts["issuerPage", default: 0], 19,
-                       "expected the nineteen issuer-sourced cards to be issuerPage")
+        XCTAssertEqual(statusCounts["issuerPage", default: 0], 26,
+                       "expected the twenty-six issuer-sourced cards to be issuerPage")
         XCTAssertEqual(statusCounts["certificateVerified", default: 0], 0,
                        "a card claims certificateVerified, but no card has had Zubair's own " +
                        "cardholder-document check yet — update this test's counts once one does")
