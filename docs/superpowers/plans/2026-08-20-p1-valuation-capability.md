@@ -874,6 +874,37 @@ failure this work exists to prevent. They land in Task 7 with sourced bases."
 - Modify: `Engine/Sources/CardCopilotEngine/Engine/Scorer.swift:3-6` (the `Warning` enum) and `:112-139`
 - Test: `Engine/Tests/CardCopilotEngineTests/ScorerTests.swift` (extend)
 
+> ### ⚠ OPEN GAP — found while implementing Task 5 (2026-08-20). Decide before starting Task 6.
+>
+> **Nothing in this plan ever wires `contracts/programs.json` into the production path.**
+> `SeedLoader.loadPrograms()` is called in exactly two places across all eleven tasks, and both
+> are tests: one assertion in Task 5, and the `seedWithAllCardsOwned` helper in Task 7 Step 4.
+> No production code path merges catalogue defaults under owner-state overrides.
+>
+> **Why it bites here.** Task 6 makes an unvalued program *exclude* the card. Task 7 then adds the
+> ten valuations to `programs.json` and proves the fix with a test whose owner state is built as
+> `Valuations(programs: try SeedLoader.loadPrograms().defaults)`. That test passes. But the app
+> calls `loadOwnerState()`, which returns owner-state.json's six programs — so on shipped code the
+> same 14 cards would flip from silently scoring $0.00 to being visibly excluded, with the suite
+> green throughout and a passing test asserting the opposite. Same 14 cards, new symptom, now with
+> cover.
+>
+> **The unmade decision is *where* the merge belongs**, and the two candidates are not equivalent:
+>
+> - `SeedLoader.loadOwnerState()` — smallest change, closest to this plan's shape, but owner states
+>   loaded from a device through `Store`'s `AccountOwnerStateStore` bypass it entirely. That is
+>   every real user, so this fixes the seed and nobody else.
+> - `RecommendationEngine.init` / `Scorer` — catches every caller regardless of where the owner
+>   state came from, at the cost of changing a type's effective meaning mid-plan.
+>
+> **Timing argument for doing it before Task 7, not with it.** Merging defaults under owner-state
+> overrides is *provably a no-op today* — verified 2026-08-20: `programs.json` and
+> `owner-state.json` value exactly the same six programs and the owner wins every key, so the
+> merged `Valuations` is equal to the owner's. Landing the wiring while it is still a no-op lets
+> the 27 golden fixtures prove the wiring alone. Landing it together with Task 7's ten new
+> valuations means wiring and data change in one commit, and the gate can no longer isolate which
+> one moved a number.
+
 **Interfaces:**
 - Consumes: `Valuations` subscript (Task 4).
 - Produces: `Warning` gains `.unsupportedProgram` and `.unsupportedCapability`. `Scorer.valueCad(units:program:valuations:state:band:) -> Double?` — `nil` means "no valuation for this program", distinct from `0.0` which means "worth nothing". `Scorer.score` returns an excluded `CandidateScore` with `exclusionReason` naming the program.
@@ -1044,6 +1075,11 @@ Add to `CatalogueIntegrityTests`:
 ```
 
 Add the `OwnerState.seedWithAllCardsOwned(catalogue:)` test helper to `PinnedOwnerState.swift`: it returns `PinnedOwnerState.make()` with `ownedCardIds` set to every `cardId` and `valuationsCad` set to `Valuations(programs: try SeedLoader.loadPrograms().defaults)`.
+
+> **⚠ This helper is the one place `loadPrograms()` reaches the scoring path, and it is a test.**
+> It makes `testNoCatalogueCardIsExcludedForAnUnvaluedProgram` pass while production still excludes
+> those cards — see the OPEN GAP callout in Task 6. Resolve the merge-point decision first, then
+> build this helper on the same production path rather than hand-assembling the defaults here.
 
 - [ ] **Step 5: Commit**
 
