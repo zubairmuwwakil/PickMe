@@ -21,9 +21,9 @@ final class PortfolioReportTests: XCTestCase {
     func testPlatinumVerdictSurvivesBothEndsOfTheValuationRange() throws {
         let catalogue = try SeedLoader.loadCatalogue()
         let owner = try SeedLoader.loadOwnerState()
-        let benchmark = owner.valuationsCad.amexMembershipRewards.aspirationalCentsPerPoint ?? 2.2
+        let benchmark = owner.pointsValuation().aspirationalCentsPerPoint ?? 2.2
 
-        for cents in [owner.valuationsCad.amexMembershipRewards.centsPerPoint, benchmark] {
+        for cents in [owner.pointsValuation().centsPerPoint, benchmark] {
             let platinum = try XCTUnwrap(
                 PortfolioAnalyzer(catalogue: catalogue, ownerState: valued(owner, mr: cents))
                     .analyze(.placeholderCanadianHousehold, asOf: "2026-08-20")
@@ -39,8 +39,8 @@ final class PortfolioReportTests: XCTestCase {
         let catalogue = try SeedLoader.loadCatalogue()
         let owner = try SeedLoader.loadOwnerState()
         names = Dictionary(uniqueKeysWithValues: catalogue.cards.map { ($0.cardId, $0.officialName) })
-        let declared = owner.valuationsCad.amexMembershipRewards.centsPerPoint
-        let benchmark = owner.valuationsCad.amexMembershipRewards.aspirationalCentsPerPoint ?? 2.2
+        let declared = owner.pointsValuation().centsPerPoint
+        let benchmark = owner.pointsValuation().aspirationalCentsPerPoint ?? 2.2
         let profile = SpendDistribution.placeholderCanadianHousehold
 
         let atFloor = PortfolioAnalyzer(catalogue: catalogue, ownerState: valued(owner, mr: declared))
@@ -204,7 +204,7 @@ final class PortfolioReportTests: XCTestCase {
 
     private func valued(_ owner: OwnerState, mr cents: Double) -> OwnerState {
         var copy = owner
-        copy.valuationsCad.amexMembershipRewards.centsPerPoint = cents
+        copy.withPointsValuation { $0.centsPerPoint = cents }
         return copy
     }
 

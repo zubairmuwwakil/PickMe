@@ -8,7 +8,7 @@ final class ValuationSensitivityTests: XCTestCase {
 
     private func state(_ base: OwnerState, mrCentsPerPoint: Double) -> OwnerState {
         var s = base
-        s.valuationsCad.amexMembershipRewards.centsPerPoint = mrCentsPerPoint
+        s.withPointsValuation { $0.centsPerPoint = mrCentsPerPoint }
         return s
     }
 

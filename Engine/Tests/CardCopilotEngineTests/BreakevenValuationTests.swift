@@ -12,7 +12,7 @@ final class BreakevenValuationTests: XCTestCase {
     private func winner(_ catalogue: Catalogue, _ owner: OwnerState,
                         _ purchase: PurchaseContext, mr: Double) -> CandidateScore {
         var state = owner
-        state.valuationsCad.amexMembershipRewards.centsPerPoint = mr
+        state.withPointsValuation { $0.centsPerPoint = mr }
         return RecommendationEngine(catalogue: catalogue, ownerState: state)
             .recommend(purchase, asOf: "2026-08-20").winner
     }

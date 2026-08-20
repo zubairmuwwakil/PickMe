@@ -122,20 +122,23 @@ public enum Scorer {
                                            v.centsPerPoint)
             }
         }
-        switch program {
-        case "amexMembershipRewards": return units * cents(valuations.amexMembershipRewards) / 100
-        case "marriottBonvoy": return units * cents(valuations.marriottBonvoy) / 100
-        case "mbnaRewards": return units * cents(valuations.mbnaRewards) / 100
-        case "ctMoney":
-            let v = valuations.ctMoney
+        // Dispatch on the valuation's model, not on the program's name. The name-keyed switch
+        // this replaced could only ever value the six programs it listed, so a program gaining a
+        // valuation still had to gain a Swift case — which is the coupling this refactor exists
+        // to remove. A program with no valuation still yields 0.0 here; excluding the card
+        // instead is Scorer's next change, not this one.
+        switch valuations[program] {
+        case .points(let v):
+            return units * cents(v) / 100
+        case .ctMoney(let v):
             return units * v.cadPerUnit * (v.usabilityFactorApplied ? v.optionalUsabilityFactor : 1)
-        case "cro":
-            let factor = state.croHandling == "autoSell"
-                ? valuations.cro.faceValueFactorIfAutoSold
-                : valuations.cro.defaultHeldRiskFactor
-            return units * factor
-        case "cashback": return units * valuations.cashBack.cadPerDollar
-        default: return 0.0
+        case .cro(let v):
+            return units * (state.croHandling == "autoSell"
+                            ? v.faceValueFactorIfAutoSold : v.defaultHeldRiskFactor)
+        case .cashback(let v):
+            return units * v.cadPerDollar
+        case nil:
+            return 0.0
         }
     }
 }

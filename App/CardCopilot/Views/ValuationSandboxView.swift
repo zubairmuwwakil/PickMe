@@ -144,8 +144,8 @@ struct ValuationSandboxView: View {
     private func simulateCheckout(sample: SimulationSample) -> SimulationResult {
         // Build customized owner state with current slider values
         var customOwner = deps.ownerState
-        customOwner.valuationsCad.amexMembershipRewards.centsPerPoint = amexMrCents
-        customOwner.valuationsCad.mbnaRewards.centsPerPoint = avionCents
+        customOwner.valuationsCad[points: "amexMembershipRewards"]?.centsPerPoint = amexMrCents
+        customOwner.valuationsCad[points: "mbnaRewards"]?.centsPerPoint = avionCents
 
         let context = PurchaseContext(amountCad: sample.amountCad, category: sample.category)
         let engine = RecommendationEngine(catalogue: deps.catalogue, ownerState: customOwner)

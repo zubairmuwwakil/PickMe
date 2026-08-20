@@ -12,8 +12,10 @@ final class UpsideValuationTests: XCTestCase {
     override func setUpWithError() throws {
         let catalogue = try SeedLoader.loadCatalogue()
         var state = try SeedLoader.loadOwnerState()
-        state.valuationsCad.amexMembershipRewards.centsPerPoint = 1.0
-        state.valuationsCad.amexMembershipRewards.aspirationalCentsPerPoint = 2.2
+        state.withPointsValuation {
+            $0.centsPerPoint = 1.0
+            $0.aspirationalCentsPerPoint = 2.2
+        }
         engine = RecommendationEngine(catalogue: catalogue, ownerState: state)
         explainer = RecommendationExplainer(catalogue: catalogue)
     }

@@ -31,7 +31,7 @@ final class SeedLoaderTests: XCTestCase {
         XCTAssertEqual(state.defaultCardId, "wealthsimple-vip")
         XCTAssertEqual(state.ownedCardIds.count, 27)
         XCTAssertEqual(state.switchThreshold.semantics, "both")
-        let mr = state.valuationsCad.amexMembershipRewards
+        let mr = state.pointsValuation()
         XCTAssertEqual(mr.centsPerPoint, 1.0, accuracy: 0.005,
                        "MR ranks at the guaranteed cash floor — no redemption history to justify more")
         XCTAssertEqual(mr.floorCentsPerPoint ?? .nan, 1.0, accuracy: 0.005)

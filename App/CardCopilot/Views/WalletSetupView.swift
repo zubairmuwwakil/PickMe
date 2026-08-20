@@ -158,9 +158,15 @@ struct WalletSetupView: View {
                 Text("Default: 0.5 percentage points and $0.25 more — both conditions must be met.").font(.footnote).foregroundStyle(.secondary)
             }
             Section("Point valuations") {
-                valuationRow("Amex Membership Rewards", value: $setup.valuationsCad.amexMembershipRewards.centsPerPoint)
-                valuationRow("Marriott Bonvoy", value: $setup.valuationsCad.marriottBonvoy.centsPerPoint)
-                valuationRow("MBNA Rewards", value: $setup.valuationsCad.mbnaRewards.centsPerPoint)
+                if let amex = centsPerPointBinding("amexMembershipRewards") {
+                    valuationRow("Amex Membership Rewards", value: amex)
+                }
+                if let bonvoy = centsPerPointBinding("marriottBonvoy") {
+                    valuationRow("Marriott Bonvoy", value: bonvoy)
+                }
+                if let mbna = centsPerPointBinding("mbnaRewards") {
+                    valuationRow("MBNA Rewards", value: mbna)
+                }
                 Text("These published benchmarks are starting points. PickMe assumes the cents-per-point values above; recommendations disclose when the answer flips.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
@@ -202,6 +208,17 @@ struct WalletSetupView: View {
 
     private func valuationRow(_ name: String, value: Binding<Double>) -> some View {
         Stepper("\(name): \(value.wrappedValue, specifier: "%.2f")¢ / point", value: value, in: 0...10, step: 0.05)
+    }
+
+    /// A stepper binding into one points program's cents-per-point, or nil when the wallet holds
+    /// no points valuation for it. Nil hides the row rather than showing 0.00¢: an editor
+    /// pre-filled with a value nobody declared is the same lie as scoring the card at $0.00.
+    private func centsPerPointBinding(_ programId: String) -> Binding<Double>? {
+        guard setup.valuationsCad[points: programId] != nil else { return nil }
+        return Binding(
+            get: { setup.valuationsCad[points: programId]?.centsPerPoint ?? 0 },
+            set: { setup.valuationsCad[points: programId]?.centsPerPoint = $0 }
+        )
     }
 }
 

@@ -111,7 +111,7 @@ final class BreakevenCrossValidationTests: XCTestCase {
 
         func winnerId(_ p: PurchaseContext, mr: Double) -> String {
             var s = owner
-            s.valuationsCad.amexMembershipRewards.centsPerPoint = mr
+            s.withPointsValuation { $0.centsPerPoint = mr }
             return RecommendationEngine(catalogue: catalogue, ownerState: s)
                 .recommend(p, asOf: asOf).winner.cardId
         }

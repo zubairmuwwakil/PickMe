@@ -77,8 +77,7 @@ final class FixtureHarnessTests: XCTestCase {
         let catalogue = try SeedLoader.loadCatalogue()
         var baseState = try SeedLoader.loadOwnerState()
         // Pinned rather than inherited — see pinnedValuations._why in the fixture file.
-        baseState.valuationsCad.amexMembershipRewards.centsPerPoint =
-            file.pinnedValuations.amexMembershipRewards
+        baseState.withPointsValuation { $0.centsPerPoint = file.pinnedValuations.amexMembershipRewards }
 
         for fixture in file.cases {
             var state = baseState

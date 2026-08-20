@@ -24,9 +24,9 @@ final class RecurringReportTests: XCTestCase {
     func testScotiaOnlyWinsBillsThatNothingElseAcceleratesAtEitherEndOfTheValuationRange() throws {
         let catalogue = try SeedLoader.loadCatalogue()
         let owner = try SeedLoader.loadOwnerState()
-        let benchmark = owner.valuationsCad.amexMembershipRewards.aspirationalCentsPerPoint ?? 2.2
+        let benchmark = owner.pointsValuation().aspirationalCentsPerPoint ?? 2.2
 
-        for cents in [owner.valuationsCad.amexMembershipRewards.centsPerPoint, benchmark] {
+        for cents in [owner.pointsValuation().centsPerPoint, benchmark] {
             let audit = RecurringAuditor(catalogue: catalogue, ownerState: valued(owner, mr: cents))
                 .audit(.placeholderSubscriptions, asOf: "2026-08-16")
 
@@ -180,7 +180,7 @@ final class RecurringReportTests: XCTestCase {
 
     private func valued(_ owner: OwnerState, mr cents: Double) -> OwnerState {
         var copy = owner
-        copy.valuationsCad.amexMembershipRewards.centsPerPoint = cents
+        copy.withPointsValuation { $0.centsPerPoint = cents }
         return copy
     }
 }

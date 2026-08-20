@@ -74,7 +74,11 @@ public struct CheckoutService {
     let explainer: RecommendationExplainer
     public let log: PredictionLog
     private let context: ModelContext
-    private let mrCentsPerPoint: Double
+    /// The Membership Rewards valuation in force when a prediction is logged, so an audit can
+    /// tell which assumption produced it. Optional since valuations became a keyed dictionary:
+    /// nil records "the owner declared none", which is the truth, rather than a zero that would
+    /// read as a deliberate valuation of nothing.
+    private let mrCentsPerPoint: Double?
     private let defaultCardId: String
     /// cardId -> the unit its program pays in, snapshotted onto every prediction.
     private let rewardUnitKinds: [String: String]
@@ -84,7 +88,7 @@ public struct CheckoutService {
         self.explainer = RecommendationExplainer(catalogue: catalogue)
         self.log = PredictionLog(context: context)
         self.context = context
-        self.mrCentsPerPoint = ownerState.valuationsCad.amexMembershipRewards.centsPerPoint
+        self.mrCentsPerPoint = ownerState.valuationsCad[points: "amexMembershipRewards"]?.centsPerPoint
         self.defaultCardId = ownerState.defaultCardId
         self.rewardUnitKinds = Dictionary(uniqueKeysWithValues:
             catalogue.cards.map { ($0.cardId, $0.program.unit) })
