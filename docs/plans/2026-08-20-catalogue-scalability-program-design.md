@@ -1,6 +1,7 @@
 # Catalogue scalability — program design
 
-**Status:** Design ratified in chat 2026-08-20. Awaiting spec review before implementation planning.
+**Status:** Design ratified 2026-08-20; five of six open decisions resolved (§9).
+P1 Phase 0–1 planned at [`../superpowers/plans/2026-08-20-p1-valuation-capability.md`](../superpowers/plans/2026-08-20-p1-valuation-capability.md).
 **Parent decisions:** `../../CLAUDE.md` · `../../ECOSYSTEM.md` · `2026-08-16-card-contract-spec.md`
 **Horizon:** North America (CA + US), thousands of cards.
 **Goal:** make adding a card, rewards program, merchant, owner condition or cap anchor a *data* edit,
@@ -219,18 +220,22 @@ maintenance burden inverts from O(rules) to O(capabilities).
 
 ### 3.6 Warnings, and a reachable crash
 
+**Corrected 2026-08-20 during implementation planning.** This section originally proposed a new
+`EngineWarning` type with associated values. That was wrong: `Scorer.swift:3` already defines a
+`Warning` enum, `CandidateScore` already carries `warnings: [Warning]`, and `exclusionReason: String?`
+already exists for human-readable detail. Extending those is smaller and follows the established
+pattern.
+
 ```swift
-public struct EngineWarning: Equatable, Sendable {
-    public enum Kind: Equatable, Sendable {
-        case unsupportedProgram(programId: String, cardId: String)
-        case unsupportedCapability(EngineCapability, ruleId: String, cardId: String)
-        case unresolvedOwnerCondition(conditionId: String, cardId: String)
-        case unresolvedCapAnchor(anchor: String, cardId: String)
-        case staleData(cardId: String, lastVerifiedAt: String, ageDays: Int)
-    }
-    public let kind: Kind
+public enum Warning: String, Codable, Equatable, Sendable {
+    case drawerCard, unresolvedOwnerState, networkNotAccepted,
+         capNearlyExhausted, negativeNetValue, fxAllowanceAssumed, hypotheticalSelection,
+         unsupportedProgram,      // no valuation for this card's program
+         unsupportedCapability    // rule needs an engine feature this build lacks
 }
 ```
+
+The specifics — which program, which capability — travel in `exclusionReason`.
 
 `RecommendationEngine.swift:54` holds
 `precondition(!scores.isEmpty, "no scorable card — catalogue misconfigured")`. Once unsupported
@@ -240,7 +245,7 @@ reaches that precondition — a data-triggered crash. `recommend` therefore retu
 ```swift
 public enum RecommendationOutcome: Sendable {
     case advised(Recommendation)
-    case cannotAdvise([EngineWarning])
+    case cannotAdvise(reasons: [String])
 }
 ```
 
