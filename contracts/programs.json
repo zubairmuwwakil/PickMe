@@ -1,0 +1,46 @@
+{
+  "programsVersion": "1.0",
+  "_provenance": "Defaults are DISCLOSED ASSUMPTIONS, not issuer facts. Each basis names its source and says what it assumes. Owner state overrides any entry per programId; see docs/plans/2026-08-20-catalogue-scalability-program-design.md §3.1.",
+  "_gap": "The catalogue ships 16 programIds; this file values 6. The other ten — scenePlus, aeroplan, rbcAvion, tdRewards, bmoRewards, aventura, nbcRewards, pcOptimum, westJetPoints, amazonRewards — are deliberately absent pending sourced valuations, and are pinned in CatalogueIntegrityTests.knownUnvaluedPrograms. A guessed default is a number the owner cannot check silently deciding recommendations, which is the failure this file exists to prevent.",
+  "defaults": {
+    "cashback": {
+      "model": "cashback",
+      "cadPerDollar": 1.0,
+      "basis": "A dollar of cash back is a dollar. The only entry in this file that is an issuer fact rather than an assumption."
+    },
+    "amexMembershipRewards": {
+      "model": "points",
+      "centsPerPoint": 1.0,
+      "floorCentsPerPoint": 1.0,
+      "aspirationalCentsPerPoint": 2.2,
+      "basis": "Ranked at the guaranteed cash floor — 1.0¢ is Amex Canada's statement-credit rate, which is an issuer fact. Anything above it is a forecast of redemption behaviour and is not assumed here. aspirationalCentsPerPoint 2.2 is the published Canadian transfer-partner benchmark (Prince of Travel, 2026-07-29) and is used ONLY as the plausibility ceiling for disclosing upside breakevens, never for ranking."
+    },
+    "marriottBonvoy": {
+      "model": "points",
+      "centsPerPoint": 0.8,
+      "low": 0.6,
+      "high": 1.0,
+      "basis": "ASSUMPTION: 0.8¢ per point on hotel award nights, range 0.6–1.0¢ across property tiers. Bonvoy has no cash-out floor, so there is no issuer fact to anchor to; an owner who redeems differently should override this."
+    },
+    "mbnaRewards": {
+      "model": "points",
+      "centsPerPoint": 1.0,
+      "floorCentsPerPoint": 0.833333,
+      "basis": "1.0¢ on the travel-redemption schedule. floorCentsPerPoint 0.833333 is the guaranteed cash-back rate (100 points = $0.83), an issuer fact; the 1.0¢ above it assumes travel redemption."
+    },
+    "ctMoney": {
+      "model": "ctMoney",
+      "cadPerUnit": 1.0,
+      "optionalUsabilityFactor": 0.95,
+      "usabilityFactorApplied": true,
+      "basis": "Face value is 1 CT Money = $1.00 at Canadian Tire, an issuer fact. ASSUMPTION: a 0.95 usability factor, applied by default, because CT Money spends only in one retailer's stores and a dollar locked to one merchant is not a dollar. Set usabilityFactorApplied false to value it at face."
+    },
+    "cro": {
+      "model": "cro",
+      "redemptionModel": "reward-currency",
+      "faceValueFactorIfAutoSold": 1.0,
+      "defaultHeldRiskFactor": 0.8,
+      "basis": "CRO is paid as a crypto asset, so its CAD value is only fixed at the moment it is sold. faceValueFactorIfAutoSold 1.0 applies when cardState.croHandling is autoSell — sold on receipt, so face value is realised. ASSUMPTION: 0.8 when held, a haircut for price risk between earning and selling. This is a risk discount, not a price forecast."
+    }
+  }
+}

@@ -63,3 +63,69 @@ final class SeedLoaderTests: XCTestCase {
         XCTAssertThrowsError(try SeedLoader.validate(catalogueVersion: "not-a-version"))
     }
 }
+
+extension SeedLoaderTests {
+    func testLoadsProgramDefaults() throws {
+        let programs = try SeedLoader.loadPrograms()
+        XCTAssertEqual(programs.programsVersion, "1.0")
+        guard case .cashback(let cash) = try XCTUnwrap(programs.defaults["cashback"])
+        else { return XCTFail("expected .cashback") }
+        XCTAssertEqual(cash.cadPerDollar, 1.0)
+    }
+
+    /// Owner overrides win; catalogue defaults fill the gaps. Neither alone is enough:
+    /// defaults-only ignores the owner's declared value, overrides-only leaves new programs unvalued.
+    func testOwnerOverrideBeatsCatalogueDefault() throws {
+        let defaults = try SeedLoader.loadPrograms().defaults
+        var owner = Valuations(programs: defaults)
+        owner["cashback"] = .cashback(CashBackValuation(cadPerDollar: 0.5))
+        guard case .cashback(let cash) = try XCTUnwrap(owner["cashback"])
+        else { return XCTFail("expected .cashback") }
+        XCTAssertEqual(cash.cadPerDollar, 0.5)
+    }
+
+    /// A default is a number the engine will spend the owner's money on, so it has to say where
+    /// it came from. The disclosure UI renders this string; an entry without one is a valuation
+    /// presented as a fact.
+    func testEveryProgramDefaultDisclosesItsBasis() throws {
+        for (programId, valuation) in try SeedLoader.loadPrograms().defaults {
+            let basis: String?
+            switch valuation {
+            case .points(let v):   basis = v.basis
+            case .cashback(let v): basis = v.basis
+            case .ctMoney(let v):  basis = v.basis
+            case .cro(let v):      basis = v.basis
+            }
+            XCTAssertFalse((basis ?? "").isEmpty,
+                           "programs.json default '\(programId)' ships no basis disclosure")
+        }
+    }
+
+    /// programs.json and the shipped owner state must value the same programs under the same
+    /// models. A program the owner state values but the defaults do not means a fresh install
+    /// with no owner state cannot score that program at all; a programId valued as points in one
+    /// and cashback in the other is a data bug that only surfaces as a wrong number.
+    ///
+    /// Deliberately does NOT assert the numbers agree. They do today, because programs.json was
+    /// derived from the shipped owner state — but a valuation is a personal forecast of
+    /// redemption behaviour, and the owner is entitled to declare one that differs from the
+    /// catalogue's default. That is the whole point of the override. Pinning the numbers here
+    /// would turn a preference change into a test failure.
+    func testProgramDefaultsCoverTheShippedOwnerStateUnderTheSameModels() throws {
+        let defaults = try SeedLoader.loadPrograms().defaults
+        let owner = try SeedLoader.loadOwnerState().valuationsCad
+
+        XCTAssertEqual(Set(defaults.keys), Set(owner.programs.keys),
+                       "programs.json and owner-state.json value different program sets")
+
+        for (programId, ownerValuation) in owner.programs {
+            switch (ownerValuation, try XCTUnwrap(defaults[programId], programId)) {
+            case (.points, .points), (.cashback, .cashback),
+                 (.ctMoney, .ctMoney), (.cro, .cro):
+                continue
+            default:
+                XCTFail("'\(programId)' is valued under different models in owner state and defaults")
+            }
+        }
+    }
+}

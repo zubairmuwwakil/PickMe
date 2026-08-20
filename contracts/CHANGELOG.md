@@ -2,6 +2,41 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-20 — programs.json: catalogue-level default valuations; catalogueVersion 1.3
+
+- **New contract `programs.json`** (+ `schema/programs.schema.json`), copied into Engine and
+  Android resources by both sync scripts and guarded by `ContractsSyncTests`. It holds the
+  catalogue's DEFAULT valuation per `programId`; `OwnerState.valuationsCad` overrides any entry
+  key-for-key. Loaded by `SeedLoader.loadPrograms()`.
+- `catalogueVersion` `1.2` → `1.3` (MINOR). Additive: no card data changed, no rule changed, and
+  all 27 golden fixtures in `engine-fixtures.json` pass byte-unchanged.
+- **`program.programId` is no longer an engine dispatch key.** `Scorer.valueCad` used to switch on
+  the programId string, so each of the six programs it named needed a hardcoded Swift property and
+  a Kotlin twin — while the catalogue shipped sixteen programIds. The other ten fell to the
+  switch's `default: return 0.0`, so 14 of 27 cards scored exactly $0.00 on every purchase while
+  staying selectable in wallet setup. The Scorer now dispatches on the valuation's *model*, and a
+  program becomes scoreable by gaining a data entry.
+- The `programId` enum is hoisted to `card-catalogue.schema.json#/$defs/programId` so
+  `programs.schema.json` references one list rather than keeping a second copy in step. Its
+  description and the schema's top-level description are corrected accordingly.
+- **Ten programs are deliberately left unvalued**: `scenePlus`, `aeroplan`, `rbcAvion`,
+  `tdRewards`, `bmoRewards`, `aventura`, `nbcRewards`, `pcOptimum`, `westJetPoints`,
+  `amazonRewards`. They need researched, sourced valuations. A guessed default is a number the
+  owner cannot check silently deciding recommendations — the exact failure this contract exists to
+  prevent. The gap is pinned in `CatalogueIntegrityTests.knownUnvaluedPrograms`, which now derives
+  its "valued" set from this file and fails if an entry here is left listed as a known gap.
+- Every default carries a `basis` disclosure naming its source and separating issuer facts from
+  assumptions. `basis` was added to `CashBackValuation`, `CtMoneyValuation` and `CroValuation`
+  (Swift and Kotlin); previously only `PointValuation` had one, so a disclosure written for CT
+  Money's usability factor or CRO's held-risk factor would have been dropped on decode.
+- `CroValuation.model` → `redemptionModel` (owner-state.json and both language twins). The
+  `ProgramValuation` union's `model` discriminator shares one flat JSON object with its payload,
+  so no payload may own that key.
+- Owner states written before today are still read: `Valuations` decodes both the legacy
+  named-field shape and `{"programs": {...}}`, and always writes the latter, so a wallet upgrades
+  itself on first save. The legacy branch may be deleted one full release cycle after ship, with a
+  dated entry here. Note the legacy key `cashBack` maps to programId `cashback`.
+
 ## 2026-08-20 — Standardized Cap Anchors in Candidate Catalogue
 
 - Standardized `simplycash-preferred` cap anchor `"cardmembership anniversary"` → `"ownerState.amexAccountAnniversaryMonth"` in `candidate-catalogue.json`.

@@ -57,6 +57,11 @@ public struct CardState: Codable, Equatable, Sendable {
     public init() {}
 }
 
+/// All four valuation models carry an optional `basis`: the string that tells the owner where a
+/// number came from and which parts of it are assumptions rather than issuer facts. It is not
+/// decoration — the disclosure UI renders it, and CLAUDE.md's valuation policy is that a point
+/// value is a forecast of redemption behaviour, never a fact. ctMoney's usability factor and
+/// cro's held-risk factor are the most assumption-laden numbers in the catalogue and need it most.
 public struct PointValuation: Codable, Equatable, Sendable {
     public var centsPerPoint: Double
     public var floorCentsPerPoint: Double?
@@ -83,12 +88,14 @@ public struct CtMoneyValuation: Codable, Equatable, Sendable {
     public var cadPerUnit: Double
     public var optionalUsabilityFactor: Double
     public var usabilityFactorApplied: Bool
+    public var basis: String?
 
     public init(cadPerUnit: Double, optionalUsabilityFactor: Double,
-                usabilityFactorApplied: Bool) {
+                usabilityFactorApplied: Bool, basis: String? = nil) {
         self.cadPerUnit = cadPerUnit
         self.optionalUsabilityFactor = optionalUsabilityFactor
         self.usabilityFactorApplied = usabilityFactorApplied
+        self.basis = basis
     }
 }
 
@@ -98,19 +105,25 @@ public struct CroValuation: Codable, Equatable, Sendable {
     public var redemptionModel: String
     public var faceValueFactorIfAutoSold: Double
     public var defaultHeldRiskFactor: Double
+    public var basis: String?
 
     public init(redemptionModel: String, faceValueFactorIfAutoSold: Double,
-                defaultHeldRiskFactor: Double) {
+                defaultHeldRiskFactor: Double, basis: String? = nil) {
         self.redemptionModel = redemptionModel
         self.faceValueFactorIfAutoSold = faceValueFactorIfAutoSold
         self.defaultHeldRiskFactor = defaultHeldRiskFactor
+        self.basis = basis
     }
 }
 
 public struct CashBackValuation: Codable, Equatable, Sendable {
     public var cadPerDollar: Double
+    public var basis: String?
 
-    public init(cadPerDollar: Double) { self.cadPerDollar = cadPerDollar }
+    public init(cadPerDollar: Double, basis: String? = nil) {
+        self.cadPerDollar = cadPerDollar
+        self.basis = basis
+    }
 }
 
 /// Reward-currency valuations, keyed by the catalogue's `programId`.

@@ -32,6 +32,15 @@ public enum SeedLoader {
         try load("benefits-catalogue")
     }
 
+    /// Catalogue-level default valuations. Owner state overrides any entry; a program present
+    /// here is scoreable the moment a card declares it, with no owner-state edit.
+    ///
+    /// Not every catalogue programId appears — see contracts/programs.json's `_gap`. Callers must
+    /// treat a missing key as "no valuation", never as zero.
+    public static func loadPrograms() throws -> ProgramCatalogue {
+        try load("programs")
+    }
+
     /// catalogueVersion is "MAJOR.MINOR" (contracts/schema/card-catalogue.schema.json). Refuses to
     /// load a MAJOR this build doesn't recognize rather than silently misinterpreting a breaking
     /// shape change.

@@ -11,6 +11,7 @@ mkdir -p "$res_main" "$res_test"
 cp "$root/contracts/card-catalogue.json" "$res_main/card-catalogue.json"
 cp "$root/contracts/candidate-catalogue.json" "$res_main/candidate-catalogue.json"
 cp "$root/contracts/benefits-catalogue.json" "$res_main/benefits-catalogue.json"
+cp "$root/contracts/programs.json" "$res_main/programs.json"
 cp "$root/Engine/Sources/CardCopilotEngine/Resources/owner-state.json" "$res_main/owner-state.json"
 
 cp "$root/contracts/engine-fixtures.json" "$res_test/engine-fixtures.json"

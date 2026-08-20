@@ -77,7 +77,9 @@ data class PointValuation(
 data class CtMoneyValuation(
     val cadPerUnit: Double,
     val optionalUsabilityFactor: Double,
-    val usabilityFactorApplied: Boolean
+    val usabilityFactorApplied: Boolean,
+    /** Where the number came from and which parts of it are assumptions. See the Swift twin. */
+    val basis: String? = null
 )
 
 @Serializable
@@ -86,12 +88,16 @@ data class CroValuation(
      *  ProgramValuation discriminator can own that key at the same JSON level. */
     val redemptionModel: String,
     val faceValueFactorIfAutoSold: Double,
-    val defaultHeldRiskFactor: Double
+    val defaultHeldRiskFactor: Double,
+    /** Where the number came from and which parts of it are assumptions. See the Swift twin. */
+    val basis: String? = null
 )
 
 @Serializable
 data class CashBackValuation(
-    val cadPerDollar: Double
+    val cadPerDollar: Double,
+    /** Where the number came from and which parts of it are assumptions. See the Swift twin. */
+    val basis: String? = null
 )
 
 @Serializable

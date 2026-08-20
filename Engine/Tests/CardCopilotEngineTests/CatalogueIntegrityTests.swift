@@ -41,17 +41,39 @@ final class CatalogueIntegrityTests: XCTestCase {
         try SeedLoader.loadCatalogue().cards + SeedLoader.loadCandidateCatalogue().cards
     }
 
+    /// The valued set is read from programs.json, not mirrored here. A hand-copied list would be
+    /// one more place for the catalogue to outrun the code — inside the very gate meant to catch
+    /// that. Adding a sourced valuation to programs.json now tightens this test on its own.
     func testEveryProgramIdIsValuedOrKnownUnvalued() throws {
-        let valued: Set<String> = [
-            "amexMembershipRewards", "marriottBonvoy", "mbnaRewards", "ctMoney", "cro", "cashback",
-        ]
+        let valued = Set(try SeedLoader.loadPrograms().defaults.keys)
         let unhandled = Set(try allCards().map(\.program.programId))
             .subtracting(valued)
             .subtracting(Self.knownUnvaluedPrograms)
         XCTAssertTrue(unhandled.isEmpty,
             "programId(s) with no valuation and not on the known-gap list: \(unhandled.sorted()). "
-          + "Scorer.valueCad would value these at $0.00. Add a valuation, or add to "
-          + "knownUnvaluedPrograms with a CHANGELOG entry saying why.")
+          + "Scorer.valueCad would value these at $0.00. Add a default to contracts/programs.json, "
+          + "or add to knownUnvaluedPrograms with a CHANGELOG entry saying why.")
+    }
+
+    /// The ratchet only ratchets if valuing a program also retires its allowlist entry. Without
+    /// this, Task 7 could add aeroplan to programs.json, leave it listed as a known gap, and the
+    /// suite would report the debt as unpaid forever while quietly passing.
+    func testKnownUnvaluedListRetiresProgramsThatGainedAValuation() throws {
+        let valued = Set(try SeedLoader.loadPrograms().defaults.keys)
+        let stale = valued.intersection(Self.knownUnvaluedPrograms)
+        XCTAssertTrue(stale.isEmpty,
+            "programs.json now values \(stale.sorted()), which is still listed as a known gap. "
+          + "Remove from knownUnvaluedPrograms.")
+    }
+
+    /// A default keyed to a programId no card declares values nothing and reads as coverage.
+    /// A single typo in programs.json would otherwise be invisible.
+    func testEveryProgramDefaultKeyIsARealCatalogueProgramId() throws {
+        let declared = Set(try allCards().map(\.program.programId))
+        let orphans = Set(try SeedLoader.loadPrograms().defaults.keys).subtracting(declared)
+        XCTAssertTrue(orphans.isEmpty,
+            "contracts/programs.json values programId(s) no card declares: \(orphans.sorted()). "
+          + "Likely a typo — the valuation will never be used.")
     }
 
     func testEveryOwnerConditionHasAHandler() throws {

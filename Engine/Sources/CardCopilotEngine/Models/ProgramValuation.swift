@@ -48,3 +48,23 @@ extension ProgramValuation: Codable {
         }
     }
 }
+
+/// Catalogue-shipped default valuations, keyed by `programId`.
+///
+/// Exists so that adding a rewards program is one data edit rather than two. Without defaults a
+/// new program has to be valued in the catalogue *and* in every owner-state file that will ever
+/// see it — which is how sixteen catalogue programIds came to face six valuations.
+///
+/// `defaults` is deliberately allowed to be incomplete: a program with no default and no owner
+/// override has no honest number, and inventing one is worse than admitting it. Callers must
+/// treat a missing key as "no valuation" — note that `Scorer.valueCad` still answers 0.0 for one
+/// today, which is the half of this defect that remains open.
+public struct ProgramCatalogue: Codable, Equatable, Sendable {
+    public var programsVersion: String
+    public var defaults: [String: ProgramValuation]
+
+    public init(programsVersion: String = "1.0", defaults: [String: ProgramValuation] = [:]) {
+        self.programsVersion = programsVersion
+        self.defaults = defaults
+    }
+}
