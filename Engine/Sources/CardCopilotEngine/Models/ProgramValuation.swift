@@ -57,8 +57,8 @@ extension ProgramValuation: Codable {
 ///
 /// `defaults` is deliberately allowed to be incomplete: a program with no default and no owner
 /// override has no honest number, and inventing one is worse than admitting it. Callers must
-/// treat a missing key as "no valuation" — note that `Scorer.valueCad` still answers 0.0 for one
-/// today, which is the half of this defect that remains open.
+/// treat a missing key as "no valuation" — `Scorer.valueCad` answers nil for one, and
+/// `Scorer.score` excludes the card with `Warning.unsupportedProgram` rather than scoring zero.
 public struct ProgramCatalogue: Codable, Equatable, Sendable {
     public var programsVersion: String
     public var defaults: [String: ProgramValuation]

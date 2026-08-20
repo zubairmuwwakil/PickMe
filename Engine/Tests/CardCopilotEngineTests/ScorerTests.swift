@@ -82,3 +82,37 @@ final class ScorerTests: XCTestCase {
         XCTAssertTrue(s.warnings.contains(.networkNotAccepted))
     }
 }
+
+extension ScorerTests {
+
+    /// A program with no valuation must exclude the card, not value it at $0.00. Scoring zero
+    /// makes an unscoreable card silently rank last behind every cash-back card, which reads to
+    /// the owner as advice rather than as the refusal it actually is.
+    func testUnvaluedProgramExcludesRatherThanScoringZero() throws {
+        var card = try XCTUnwrap(SeedLoader.loadCatalogue().cards
+            .first { $0.cardId == "scotia-momentum-vi-plus" })
+        card.program = Program(programId: "programTheEngineHasNeverHeardOf", unit: "point")
+
+        let score = Scorer.score(card: card,
+                                 purchase: PurchaseContext(amountCad: 100, category: "grocery"),
+                                 ownerState: try SeedLoader.loadPinnedOwnerState(),
+                                 asOf: "2026-08-20")
+
+        XCTAssertTrue(score.excluded)
+        XCTAssertTrue(score.warnings.contains(.unsupportedProgram))
+        XCTAssertEqual(score.netValueCad, 0)
+        XCTAssertTrue(try XCTUnwrap(score.exclusionReason).contains("programTheEngineHasNeverHeardOf"),
+                      "the reason must name the program so the gap is diagnosable")
+    }
+
+    /// nil (no valuation) and 0.0 (valued at nothing) are different answers.
+    func testValueCadDistinguishesUnvaluedFromWorthless() {
+        var valuations = Valuations()
+        valuations["worthless"] = .cashback(CashBackValuation(cadPerDollar: 0.0))
+
+        XCTAssertEqual(Scorer.valueCad(units: 100, program: "worthless",
+                                       valuations: valuations, state: CardState()), 0.0)
+        XCTAssertNil(Scorer.valueCad(units: 100, program: "absent",
+                                     valuations: valuations, state: CardState()))
+    }
+}

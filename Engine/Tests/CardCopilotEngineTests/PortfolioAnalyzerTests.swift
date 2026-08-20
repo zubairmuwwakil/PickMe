@@ -121,8 +121,18 @@ final class PortfolioAnalyzerTests: XCTestCase {
 
         XCTAssertTrue(crypto.neverScorable)
         XCTAssertEqual(crypto.marginalValueCad, 0, accuracy: 0.01)
-        XCTAssertTrue(analysis.contributions.filter(\.neverScorable).map(\.cardId)
-            == ["cryptocom-royal-indigo"])
+
+        // Every OTHER never-scorable card must be one the catalogue ratchet already admits it
+        // cannot value. Derived from knownUnvaluedPrograms rather than listed again here, so
+        // Task 7 tightens this back to exactly [crypto] by emptying that allowlist — a second
+        // hand-kept list would have to be remembered, and would rot into a rubber stamp.
+        let cannotBeValued = Set(try SeedLoader.loadCatalogue().cards
+            .filter { CatalogueIntegrityTests.knownUnvaluedPrograms.contains($0.program.programId) }
+            .map(\.cardId))
+        XCTAssertEqual(Set(analysis.contributions.filter(\.neverScorable).map(\.cardId)),
+                       cannotBeValued.union(["cryptocom-royal-indigo"]),
+                       "a card is never-scorable only if owner state gates it out or its program "
+                     + "has no valuation — anything else here is the engine losing a card silently")
     }
 
     /// Wealthsimple's $240 is waived on assets or direct deposit and the owner hasn't told us

@@ -70,6 +70,8 @@ public struct RecommendationExplainer {
         case .unresolvedOwnerState: return "Card skipped — account state not set up yet."
         case .fxAllowanceAssumed: return "Assumed within this card's monthly FX-free allowance."
         case .hypotheticalSelection: return "Assumes this is one of your selected 2% categories — check your selections."
+        case .unsupportedProgram: return "Card skipped — you haven't set what this card's rewards are worth."
+        case .unsupportedCapability: return "Card skipped — one of its rules needs something this app can't check yet."
         }
     }
 

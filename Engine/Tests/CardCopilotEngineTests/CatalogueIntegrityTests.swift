@@ -9,7 +9,8 @@ import XCTest
 /// if that is genuinely intended, say so in contracts/CHANGELOG.md in the same commit.
 final class CatalogueIntegrityTests: XCTestCase {
 
-    /// Programs with no valuation. Each scores every purchase at $0.00 CAD today.
+    /// Programs with no valuation. Every card on one is now EXCLUDED from scoring with
+    /// Warning.unsupportedProgram — it used to score $0.00 and rank last, which read as advice.
     /// Deleted by Task 7 as programs.json gains defaults.
     static let knownUnvaluedPrograms: Set<String> = [
         "scenePlus", "aeroplan", "rbcAvion", "tdRewards", "bmoRewards",
@@ -51,7 +52,8 @@ final class CatalogueIntegrityTests: XCTestCase {
             .subtracting(Self.knownUnvaluedPrograms)
         XCTAssertTrue(unhandled.isEmpty,
             "programId(s) with no valuation and not on the known-gap list: \(unhandled.sorted()). "
-          + "Scorer.valueCad would value these at $0.00. Add a default to contracts/programs.json, "
+          + "Scorer.valueCad returns nil for these, excluding every card on them. Add a default "
+          + "to contracts/programs.json, "
           + "or add to knownUnvaluedPrograms with a CHANGELOG entry saying why.")
     }
 

@@ -2,7 +2,13 @@ import Foundation
 
 public enum Warning: String, Codable, Equatable, Sendable {
     case drawerCard, unresolvedOwnerState, networkNotAccepted,
-         capNearlyExhausted, negativeNetValue, fxAllowanceAssumed, hypotheticalSelection
+         capNearlyExhausted, negativeNetValue, fxAllowanceAssumed, hypotheticalSelection,
+         /// This card's rewards program has no valuation. The card cannot be scored at all —
+         /// distinct from being scored and losing.
+         unsupportedProgram,
+         /// An earn rule requires an engine capability this build does not have. The rule is
+         /// skipped; the card is still scored on its remaining rules.
+         unsupportedCapability
 }
 
 public struct CandidateScore: Equatable, Sendable {
@@ -51,6 +57,15 @@ public enum Scorer {
         var warnings: [Warning] = []
         let state = ownerState.cardStates[card.cardId] ?? CardState()
 
+        // Ask before earning, not after: a program with no valuation cannot produce an honest
+        // number, and the honest answer is a refusal that names the gap. `units: 0` makes this a
+        // pure presence check — no model here can turn a missing valuation into a value.
+        guard valueCad(units: 0, program: card.program.programId,
+                       valuations: ownerState.valuationsCad, state: state) != nil else {
+            return excludedScore(.unsupportedProgram,
+                                 "no valuation for program \(card.program.programId)")
+        }
+
         var inCapCad = purchase.amountCad
         var overCapCad = 0.0
         if let capId = rule.capId, let cap = card.caps.first(where: { $0.capId == capId }) {
@@ -68,14 +83,16 @@ public enum Scorer {
         let postCapEarn = rule.capId.flatMap { id in card.caps.first { $0.capId == id }?.postCapEarn }
         let units = earnUnits(rule.earn, amountCad: inCapCad)
             + earnUnits(postCapEarn ?? rule.earn, amountCad: overCapCad)
+        // Force-unwrapped, not `?? 0`: the guard above proves a valuation exists, and `?? 0`
+        // would quietly reinstate the zero-scoring bug if a refactor ever moved that guard.
         let gross = valueCad(units: units, program: card.program.programId,
-                             valuations: ownerState.valuationsCad, state: state)
+                             valuations: ownerState.valuationsCad, state: state)!
         let grossFloor = valueCad(units: units, program: card.program.programId,
                                   valuations: ownerState.valuationsCad, state: state,
-                                  band: .floor)
+                                  band: .floor)!
         let grossAspirational = valueCad(units: units, program: card.program.programId,
                                          valuations: ownerState.valuationsCad, state: state,
-                                         band: .aspirational)
+                                         band: .aspirational)!
 
         var fxCost = 0.0
         if purchase.currency != "CAD", let fx = RuleMatcher.activeFxRule(for: card, asOf: asOf) {
@@ -111,9 +128,16 @@ public enum Scorer {
     /// Which point of a program's plausible valuation range to use.
     enum ValuationBand { case declared, floor, aspirational }
 
+    /// Nil means the program has no valuation — the card cannot be scored. Zero means the
+    /// program is valued and this earn is worth nothing. Conflating them is how ten programs
+    /// silently ranked last for four release batches.
+    ///
+    /// A pure function of the `valuations` passed in: catalogue defaults are merged into owner
+    /// state up in `RecommendationEngine.init`, deliberately not here, so a caller holding an
+    /// empty `Valuations` gets nil rather than a value it never declared.
     static func valueCad(units: Double, program: String,
                          valuations: Valuations, state: CardState,
-                         band: ValuationBand = .declared) -> Double {
+                         band: ValuationBand = .declared) -> Double? {
         func cents(_ v: PointValuation) -> Double {
             switch band {
             case .declared: return v.centsPerPoint
@@ -125,9 +149,9 @@ public enum Scorer {
         // Dispatch on the valuation's model, not on the program's name. The name-keyed switch
         // this replaced could only ever value the six programs it listed, so a program gaining a
         // valuation still had to gain a Swift case — which is the coupling this refactor exists
-        // to remove. A program with no valuation still yields 0.0 here; excluding the card
-        // instead is Scorer's next change, not this one.
-        switch valuations[program] {
+        // to remove.
+        guard let valuation = valuations[program] else { return nil }
+        switch valuation {
         case .points(let v):
             return units * cents(v) / 100
         case .ctMoney(let v):
@@ -137,8 +161,6 @@ public enum Scorer {
                             ? v.faceValueFactorIfAutoSold : v.defaultHeldRiskFactor)
         case .cashback(let v):
             return units * v.cadPerDollar
-        case nil:
-            return 0.0
         }
     }
 }
