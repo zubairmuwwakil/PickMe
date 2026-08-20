@@ -71,6 +71,33 @@ public struct EarnRule: Codable, Equatable, Sendable {
     public var capId: String?
     public var ownerConditions: [String]?
     public var scoredInV1: Bool?
+    /// Engine capabilities this rule needs, as `EngineCapability` raw values. Absent means none.
+    /// A rule naming a capability this build lacks is skipped; it turns on by itself when that
+    /// capability ships. Typed as `[String]` rather than `[EngineCapability]` so an unrecognised
+    /// name is a gating decision made in code, not a decode failure that loses the whole
+    /// catalogue — a card the engine cannot fully score is still a card it can partly score.
+    public var requires: [String]?
+    /// Set when the rule will never be scored. Mutually exclusive with `requires`.
+    public var outOfScope: OutOfScope?
+
+    public init(ruleId: String, status: RuleStatus, effectiveFrom: String? = nil,
+                effectiveTo: String? = nil, sourceType: SourceType, earn: Earn,
+                predicate: Predicate, capId: String? = nil, ownerConditions: [String]? = nil,
+                scoredInV1: Bool? = nil, requires: [String]? = nil,
+                outOfScope: OutOfScope? = nil) {
+        self.ruleId = ruleId
+        self.status = status
+        self.effectiveFrom = effectiveFrom
+        self.effectiveTo = effectiveTo
+        self.sourceType = sourceType
+        self.earn = earn
+        self.predicate = predicate
+        self.capId = capId
+        self.ownerConditions = ownerConditions
+        self.scoredInV1 = scoredInV1
+        self.requires = requires
+        self.outOfScope = outOfScope
+    }
 }
 
 public enum CapMeasure: String, Codable, Sendable { case spendCad, spendUsdEquivalent }

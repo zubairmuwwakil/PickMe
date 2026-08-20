@@ -39,7 +39,15 @@ public enum RuleMatcher {
     }
 
     static func isLive(_ rule: EarnRule, asOf: String) -> Bool {
+        if rule.outOfScope != nil { return false }
         guard rule.scoredInV1 != false else { return false }
+        if let requires = rule.requires {
+            // Unknown strings fail closed: an unrecognised capability is a data error, and
+            // assuming support would score a rule the engine cannot honour.
+            let needed = requires.map { EngineCapability(rawValue: $0) }
+            guard needed.allSatisfy({ $0.map(EngineCapability.supported.contains) ?? false })
+            else { return false }
+        }
         let fromOk = rule.effectiveFrom.map { $0 <= asOf } ?? true
         let toOk = rule.effectiveTo.map { asOf <= $0 } ?? true
         return fromOk && toOk
