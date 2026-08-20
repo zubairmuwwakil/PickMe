@@ -48,16 +48,22 @@ public struct WalletInstallation: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
-public enum MoneyTalksAPIError: Error, LocalizedError {
+public enum MoneyTalksAPIError: Error, LocalizedError, Equatable {
     case unavailableConfiguration
     case unauthenticated
-    case unexpectedResponse(Int)
+    case unexpectedResponse(Int, detail: String? = nil)
 
     public var errorDescription: String? {
         switch self {
-        case .unavailableConfiguration: "Inunity sync has not been configured."
-        case .unauthenticated: "Sign in to sync with Inunity."
-        case .unexpectedResponse(let status): "Inunity returned HTTP \(status)."
+        case .unavailableConfiguration: 
+            return "Inunity sync has not been configured."
+        case .unauthenticated: 
+            return "Sign in to sync with Inunity."
+        case .unexpectedResponse(let status, let detail):
+            if let detail, !detail.isEmpty {
+                return "Inunity returned HTTP \(status): \(detail)"
+            }
+            return "Inunity returned HTTP \(status)."
         }
     }
 }
@@ -78,7 +84,23 @@ public actor MoneyTalksAPIClient {
         self.tokenProvider = tokenProvider
         self.session = session
         self.decoder = JSONDecoder()
-        self.decoder.dateDecodingStrategy = .iso8601
+        self.decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let string = try container.decode(String.self)
+            // Prisma serialises DateTime fields via JSON.stringify, which always
+            // includes fractional seconds (e.g. "2026-08-19T19:20:51.123Z").
+            // Swift's built-in .iso8601 strategy uses ISO8601DateFormatter without
+            // .withFractionalSeconds, so it rejects those strings on most iOS
+            // versions. Try with fractional seconds first, then fall back.
+            let withFrac = ISO8601DateFormatter()
+            withFrac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = withFrac.date(from: string) { return date }
+            let withoutFrac = ISO8601DateFormatter()
+            withoutFrac.formatOptions = [.withInternetDateTime]
+            if let date = withoutFrac.date(from: string) { return date }
+            throw DecodingError.dataCorruptedError(in: container,
+                debugDescription: "Expected ISO 8601 date string, got \(string)")
+        }
     }
 
     public func fetchSnapshot() async throws -> SpineSnapshot {
@@ -149,14 +171,20 @@ public actor MoneyTalksAPIClient {
     private func send<Response: Decodable>(_ request: URLRequest) async throws -> Response {
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw MoneyTalksAPIError.unexpectedResponse(-1) }
-        guard 200..<300 ~= http.statusCode else { throw MoneyTalksAPIError.unexpectedResponse(http.statusCode) }
+        guard 200..<300 ~= http.statusCode else {
+            let detail = String(data: data, encoding: .utf8)
+            throw MoneyTalksAPIError.unexpectedResponse(http.statusCode, detail: detail)
+        }
         return try decoder.decode(Response.self, from: data)
     }
 
     private func sendIgnoringBody(_ request: URLRequest) async throws {
-        let (_, response) = try await session.data(for: request)
+        let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw MoneyTalksAPIError.unexpectedResponse(-1) }
-        guard 200..<300 ~= http.statusCode else { throw MoneyTalksAPIError.unexpectedResponse(http.statusCode) }
+        guard 200..<300 ~= http.statusCode else {
+            let detail = String(data: data, encoding: .utf8)
+            throw MoneyTalksAPIError.unexpectedResponse(http.statusCode, detail: detail)
+        }
     }
 
     private struct CapsResponse: Decodable { let caps: [String: SpineCap] }

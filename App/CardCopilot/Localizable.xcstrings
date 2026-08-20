@@ -1060,6 +1060,9 @@
         }
       }
     },
+    "Connected" : {
+
+    },
     "Continue" : {
       "localizations" : {
         "fr-CA" : {
@@ -1111,6 +1114,9 @@
         }
       }
     },
+    "Create another token" : {
+
+    },
     "Create installation token" : {
       "localizations" : {
         "fr-CA" : {
@@ -1130,6 +1136,9 @@
           }
         }
       }
+    },
+    "Created %@" : {
+
     },
     "Creating…" : {
       "localizations" : {

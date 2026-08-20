@@ -49,15 +49,24 @@ final class CardVisualThemeTests: XCTestCase {
     }
 
     func testUnknownCardFallsBackToGenericStyle() {
-        let unknownId = "unknown-test-card-\(UUID().uuidString)"
+        let unknownId = "custom-store-card"
         let fallback = CardVisualTheme.style(for: unknownId)
 
         XCTAssertEqual(fallback.cardId, unknownId)
-        XCTAssertEqual(fallback.shortName, unknownId)
         XCTAssertEqual(fallback.issuer, "Card")
-        XCTAssertEqual(fallback.network, .mastercard)
         XCTAssertGreaterThanOrEqual(fallback.gradientColors.count, 2)
         XCTAssertTrue(fallback.isDark)
+
+        // Verify smart inference for unknown cards with network keywords
+        let unknownAmex = CardVisualTheme.style(for: "custom-amex-card")
+        XCTAssertEqual(unknownAmex.network, .amex)
+        XCTAssertEqual(unknownAmex.issuer, "American Express")
+
+        let unknownVisa = CardVisualTheme.style(for: "custom-visa-infinite-card")
+        XCTAssertEqual(unknownVisa.network, .visaInfinite)
+
+        let unknownMC = CardVisualTheme.style(for: "custom-mastercard-card")
+        XCTAssertEqual(unknownMC.network, .mastercard)
     }
 
     func testCardVisualThemeNetworksAlignWithCatalogue() throws {

@@ -114,6 +114,9 @@ public struct PortfolioAnalyzer {
         var scopedCatalogue = catalogue
         if let cardIds {
             scopedCatalogue.cards = catalogue.cards.filter { cardIds.contains($0.cardId) }
+        } else if !ownerState.ownedCardIds.isEmpty {
+            let owned = Set(ownerState.ownedCardIds)
+            scopedCatalogue.cards = catalogue.cards.filter { owned.contains($0.cardId) }
         }
         self.catalogue = scopedCatalogue
         self.ownerState = ownerState

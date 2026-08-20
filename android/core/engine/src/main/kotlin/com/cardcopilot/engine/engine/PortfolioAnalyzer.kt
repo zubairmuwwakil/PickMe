@@ -72,6 +72,9 @@ class PortfolioAnalyzer(
 ) {
     private val scopedCatalogue: Catalogue = if (cardIds != null) {
         catalogue.copy(cards = catalogue.cards.filter { cardIds.contains(it.cardId) })
+    } else if (ownerState.ownedCardIds.isNotEmpty()) {
+        val owned = ownerState.ownedCardIds.toSet()
+        catalogue.copy(cards = catalogue.cards.filter { owned.contains(it.cardId) })
     } else {
         catalogue
     }

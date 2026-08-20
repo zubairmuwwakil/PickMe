@@ -92,7 +92,7 @@ final class AccountDeletionTests: XCTestCase {
         do {
             try await client(token: "session-jwt").deleteAccount()
             XCTFail("A failed deletion must not be reported as done")
-        } catch MoneyTalksAPIError.unexpectedResponse(let status) {
+        } catch MoneyTalksAPIError.unexpectedResponse(let status, _) {
             XCTAssertEqual(status, 500)
         } catch {
             XCTFail("Unexpected error: \(error)")

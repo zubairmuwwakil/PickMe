@@ -27,7 +27,7 @@ struct ProtectionLensView: View {
 
     private var comparison: ProtectionComparison {
         BenefitsAdvisor.comparison(context: context,
-                                   wallet: deps.catalogue.cards.map(\.cardId),
+                                   wallet: deps.walletCardIds,
                                    catalogue: deps.benefits)
     }
 

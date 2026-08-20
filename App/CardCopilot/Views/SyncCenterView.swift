@@ -132,6 +132,11 @@ struct SyncCenterView: View {
             isShowingCreateForm = false
             installationName = "My iPhone"
         }
-        catch { tokenError = "Couldn’t create a token. Check your connection and try again." }
+        catch {
+            #if DEBUG
+            print("❌ createInstallationToken error: \(error)")
+            #endif
+            tokenError = error.localizedDescription
+        }
     }
 }

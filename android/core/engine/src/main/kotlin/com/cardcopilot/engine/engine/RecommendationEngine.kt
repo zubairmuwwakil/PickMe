@@ -23,7 +23,13 @@ class RecommendationEngine(
     )
 
     fun recommend(purchase: PurchaseContext, asOf: String): Recommendation {
-        val scores = catalogue.cards
+        val candidateCards = if (ownerState.ownedCardIds.isEmpty()) {
+            catalogue.cards
+        } else {
+            val ownedSet = ownerState.ownedCardIds.toSet()
+            catalogue.cards.filter { ownedSet.contains(it.cardId) }
+        }
+        val scores = candidateCards
             .map { Scorer.score(it, purchase, ownerState, asOf) }
             .filter { !it.excluded }
         check(scores.isNotEmpty()) { "no scorable card — catalogue misconfigured" }

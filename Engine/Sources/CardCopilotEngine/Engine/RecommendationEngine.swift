@@ -45,7 +45,10 @@ public struct RecommendationEngine {
     }
 
     public func recommend(_ purchase: PurchaseContext, asOf: String) -> Recommendation {
-        let scores = catalogue.cards
+        let candidateCards = ownerState.ownedCardIds.isEmpty
+            ? catalogue.cards
+            : catalogue.cards.filter { ownerState.ownedCardIds.contains($0.cardId) }
+        let scores = candidateCards
             .map { Scorer.score(card: $0, purchase: purchase, ownerState: ownerState, asOf: asOf) }
             .filter { !$0.excluded }
         precondition(!scores.isEmpty, "no scorable card — catalogue misconfigured")

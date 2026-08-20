@@ -44,4 +44,17 @@ final class EngineGateTests: XCTestCase {
         XCTAssertEqual(r.runnerUp?.cardId, "mbna-rewards-we")
         XCTAssertEqual(r.advantageOverDefaultCad ?? .nan, 7.00, accuracy: 0.005)
     }
+
+    func testOnlyOwnedCardsAreConsidered() throws {
+        var customOwner = try SeedLoader.loadPinnedOwnerState()
+        customOwner.ownedCardIds = ["amex-simplycash"]
+        customOwner.defaultCardId = "amex-simplycash"
+        let customEngine = RecommendationEngine(catalogue: try SeedLoader.loadCatalogue(),
+                                                ownerState: customOwner)
+        // Canadian Tire purchase over $10 - Triangle WE would normally win if all catalogue cards were considered,
+        // but owner only owns SimplyCash.
+        let r = customEngine.recommend(PurchaseContext(amountCad: 50, category: "ctFamily"), asOf: asOf)
+        XCTAssertEqual(r.winner.cardId, "amex-simplycash")
+        XCTAssertEqual(r.allCandidates.map(\.cardId), ["amex-simplycash"])
+    }
 }

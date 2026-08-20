@@ -18,7 +18,7 @@ struct BenefitsDisclosureSection: View {
             purchase: PurchaseContext(amountCad: result.effectiveAmountCad,
                                       category: result.prediction.category),
             recommendedCardId: winnerCardId,
-            wallet: deps.catalogue.cards.map(\.cardId),
+            wallet: deps.walletCardIds,
             catalogue: deps.benefits)
     }
 

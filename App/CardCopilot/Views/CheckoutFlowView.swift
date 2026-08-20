@@ -63,6 +63,18 @@ struct CheckoutFlowView: View {
         let explainer: RecommendationExplainer
         let engine: RecommendationEngine
         let provider: LiveMerchantProvider
+
+        var walletCards: [CardProduct] {
+            if ownerState.ownedCardIds.isEmpty {
+                return catalogue.cards
+            }
+            let owned = Set(ownerState.ownedCardIds)
+            return catalogue.cards.filter { owned.contains($0.cardId) }
+        }
+
+        var walletCardIds: [String] {
+            ownerState.ownedCardIds.isEmpty ? catalogue.cards.map(\.cardId) : ownerState.ownedCardIds
+        }
     }
 
     struct CachedLocation {
@@ -156,12 +168,12 @@ struct CheckoutFlowView: View {
                                })
         case .finish:
             FinishPurchaseView(queue: completionQueue,
-                               cards: deps?.catalogue.cards ?? [],
+                               cards: deps?.walletCards ?? [],
                                onFinish: { prediction, entry in finish(prediction, entry: entry) },
                                onDone: { stage = .idle })
         case .reconcile:
             ReconcileView(queue: reconcileQueue,
-                          cards: deps?.catalogue.cards ?? [],
+                          cards: deps?.walletCards ?? [],
                           categories: deps.map { observableCategories(in: $0.catalogue) } ?? [],
                           onConfirm: { prediction, entry in confirm(prediction, entry: entry) },
                           onDone: { stage = .idle })

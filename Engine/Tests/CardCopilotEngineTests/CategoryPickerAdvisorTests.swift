@@ -220,4 +220,16 @@ final class CategoryPickerAdvisorTests: XCTestCase {
                                  + "scotia-momentum-vi-plus (both earn exactly 2%) may be "
                                  + "leaking through as spurious boundaries again: \(bands)")
     }
+
+    func testCategoryBandsOnlyRecommendOwnedCards() throws {
+        let catalogue = try SeedLoader.loadCatalogue()
+        var owner = try SeedLoader.loadOwnerState()
+        owner.ownedCardIds = ["amex-simplycash"]
+        owner.defaultCardId = "amex-simplycash"
+        // Canadian Tire family spend would normally switch to Triangle WE above $9.81 if unowned cards were evaluated.
+        let bands = CategoryPickerAdvisor.bands(for: "ctFamily", catalogue: catalogue,
+                                                ownerState: owner, asOf: asOf)
+        XCTAssertEqual(bands.count, 1)
+        XCTAssertEqual(bands.first?.cardId, "amex-simplycash")
+    }
 }
