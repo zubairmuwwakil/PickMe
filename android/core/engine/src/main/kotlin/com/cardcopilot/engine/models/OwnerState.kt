@@ -82,7 +82,9 @@ data class CtMoneyValuation(
 
 @Serializable
 data class CroValuation(
-    val model: String,
+    /** How CRO converts to CAD. Renamed from `model` 2026-08-20 so the Swift twin's
+     *  ProgramValuation discriminator can own that key at the same JSON level. */
+    val redemptionModel: String,
     val faceValueFactorIfAutoSold: Double,
     val defaultHeldRiskFactor: Double
 )

@@ -56,7 +56,7 @@
     "marriottBonvoy": { "centsPerPoint": 0.8, "low": 0.6, "high": 1.0, "basis": "hotel award nights actually used" },
     "mbnaRewards": { "centsPerPoint": 1.0, "floorCentsPerPoint": 0.833333, "basis": "travel redemption; cash floor" },
     "ctMoney": { "cadPerUnit": 1.0, "optionalUsabilityFactor": 0.95, "usabilityFactorApplied": true },
-    "cro": { "model": "reward-currency", "faceValueFactorIfAutoSold": 1.0, "defaultHeldRiskFactor": 0.8 },
+    "cro": { "redemptionModel": "reward-currency", "faceValueFactorIfAutoSold": 1.0, "defaultHeldRiskFactor": 0.8 },
     "cashBack": { "cadPerDollar": 1.0 },
     "rogersEligibleServiceRedemption": { "redemptionFactor": 1.5, "appliedAtCheckout": false }
   }

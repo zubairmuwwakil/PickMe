@@ -66,22 +66,51 @@ public struct PointValuation: Codable, Equatable, Sendable {
     public var low: Double?
     public var high: Double?
     public var basis: String?
+
+    public init(centsPerPoint: Double, floorCentsPerPoint: Double? = nil,
+                aspirationalCentsPerPoint: Double? = nil, low: Double? = nil,
+                high: Double? = nil, basis: String? = nil) {
+        self.centsPerPoint = centsPerPoint
+        self.floorCentsPerPoint = floorCentsPerPoint
+        self.aspirationalCentsPerPoint = aspirationalCentsPerPoint
+        self.low = low
+        self.high = high
+        self.basis = basis
+    }
 }
 
 public struct CtMoneyValuation: Codable, Equatable, Sendable {
     public var cadPerUnit: Double
     public var optionalUsabilityFactor: Double
     public var usabilityFactorApplied: Bool
+
+    public init(cadPerUnit: Double, optionalUsabilityFactor: Double,
+                usabilityFactorApplied: Bool) {
+        self.cadPerUnit = cadPerUnit
+        self.optionalUsabilityFactor = optionalUsabilityFactor
+        self.usabilityFactorApplied = usabilityFactorApplied
+    }
 }
 
 public struct CroValuation: Codable, Equatable, Sendable {
-    public var model: String
+    /// How CRO converts to CAD — not the `ProgramValuation` discriminator, which is a separate
+    /// key at the same JSON level. Named `model` until 2026-08-20; renamed to free that key.
+    public var redemptionModel: String
     public var faceValueFactorIfAutoSold: Double
     public var defaultHeldRiskFactor: Double
+
+    public init(redemptionModel: String, faceValueFactorIfAutoSold: Double,
+                defaultHeldRiskFactor: Double) {
+        self.redemptionModel = redemptionModel
+        self.faceValueFactorIfAutoSold = faceValueFactorIfAutoSold
+        self.defaultHeldRiskFactor = defaultHeldRiskFactor
+    }
 }
 
 public struct CashBackValuation: Codable, Equatable, Sendable {
     public var cadPerDollar: Double
+
+    public init(cadPerDollar: Double) { self.cadPerDollar = cadPerDollar }
 }
 
 public struct Valuations: Codable, Equatable, Sendable {
