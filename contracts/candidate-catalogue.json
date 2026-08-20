@@ -147,7 +147,7 @@
           "measure": "spendCad",
           "limit": 30000,
           "period": "accountYear",
-          "anchor": "cardmembership anniversary",
+          "anchor": "ownerState.amexAccountAnniversaryMonth",
           "resetTimeZone": "America/Toronto",
           "postCapEarn": { "type": "cashback", "rate": 0.02 },
           "proration": true
@@ -457,7 +457,7 @@
           "measure": "spendCad",
           "limit": 25000,
           "period": "accountYear",
-          "anchor": "account anniversary",
+          "anchor": "ownerState.rbcAccountAnniversaryMonth",
           "resetTimeZone": "America/Toronto",
           "postCapEarn": { "type": "cashback", "rate": 0.01 },
           "proration": true

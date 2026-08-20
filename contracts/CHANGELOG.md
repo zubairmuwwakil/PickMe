@@ -2,6 +2,13 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-20 — Standardized Cap Anchors in Candidate Catalogue
+
+- Standardized `simplycash-preferred` cap anchor `"cardmembership anniversary"` → `"ownerState.amexAccountAnniversaryMonth"` in `candidate-catalogue.json`.
+- Standardized `rbc-cashback-preferred` cap anchor `"account anniversary"` → `"ownerState.rbcAccountAnniversaryMonth"` in `candidate-catalogue.json`.
+- Both anchors match the schema specification (`card-catalogue.schema.json:558`) requiring pointer path strings rather than informal text.
+- Ran sync scripts to update Engine and Android resource copies.
+
 ## 2026-08-18 — Added Batch 3 of 7 Canadian Card Products & Insurance Certificates
 
 - Added 7 researched Canadian credit cards to `card-catalogue.json`:
