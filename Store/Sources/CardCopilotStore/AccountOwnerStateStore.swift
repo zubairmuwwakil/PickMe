@@ -62,7 +62,22 @@ public final class AccountOwnerStateStore: @unchecked Sendable {
 
     private func profiles() -> [String: OwnerState] {
         guard let data = defaults.data(forKey: profilesKey) else { return [:] }
-        return (try? JSONDecoder().decode([String: OwnerState].self, from: data)) ?? [:]
+        return Self.decodeTolerantly(data)
+    }
+
+    /// Decodes each profile independently so one unreadable entry — the shape a future
+    /// migration produces on an older build — cannot evict every other account's wallet.
+    /// The all-or-nothing `decode([String: OwnerState].self)` this replaces returned [:].
+    static func decodeTolerantly(_ data: Data) -> [String: OwnerState] {
+        guard let raw = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+            return [:]
+        }
+        let decoder = JSONDecoder()
+        return raw.reduce(into: [:]) { result, entry in
+            guard let itemData = try? JSONSerialization.data(withJSONObject: entry.value),
+                  let state = try? decoder.decode(OwnerState.self, from: itemData) else { return }
+            result[entry.key] = state
+        }
     }
 }
 
@@ -100,6 +115,6 @@ public final class OwnerStateUploadQueue: @unchecked Sendable {
 
     private func records() -> [String: OwnerState] {
         guard let data = defaults.data(forKey: key) else { return [:] }
-        return (try? JSONDecoder().decode([String: OwnerState].self, from: data)) ?? [:]
+        return AccountOwnerStateStore.decodeTolerantly(data)
     }
 }
