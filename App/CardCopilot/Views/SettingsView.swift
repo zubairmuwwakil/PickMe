@@ -13,6 +13,7 @@ struct SettingsView: View {
     let isSignedIn: Bool
     let accountEmail: String?
     let lastSyncedAt: Date?
+    let syncIssue: SyncStatusIssue?
     let ambientEnabled: Bool
     let onOpenSync: () -> Void
     let onOpenAmbient: () -> Void
@@ -40,6 +41,12 @@ struct SettingsView: View {
                     Button("Sync & Wallet Capture", action: onOpenSync)
                     LabeledContent("Last synced",
                                    value: lastSyncedAt.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "Never")
+                    if let syncIssue {
+                        Label(syncIssue.kind == .warning ? "Last sync needs attention" : "Last sync attempt failed",
+                              systemImage: syncIssue.kind == .warning ? "exclamationmark.triangle.fill" : "xmark.octagon.fill")
+                            .font(.footnote)
+                            .foregroundStyle(syncIssue.kind == .warning ? Color.orange : Color.red)
+                    }
                     Button("Sign Out", role: .destructive) { signOutIsPresented = true }
                 } else {
                     Text("Checkout works without an account. Sign in only to sync cap usage and capture feedback.")

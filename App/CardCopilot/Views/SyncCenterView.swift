@@ -8,7 +8,10 @@ struct SyncCenterView: View {
     let lastSyncedAt: Date?
     let feedback: [WalletFeedback]
     let installations: [WalletInstallation]
+    let syncIssue: SyncStatusIssue?
     let isSyncing: Bool
+    let isPreparingAccount: Bool
+    let isAccountReady: Bool
     let onSync: () -> Void
     let onCreateInstallation: (String) async throws -> String
     let onDone: () -> Void
@@ -29,6 +32,8 @@ struct SyncCenterView: View {
             VStack(alignment: .leading, spacing: 20) {
                 if !MoneyTalksConfiguration.isConfigured { configurationRequired }
                 else if !isSignedIn { signInRequired }
+                else if isPreparingAccount { preparingAccount }
+                else if !isAccountReady { accountUnavailable }
                 else { connectedContent }
             }.padding(16)
         }
@@ -52,12 +57,51 @@ struct SyncCenterView: View {
         }.padding(18).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
     }
 
+    private var preparingAccount: some View {
+        HStack(spacing: 12) {
+            ProgressView()
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Loading this account's wallet").font(.headline)
+                Text("PickMe keeps account wallets separate on this iPhone.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var accountUnavailable: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Wallet not loaded", systemImage: "person.crop.circle.badge.exclamationmark")
+                .font(.headline)
+            Text(syncIssue?.message ?? "PickMe could not safely load this account's wallet.")
+                .font(.subheadline).foregroundStyle(.secondary)
+            Button("Retry", action: onSync).buttonStyle(.borderedProminent)
+        }
+        .padding(18)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+    }
+
     private var connectedContent: some View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 8) {
                 Label("Sync", systemImage: "checkmark.icloud").font(.title3.weight(.bold))
                 Text(lastSyncedAt.map { "Last synced \($0.formatted(date: .abbreviated, time: .shortened))" } ?? "Not synced yet — stored cap data remains in use until a sync succeeds.")
                     .font(.subheadline).foregroundStyle(.secondary)
+                if let syncIssue {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(syncIssue.message)
+                            Text("Last attempt \(syncIssue.occurredAt.formatted(date: .abbreviated, time: .shortened))")
+                                .font(.caption)
+                        }
+                    } icon: {
+                        Image(systemName: syncIssue.kind == .warning ? "exclamationmark.triangle.fill" : "xmark.octagon.fill")
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(syncIssue.kind == .warning ? .orange : .red)
+                }
                 Button(isSyncing ? "Syncing…" : "Sync now", action: onSync).buttonStyle(.borderedProminent).disabled(isSyncing)
             }.padding(18).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
             installationSection
@@ -80,7 +124,15 @@ struct SyncCenterView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Wallet Shortcut token", systemImage: "wallet.pass").font(.headline)
             Text("Create one token for this device, copy it once, then paste it into the shared Wallet Capture Shortcut. The Shortcut’s assembly contract is in MoneyTalks/docs/plans/2026-08-16-wallet-capture-spec.md.").font(.footnote).foregroundStyle(.secondary)
-            if let installationToken {
+            if isSyncing && activeInstallations.isEmpty && installationToken == nil {
+                ProgressView("Checking connected tokens…")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 8)
+            } else if syncIssue != nil && activeInstallations.isEmpty && installationToken == nil {
+                Text("PickMe could not verify whether this account already has a token. Retry sync before creating another one.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                Button("Retry token check", action: onSync).buttonStyle(.bordered)
+            } else if let installationToken {
                 Text(installationToken).font(.footnote.monospaced()).textSelection(.enabled).padding(12).frame(maxWidth: .infinity, alignment: .leading).background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10))
                 Button("Copy token") { UIPasteboard.general.string = installationToken }.buttonStyle(.bordered)
                 Text("This is the only time PickMe displays this token. Store it in the Shortcut, not a note.").font(.caption).foregroundStyle(.secondary)
@@ -110,7 +162,7 @@ struct SyncCenterView: View {
                 TextField("Installation name", text: $installationName).textFieldStyle(.roundedBorder)
                 HStack {
                     Button(isCreatingToken ? "Creating…" : "Create installation token") { Task { await createInstallationToken() } }
-                        .buttonStyle(.bordered).disabled(isCreatingToken || installationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .buttonStyle(.bordered).disabled(isCreatingToken || isSyncing || installationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     if !activeInstallations.isEmpty {
                         Button("Cancel") {
                             withAnimation { isShowingCreateForm = false }

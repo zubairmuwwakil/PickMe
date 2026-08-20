@@ -17,13 +17,36 @@ public struct WalletFeedback: Codable, Equatable, Sendable, Identifiable {
     public let eventId: String
     public let capturedAt: Date
     public let merchantRaw: String?
+    /// The server's cleaned merchant name, from the alias table. Better evidence than the raw
+    /// Apple string when present, and absent until the pipeline has normalised the event.
+    public let merchantNormalized: String?
     public let amountMinor: Int?
     public let currency: String?
     public let cardRaw: String?
+    /// The catalogue card id the server's alias table resolved `cardRaw` to. Nil when the alias
+    /// is unknown — the app must leave the card blank rather than string-match locally, which
+    /// the wallet capture spec forbids.
+    public let resolvedCardId: String?
     public let verdict: String
     public let warning: String?
 
     public var id: String { eventId }
+
+    public init(eventId: String, capturedAt: Date, merchantRaw: String?,
+                merchantNormalized: String? = nil, amountMinor: Int?, currency: String?,
+                cardRaw: String?, resolvedCardId: String? = nil,
+                verdict: String, warning: String?) {
+        self.eventId = eventId
+        self.capturedAt = capturedAt
+        self.merchantRaw = merchantRaw
+        self.merchantNormalized = merchantNormalized
+        self.amountMinor = amountMinor
+        self.currency = currency
+        self.cardRaw = cardRaw
+        self.resolvedCardId = resolvedCardId
+        self.verdict = verdict
+        self.warning = warning
+    }
 }
 
 public struct SpineSnapshot: Sendable {
@@ -131,6 +154,14 @@ public actor MoneyTalksAPIClient {
         try await sendIgnoringBody(request)
     }
 
+    /// The server's copy of the wallet, used to seed a fresh install on an account that already
+    /// has cards. A `nil` ownerState is a real answer — the account owns no catalogue-linked cards
+    /// yet — and is deliberately distinct from a failure, so it decodes rather than throwing.
+    public func fetchOwnerState() async throws -> OwnerState? {
+        let response: RemoteOwnerStateResponse = try await get("api/spine/owner-state")
+        return response.ownerState
+    }
+
     /// The app writes its complete local wallet after setup/editing. The server uses this same
     /// record when it evaluates Wallet Capture verdicts.
     public func updateOwnerState(_ ownerState: OwnerState) async throws {
@@ -187,6 +218,7 @@ public actor MoneyTalksAPIClient {
         }
     }
 
+    private struct RemoteOwnerStateResponse: Decodable { let ownerState: OwnerState? }
     private struct CapsResponse: Decodable { let caps: [String: SpineCap] }
     private struct FeedbackResponse: Decodable { let feedback: [WalletFeedback] }
 }
@@ -194,13 +226,18 @@ public actor MoneyTalksAPIClient {
 public struct OwnerStateSyncResult: Sendable {
     public let ownerState: OwnerState
     public let feedback: [WalletFeedback]
-    public let installations: [WalletInstallation]
+    /// `nil` means the installation request failed. An empty array is a successful response that
+    /// confirms this account currently has no installations.
+    public let installations: [WalletInstallation]?
+    public let installationRefreshError: String?
     public let lastSyncedAt: Date
 
-    public init(ownerState: OwnerState, feedback: [WalletFeedback], installations: [WalletInstallation] = [], lastSyncedAt: Date) {
+    public init(ownerState: OwnerState, feedback: [WalletFeedback], installations: [WalletInstallation]? = [],
+                installationRefreshError: String? = nil, lastSyncedAt: Date) {
         self.ownerState = ownerState
         self.feedback = feedback
         self.installations = installations
+        self.installationRefreshError = installationRefreshError
         self.lastSyncedAt = lastSyncedAt
     }
 }
@@ -214,14 +251,31 @@ public actor OwnerStateSyncService {
         self.client = client
     }
 
+    /// First-run seed: adopt the server's wallet so an account that already added its cards on the
+    /// web does not have to re-enter them on the phone. This is a SEED, never a merge — callers
+    /// must invoke it only when there is no local wallet, so it cannot overwrite one. Returns nil
+    /// when the server has nothing to offer, which leaves the normal empty picker in place.
+    public func seedFromRemote() async throws -> OwnerState? {
+        try await client.fetchOwnerState()
+    }
+
     public func sync(ownerState: OwnerState, catalogue: Catalogue, now: Date = Date()) async throws -> OwnerStateSyncResult {
         async let snapshot = client.fetchSnapshot()
         async let installations = client.fetchWalletInstallations()
         let snap = try await snapshot
-        let inst = (try? await installations) ?? []
+        let inst: [WalletInstallation]?
+        let installationError: String?
+        do {
+            inst = try await installations
+            installationError = nil
+        } catch {
+            inst = nil
+            installationError = error.localizedDescription
+        }
         return OwnerStateSyncResult(ownerState: Self.merging(snap.caps, into: ownerState, catalogue: catalogue),
                                     feedback: snap.feedback,
                                     installations: inst,
+                                    installationRefreshError: installationError,
                                     lastSyncedAt: now)
     }
 

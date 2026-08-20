@@ -219,8 +219,16 @@ public struct PortfolioAnalyzer {
 
     /// Caps start empty: the question is what a card is worth over the *next* year, not what is
     /// left of the current one. (The seeded Scotia progress is flagged suspect regardless.)
+    ///
+    /// The simulated owner also owns exactly the cards in this counterfactual's catalogue.
+    /// `RecommendationEngine` re-filters its catalogue by `ownedCardIds` — a checkout-path guard
+    /// against advising a card the owner doesn't hold — and without this the two filters intersect,
+    /// silently deleting any scoped-in card that isn't already owned. For keep/cancel the scoped set
+    /// is a subset of the owned set, so this is a no-op; for the *acquisition* counterfactual the
+    /// candidate is unowned by definition, so it would score on nothing at all.
     private func forwardYearState() -> OwnerState {
         var state = ownerState
+        state.ownedCardIds = catalogue.cards.map(\.cardId)
         state.cardStates = state.cardStates.mapValues { cardState in
             var reset = cardState
             reset.capProgress = cardState.capProgress?.mapValues { _ in 0 }

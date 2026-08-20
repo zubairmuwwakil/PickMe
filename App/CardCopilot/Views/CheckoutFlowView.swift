@@ -25,12 +25,19 @@ struct CheckoutFlowView: View {
     @State private var lastSyncedAt: Date?
     @State private var walletFeedback: [WalletFeedback] = []
     @State private var walletInstallations: [WalletInstallation] = []
+    @State private var syncIssue: SyncStatusIssue?
     @State private var isSyncing = false
+    @State private var isPreparingAccount = false
+    @State private var readySyncUserID: String?
+    @State private var accountSetupUserID: String?
     @State private var ambient = AmbientLocationService()
     @State private var ambientDiagnostics = SuppressionLog()
     @State private var seedOwnerState: OwnerState?
     @State private var walletIsFirstRun = false
     private let ownerStateLocalStore = OwnerStateLocalStore()
+    private let accountOwnerStateStore = AccountOwnerStateStore()
+    private let ownerStateUploadQueue = OwnerStateUploadQueue()
+    private let syncMetadataStore = SyncMetadataStore()
     private let cardRequestQueue = CardRequestQueue()
 
     enum Stage {
@@ -110,6 +117,9 @@ struct CheckoutFlowView: View {
                 }
         }
         .task { loadDependencies() }
+        .task(id: Clerk.shared.user?.id) {
+            await prepareAccount(forUserID: Clerk.shared.user?.id)
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { ambientDiagnostics = ambient.diagnostics }
         }
@@ -169,8 +179,14 @@ struct CheckoutFlowView: View {
         case .finish:
             FinishPurchaseView(queue: completionQueue,
                                cards: deps?.walletCards ?? [],
+                               proposals: captureProposals,
                                onFinish: { prediction, entry in finish(prediction, entry: entry) },
                                onDone: { stage = .idle })
+                // Captures are only pulled when the owner opens Sync, which most never will.
+                // This queue is the one screen where a capture has something to offer, so it is
+                // the right place to go looking. Failure is silent by design: the queue works
+                // exactly as it did before, asking for both facts.
+                .task { await syncCapsSilently() }
         case .reconcile:
             ReconcileView(queue: reconcileQueue,
                           cards: deps?.walletCards ?? [],
@@ -209,14 +225,18 @@ struct CheckoutFlowView: View {
                            lastSyncedAt: lastSyncedAt,
                            feedback: walletFeedback,
                            installations: walletInstallations,
+                           syncIssue: syncIssue,
                            isSyncing: isSyncing,
-                           onSync: { Task { await syncCapsSilently() } },
+                           isPreparingAccount: isPreparingAccount,
+                           isAccountReady: readySyncUserID == Clerk.shared.user?.id,
+                           onSync: { Task { await syncFromUI() } },
                            onCreateInstallation: { label in try await createInstallation(label: label) },
                            onDone: { stage = .idle })
         case .settings:
             SettingsView(isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
                          accountEmail: Clerk.shared.user?.primaryEmailAddress?.emailAddress,
                          lastSyncedAt: lastSyncedAt,
+                         syncIssue: syncIssue,
                          ambientEnabled: ambient.isEnabled,
                          onOpenSync: { stage = .sync },
                          onOpenAmbient: { stage = .ambientSetup },
@@ -270,6 +290,83 @@ struct CheckoutFlowView: View {
             if localOwner == nil { stage = .walletSetup }
         } catch {
             stage = .failed("Seed data failed to load: \(error.localizedDescription)")
+        }
+    }
+
+    /// Binds the active device wallet to the signed-in account. A cached profile is restored when
+    /// possible; a different, previously unseen account is seeded from its server wallet instead
+    /// of inheriting the prior account's cards. A server miss opens a genuinely empty setup flow.
+    private func prepareAccount(forUserID userID: String?) async {
+        restoreSyncMetadata(forUserID: userID)
+        walletFeedback = []
+        walletInstallations = []
+        readySyncUserID = nil
+        accountSetupUserID = nil
+        guard let userID else { return }
+
+        loadDependencies()
+        guard let deps else { return }
+        isPreparingAccount = true
+        defer { isPreparingAccount = false }
+
+        do {
+            if accountOwnerStateStore.activeUserID == userID,
+               let cached = accountOwnerStateStore.state(forUserID: userID) {
+                try accountOwnerStateStore.activate(cached, forUserID: userID)
+                applyOwnerState(cached, using: deps)
+                walletIsFirstRun = false
+                if case .walletSetup = stage { stage = .idle }
+                readySyncUserID = userID
+                return
+            }
+
+            if let cached = accountOwnerStateStore.state(forUserID: userID) {
+                try accountOwnerStateStore.activate(cached, forUserID: userID)
+                applyOwnerState(cached, using: deps)
+                walletIsFirstRun = false
+                if case .walletSetup = stage { stage = .idle }
+                readySyncUserID = userID
+                return
+            }
+
+            // Migration and first account attachment: an existing unbound device wallet belongs to
+            // the first account the owner signs into. A first-run bundled seed is never adopted.
+            if accountOwnerStateStore.activeUserID == nil, !walletIsFirstRun {
+                try accountOwnerStateStore.activate(deps.ownerState, forUserID: userID)
+                try ownerStateUploadQueue.enqueue(deps.ownerState, forUserID: userID)
+                cardRequestQueue.claimUnscopedRequests(forUserID: userID)
+                readySyncUserID = userID
+                return
+            }
+
+            guard MoneyTalksConfiguration.isConfigured,
+                  let baseURL = MoneyTalksConfiguration.apiBaseURL else {
+                throw MoneyTalksAPIError.unavailableConfiguration
+            }
+            let shouldClaimUnscopedRequests = accountOwnerStateStore.activeUserID == nil
+            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+            if let remote = try await OwnerStateSyncService(client: client).seedFromRemote(),
+               !remote.ownedCardIds.isEmpty {
+                try accountOwnerStateStore.activate(remote, forUserID: userID)
+                if shouldClaimUnscopedRequests {
+                    cardRequestQueue.claimUnscopedRequests(forUserID: userID)
+                }
+                applyOwnerState(remote, using: deps)
+                walletIsFirstRun = false
+                if case .walletSetup = stage { stage = .idle }
+            } else {
+                let emptySetup = WalletSetup(ownedCardIds: [], defaultCardId: "",
+                                             switchThreshold: OwnerStateBuilder.defaultSwitchThreshold,
+                                             valuationsCad: deps.ownerState.valuationsCad)
+                let empty = OwnerStateBuilder.make(setup: emptySetup, catalogue: deps.catalogue)
+                applyOwnerState(empty, using: deps)
+                walletIsFirstRun = true
+                accountSetupUserID = userID
+                stage = .walletSetup
+            }
+            readySyncUserID = userID
+        } catch {
+            saveSyncFailure(error, forUserID: userID)
         }
     }
 
@@ -360,19 +457,32 @@ struct CheckoutFlowView: View {
                                                  distanceMeters: nil))
     }
 
+    /// What the Apple Wallet Shortcut already answered for the checkouts still in the finish
+    /// queue. Recomputed from the two published facts rather than stored, so it can never
+    /// disagree with the queue it annotates — a stale proposal would offer to fill a field that
+    /// was filled a moment ago.
+    private var captureProposals: [UUID: CaptureProposal] {
+        Dictionary(CaptureMatcher.proposals(for: completionQueue, from: walletFeedback)
+                    .map { ($0.predictionId, $0) },
+                   uniquingKeysWith: { first, _ in first })
+    }
+
     /// Supplying the till facts, without touching anything already recorded.
     ///
-    /// `.recalledLater` throughout: this screen is reached from the app, after the fact. The
-    /// lock-screen path records the same fields as `.atTill`, and the difference between the two
-    /// is the whole reason provenance is stored per field rather than per record.
+    /// Provenance comes from the entry rather than being assumed here. This screen is reached
+    /// after the fact, so a typed answer is `.recalledLater` — but a figure read off an Apple
+    /// Wallet transaction and accepted unedited is `.walletCapture`, and collapsing the two would
+    /// throw away the only evidence of which rows were measured rather than remembered.
     private func finish(_ prediction: StoredPrediction, entry: FinishEntry) {
         guard let deps else { return }
         do {
             let purchase = try deps.service.log.recordPurchase(for: prediction,
                                                                cardUsedId: entry.cardUsedId,
-                                                               cardSource: entry.cardUsedId == nil ? nil : .recalledLater)
+                                                               cardSource: entry.cardSource)
             if let amount = entry.actualAmountCad {
-                try deps.service.log.recordAmount(amount, source: .recalledLater, on: purchase)
+                try deps.service.log.recordAmount(amount,
+                                                  source: entry.amountSource ?? .recalledLater,
+                                                  on: purchase)
             }
             refreshHome()
         } catch {
@@ -426,30 +536,76 @@ struct CheckoutFlowView: View {
 
     private func syncCapsSilently() async {
         guard MoneyTalksConfiguration.isConfigured, !isSyncing, let baseURL = MoneyTalksConfiguration.apiBaseURL,
-              Clerk.shared.user != nil, let deps else { return }
+              let userID = Clerk.shared.user?.id, readySyncUserID == userID,
+              accountOwnerStateStore.activeUserID == userID, let deps else { return }
         isSyncing = true
         defer { isSyncing = false }
         do {
             let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+            try await flushQueuedOwnerState(forUserID: userID, using: client)
             let result = try await OwnerStateSyncService(client: client).sync(ownerState: deps.ownerState, catalogue: deps.catalogue)
             self.deps = makeDependencies(catalogue: deps.catalogue, candidates: deps.candidateCatalogue,
                                          owner: result.ownerState, benefits: deps.benefits)
-            try? ownerStateLocalStore.save(result.ownerState)
+            try accountOwnerStateStore.updateActive(result.ownerState)
             configureAmbient(catalogue: deps.catalogue, owner: result.ownerState)
             walletFeedback = result.feedback
-            walletInstallations = result.installations
+            if let installations = result.installations {
+                walletInstallations = installations
+            }
             lastSyncedAt = result.lastSyncedAt
-            try await flushQueuedCardRequests(using: client)
+            syncMetadataStore.save(lastSyncedAt: result.lastSyncedAt, forUserID: userID)
+            var warnings: [String] = []
+            if result.installationRefreshError != nil {
+                warnings.append("Connected Wallet tokens could not be refreshed.")
+            }
+            do {
+                try await flushQueuedCardRequests(forUserID: userID, using: client)
+            } catch {
+                warnings.append("A queued card request could not be sent yet.")
+            }
+            if warnings.isEmpty {
+                clearSyncIssue(forUserID: userID)
+            } else {
+                saveSyncIssue(kind: .warning,
+                              message: "Caps and feedback synced, but \(warnings.joined(separator: " "))",
+                              forUserID: userID)
+            }
         } catch {
             // A1: existing local state is usable; connectivity must never interrupt checkout.
+            saveSyncFailure(error, forUserID: userID)
         }
+    }
+
+    private func syncFromUI() async {
+        guard let userID = Clerk.shared.user?.id else { return }
+        if readySyncUserID != userID {
+            await prepareAccount(forUserID: userID)
+        }
+        await syncCapsSilently()
     }
 
     private func saveWalletSetup(_ setup: WalletSetup) async {
         guard let deps else { return }
         let owner = OwnerStateBuilder.make(setup: setup, catalogue: deps.catalogue)
         do {
-            try ownerStateLocalStore.save(owner)
+            if let signedInUserID = Clerk.shared.user?.id,
+               accountOwnerStateStore.activeUserID != signedInUserID {
+                guard accountSetupUserID == signedInUserID else {
+                    saveSyncIssue(kind: .error,
+                                  message: "This wallet is still linked to another account. Retry account setup before saving.",
+                                  forUserID: signedInUserID)
+                    return
+                }
+                try accountOwnerStateStore.activate(owner, forUserID: signedInUserID)
+                cardRequestQueue.claimUnscopedRequests(forUserID: signedInUserID)
+                readySyncUserID = signedInUserID
+                accountSetupUserID = nil
+            } else {
+                try accountOwnerStateStore.updateActive(owner)
+            }
+            if let boundUserID = accountOwnerStateStore.activeUserID {
+                try ownerStateUploadQueue.enqueue(owner, forUserID: boundUserID)
+            }
         } catch {
             stage = .failed(error.localizedDescription)
             return
@@ -460,20 +616,24 @@ struct CheckoutFlowView: View {
         walletIsFirstRun = false
         stage = .idle
 
-        // Setup remains usable offline. The server copy is retried by re-saving from Settings,
-        // while Wallet Capture sees the exact per-user state as soon as this write succeeds.
+        // Setup remains usable offline. The durable outbox retries on every sync until the server
+        // has the exact wallet needed to evaluate Wallet Capture feedback.
         guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
-              Clerk.shared.user != nil else { return }
+              let userID = Clerk.shared.user?.id, readySyncUserID == userID,
+              accountOwnerStateStore.activeUserID == userID else { return }
         do {
             let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
-            try await client.updateOwnerState(owner)
-        } catch { }
+            try await flushQueuedOwnerState(forUserID: userID, using: client)
+        } catch {
+            saveSyncFailure(error, forUserID: userID)
+        }
     }
 
     private func requestCard(_ request: PendingCardRequest) async -> Bool {
         guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
-              Clerk.shared.user != nil else {
-            cardRequestQueue.enqueue(request)
+              let userID = Clerk.shared.user?.id, readySyncUserID == userID,
+              accountOwnerStateStore.activeUserID == userID else {
+            enqueueCardRequestForCurrentProfile(request)
             return false
         }
         do {
@@ -481,16 +641,32 @@ struct CheckoutFlowView: View {
             try await client.createCardRequest(request)
             return true
         } catch {
-            cardRequestQueue.enqueue(request)
+            enqueueCardRequestForCurrentProfile(request)
             return false
         }
     }
 
-    private func flushQueuedCardRequests(using client: MoneyTalksAPIClient) async throws {
-        for request in cardRequestQueue.pending() {
-            try await client.createCardRequest(request)
-            cardRequestQueue.remove(request)
+    private func enqueueCardRequestForCurrentProfile(_ request: PendingCardRequest) {
+        if let userID = accountOwnerStateStore.activeUserID {
+            cardRequestQueue.enqueue(request, forUserID: userID)
+        } else {
+            cardRequestQueue.enqueue(request)
         }
+    }
+
+    private func flushQueuedCardRequests(forUserID userID: String,
+                                         using client: MoneyTalksAPIClient) async throws {
+        for request in cardRequestQueue.pending(forUserID: userID) {
+            try await client.createCardRequest(request)
+            cardRequestQueue.remove(request, forUserID: userID)
+        }
+    }
+
+    private func flushQueuedOwnerState(forUserID userID: String,
+                                       using client: MoneyTalksAPIClient) async throws {
+        guard let pending = ownerStateUploadQueue.pending(forUserID: userID) else { return }
+        try await client.updateOwnerState(pending)
+        ownerStateUploadQueue.remove(forUserID: userID)
     }
 
     /// Erasing the device history on its own — no account required, and nothing on the server is
@@ -510,12 +686,19 @@ struct CheckoutFlowView: View {
         guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL else {
             throw MoneyTalksAPIError.unavailableConfiguration
         }
+        let deletedUserID = Clerk.shared.user?.id
         let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
         try await client.deleteAccount()
 
         // Geofences are refreshed from the store on the next significant location change, which
         // could be hours away. Arrival monitoring for merchants the owner just erased stops now.
         if eraseLocalHistory { self.eraseLocalHistory() }
+        if let deletedUserID {
+            syncMetadataStore.remove(forUserID: deletedUserID)
+            ownerStateUploadQueue.remove(forUserID: deletedUserID)
+            cardRequestQueue.removeAll(forUserID: deletedUserID)
+            accountOwnerStateStore.removeProfile(forUserID: deletedUserID)
+        }
         try? await Clerk.shared.auth.signOut()
         resetSyncedState()
         stage = .idle
@@ -527,19 +710,74 @@ struct CheckoutFlowView: View {
         stage = .idle
     }
 
-    /// Drops everything the server contributed: cap progress merged into OwnerState, the capture
-    /// feedback list, and the sync timestamp. Reloading from the bundled seed is what makes this
-    /// exact rather than approximate — there is no partially-synced state left to reason about.
+    /// Clears account-only presentation state. The synced wallet remains in the offline owner-state
+    /// store, while the per-account timestamp can be restored if this account signs in again.
     private func resetSyncedState() {
         lastSyncedAt = nil
+        syncIssue = nil
         walletFeedback = []
         walletInstallations = []
+        readySyncUserID = nil
+        accountSetupUserID = nil
         deps = nil
         loadDependencies()
     }
 
+    private func restoreSyncMetadata(forUserID userID: String?) {
+        lastSyncedAt = userID.flatMap { syncMetadataStore.lastSyncedAt(forUserID: $0) }
+        syncIssue = userID.flatMap { syncMetadataStore.issue(forUserID: $0) }
+    }
+
+    private func applyOwnerState(_ owner: OwnerState, using existing: Dependencies) {
+        deps = makeDependencies(catalogue: existing.catalogue, candidates: existing.candidateCatalogue,
+                                owner: owner, benefits: existing.benefits)
+        configureAmbient(catalogue: existing.catalogue, owner: owner)
+        refreshHome()
+    }
+
+    private func saveSyncFailure(_ error: Error, forUserID userID: String) {
+        #if DEBUG
+        print("❌ PickMe sync error: \(error)")
+        #endif
+        let message: String
+        if let apiError = error as? MoneyTalksAPIError {
+            switch apiError {
+            case .unauthenticated:
+                message = "Your sign-in expired. Sign in again, then retry sync."
+            case .unavailableConfiguration:
+                message = "Sync is not configured in this build. Your on-device wallet is still available."
+            case .unexpectedResponse:
+                message = "Inunity could not finish the sync. Your on-device wallet is still available."
+            }
+        } else if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet, .networkConnectionLost, .timedOut,
+                 .cannotConnectToHost, .cannotFindHost:
+                message = "Could not reach Inunity. Check your connection and retry."
+            default:
+                message = "Sync could not finish. Your on-device wallet is still available."
+            }
+        } else {
+            message = "Sync could not finish. Your on-device wallet is still available."
+        }
+        saveSyncIssue(kind: .error, message: message, forUserID: userID)
+    }
+
+    private func saveSyncIssue(kind: SyncStatusIssue.Kind, message: String, forUserID userID: String) {
+        let issue = SyncStatusIssue(kind: kind, message: message)
+        syncMetadataStore.save(issue: issue, forUserID: userID)
+        if Clerk.shared.user?.id == userID { syncIssue = issue }
+    }
+
+    private func clearSyncIssue(forUserID userID: String) {
+        syncMetadataStore.clearIssue(forUserID: userID)
+        if Clerk.shared.user?.id == userID { syncIssue = nil }
+    }
+
     private func createInstallation(label: String) async throws -> String {
-        guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL else {
+        guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
+              let userID = Clerk.shared.user?.id, readySyncUserID == userID,
+              accountOwnerStateStore.activeUserID == userID else {
             throw MoneyTalksAPIError.unavailableConfiguration
         }
         let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }

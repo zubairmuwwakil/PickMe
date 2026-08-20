@@ -53,9 +53,9 @@ never get it. The only thing that leaves your phone is a Maps lookup, which goes
 us.
 
 **If you sign in** — optional, and nothing pushes you toward it — you get an account with us, and
-some data does reach our server: your email address, how much you have spent toward each card's
-bonus limits, and, if you set up the Apple Wallet capture shortcut, your card transactions
-**including where you were when you made them.**
+some data does reach our server: your email address; your wallet and reward settings; how much you
+have spent toward each card's bonus limits; and, if you set up the Apple Wallet capture shortcut,
+your card transactions **including where you were when you made them.**
 
 The app never asks for and never stores card numbers, PINs, or banking credentials, in either mode.
 It has no access to your bank and cannot move money.
@@ -70,8 +70,10 @@ practices described here.
 
 ### 2. What the app stores on your iPhone
 
-Everything in this section stays in the app's own storage on your device in both modes. None of it
-is uploaded, even when you are signed in.
+Everything in this section is stored in the app's own storage on your device in both modes. If you
+sign in, the wallet configuration in 2(a) through 2(c) is also copied to your account so the server
+can evaluate Wallet Shortcut captures. The merchant history, recommendations, purchase entries,
+statement checks, and location/discovery history in 2(d) through 2(h) are never uploaded.
 
 **a. Your cards.** Which *card products* you selected from the catalogue built into the app — for
 example "American Express Cobalt Card."
@@ -129,7 +131,11 @@ in section 2 work fully without one.
 
 - **Your email address**, through our sign-in provider, Clerk.
 - **A user identifier** we use to associate your data with your account.
+- **Your wallet and reward settings** — selected card products; default and drawer cards;
+  card-specific reward conditions and categories; account-anniversary or cap-reset settings;
+  cap-progress estimates; switching thresholds; and point or reward valuations.
 - **Your bonus-cap usage** — how much you have spent toward each card's limits.
+- **Card-catalogue requests you submit** — the issuer, product name, and optional note you entered.
 
 **If you additionally set up the Apple Wallet capture shortcut, we also receive, for each
 transaction it captures:**

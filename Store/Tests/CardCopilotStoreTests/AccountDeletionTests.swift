@@ -9,9 +9,12 @@ final class StubURLProtocol: URLProtocol {
     nonisolated(unsafe) static var status = 200
     nonisolated(unsafe) static var capturedRequest: URLRequest?
     nonisolated(unsafe) static var capturedBody: Data?
+    nonisolated(unsafe) static var responseData = Data("{\"ok\":true,\"scope\":\"account\"}".utf8)
 
-    static func reset(status: Int = 200) {
+    static func reset(status: Int = 200,
+                      responseData: Data = Data("{\"ok\":true,\"scope\":\"account\"}".utf8)) {
         self.status = status
+        self.responseData = responseData
         capturedRequest = nil
         capturedBody = nil
     }
@@ -43,7 +46,7 @@ final class StubURLProtocol: URLProtocol {
         let response = HTTPURLResponse(url: request.url!, statusCode: Self.status,
                                        httpVersion: nil, headerFields: nil)!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-        client?.urlProtocol(self, didLoad: Data("{\"ok\":true,\"scope\":\"account\"}".utf8))
+        client?.urlProtocol(self, didLoad: Self.responseData)
         client?.urlProtocolDidFinishLoading(self)
     }
 

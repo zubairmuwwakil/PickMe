@@ -3,6 +3,18 @@ import CardCopilotEngine
 @testable import CardCopilotStore
 
 final class MoneyTalksSyncTests: XCTestCase {
+    private let baseURL = URL(string: "https://example.test/")!
+
+    override func setUp() {
+        super.setUp()
+        StubURLProtocol.reset()
+    }
+
+    private func client() -> MoneyTalksAPIClient {
+        MoneyTalksAPIClient(baseURL: baseURL, tokenProvider: { "session-jwt" },
+                            session: StubURLProtocol.session)
+    }
+
     func testMergeConvertsMinorUnitsIntoTheExistingOwnerStateCapUnits() throws {
         let catalogue = try SeedLoader.loadCatalogue()
         let owner = try SeedLoader.loadOwnerState()
@@ -49,9 +61,46 @@ final class MoneyTalksSyncTests: XCTestCase {
         let now = Date()
         let inst = WalletInstallation(id: "inst_1", label: "My Phone", createdAt: now)
         let result = OwnerStateSyncResult(ownerState: owner, feedback: [], installations: [inst], lastSyncedAt: now)
+        let installations = try XCTUnwrap(result.installations)
 
-        XCTAssertEqual(result.installations.count, 1)
-        XCTAssertEqual(result.installations.first?.id, "inst_1")
-        XCTAssertEqual(result.installations.first?.label, "My Phone")
+        XCTAssertEqual(installations.count, 1)
+        XCTAssertEqual(installations.first?.id, "inst_1")
+        XCTAssertEqual(installations.first?.label, "My Phone")
+        XCTAssertNil(result.installationRefreshError)
+    }
+
+    func testFailedInstallationRefreshIsDistinctFromConfirmedEmptyList() throws {
+        let owner = try SeedLoader.loadOwnerState()
+        let now = Date()
+        let result = OwnerStateSyncResult(ownerState: owner, feedback: [], installations: nil,
+                                          installationRefreshError: "offline", lastSyncedAt: now)
+
+        XCTAssertNil(result.installations)
+        XCTAssertEqual(result.installationRefreshError, "offline")
+    }
+
+    func testOwnerStateUploadSendsTheCompleteWallet() async throws {
+        let owner = try SeedLoader.loadOwnerState()
+
+        try await client().updateOwnerState(owner)
+
+        let request = try XCTUnwrap(StubURLProtocol.capturedRequest)
+        XCTAssertEqual(request.httpMethod, "PUT")
+        XCTAssertEqual(request.url?.path, "/api/spine/owner-state")
+        let uploaded = try JSONDecoder().decode(OwnerState.self,
+                                                from: try XCTUnwrap(StubURLProtocol.capturedBody))
+        XCTAssertEqual(uploaded, owner)
+    }
+
+    func testFetchOwnerStateReturnsTheAccountWallet() async throws {
+        struct Response: Encodable { let ownerState: OwnerState }
+        let owner = try SeedLoader.loadOwnerState()
+        StubURLProtocol.reset(responseData: try JSONEncoder().encode(Response(ownerState: owner)))
+
+        let fetched = try await client().fetchOwnerState()
+
+        XCTAssertEqual(fetched, owner)
+        XCTAssertEqual(StubURLProtocol.capturedRequest?.httpMethod, "GET")
+        XCTAssertEqual(StubURLProtocol.capturedRequest?.url?.path, "/api/spine/owner-state")
     }
 }

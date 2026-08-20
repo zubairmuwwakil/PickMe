@@ -108,6 +108,35 @@ public struct Program: Codable, Equatable, Sendable {
     public var unit: String
 }
 
+/// A recurring statement credit the issuer grants for holding the card — Platinum's annual travel
+/// and dining credits, Crypto.com's monthly streaming rebates. Deliberately NOT an earn rule: a
+/// credit does not depend on what the purchase was, so it never enters the checkout pick. It is
+/// keep/cancel and net-value input, which is why `RecommendationEngine` does not read it and the
+/// golden fixtures are unaffected by its presence.
+///
+/// `valueCad` is the issuer's stated maximum, not a forecast of what the owner will actually use;
+/// whether a credit was redeemed is owner activity and lives with the consumer, not here.
+public struct CardCredit: Codable, Equatable, Identifiable, Sendable {
+    public var creditId: String
+    public var label: String
+    public var valueCad: Double
+    public var period: CapPeriod
+    public var sourceType: SourceType
+    public var lastVerifiedAt: String
+
+    public var id: String { creditId }
+
+    public init(creditId: String, label: String, valueCad: Double, period: CapPeriod,
+                sourceType: SourceType, lastVerifiedAt: String) {
+        self.creditId = creditId
+        self.label = label
+        self.valueCad = valueCad
+        self.period = period
+        self.sourceType = sourceType
+        self.lastVerifiedAt = lastVerifiedAt
+    }
+}
+
 public struct CardProduct: Codable, Equatable, Identifiable, Sendable {
     public var cardId: String
     public var officialName: String
@@ -121,6 +150,10 @@ public struct CardProduct: Codable, Equatable, Identifiable, Sendable {
     public var caps: [Cap]
     public var perTransactionRewardVisibility: String
     public var lastVerifiedAt: String
+    /// Absent for the majority of cards. Optional rather than defaulted so a catalogue written
+    /// before credits existed still decodes, exactly as `sources` and `stacking` do by being
+    /// absent from this struct entirely.
+    public var credits: [CardCredit]?
 
     public var id: String { cardId }
 }

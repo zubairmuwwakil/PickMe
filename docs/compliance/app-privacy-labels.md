@@ -95,7 +95,7 @@ Tracking**. §3 and §4 justify the last two columns.
 | **Identifiers → User ID** | Clerk user id; wallet-installation id | Clerk, capture |
 | **Purchase History** | Captured Wallet transactions: merchant, amount, currency, card, timestamp | Wallet Shortcut |
 | **Location → Precise Location** | Coordinates and accuracy captured at transaction time, **retained** on the event | Wallet Shortcut |
-| **Other Financial Info** | Cap usage per card; which card products are held | Sync |
+| **Other Financial Info** | Cap usage; selected card products; default/drawer choices; reward conditions and categories; account-anniversary or reset settings; cap estimates; switching thresholds; point and reward valuations | Sync |
 
 ### 2.1 Precise Location deserves its own paragraph
 

@@ -117,10 +117,14 @@ public struct PendingCardRequest: Codable, Equatable, Sendable {
 public final class CardRequestQueue: @unchecked Sendable {
     private let defaults: UserDefaults
     private let key: String
+    private let accountKey: String
 
-    public init(defaults: UserDefaults = OwnerStateLocalStore.sharedDefaults, key: String = "ca.pickme.pending-card-requests.v1") {
+    public init(defaults: UserDefaults = OwnerStateLocalStore.sharedDefaults,
+                key: String = "ca.pickme.pending-card-requests.v1",
+                accountKey: String = "ca.pickme.pending-card-requests-by-account.v1") {
         self.defaults = defaults
         self.key = key
+        self.accountKey = accountKey
     }
 
     public func enqueue(_ request: PendingCardRequest) {
@@ -137,5 +141,56 @@ public final class CardRequestQueue: @unchecked Sendable {
     public func remove(_ request: PendingCardRequest) {
         let remaining = pending().filter { $0 != request }
         defaults.set(try? JSONEncoder().encode(remaining), forKey: key)
+    }
+
+    public func enqueue(_ request: PendingCardRequest, forUserID userID: String) {
+        var values = accountRecords()
+        var queued = values[userID] ?? []
+        guard !queued.contains(request) else { return }
+        queued.append(request)
+        values[userID] = queued
+        defaults.set(try? JSONEncoder().encode(values), forKey: accountKey)
+    }
+
+    public func pending(forUserID userID: String) -> [PendingCardRequest] {
+        accountRecords()[userID] ?? []
+    }
+
+    public func remove(_ request: PendingCardRequest, forUserID userID: String) {
+        var values = accountRecords()
+        let remaining = (values[userID] ?? []).filter { $0 != request }
+        if remaining.isEmpty {
+            values.removeValue(forKey: userID)
+        } else {
+            values[userID] = remaining
+        }
+        if values.isEmpty {
+            defaults.removeObject(forKey: accountKey)
+        } else {
+            defaults.set(try? JSONEncoder().encode(values), forKey: accountKey)
+        }
+    }
+
+    /// Assigns requests made before any account was attached to the first account the owner uses.
+    public func claimUnscopedRequests(forUserID userID: String) {
+        let unscoped = pending()
+        guard !unscoped.isEmpty else { return }
+        for request in unscoped { enqueue(request, forUserID: userID) }
+        defaults.removeObject(forKey: key)
+    }
+
+    public func removeAll(forUserID userID: String) {
+        var values = accountRecords()
+        values.removeValue(forKey: userID)
+        if values.isEmpty {
+            defaults.removeObject(forKey: accountKey)
+        } else {
+            defaults.set(try? JSONEncoder().encode(values), forKey: accountKey)
+        }
+    }
+
+    private func accountRecords() -> [String: [PendingCardRequest]] {
+        guard let data = defaults.data(forKey: accountKey) else { return [:] }
+        return (try? JSONDecoder().decode([String: [PendingCardRequest]].self, from: data)) ?? [:]
     }
 }
