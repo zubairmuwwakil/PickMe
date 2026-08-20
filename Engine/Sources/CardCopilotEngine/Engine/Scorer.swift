@@ -49,12 +49,16 @@ public enum Scorer {
         }
 
         let rule: EarnRule
+        let capabilityGaps: [String]
         switch RuleMatcher.resolve(card: card, purchase: purchase, ownerState: ownerState, asOf: asOf) {
-        case .cardExcluded(let reason): return excludedScore(.unresolvedOwnerState, reason)
-        case .applied(let matched): rule = matched
+        case .cardExcluded(let reason, let warning): return excludedScore(warning, reason)
+        case .applied(let matched, let gaps): rule = matched; capabilityGaps = gaps
         }
 
         var warnings: [Warning] = []
+        // A better rule matched this purchase and this build could not run it. The card keeps the
+        // number it can defend, and the owner is told the number is not the whole story.
+        if !capabilityGaps.isEmpty { warnings.append(.unsupportedCapability) }
         let state = ownerState.cardStates[card.cardId] ?? CardState()
 
         // Ask before earning, not after: a program with no valuation cannot produce an honest

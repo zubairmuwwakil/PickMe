@@ -71,7 +71,9 @@ public struct RecommendationExplainer {
         case .fxAllowanceAssumed: return "Assumed within this card's monthly FX-free allowance."
         case .hypotheticalSelection: return "Assumes this is one of your selected 2% categories — check your selections."
         case .unsupportedProgram: return "Card skipped — you haven't set what this card's rewards are worth."
-        case .unsupportedCapability: return "Card skipped — one of its rules needs something this app can't check yet."
+        // Reachable on a card that WON: the excluded case never reaches an explanation, because
+        // an excluded card is never the winner. Worded for the case the owner can actually see.
+        case .unsupportedCapability: return "This card has a better rule here that this app can't check yet — it may be worth more than shown."
         }
     }
 

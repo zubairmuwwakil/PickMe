@@ -1,8 +1,16 @@
 import Foundation
 
 public enum RuleResolution: Equatable, Sendable {
-    case applied(EarnRule)
-    case cardExcluded(reason: String)
+    /// The winning rule, plus the capabilities named by rules that would have matched this same
+    /// purchase had this build supported them. The card is still scored on what the engine can
+    /// honour; the list is what it had to leave on the table, and saying so is the whole point —
+    /// a rule that vanishes without a trace is indistinguishable from a rule that lost.
+    case applied(EarnRule, unsupportedCapabilities: [String])
+    /// Why the card is out, and which warning says so. The warning travels with the reason
+    /// because `RuleMatcher` is the only thing that knows the difference between "your account
+    /// state rules this out" and "this build cannot check this rule" — and sending an owner to
+    /// re-check settings over an engine gap is a lie with a support ticket attached.
+    case cardExcluded(reason: String, warning: Warning)
 }
 
 /// Decides which earn rule a purchase triggers on one card.
@@ -20,15 +28,30 @@ public enum RuleMatcher {
     public static func resolve(card: CardProduct, purchase: PurchaseContext,
                                ownerState: OwnerState, asOf: String) -> RuleResolution {
         let state = ownerState.cardStates[card.cardId] ?? CardState()
-        let candidates = card.earnRules.filter { rule in
-            isLive(rule, asOf: asOf)
+        // One matching pass, then partitioned on capability. Asking "which rules matched" and
+        // "which matched but for a capability" in two separate passes would let the two drift,
+        // and the warning would start naming rules that never applied to this purchase.
+        let matching = card.earnRules.filter { rule in
+            isScheduleLive(rule, asOf: asOf)
                 && conditionsResolveTrue(rule.ownerConditions, state: state)
                 && matches(rule.predicate, purchase: purchase, state: state)
         }
+        let gaps = Set(matching.flatMap { capabilityGap($0) ?? [] }).sorted()
+        let candidates = matching.filter { capabilityGap($0) == nil }
+
         guard let best = candidates.max(by: { rawEarn($0.earn) < rawEarn($1.earn) }) else {
-            return .cardExcluded(reason: "no scorable earn rule (unresolved or inactive owner state)")
+            // A capability gap is the more specific cause and outranks the generic one: it names
+            // something the engine can fix, where owner state names something only the owner can.
+            guard gaps.isEmpty else {
+                return .cardExcluded(
+                    reason: "earn rule needs \(gaps.joined(separator: ", ")), "
+                          + "which this build does not support",
+                    warning: .unsupportedCapability)
+            }
+            return .cardExcluded(reason: "no scorable earn rule (unresolved or inactive owner state)",
+                                 warning: .unresolvedOwnerState)
         }
-        return .applied(best)
+        return .applied(best, unsupportedCapabilities: gaps)
     }
 
     public static func activeFxRule(for card: CardProduct, asOf: String) -> FxRule? {
@@ -38,19 +61,34 @@ public enum RuleMatcher {
         }
     }
 
+    /// Scorable right now: in its date window, not permanently out of scope, and needing nothing
+    /// this build lacks.
     static func isLive(_ rule: EarnRule, asOf: String) -> Bool {
+        isScheduleLive(rule, asOf: asOf) && capabilityGap(rule) == nil
+    }
+
+    /// Everything about liveness that is NOT about capability — dates, `scoredInV1`, and the
+    /// permanent `outOfScope` verdict. Split out so `resolve` can tell a rule that lost from a
+    /// rule this build could not run: the second is reportable, the first is not, and the third
+    /// (`outOfScope`) is deliberately neither, because "never" is not a gap awaiting a fix.
+    static func isScheduleLive(_ rule: EarnRule, asOf: String) -> Bool {
         if rule.outOfScope != nil { return false }
         guard rule.scoredInV1 != false else { return false }
-        if let requires = rule.requires {
-            // Unknown strings fail closed: an unrecognised capability is a data error, and
-            // assuming support would score a rule the engine cannot honour.
-            let needed = requires.map { EngineCapability(rawValue: $0) }
-            guard needed.allSatisfy({ $0.map(EngineCapability.supported.contains) ?? false })
-            else { return false }
-        }
         let fromOk = rule.effectiveFrom.map { $0 <= asOf } ?? true
         let toOk = rule.effectiveTo.map { asOf <= $0 } ?? true
         return fromOk && toOk
+    }
+
+    /// The capability names this rule needs and this build does not have, or nil when it is fully
+    /// supported. Unknown strings fail closed and are reported by name: an unrecognised capability
+    /// is a data error, and assuming support would score a rule the engine cannot honour.
+    static func capabilityGap(_ rule: EarnRule) -> [String]? {
+        guard let requires = rule.requires else { return nil }
+        let missing = requires.filter { name in
+            guard let capability = EngineCapability(rawValue: name) else { return true }
+            return !EngineCapability.supported.contains(capability)
+        }
+        return missing.isEmpty ? nil : missing
     }
 
     static func conditionsResolveTrue(_ conditions: [String]?, state: CardState) -> Bool {

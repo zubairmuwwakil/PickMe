@@ -14,7 +14,7 @@ final class RuleMatcherTests: XCTestCase {
     private func card(_ id: String) -> CardProduct { catalogue.cards.first { $0.cardId == id }! }
 
     private func appliedRuleId(_ cardId: String, _ p: PurchaseContext) -> String? {
-        if case .applied(let rule) = RuleMatcher.resolve(card: card(cardId), purchase: p,
+        if case .applied(let rule, _) = RuleMatcher.resolve(card: card(cardId), purchase: p,
                                                         ownerState: owner, asOf: asOf) {
             return rule.ruleId
         }
@@ -56,7 +56,7 @@ final class RuleMatcherTests: XCTestCase {
         var s = o.cardStates["rogers-red-we"] ?? CardState()
         s.rogersEligibleServiceLinked = nil
         o.cardStates["rogers-red-we"] = s
-        guard case .applied(let rule) = RuleMatcher.resolve(card: card("rogers-red-we"), purchase: p,
+        guard case .applied(let rule, _) = RuleMatcher.resolve(card: card("rogers-red-we"), purchase: p,
                                                             ownerState: o, asOf: asOf)
         else { return XCTFail("expected a rule to apply") }
         XCTAssertEqual(rule.ruleId, "rogers-base-1_5", "unresolved condition must not enable the 2% rule")
@@ -80,7 +80,7 @@ final class RuleMatcherTests: XCTestCase {
         var s = o.cardStates["tangerine-moneyback-world"] ?? CardState()
         s.selectedCategories = nil
         o.cardStates["tangerine-moneyback-world"] = s
-        guard case .applied(let rule) = RuleMatcher.resolve(card: card("tangerine-moneyback-world"),
+        guard case .applied(let rule, _) = RuleMatcher.resolve(card: card("tangerine-moneyback-world"),
                                                             purchase: p, ownerState: o, asOf: asOf)
         else { return XCTFail("expected a rule to apply") }
         XCTAssertEqual(rule.ruleId, "tangerine-base")

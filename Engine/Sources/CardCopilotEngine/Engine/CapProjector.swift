@@ -154,7 +154,7 @@ public struct CapProjector {
         else { return nil }
         var purchase = context(for: placement)
         purchase.recurringIndicator = flagged
-        guard case .applied(let rule) = RuleMatcher.resolve(card: card, purchase: purchase,
+        guard case .applied(let rule, _) = RuleMatcher.resolve(card: card, purchase: purchase,
                                                            ownerState: ownerState, asOf: asOf)
         else { return nil }
         return rule.capId
