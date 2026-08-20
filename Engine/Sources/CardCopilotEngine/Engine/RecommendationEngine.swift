@@ -29,9 +29,13 @@ public struct RecommendationEngine {
     let catalogue: Catalogue
     let ownerState: OwnerState
 
+    /// Catalogue valuation defaults are merged in here, beneath anything the owner has declared.
+    /// This is the single funnel every scoring path reaches — including owner states restored
+    /// from a device, which never touch SeedLoader. Without it contracts/programs.json would be
+    /// data nothing reads.
     public init(catalogue: Catalogue, ownerState: OwnerState) {
         self.catalogue = catalogue
-        self.ownerState = ownerState
+        self.ownerState = ownerState.applyingCatalogueValuationDefaults()
     }
 
     private struct Verdict {

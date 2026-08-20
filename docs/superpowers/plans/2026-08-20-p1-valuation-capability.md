@@ -874,9 +874,17 @@ failure this work exists to prevent. They land in Task 7 with sourced bases."
 - Modify: `Engine/Sources/CardCopilotEngine/Engine/Scorer.swift:3-6` (the `Warning` enum) and `:112-139`
 - Test: `Engine/Tests/CardCopilotEngineTests/ScorerTests.swift` (extend)
 
-> ### ⚠ OPEN GAP — found while implementing Task 5 (2026-08-20). Decide before starting Task 6.
+> ### ✅ RESOLVED 2026-08-20 — was: programs.json is never wired into production
 >
-> **Nothing in this plan ever wires `contracts/programs.json` into the production path.**
+> **Closed before Task 6 started.** `RecommendationEngine.init` now merges catalogue defaults
+> beneath the owner's own declarations via `OwnerState.applyingCatalogueValuationDefaults()`,
+> backed by `SeedLoader.programValuationDefaults`. Covered by `CatalogueDefaultValuationTests`,
+> whose cases each remove a program from the owner state first — against the shipped seed the
+> merge is a no-op, so a test written against it would pass with the wiring deleted.
+>
+> The original finding, kept because it explains why the merge point is where it is:
+>
+> **Nothing in this plan ever wired `contracts/programs.json` into the production path.**
 > `SeedLoader.loadPrograms()` is called in exactly two places across all eleven tasks, and both
 > are tests: one assertion in Task 5, and the `seedWithAllCardsOwned` helper in Task 7 Step 4.
 > No production code path merges catalogue defaults under owner-state overrides.
@@ -889,15 +897,19 @@ failure this work exists to prevent. They land in Task 7 with sourced bases."
 > green throughout and a passing test asserting the opposite. Same 14 cards, new symptom, now with
 > cover.
 >
-> **The unmade decision is *where* the merge belongs**, and the two candidates are not equivalent:
+> **The decision was *where* the merge belongs**, and the two candidates were not equivalent:
 >
 > - `SeedLoader.loadOwnerState()` — smallest change, closest to this plan's shape, but owner states
 >   loaded from a device through `Store`'s `AccountOwnerStateStore` bypass it entirely. That is
->   every real user, so this fixes the seed and nobody else.
-> - `RecommendationEngine.init` / `Scorer` — catches every caller regardless of where the owner
->   state came from, at the cost of changing a type's effective meaning mid-plan.
+>   every real user, so it would fix the seed and nobody else. **Rejected for that reason.**
+> - `RecommendationEngine.init` — **chosen.** Every scoring path funnels through it:
+>   PortfolioAnalyzer, RecurringAuditor, CategoryPickerAdvisor and Store's CheckoutService all
+>   construct one, and `Scorer.score` has exactly one caller, which is inside it. Deliberately NOT
+>   hidden inside `Scorer.valueCad`, which takes `valuations` as an explicit parameter and must
+>   stay a pure function of it — Task 6's `testValueCadDistinguishesUnvaluedFromWorthless` builds
+>   a bare `Valuations()` and would otherwise silently pick up catalogue defaults.
 >
-> **Timing argument for doing it before Task 7, not with it.** Merging defaults under owner-state
+> **Timing argument for doing it before Task 7, not with it** — the reason it landed now: Merging defaults under owner-state
 > overrides is *provably a no-op today* — verified 2026-08-20: `programs.json` and
 > `owner-state.json` value exactly the same six programs and the owner wins every key, so the
 > merged `Valuations` is equal to the owner's. Landing the wiring while it is still a no-op lets
@@ -1077,9 +1089,11 @@ Add to `CatalogueIntegrityTests`:
 Add the `OwnerState.seedWithAllCardsOwned(catalogue:)` test helper to `PinnedOwnerState.swift`: it returns `PinnedOwnerState.make()` with `ownedCardIds` set to every `cardId` and `valuationsCad` set to `Valuations(programs: try SeedLoader.loadPrograms().defaults)`.
 
 > **⚠ This helper is the one place `loadPrograms()` reaches the scoring path, and it is a test.**
-> It makes `testNoCatalogueCardIsExcludedForAnUnvaluedProgram` pass while production still excludes
-> those cards — see the OPEN GAP callout in Task 6. Resolve the merge-point decision first, then
-> build this helper on the same production path rather than hand-assembling the defaults here.
+> **Superseded 2026-08-20.** The merge is now wired into `RecommendationEngine.init`, so this
+> helper should no longer hand-assemble `Valuations(programs: loadPrograms().defaults)` — doing so
+> would re-create the very blind spot it used to hide, testing the defaults rather than the path
+> that reads them. Build it as `PinnedOwnerState.make()` with every `cardId` owned and leave
+> `valuationsCad` alone; the engine supplies the defaults. See the resolved callout in Task 6.
 
 - [ ] **Step 5: Commit**
 

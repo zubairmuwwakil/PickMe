@@ -4,6 +4,12 @@ One entry per catalogue/fixture change (spec §3). Newest first.
 
 ## 2026-08-20 — programs.json: catalogue-level default valuations; catalogueVersion 1.3
 
+- **`programs.json` is read by the scoring path**, not just shipped: `RecommendationEngine.init`
+  merges these defaults beneath whatever the owner has declared, so every scoring caller
+  (PortfolioAnalyzer, RecurringAuditor, CategoryPickerAdvisor, Store's CheckoutService) picks them
+  up — including owner states restored from a device, which never pass through `SeedLoader`. The
+  owner's own declaration wins every key it sets; the catalogue only fills gaps. Against today's
+  data the merge is a verified no-op, which is why the 27 fixtures still pass byte-unchanged.
 - **New contract `programs.json`** (+ `schema/programs.schema.json`), copied into Engine and
   Android resources by both sync scripts and guarded by `ContractsSyncTests`. It holds the
   catalogue's DEFAULT valuation per `programId`; `OwnerState.valuationsCad` overrides any entry

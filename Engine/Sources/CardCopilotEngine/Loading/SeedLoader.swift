@@ -41,6 +41,19 @@ public enum SeedLoader {
         try load("programs")
     }
 
+    /// The catalogue's default valuations, decoded once and reused.
+    ///
+    /// Traps rather than falling back to `[:]`. programs.json is a resource compiled into the
+    /// bundle and gated by ContractsSyncTests and SeedLoaderTests, so it cannot be unreadable at
+    /// runtime without the build itself being broken — and an empty fallback would silently
+    /// unvalue every program the owner has not declared, which is the exact failure this
+    /// contract exists to prevent. Matches the house response to misconfigured catalogue data,
+    /// `RecommendationEngine`'s `precondition(!scores.isEmpty)`.
+    public static let programValuationDefaults: [String: ProgramValuation] = {
+        do { return try loadPrograms().defaults }
+        catch { preconditionFailure("contracts/programs.json is unreadable: \(error)") }
+    }()
+
     /// catalogueVersion is "MAJOR.MINOR" (contracts/schema/card-catalogue.schema.json). Refuses to
     /// load a MAJOR this build doesn't recognize rather than silently misinterpreting a breaking
     /// shape change.

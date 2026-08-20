@@ -62,6 +62,32 @@ public struct CardState: Codable, Equatable, Sendable {
 /// decoration — the disclosure UI renders it, and CLAUDE.md's valuation policy is that a point
 /// value is a forecast of redemption behaviour, never a fact. ctMoney's usability factor and
 /// cro's held-risk factor are the most assumption-laden numbers in the catalogue and need it most.
+public extension OwnerState {
+    /// This owner state with the catalogue's default valuations filled in *beneath* the owner's
+    /// own. Every key the owner declares wins; defaults only fill gaps.
+    ///
+    /// A valuation is a personal forecast of redemption behaviour, so the catalogue may supply a
+    /// number where the owner has none but must never overrule one they have declared. That
+    /// direction is the whole contract.
+    ///
+    /// Applied at `RecommendationEngine.init`, which every scoring path funnels through —
+    /// PortfolioAnalyzer, RecurringAuditor, CategoryPickerAdvisor and Store's CheckoutService all
+    /// construct one. Merging at `SeedLoader.loadOwnerState()` instead would reach the shipped
+    /// seed and nothing else: owner states restored from a device by
+    /// `AccountOwnerStateStore` never pass through SeedLoader, and those are the real wallets.
+    ///
+    /// Idempotent, so re-merging an already-merged state (PortfolioAnalyzer builds sub-engines
+    /// from a state it already holds) costs a dictionary merge and changes nothing.
+    func applyingCatalogueValuationDefaults(
+        _ defaults: [String: ProgramValuation] = SeedLoader.programValuationDefaults
+    ) -> OwnerState {
+        var merged = self
+        merged.valuationsCad.programs = defaults
+            .merging(valuationsCad.programs) { _, ownerDeclared in ownerDeclared }
+        return merged
+    }
+}
+
 public struct PointValuation: Codable, Equatable, Sendable {
     public var centsPerPoint: Double
     public var floorCentsPerPoint: Double?
