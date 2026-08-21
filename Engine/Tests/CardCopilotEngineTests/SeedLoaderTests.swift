@@ -67,7 +67,7 @@ final class SeedLoaderTests: XCTestCase {
 extension SeedLoaderTests {
     func testLoadsProgramDefaults() throws {
         let programs = try SeedLoader.loadPrograms()
-        XCTAssertEqual(programs.programsVersion, "1.0")
+        XCTAssertEqual(programs.programsVersion, "1.1")
         guard case .cashback(let cash) = try XCTUnwrap(programs.defaults["cashback"])
         else { return XCTFail("expected .cashback") }
         XCTAssertEqual(cash.cadPerDollar, 1.0)
@@ -101,10 +101,15 @@ extension SeedLoaderTests {
         }
     }
 
-    /// programs.json and the shipped owner state must value the same programs under the same
-    /// models. A program the owner state values but the defaults do not means a fresh install
-    /// with no owner state cannot score that program at all; a programId valued as points in one
-    /// and cashback in the other is a data bug that only surfaces as a wrong number.
+    /// Every program the shipped owner state values must also be valued in programs.json, under
+    /// the same model. A program the owner state values but the defaults do not means a fresh
+    /// install with no owner state cannot score that program at all; a programId valued as
+    /// points in one and cashback in the other is a data bug that only surfaces as a wrong
+    /// number.
+    ///
+    /// A SUBSET, not an equality: since 2026-08-20 programs.json values all sixteen catalogue
+    /// programIds while the owner state declares six. The defaults exceeding the owner state is
+    /// the point of the file — the reverse is the bug.
     ///
     /// Deliberately does NOT assert the numbers agree. They do today, because programs.json was
     /// derived from the shipped owner state — but a valuation is a personal forecast of
@@ -115,8 +120,10 @@ extension SeedLoaderTests {
         let defaults = try SeedLoader.loadPrograms().defaults
         let owner = try SeedLoader.loadOwnerState().valuationsCad
 
-        XCTAssertEqual(Set(defaults.keys), Set(owner.programs.keys),
-                       "programs.json and owner-state.json value different program sets")
+        XCTAssertTrue(Set(owner.programs.keys).isSubset(of: Set(defaults.keys)),
+            "owner-state.json values program(s) programs.json does not: "
+          + "\(Set(owner.programs.keys).subtracting(defaults.keys).sorted()). A fresh install "
+          + "with no owner state cannot score those at all.")
 
         for (programId, ownerValuation) in owner.programs {
             switch (ownerValuation, try XCTUnwrap(defaults[programId], programId)) {

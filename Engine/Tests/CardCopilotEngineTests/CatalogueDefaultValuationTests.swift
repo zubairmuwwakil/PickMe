@@ -48,14 +48,30 @@ final class CatalogueDefaultValuationTests: XCTestCase {
                        owner.valuationsCad["cro"])
     }
 
-    /// Against the shipped contracts the merge changes nothing. Pinning that is what lets this
-    /// wiring land while the 27 golden fixtures still prove it behaviour-preserving; the day
-    /// programs.json gains a program owner-state.json lacks, this is expected to fail and be
-    /// replaced by a case describing the new behaviour.
-    func testMergeIsANoOpAgainstTheShippedContractsToday() throws {
+    /// The merge stopped being a no-op on 2026-08-20, which is the point of that day's work.
+    /// It replaces `testMergeIsANoOpAgainstTheShippedContractsToday`, which pinned the no-op
+    /// while programs.json and owner-state.json valued the same six programs and which its own
+    /// comment said to retire here.
+    ///
+    /// Two halves, and both matter. The merge must ADD the ten programs the owner has never
+    /// declared — otherwise every card on them is still excluded — and it must leave the six the
+    /// owner HAS declared untouched, byte for byte. A merge that quietly restated the owner's own
+    /// Membership Rewards number as the catalogue's would move the 27 golden fixtures, because
+    /// they are pinned above the shipped 1.0¢ floor.
+    func testMergeAddsTheCatalogueOnlyProgramsAndDisturbsNoneTheOwnerDeclares() throws {
         let owner = try SeedLoader.loadOwnerState()
-        XCTAssertEqual(owner.applyingCatalogueValuationDefaults().valuationsCad,
-                       owner.valuationsCad)
+        let merged = owner.applyingCatalogueValuationDefaults().valuationsCad
+
+        for (programId, declared) in owner.valuationsCad.programs {
+            XCTAssertEqual(merged[programId], declared,
+                           "the catalogue overwrote the owner's own valuation for '\(programId)'")
+        }
+
+        let added = Set(merged.programs.keys).subtracting(owner.valuationsCad.programs.keys)
+        XCTAssertEqual(added, ["scenePlus", "aeroplan", "rbcAvion", "tdRewards", "bmoRewards",
+                               "aventura", "nbcRewards", "pcOptimum", "westJetPoints",
+                               "amazonRewards"],
+                       "the catalogue-only programs are what make the other 14 cards scorable")
     }
 
     // MARK: - The wiring

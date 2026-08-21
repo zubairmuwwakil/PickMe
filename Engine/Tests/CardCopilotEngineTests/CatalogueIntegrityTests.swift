@@ -9,13 +9,13 @@ import XCTest
 /// if that is genuinely intended, say so in contracts/CHANGELOG.md in the same commit.
 final class CatalogueIntegrityTests: XCTestCase {
 
-    /// Programs with no valuation. Every card on one is now EXCLUDED from scoring with
-    /// Warning.unsupportedProgram — it used to score $0.00 and rank last, which read as advice.
-    /// Deleted by Task 7 as programs.json gains defaults.
-    static let knownUnvaluedPrograms: Set<String> = [
-        "scenePlus", "aeroplan", "rbcAvion", "tdRewards", "bmoRewards",
-        "aventura", "nbcRewards", "pcOptimum", "westJetPoints", "amazonRewards",
-    ]
+    /// Programs with no valuation. Every card on one is EXCLUDED from scoring with
+    /// Warning.unsupportedProgram — such a card used to score $0.00 and rank last, which read
+    /// as advice. EMPTY since 2026-08-20: every programId the catalogue declares now carries a
+    /// sourced default in contracts/programs.json. Keep it empty. Adding an entry here means
+    /// shipping a card the engine cannot score, and the ratchet below is set to zero so that
+    /// has to be an argued exception rather than a quiet one.
+    static let knownUnvaluedPrograms: Set<String> = []
 
     /// Owner conditions declared in the catalogue with no case in RuleMatcher.
     /// Each fails closed silently. Deleted when CardState.flags lands (spec §3.2).
@@ -101,8 +101,52 @@ final class CatalogueIntegrityTests: XCTestCase {
     /// The allowlists are debt, not design. This pins their size so growth is a deliberate,
     /// reviewed act rather than a quiet regression.
     func testKnownGapListsDoNotGrow() {
-        XCTAssertLessThanOrEqual(Self.knownUnvaluedPrograms.count, 10)
+        XCTAssertLessThanOrEqual(Self.knownUnvaluedPrograms.count, 0)
         XCTAssertLessThanOrEqual(Self.knownUnhandledConditions.count, 1)
         XCTAssertLessThanOrEqual(Self.knownUnresolvableAnchors.count, 2)
+    }
+
+    /// The headline outcome: no card in the catalogue is structurally unable to be scored.
+    ///
+    /// Routed through RecommendationEngine rather than a hand-assembled `Valuations`, because
+    /// the catalogue defaults are merged in the engine's init. Building the owner state with
+    /// `Valuations(programs: loadPrograms().defaults)` here would assert that programs.json
+    /// contains sixteen entries — which the tests above already do — while saying nothing about
+    /// whether the scoring path ever reads them. That blind spot is the one this whole phase
+    /// exists to close.
+    func testNoCatalogueCardIsExcludedForAnUnvaluedProgram() throws {
+        let catalogue = try SeedLoader.loadCatalogue()
+        let engine = RecommendationEngine(
+            catalogue: catalogue,
+            ownerState: try OwnerState.seedWithAllCardsOwned(catalogue: catalogue))
+        let purchase = PurchaseContext(amountCad: 100, category: "other")
+
+        for card in catalogue.cards {
+            let score = Scorer.score(card: card, purchase: purchase,
+                                     ownerState: engine.ownerState, asOf: "2026-08-20")
+            XCTAssertFalse(score.warnings.contains(.unsupportedProgram),
+                           "\(card.cardId) still has no valuation")
+        }
+    }
+
+    /// A card with NO fx rule is not a fee-free card — it is a card whose FX data is missing.
+    ///
+    /// `Scorer` reads "no active rule" as zero FX cost, so an empty `fxRules` ranks the card as
+    /// well as Wealthsimple on every foreign-currency purchase. Three cards shipped that way
+    /// (rbc-ion-plus-visa, bmo-ascend-world-elite, cibc-aventura-visa) and nobody saw it, because
+    /// all three were unscorable until their programs gained valuations on 2026-08-20 — the gap
+    /// was hidden behind another gap.
+    ///
+    /// The schema cannot catch this: `"fxRules": []` is valid JSON against it, and has to stay
+    /// valid, because absence and zero are different claims. Genuinely fee-free cards say so out
+    /// loud with `rate: 0.0` — wealthsimple-vip, scotia-gold-amex and scotia-passport all do —
+    /// so requiring at least one rule costs nothing and closes the hole. No allowlist: there is
+    /// no honest reason for a card to decline to state its FX terms.
+    func testEveryCardDeclaresAnFxRule() throws {
+        let silent = try allCards().filter { $0.fxRules.isEmpty }.map(\.cardId)
+        XCTAssertTrue(silent.isEmpty,
+            "card(s) declaring no fxRule: \(silent.sorted()). Scorer charges them $0.00 FX, so "
+          + "they outrank every 2.5% card on foreign purchases. State the rate — a fee-free card "
+          + "declares rate 0.0 rather than saying nothing.")
     }
 }

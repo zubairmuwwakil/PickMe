@@ -49,3 +49,18 @@ extension SeedLoader {
         return state
     }
 }
+
+/// Every card in the catalogue, owned, with the owner's own valuations left exactly as shipped.
+///
+/// Deliberately does NOT hand-assemble `Valuations(programs: SeedLoader.loadPrograms().defaults)`.
+/// Doing that would make the catalogue defaults present by construction, and a test built on it
+/// would keep passing with the merge in `RecommendationEngine.init` deleted — testing the data
+/// file rather than the path that reads it. Pass this to a `RecommendationEngine` and let the
+/// engine supply the defaults, the way every real caller does.
+extension OwnerState {
+    static func seedWithAllCardsOwned(catalogue: Catalogue) throws -> OwnerState {
+        var state = try SeedLoader.loadPinnedOwnerState()
+        state.ownedCardIds = catalogue.cards.map(\.cardId)
+        return state
+    }
+}
