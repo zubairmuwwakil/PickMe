@@ -5,6 +5,7 @@ import com.cardcopilot.engine.loading.SeedLoader
 import com.cardcopilot.engine.models.CardState
 import com.cardcopilot.engine.models.OwnerState
 import com.cardcopilot.engine.models.PurchaseContext
+import com.cardcopilot.engine.models.RecommendationOutcome
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -76,6 +77,7 @@ class FixtureHarnessTest {
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
+        classDiscriminator = "model"
     }
 
     @Test
@@ -93,12 +95,15 @@ class FixtureHarnessTest {
         val catalogue = SeedLoader.loadCatalogue()
         var baseState = SeedLoader.loadOwnerState()
 
-        val updatedValuations = baseState.valuationsCad.copy(
-            amexMembershipRewards = baseState.valuationsCad.amexMembershipRewards.copy(
-                centsPerPoint = fixtureFile.pinnedValuations.amexMembershipRewards
-            )
+        // Pinned rather than inherited — see pinnedValuations._why in the fixture file. The
+        // engine merges catalogue defaults on construction, so pinning the owner-declared entry
+        // still wins: owner state overrides programs.json, never the other way round.
+        val pinnedAmex = requireNotNull(baseState.valuationsCad.points("amexMembershipRewards")) {
+            "owner state must declare a points valuation for amexMembershipRewards"
+        }.copy(centsPerPoint = fixtureFile.pinnedValuations.amexMembershipRewards)
+        baseState = baseState.copy(
+            valuationsCad = baseState.valuationsCad.setting("amexMembershipRewards", pinnedAmex)
         )
-        baseState = baseState.copy(valuationsCad = updatedValuations)
 
         val defaultAsOf = "2026-08-20"
 
@@ -136,7 +141,9 @@ class FixtureHarnessTest {
             }
 
             val engine = RecommendationEngine(catalogue, state)
-            val r = engine.recommend(fixture.purchase, fixture.asOf ?: defaultAsOf)
+            val outcome = engine.recommend(fixture.purchase, fixture.asOf ?: defaultAsOf)
+            val r = (outcome as? RecommendationOutcome.Advised)?.recommendation
+                ?: throw AssertionError("$ctx: expected an advised recommendation, got refusal")
             val e = fixture.expected
 
             assertEquals(e.winner, r.winner.cardId, ctx)

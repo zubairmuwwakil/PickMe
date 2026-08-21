@@ -179,7 +179,7 @@ class PortfolioAnalyzer(
                 }
 
                 val engine = RecommendationEngine(subCatalogue, state)
-                val candidates = engine.recommend(purchase, monthAsOf).allCandidates
+                val candidates = engine.recommendOrNull(purchase, monthAsOf)?.allCandidates ?: emptyList()
                 scorable.addAll(candidates.map { it.cardId })
                 val best = candidates.firstOrNull() ?: continue
 

@@ -123,7 +123,11 @@ fun CardCopilotApp() {
                                 confidenceSource = result.prediction.confidenceSource,
                                 recommendation = result.primaryRecommendation,
                                 scoredAmountCad = result.scoredContext.amountCad,
-                                valuationCentsPerPoint = ownerState.valuationsCad.amexMembershipRewards.centsPerPoint,
+                                // Nullable since valuations became a keyed dictionary: null records "the owner
+                                // declared none", which is the truth, rather than a zero that would read
+                                // as a deliberate valuation of nothing.
+                                valuationCentsPerPoint = ownerState.valuationsCad
+                                    .points("amexMembershipRewards")?.centsPerPoint,
                                 headline = result.explanation.headline
                             )
                         }

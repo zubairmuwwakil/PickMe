@@ -108,16 +108,18 @@ object CategoryPickerAdvisor {
         val engine = RecommendationEngine(catalogue, ownerState)
         val template = enrichedTemplate(category, distribution)
 
-        fun recommendation(cents: Int): Recommendation {
+        fun recommendation(cents: Int): Recommendation? {
             val context = template.copy(amountCad = cents.toDouble() / 100.0)
-            return engine.recommend(context, asOf)
+            return engine.recommendOrNull(context, asOf)
         }
 
         val sweepMaxCad = sweepCeilingCad(catalogue)
         val boundaryCents = detectBoundaryCents({ recommendation(it) }, sweepMaxCad)
 
         if (boundaryCents.isEmpty()) {
-            val rec = recommendation(100)
+            // Constant across the whole sweep — any point proves it. $1 keeps the evaluated
+            // context sane without implying a "typical" amount that isn't real.
+            val rec = recommendation(100) ?: return emptyList()
             return listOf(
                 AmountBand(
                     lowerBoundCad = 0.0,
@@ -132,7 +134,7 @@ object CategoryPickerAdvisor {
         var lowerCents = 0
         for (boundaryCentsValue in boundaryCents) {
             val representativeCents = lowerCents + maxOf(1, (boundaryCentsValue - lowerCents) / 2)
-            val rec = recommendation(representativeCents)
+            val rec = recommendation(representativeCents) ?: continue
             result.add(
                 AmountBand(
                     lowerBoundCad = lowerCents.toDouble() / 100.0,
@@ -145,7 +147,7 @@ object CategoryPickerAdvisor {
         }
 
         val finalCents = maxOf(lowerCents + 1, (sweepMaxCad * 100.0).roundToInt())
-        val finalRec = recommendation(finalCents)
+        val finalRec = recommendation(finalCents) ?: return result
         result.add(
             AmountBand(
                 lowerBoundCad = lowerCents.toDouble() / 100.0,
@@ -158,7 +160,7 @@ object CategoryPickerAdvisor {
     }
 
     fun detectBoundaryCents(
-        recommendation: (Int) -> Recommendation,
+        recommendation: (Int) -> Recommendation?,
         sweepMaxCad: Double
     ): List<Int> {
         val sweepMaxCents = maxOf((sweepMaxCad * 100.0).roundToInt(), 100)
@@ -171,8 +173,11 @@ object CategoryPickerAdvisor {
         for (i in 0..sampleCount) {
             val t = i.toDouble() / sampleCount.toDouble()
             val cents = maxOf(minCents, (minCents.toDouble() * ratio.pow(t)).roundToInt())
-            samples.add(Sample(cents, recommendation(cents).winner.cardId))
+            val cardId = recommendation(cents)?.winner?.cardId ?: continue
+            samples.add(Sample(cents, cardId))
         }
+
+        if (samples.isEmpty()) return emptyList()
 
         val boundaries = mutableListOf<Int>()
         for (i in 1 until samples.size) {
@@ -201,7 +206,7 @@ object CategoryPickerAdvisor {
         lowCents: Int,
         lowCardId: String,
         highCents: Int,
-        recommendation: (Int) -> Recommendation
+        recommendation: (Int) -> Recommendation?
     ): Int {
         var lo = lowCents
         var hi = highCents
@@ -221,9 +226,9 @@ object CategoryPickerAdvisor {
     fun isSameRegime(
         cardId: String,
         cents: Int,
-        recommendation: (Int) -> Recommendation
+        recommendation: (Int) -> Recommendation?
     ): Boolean {
-        val rec = recommendation(cents)
+        val rec = recommendation(cents) ?: return false
         if (rec.winner.cardId == cardId) return true
         val candidate = rec.allCandidates.firstOrNull { it.cardId == cardId } ?: return false
         if (candidate.excluded) return false

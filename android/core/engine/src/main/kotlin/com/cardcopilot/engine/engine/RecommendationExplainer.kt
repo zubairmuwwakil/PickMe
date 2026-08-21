@@ -73,6 +73,11 @@ class RecommendationExplainer(catalogue: Catalogue) {
             Warning.UNRESOLVED_OWNER_STATE -> "Card skipped — account state not set up yet."
             Warning.FX_ALLOWANCE_ASSUMED -> "Assumed within this card's monthly FX-free allowance."
             Warning.HYPOTHETICAL_SELECTION -> "Assumes this is one of your selected 2% categories — check your selections."
+            Warning.UNSUPPORTED_PROGRAM -> "Card skipped — you haven't set what this card's rewards are worth."
+            // Reachable on a card that WON: the excluded case never reaches an explanation, because
+            // an excluded card is never the winner. Worded for the case the owner can actually see.
+            Warning.UNSUPPORTED_CAPABILITY ->
+                "This card has a better rule here that this app can't check yet — it may be worth more than shown."
         }
     }
 

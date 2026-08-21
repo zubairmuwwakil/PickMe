@@ -328,7 +328,8 @@ class RecurringAuditor(
             recurringIndicator = flagged,
             acceptedNetworks = payment.effectiveAcceptedNetworks
         )
-        val candidates = RecommendationEngine(catalogue, ownerState).recommend(purchase, asOf).allCandidates
+        val candidates = RecommendationEngine(catalogue, ownerState)
+            .recommendOrNull(purchase, asOf)?.allCandidates ?: emptyList()
         return ScoredWorld(
             candidates = candidates,
             perYear = payment.cadence.chargesPerYear,

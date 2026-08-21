@@ -7,6 +7,7 @@ import com.cardcopilot.engine.models.Catalogue
 import com.cardcopilot.engine.models.OwnerState
 import com.cardcopilot.engine.models.PurchaseContext
 import com.cardcopilot.engine.models.Recommendation
+import com.cardcopilot.engine.models.RecommendationOutcome
 import com.cardcopilot.store.models.CategoryPrediction
 import com.cardcopilot.store.models.ConfidenceSource
 import com.cardcopilot.store.models.NearbyMerchant
@@ -15,6 +16,14 @@ data class CheckoutBranch(
     val category: String,
     val recommendation: Recommendation
 )
+
+/**
+ * The engine declined to advise, with the per-card reasons it gave. Checkout has no honest
+ * fallback here — a card the engine cannot value is not a card it can rank — so this surfaces
+ * rather than degrading to a $0.00 winner. The Kotlin twin of Swift's `CheckoutError`.
+ */
+class CannotAdviseException(val reasons: List<String>) :
+    Exception("cannot advise: ${reasons.joinToString("; ")}")
 
 sealed interface CheckoutOutcome {
     data class Single(val recommendation: Recommendation) : CheckoutOutcome
@@ -65,8 +74,14 @@ class CheckoutService(
             acceptedNetworks = networks
         )
 
+        fun recommend(context: PurchaseContext): Recommendation =
+            when (val outcome = engine.recommend(context, asOf)) {
+                is RecommendationOutcome.Advised -> outcome.recommendation
+                is RecommendationOutcome.CannotAdvise -> throw CannotAdviseException(outcome.reasons)
+            }
+
         if (prediction.candidates.size <= 1) {
-            val rec = engine.recommend(primaryContext, asOf)
+            val rec = recommend(primaryContext)
             val explanation = explainer.explain(rec, primaryContext)
             return CheckoutResult(
                 merchant = merchant,
@@ -85,7 +100,7 @@ class CheckoutService(
             )
             CheckoutBranch(
                 category = cat,
-                recommendation = engine.recommend(branchContext, asOf)
+                recommendation = recommend(branchContext)
             )
         }
 
