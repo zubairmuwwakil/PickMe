@@ -55,7 +55,7 @@ public struct QuickRecommendProvider: TimelineProvider {
         let today = Date().formatted(.iso8601.year().month().day())
         for item in testCategories {
             let context = PurchaseContext(amountCad: item.amount, category: item.id)
-            let rec = RecommendationEngine(catalogue: catalogue, ownerState: ownerState).recommend(context, asOf: today)
+            guard case .advised(let rec) = RecommendationEngine(catalogue: catalogue, ownerState: ownerState).recommend(context, asOf: today) else { continue }
             let cardName = catalogue.cards.first(where: { $0.cardId == rec.winner.cardId })?.officialName ?? rec.winner.cardId
             // Shorten card name for widget
             let shortCardName = cardName.replacingOccurrences(of: "American Express", with: "Amex")

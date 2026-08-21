@@ -15,7 +15,8 @@ final class ExplainerTests: XCTestCase {
 
     func testGroceryExplanation() {
         let p = PurchaseContext(amountCad: 100, category: "grocery", mcc: 5411, merchantBrand: "loblaws")
-        let e = explainer.explain(engine.recommend(p, asOf: asOf), purchase: p)
+        guard case .advised(let rec) = engine.recommend(p, asOf: asOf) else { return XCTFail("expected .advised") }
+        let e = explainer.explain(rec, purchase: p)
         XCTAssertEqual(e.headline,
                        "Use American Express Cobalt Card — about $9.00 back on this $100.00 purchase.")
         XCTAssertEqual(e.runnerUpLine,
@@ -24,7 +25,8 @@ final class ExplainerTests: XCTestCase {
 
     func testTaxiSuppressionExplanation() {
         let p = PurchaseContext(amountCad: 12, category: "transit", mcc: 4121)
-        let e = explainer.explain(engine.recommend(p, asOf: asOf), purchase: p)
+        guard case .advised(let rec) = engine.recommend(p, asOf: asOf) else { return XCTFail("expected .advised") }
+        let e = explainer.explain(rec, purchase: p)
         XCTAssertEqual(e.headline,
                        "Stay on Wealthsimple Visa Infinite Privilege Credit Card — about $0.24 back on this $12.00 purchase.")
         XCTAssertEqual(e.runnerUpLine,
@@ -34,7 +36,8 @@ final class ExplainerTests: XCTestCase {
     func testDrawerCardWarningSurfaces() {
         let p = PurchaseContext(amountCad: 150, category: "ctFamily", mcc: 5200,
                                 merchantBrand: "canadian-tire")
-        let e = explainer.explain(engine.recommend(p, asOf: asOf), purchase: p)
+        guard case .advised(let rec) = engine.recommend(p, asOf: asOf) else { return XCTFail("expected .advised") }
+        let e = explainer.explain(rec, purchase: p)
         XCTAssertTrue(e.headline.hasPrefix("Use Triangle World Elite Mastercard"))
         XCTAssertTrue(e.warningLines.contains("This card is in your drawer — bring it or take the runner-up."))
     }

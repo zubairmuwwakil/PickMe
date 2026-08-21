@@ -133,6 +133,11 @@ public struct Fee: Codable, Equatable, Sendable {
 public struct Program: Codable, Equatable, Sendable {
     public var programId: String
     public var unit: String
+
+    public init(programId: String, unit: String) {
+        self.programId = programId
+        self.unit = unit
+    }
 }
 
 /// A recurring statement credit the issuer grants for holding the card — Platinum's annual travel

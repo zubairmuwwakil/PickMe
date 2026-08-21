@@ -184,7 +184,9 @@ public struct ShareAdvisorView: View {
             channel: "online"
         )
         let today = Date().formatted(.iso8601.year().month().day())
-        let rec = RecommendationEngine(catalogue: catalogue, ownerState: ownerState).recommend(context, asOf: today)
+        guard case .advised(let rec) = RecommendationEngine(catalogue: catalogue, ownerState: ownerState).recommend(context, asOf: today) else {
+            return ("No recommendation", "Unable to advise for this wallet", nil)
+        }
         let card = catalogue.cards.first(where: { $0.cardId == rec.winner.cardId })
         let explanation = RecommendationExplainer(catalogue: catalogue).explain(rec, purchase: context)
         return (card?.officialName ?? rec.winner.cardId, explanation.headline, rec.advantageOverDefaultCad)

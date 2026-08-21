@@ -55,6 +55,10 @@ public enum CheckoutOutcome: Sendable {
     case fork([CheckoutBranch])
 }
 
+public enum CheckoutError: Error, Equatable, Sendable {
+    case cannotAdvise(reasons: [String])
+}
+
 public struct CheckoutResult: Sendable {
     public let merchant: NearbyMerchant
     public let prediction: CategoryPrediction
@@ -103,20 +107,26 @@ public struct CheckoutService {
             ?? categoryAmountEstimates[prediction.category]
             ?? fallbackAmountEstimate
 
-        func recommend(for category: String) -> Recommendation {
-            engine.recommend(PurchaseContext(amountCad: effectiveAmount,
-                                             category: category,
-                                             merchantBrand: brand,
-                                             acceptedNetworks: knownAcceptedNetworks(for: brand)),
-                             asOf: asOf)
+        func recommend(for category: String) throws -> Recommendation {
+            let outcome = engine.recommend(PurchaseContext(amountCad: effectiveAmount,
+                                                           category: category,
+                                                           merchantBrand: brand,
+                                                           acceptedNetworks: knownAcceptedNetworks(for: brand)),
+                                           asOf: asOf)
+            switch outcome {
+            case .advised(let rec):
+                return rec
+            case .cannotAdvise(let reasons):
+                throw CheckoutError.cannotAdvise(reasons: reasons)
+            }
         }
 
         let ambiguous = prediction.candidates.count > 1
         let outcome: CheckoutOutcome
         let primary: Recommendation
         if ambiguous {
-            let branches = prediction.candidates.map {
-                CheckoutBranch(category: $0, recommendation: recommend(for: $0))
+            let branches = try prediction.candidates.map {
+                CheckoutBranch(category: $0, recommendation: try recommend(for: $0))
             }
             let winners = Set(branches.map(\.recommendation.winner.cardId))
             if winners.count == 1 {
@@ -128,7 +138,7 @@ public struct CheckoutService {
                 outcome = .fork(branches)
             }
         } else {
-            primary = recommend(for: prediction.category)
+            primary = try recommend(for: prediction.category)
             outcome = .single(primary)
         }
 

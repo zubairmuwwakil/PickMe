@@ -99,8 +99,10 @@ final class CatalogueDefaultValuationTests: XCTestCase {
         owner.valuationsCad["cashback"] = nil
 
         let purchase = PurchaseContext(amountCad: 100, category: "other")
-        let recommendation = RecommendationEngine(catalogue: catalogue, ownerState: owner)
-            .recommend(purchase, asOf: "2026-08-20")
+        guard case .advised(let recommendation) = RecommendationEngine(catalogue: catalogue, ownerState: owner)
+            .recommend(purchase, asOf: "2026-08-20") else {
+            return XCTFail("expected .advised recommendation")
+        }
         let wealthsimple = try XCTUnwrap(
             recommendation.allCandidates.first { $0.cardId == "wealthsimple-vip" },
             "wealthsimple-vip is the seed default card and is on the cashback program")

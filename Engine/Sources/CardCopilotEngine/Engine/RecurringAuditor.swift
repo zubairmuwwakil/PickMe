@@ -383,7 +383,7 @@ public struct RecurringAuditor {
                                        recurringIndicator: flagged,
                                        acceptedNetworks: payment.effectiveAcceptedNetworks)
         let candidates = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
-            .recommend(purchase, asOf: asOf).allCandidates
+            .recommendOrNil(purchase, asOf: asOf)?.allCandidates ?? []
         return ScoredWorld(candidates: candidates,
                            perYear: payment.cadence.chargesPerYear,
                            defaultCardId: ownerState.defaultCardId)

@@ -386,8 +386,8 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
         let purchase = ambientPurchaseContext(merchant: arrival.merchant,
                                               category: arrival.prediction.category)
-        let recommendation = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
-            .recommend(purchase, asOf: Date().formatted(.iso8601.year().month().day()))
+        guard case .advised(let recommendation) = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
+            .recommend(purchase, asOf: Date().formatted(.iso8601.year().month().day())) else { return }
         let advantageCad = recommendation.advantageOverDefaultCad ?? 0
         let advantagePP = purchase.amountCad > 0 ? advantageCad / purchase.amountCad * 100 : 0
 

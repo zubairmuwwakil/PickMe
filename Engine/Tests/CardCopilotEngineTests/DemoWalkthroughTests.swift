@@ -27,10 +27,9 @@ final class DemoWalkthroughTests: XCTestCase {
 
         print("\n════════ A day of checkouts ════════")
         for (label, purchase) in day {
-            let e = explainer.explain(
-                RecommendationEngine(catalogue: catalogue, ownerState: state)
-                    .recommend(purchase, asOf: "2026-08-20"),
-                purchase: purchase)
+            guard case .advised(let rec) = RecommendationEngine(catalogue: catalogue, ownerState: state)
+                .recommend(purchase, asOf: "2026-08-20") else { continue }
+            let e = explainer.explain(rec, purchase: purchase)
             print("\n▸ \(label)\n  \(e.headline)\n  \(e.why)")
             if let runnerUp = e.runnerUpLine { print("  \(runnerUp)") }
             if let valuation = e.valuationLine { print("  ⓘ \(valuation)") }
@@ -41,10 +40,9 @@ final class DemoWalkthroughTests: XCTestCase {
         state.cardStates["amex-cobalt"]?.capProgress?["cobalt-eats-monthly"] = 2500
         let capped = PurchaseContext(amountCad: 140, category: "grocery", mcc: 5411,
                                      merchantBrand: "loblaws")
-        let e = explainer.explain(
-            RecommendationEngine(catalogue: catalogue, ownerState: state)
-                .recommend(capped, asOf: "2026-08-20"),
-            purchase: capped)
+        guard case .advised(let cappedRec) = RecommendationEngine(catalogue: catalogue, ownerState: state)
+            .recommend(capped, asOf: "2026-08-20") else { return }
+        let e = explainer.explain(cappedRec, purchase: capped)
         print("\n▸ Loblaws groceries, $140\n  \(e.headline)\n  \(e.why)")
         if let runnerUp = e.runnerUpLine { print("  \(runnerUp)") }
         if let valuation = e.valuationLine { print("  ⓘ \(valuation)") }

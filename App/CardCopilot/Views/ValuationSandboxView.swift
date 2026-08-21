@@ -150,9 +150,13 @@ struct ValuationSandboxView: View {
         let context = PurchaseContext(amountCad: sample.amountCad, category: sample.category)
         let engine = RecommendationEngine(catalogue: deps.catalogue, ownerState: customOwner)
         let today = Date().formatted(.iso8601.year().month().day())
-        let recommendation = engine.recommend(context, asOf: today)
+        let outcome = engine.recommend(context, asOf: today)
 
-        let winnerName = deps.catalogue.cards.first { $0.cardId == recommendation.winner.cardId }?.officialName ?? recommendation.winner.cardId
-        return SimulationResult(winningCardName: winnerName, returnCad: recommendation.winner.netValueCad)
+        if case .advised(let recommendation) = outcome {
+            let winnerName = deps.catalogue.cards.first { $0.cardId == recommendation.winner.cardId }?.officialName ?? recommendation.winner.cardId
+            return SimulationResult(winningCardName: winnerName, returnCad: recommendation.winner.netValueCad)
+        } else {
+            return SimulationResult(winningCardName: "Cannot advise", returnCad: 0.0)
+        }
     }
 }

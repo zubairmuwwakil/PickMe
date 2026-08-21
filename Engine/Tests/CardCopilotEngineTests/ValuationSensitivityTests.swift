@@ -40,8 +40,8 @@ final class ValuationSensitivityTests: XCTestCase {
         var flips = 0
         print("\n═══ Membership Rewards valuation sensitivity: 1.8¢ vs 1.0¢ floor ═══")
         for (label, purchase) in checkouts {
-            let a = optimistic.recommend(purchase, asOf: "2026-08-20")
-            let b = floor.recommend(purchase, asOf: "2026-08-20")
+            guard case .advised(let a) = optimistic.recommend(purchase, asOf: "2026-08-20"),
+                  case .advised(let b) = floor.recommend(purchase, asOf: "2026-08-20") else { continue }
             let changed = a.winner.cardId != b.winner.cardId
             if changed { flips += 1 }
             let marker = changed ? "⚠ FLIPS" : "  same "

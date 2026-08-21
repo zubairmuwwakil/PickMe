@@ -94,22 +94,23 @@ struct ProtectionLensView: View {
     private var earnSection: some View {
         if let amount = amountCad {
             let today = Date().formatted(.iso8601.year().month().day())
-            let recommendation = deps.engine.recommend(
-                PurchaseContext(amountCad: amount, category: "other"), asOf: today)
-            Section("Best Reward Return") {
-                HStack(spacing: 12) {
-                    CardMiniBadge(cardId: recommendation.winner.cardId, size: 22)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(cardName(recommendation.winner.cardId))
-                            .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        Text("Earns ≈ $\(String(format: "%.2f", recommendation.winner.netValueCad)) back on $\(Int(amount))")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+            if case .advised(let recommendation) = deps.engine.recommend(
+                PurchaseContext(amountCad: amount, category: "other"), asOf: today) {
+                Section("Best Reward Return") {
+                    HStack(spacing: 12) {
+                        CardMiniBadge(cardId: recommendation.winner.cardId, size: 22)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(cardName(recommendation.winner.cardId))
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            Text("Earns ≈ $\(String(format: "%.2f", recommendation.winner.netValueCad)) back on $\(Int(amount))")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                    Text("Earn rewards and certificate protections are evaluated separately — the highest earning card may not offer the best insurance coverage.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
-                Text("Earn rewards and certificate protections are evaluated separately — the highest earning card may not offer the best insurance coverage.")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
             }
         }
     }

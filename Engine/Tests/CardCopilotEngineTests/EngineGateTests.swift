@@ -11,16 +11,16 @@ final class EngineGateTests: XCTestCase {
     }
 
     func testPharmacyHoldsDefault() {
-        let r = engine.recommend(PurchaseContext(amountCad: 30, category: "drugStore", mcc: 5912),
-                                 asOf: asOf)
+        guard case .advised(let r) = engine.recommend(PurchaseContext(amountCad: 30, category: "drugStore", mcc: 5912),
+                                                      asOf: asOf) else { return XCTFail("expected .advised") }
         XCTAssertEqual(r.winner.cardId, "wealthsimple-vip")
         XCTAssertFalse(r.switchedFromDefault)
         XCTAssertNil(r.suppressedBetterCard, "Tangerine only ties 2%, so nothing is strictly better")
     }
 
     func testTaxiSuppressionUnderBothSemantics() {
-        let r = engine.recommend(PurchaseContext(amountCad: 12, category: "transit", mcc: 4121),
-                                 asOf: asOf)
+        guard case .advised(let r) = engine.recommend(PurchaseContext(amountCad: 12, category: "transit", mcc: 4121),
+                                                      asOf: asOf) else { return XCTFail("expected .advised") }
         XCTAssertEqual(r.winner.cardId, "wealthsimple-vip")
         XCTAssertFalse(r.switchedFromDefault)
         XCTAssertEqual(r.suppressedBetterCard?.cardId, "amex-cobalt")
@@ -28,17 +28,19 @@ final class EngineGateTests: XCTestCase {
     }
 
     func testCostcoDefaultNotAccepted() {
-        let r = engine.recommend(PurchaseContext(amountCad: 200, category: "wholesaleClub", mcc: 5300,
-                                                 merchantBrand: "costco",
-                                                 acceptedNetworks: [.mastercard]), asOf: asOf)
+        guard case .advised(let r) = engine.recommend(PurchaseContext(amountCad: 200, category: "wholesaleClub", mcc: 5300,
+                                                                      merchantBrand: "costco",
+                                                                      acceptedNetworks: [.mastercard]), asOf: asOf)
+        else { return XCTFail("expected .advised") }
         XCTAssertTrue(r.defaultNotAccepted)
         XCTAssertEqual(r.winner.cardId, "rogers-red-we")
         XCTAssertEqual(r.winner.netValueCad, 3.00, accuracy: 0.005)
     }
 
     func testGroceryWinnerAndRunnerUp() {
-        let r = engine.recommend(PurchaseContext(amountCad: 100, category: "grocery", mcc: 5411,
-                                                 merchantBrand: "loblaws"), asOf: asOf)
+        guard case .advised(let r) = engine.recommend(PurchaseContext(amountCad: 100, category: "grocery", mcc: 5411,
+                                                                      merchantBrand: "loblaws"), asOf: asOf)
+        else { return XCTFail("expected .advised") }
         XCTAssertEqual(r.winner.cardId, "amex-cobalt")
         XCTAssertTrue(r.switchedFromDefault)
         XCTAssertEqual(r.runnerUp?.cardId, "mbna-rewards-we")
@@ -53,7 +55,8 @@ final class EngineGateTests: XCTestCase {
                                                 ownerState: customOwner)
         // Canadian Tire purchase over $10 - Triangle WE would normally win if all catalogue cards were considered,
         // but owner only owns SimplyCash.
-        let r = customEngine.recommend(PurchaseContext(amountCad: 50, category: "ctFamily"), asOf: asOf)
+        guard case .advised(let r) = customEngine.recommend(PurchaseContext(amountCad: 50, category: "ctFamily"), asOf: asOf)
+        else { return XCTFail("expected .advised") }
         XCTAssertEqual(r.winner.cardId, "amex-simplycash")
         XCTAssertEqual(r.allCandidates.map(\.cardId), ["amex-simplycash"])
     }

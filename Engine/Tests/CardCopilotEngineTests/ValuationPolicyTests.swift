@@ -20,8 +20,9 @@ final class ValuationPolicyTests: XCTestCase {
 
     func testGroceryIsValuationProof() {
         // Cobalt 5x wins even at the 1.0¢ floor (700 pts = $7.00 ties MBNA, tie-break holds).
-        let r = engine.recommend(PurchaseContext(amountCad: 140, category: "grocery", mcc: 5411,
-                                                 merchantBrand: "loblaws"), asOf: asOf)
+        guard case .advised(let r) = engine.recommend(PurchaseContext(amountCad: 140, category: "grocery", mcc: 5411,
+                                                                      merchantBrand: "loblaws"), asOf: asOf)
+        else { return XCTFail("expected .advised") }
         XCTAssertEqual(r.winner.cardId, "amex-cobalt")
         XCTAssertFalse(r.valuationSensitive)
         XCTAssertNil(r.breakevenCentsPerPoint)
@@ -30,8 +31,8 @@ final class ValuationPolicyTests: XCTestCase {
     func testCoffeeIsValuationSensitiveAgainstDefault() {
         // Cobalt 30 pts vs WS $0.12; the $0.25 switch floor sets the breakeven:
         // (0.12 + 0.25) × 100 / 30 = 1.2333¢.
-        let r = engine.recommend(PurchaseContext(amountCad: 6, category: "dining", mcc: 5814),
-                                 asOf: asOf)
+        guard case .advised(let r) = engine.recommend(PurchaseContext(amountCad: 6, category: "dining", mcc: 5814),
+                                                      asOf: asOf) else { return XCTFail("expected .advised") }
         XCTAssertEqual(r.winner.cardId, "amex-cobalt")
         XCTAssertTrue(r.valuationSensitive)
         XCTAssertEqual(r.alternateWinnerCardId, "wealthsimple-vip")
@@ -41,9 +42,10 @@ final class ValuationPolicyTests: XCTestCase {
 
     func testNetflixIsValuationSensitiveAgainstMbna() {
         // Cobalt 46.47 pts vs MBNA $0.7745 (non-default rival): 0.7745 × 100 / 46.47 = 1.6667¢.
-        let r = engine.recommend(PurchaseContext(amountCad: 15.49, category: "streaming", mcc: 5968,
-                                                 merchantBrand: "netflix", channel: "online",
-                                                 recurringIndicator: true), asOf: asOf)
+        guard case .advised(let r) = engine.recommend(PurchaseContext(amountCad: 15.49, category: "streaming", mcc: 5968,
+                                                                      merchantBrand: "netflix", channel: "online",
+                                                                      recurringIndicator: true), asOf: asOf)
+        else { return XCTFail("expected .advised") }
         XCTAssertEqual(r.winner.cardId, "amex-cobalt")
         XCTAssertTrue(r.valuationSensitive)
         XCTAssertEqual(r.alternateWinnerCardId, "mbna-rewards-we")
@@ -54,8 +56,8 @@ final class ValuationPolicyTests: XCTestCase {
     func testGasBreakevenUsesPercentageFloorOfThreshold() {
         // Cobalt 140 pts vs WS $1.40; on $70 the 0.5pp leg ($0.35) exceeds the $0.25 leg:
         // (1.40 + 0.35) × 100 / 140 = 1.25¢.
-        let r = engine.recommend(PurchaseContext(amountCad: 70, category: "gasStation", mcc: 5541),
-                                 asOf: asOf)
+        guard case .advised(let r) = engine.recommend(PurchaseContext(amountCad: 70, category: "gasStation", mcc: 5541),
+                                                      asOf: asOf) else { return XCTFail("expected .advised") }
         XCTAssertEqual(r.winner.cardId, "amex-cobalt")
         XCTAssertTrue(r.valuationSensitive)
         XCTAssertEqual(r.breakevenCentsPerPoint ?? .nan, 1.25, accuracy: 0.005)
@@ -63,8 +65,8 @@ final class ValuationPolicyTests: XCTestCase {
 
     func testNonPointsWinnerIsNeverSensitive() {
         // Pharmacy: WS wins outright; no valuation dependency to disclose.
-        let r = engine.recommend(PurchaseContext(amountCad: 30, category: "drugStore", mcc: 5912),
-                                 asOf: asOf)
+        guard case .advised(let r) = engine.recommend(PurchaseContext(amountCad: 30, category: "drugStore", mcc: 5912),
+                                                      asOf: asOf) else { return XCTFail("expected .advised") }
         XCTAssertEqual(r.winner.cardId, "wealthsimple-vip")
         XCTAssertFalse(r.valuationSensitive)
         XCTAssertNil(r.breakevenCentsPerPoint)
@@ -84,7 +86,8 @@ final class ValuationPolicyTests: XCTestCase {
     func testExplainerDisclosesTheBreakeven() {
         let p = PurchaseContext(amountCad: 15.49, category: "streaming", mcc: 5968,
                                 merchantBrand: "netflix", channel: "online", recurringIndicator: true)
-        let e = explainer.explain(engine.recommend(p, asOf: asOf), purchase: p)
+        guard case .advised(let rec) = engine.recommend(p, asOf: asOf) else { return XCTFail("expected .advised") }
+        let e = explainer.explain(rec, purchase: p)
         XCTAssertEqual(e.valuationLine,
                        "Assumes your points are worth 1.80¢ each. Below about 1.67¢, MBNA Rewards World Elite Mastercard wins instead.")
     }
@@ -92,7 +95,8 @@ final class ValuationPolicyTests: XCTestCase {
     func testExplainerSilentWhenValuationProof() {
         let p = PurchaseContext(amountCad: 140, category: "grocery", mcc: 5411,
                                 merchantBrand: "loblaws")
-        let e = explainer.explain(engine.recommend(p, asOf: asOf), purchase: p)
+        guard case .advised(let rec) = engine.recommend(p, asOf: asOf) else { return XCTFail("expected .advised") }
+        let e = explainer.explain(rec, purchase: p)
         XCTAssertNil(e.valuationLine)
     }
 }
@@ -112,8 +116,9 @@ final class BreakevenCrossValidationTests: XCTestCase {
         func winnerId(_ p: PurchaseContext, mr: Double) -> String {
             var s = owner
             s.withPointsValuation { $0.centsPerPoint = mr }
-            return RecommendationEngine(catalogue: catalogue, ownerState: s)
-                .recommend(p, asOf: asOf).winner.cardId
+            guard case .advised(let rec) = RecommendationEngine(catalogue: catalogue, ownerState: s)
+                .recommend(p, asOf: asOf) else { return "" }
+            return rec.winner.cardId
         }
 
         let purchases: [(String, PurchaseContext)] = [
@@ -128,7 +133,10 @@ final class BreakevenCrossValidationTests: XCTestCase {
 
         for (label, purchase) in purchases {
             let engine = RecommendationEngine(catalogue: catalogue, ownerState: owner)
-            let rec = engine.recommend(purchase, asOf: asOf)
+            guard case .advised(let rec) = engine.recommend(purchase, asOf: asOf) else {
+                XCTFail("\(label): expected .advised")
+                continue
+            }
             guard let analytic = rec.breakevenCentsPerPoint else {
                 XCTFail("\(label): expected a valuation-sensitive recommendation")
                 continue

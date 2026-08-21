@@ -182,4 +182,23 @@ extension CapabilityGatingTests {
         let bare: [String] = undeclared.map(\.ruleId).filter { !allowed.contains($0) }
         XCTAssertTrue(bare.isEmpty, "rules disabled with no declared blocker: \(bare.sorted())")
     }
+
+    /// A wallet where nothing can be scored must refuse, not crash and not invent a winner.
+    func testWalletOfEntirelyUnvaluedCardsCannotAdvise() throws {
+        var catalogue = try SeedLoader.loadCatalogue()
+        catalogue.cards = catalogue.cards.map { card in
+            var c = card
+            c.program = Program(programId: "unknownProgram", unit: "point")
+            return c
+        }
+        var owner = try SeedLoader.loadPinnedOwnerState()
+        owner.ownedCardIds = catalogue.cards.map(\.cardId)
+
+        let outcome = RecommendationEngine(catalogue: catalogue, ownerState: owner)
+            .recommend(PurchaseContext(amountCad: 50, category: "grocery"), asOf: "2026-08-20")
+
+        guard case .cannotAdvise(let reasons) = outcome
+        else { return XCTFail("expected .cannotAdvise, got \(outcome)") }
+        XCTAssertFalse(reasons.isEmpty, "a refusal must say why")
+    }
 }

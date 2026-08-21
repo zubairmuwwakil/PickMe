@@ -25,7 +25,9 @@ public struct WatchRecommendationView: View {
 
         let today = Date().formatted(.iso8601.year().month().day())
         let context = PurchaseContext(amountCad: amountCad, category: categoryId)
-        let rec = RecommendationEngine(catalogue: catalogue, ownerState: ownerState).recommend(context, asOf: today)
+        guard case .advised(let rec) = RecommendationEngine(catalogue: catalogue, ownerState: ownerState).recommend(context, asOf: today) else {
+            return ("Open iPhone App", "Cannot advise", "")
+        }
         let card = catalogue.cards.first(where: { $0.cardId == rec.winner.cardId })
         let name = card?.officialName.replacingOccurrences(of: "American Express", with: "Amex")
             .replacingOccurrences(of: "World Elite Mastercard", with: "WE MC")

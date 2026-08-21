@@ -22,8 +22,8 @@ final class UpsideValuationTests: XCTestCase {
 
     func testGasDisclosesWhatTransferringWouldBeWorth() {
         // Cobalt 2x ties WS at 1.0¢, so the default holds; Cobalt takes over at 1.25¢.
-        let r = engine.recommend(PurchaseContext(amountCad: 70, category: "gasStation", mcc: 5541),
-                                 asOf: asOf)
+        guard case .advised(let r) = engine.recommend(PurchaseContext(amountCad: 70, category: "gasStation", mcc: 5541),
+                                                      asOf: asOf) else { return XCTFail("expected .advised") }
         XCTAssertEqual(r.winner.cardId, "wealthsimple-vip")
         XCTAssertTrue(r.valuationSensitive)
         XCTAssertEqual(r.valuationDirection, .above)
@@ -33,8 +33,8 @@ final class UpsideValuationTests: XCTestCase {
 
     func testTaxiBreakevenUsesCashLegOfThreshold() {
         // On $25 the $0.25 leg exceeds the 0.5pp leg ($0.125): (0.50 + 0.25) × 100 / 50 = 1.50¢.
-        let r = engine.recommend(PurchaseContext(amountCad: 25, category: "transit", mcc: 4121),
-                                 asOf: asOf)
+        guard case .advised(let r) = engine.recommend(PurchaseContext(amountCad: 25, category: "transit", mcc: 4121),
+                                                      asOf: asOf) else { return XCTFail("expected .advised") }
         XCTAssertEqual(r.winner.cardId, "wealthsimple-vip")
         XCTAssertEqual(r.valuationDirection, .above)
         XCTAssertEqual(r.breakevenCentsPerPoint ?? .nan, 1.50, accuracy: 0.005)
@@ -43,9 +43,10 @@ final class UpsideValuationTests: XCTestCase {
     func testNetflixComparesAgainstTheNonDefaultIncumbent() {
         // MBNA wins at the floor; Cobalt overtakes it at 1.6667¢ — no threshold applies
         // between two non-default cards.
-        let r = engine.recommend(PurchaseContext(amountCad: 15.49, category: "streaming", mcc: 5968,
-                                                 merchantBrand: "netflix", channel: "online",
-                                                 recurringIndicator: true), asOf: asOf)
+        guard case .advised(let r) = engine.recommend(PurchaseContext(amountCad: 15.49, category: "streaming", mcc: 5968,
+                                                                      merchantBrand: "netflix", channel: "online",
+                                                                      recurringIndicator: true), asOf: asOf)
+        else { return XCTFail("expected .advised") }
         XCTAssertEqual(r.winner.cardId, "mbna-rewards-we")
         XCTAssertEqual(r.valuationDirection, .above)
         XCTAssertEqual(r.alternateWinnerCardId, "amex-cobalt")
@@ -54,8 +55,9 @@ final class UpsideValuationTests: XCTestCase {
 
     func testGroceryStaysValuationProofEvenAtTheFloor() {
         // Cobalt 5x still wins at 1.0¢; nothing to disclose in either direction.
-        let r = engine.recommend(PurchaseContext(amountCad: 140, category: "grocery", mcc: 5411,
-                                                 merchantBrand: "loblaws"), asOf: asOf)
+        guard case .advised(let r) = engine.recommend(PurchaseContext(amountCad: 140, category: "grocery", mcc: 5411,
+                                                                      merchantBrand: "loblaws"), asOf: asOf)
+        else { return XCTFail("expected .advised") }
         XCTAssertEqual(r.winner.cardId, "amex-cobalt")
         XCTAssertFalse(r.valuationSensitive)
         XCTAssertNil(r.valuationDirection)
@@ -64,8 +66,8 @@ final class UpsideValuationTests: XCTestCase {
     func testImplausibleBreakevenIsNotDisclosed() {
         // Pharmacy: Cobalt only overtakes above 2.83¢, beyond the 2.2¢ published benchmark.
         // Disclosing it would be noise, not information.
-        let r = engine.recommend(PurchaseContext(amountCad: 30, category: "drugStore", mcc: 5912),
-                                 asOf: asOf)
+        guard case .advised(let r) = engine.recommend(PurchaseContext(amountCad: 30, category: "drugStore", mcc: 5912),
+                                                      asOf: asOf) else { return XCTFail("expected .advised") }
         XCTAssertEqual(r.winner.cardId, "wealthsimple-vip")
         XCTAssertFalse(r.valuationSensitive)
         XCTAssertNil(r.breakevenCentsPerPoint)
@@ -73,7 +75,8 @@ final class UpsideValuationTests: XCTestCase {
 
     func testExplainerStatesTheUpsideSymmetrically() {
         let p = PurchaseContext(amountCad: 70, category: "gasStation", mcc: 5541)
-        let e = explainer.explain(engine.recommend(p, asOf: asOf), purchase: p)
+        guard case .advised(let rec) = engine.recommend(p, asOf: asOf) else { return XCTFail("expected .advised") }
+        let e = explainer.explain(rec, purchase: p)
         XCTAssertEqual(e.valuationLine,
                        "Assumes your points are worth 1.00¢ each. Above about 1.25¢, American Express Cobalt Card wins instead.")
     }

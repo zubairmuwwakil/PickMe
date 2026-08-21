@@ -108,7 +108,10 @@ final class FixtureHarnessTests: XCTestCase {
             }
 
             let engine = RecommendationEngine(catalogue: catalogue, ownerState: state)
-            let r = engine.recommend(fixture.purchase, asOf: fixture.asOf ?? Self.defaultAsOf)
+            guard case .advised(let r) = engine.recommend(fixture.purchase, asOf: fixture.asOf ?? Self.defaultAsOf) else {
+                XCTFail("\(ctx): expected .advised recommendation, got refusal")
+                continue
+            }
             let e = fixture.expected
 
             XCTAssertEqual(r.winner.cardId, e.winner, ctx)

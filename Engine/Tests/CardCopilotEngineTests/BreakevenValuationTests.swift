@@ -13,8 +13,11 @@ final class BreakevenValuationTests: XCTestCase {
                         _ purchase: PurchaseContext, mr: Double) -> CandidateScore {
         var state = owner
         state.withPointsValuation { $0.centsPerPoint = mr }
-        return RecommendationEngine(catalogue: catalogue, ownerState: state)
-            .recommend(purchase, asOf: "2026-08-20").winner
+        guard case .advised(let rec) = RecommendationEngine(catalogue: catalogue, ownerState: state)
+            .recommend(purchase, asOf: "2026-08-20") else {
+            fatalError("expected recommendation")
+        }
+        return rec.winner
     }
 
     func testPrintRecommendationBreakevens() throws {

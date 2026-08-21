@@ -49,7 +49,7 @@ final class CheatSheetComparisonTests: XCTestCase {
         var agree = 0
         print("\n═══ Cheat sheet vs engine (Zubair's actual owner state) ═══\n")
         for (label, sheetCard, purchase) in rows {
-            let r = engine.recommend(purchase, asOf: "2026-08-20")
+            guard case .advised(let r) = engine.recommend(purchase, asOf: "2026-08-20") else { continue }
             let matches = r.winner.cardId == sheetCard
             if matches { agree += 1 }
             print(String(format: "%@ %-22@ sheet: %-26@ engine: %@ ($%.2f)",
@@ -69,7 +69,7 @@ final class CheatSheetComparisonTests: XCTestCase {
         print("\n\(agree)/\(rows.count) rows agree.\n")
 
         // Which cards never win anything in this wallet? A keep/cancel signal.
-        let winners = Set(rows.map { engine.recommend($0.2, asOf: "2026-08-20").winner.cardId })
+        let winners = Set(rows.compactMap { engine.recommendOrNil($0.2, asOf: "2026-08-20")?.winner.cardId })
         let idle = catalogue.cards.map(\.cardId).filter { !winners.contains($0) }
         print("Never wins a category here: \(idle.map { short($0, names) }.joined(separator: ", "))\n")
     }

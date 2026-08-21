@@ -148,10 +148,10 @@ public enum CategoryPickerAdvisor {
         let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
         let template = enrichedTemplate(for: category, distribution: distribution)
 
-        func recommendation(atCents cents: Int) -> Recommendation {
+        func recommendation(atCents cents: Int) -> Recommendation? {
             var context = template
             context.amountCad = Double(cents) / 100
-            return engine.recommend(context, asOf: asOf)
+            return engine.recommendOrNil(context, asOf: asOf)
         }
 
         let sweepMaxCad = sweepCeilingCad(catalogue: catalogue)
@@ -160,7 +160,7 @@ public enum CategoryPickerAdvisor {
         guard !boundaryCents.isEmpty else {
             // Constant across the whole sweep — any point proves it. $1 keeps the evaluated
             // context sane without implying a "typical" amount that isn't real.
-            let rec = recommendation(atCents: 100)
+            guard let rec = recommendation(atCents: 100) else { return [] }
             return [AmountBand(lowerBoundCad: 0, upperBoundCad: nil,
                                cardId: rec.winner.cardId, recommendation: rec)]
         }
@@ -169,7 +169,7 @@ public enum CategoryPickerAdvisor {
         var lowerCents = 0
         for boundaryCentsValue in boundaryCents {
             let representativeCents = lowerCents + max(1, (boundaryCentsValue - lowerCents) / 2)
-            let rec = recommendation(atCents: representativeCents)
+            guard let rec = recommendation(atCents: representativeCents) else { continue }
             result.append(AmountBand(lowerBoundCad: Double(lowerCents) / 100,
                                      upperBoundCad: Double(boundaryCentsValue) / 100,
                                      cardId: rec.winner.cardId, recommendation: rec))
@@ -179,7 +179,7 @@ public enum CategoryPickerAdvisor {
         // at or past the last boundary — sweepMaxCad itself is convenient — represents the
         // final, open-ended band.
         let finalCents = max(lowerCents + 1, Int((sweepMaxCad * 100).rounded()))
-        let finalRec = recommendation(atCents: finalCents)
+        guard let finalRec = recommendation(atCents: finalCents) else { return result }
         result.append(AmountBand(lowerBoundCad: Double(lowerCents) / 100, upperBoundCad: nil,
                                  cardId: finalRec.winner.cardId, recommendation: finalRec))
         return result
@@ -189,7 +189,7 @@ public enum CategoryPickerAdvisor {
     /// cent to the largest cap in the catalogue in a few hundred steps — finds every bracket
     /// where the winning card genuinely changes; each bracket is then bisected down to the
     /// cent, since a real purchase amount has no finer resolution than that.
-    static func detectBoundaryCents(recommendation: (Int) -> Recommendation, sweepMaxCad: Double) -> [Int] {
+    static func detectBoundaryCents(recommendation: (Int) -> Recommendation?, sweepMaxCad: Double) -> [Int] {
         let sweepMaxCents = max(Int((sweepMaxCad * 100).rounded()), 100)
         let minCents = 1
         let sampleCount = 600
@@ -200,8 +200,11 @@ public enum CategoryPickerAdvisor {
         for i in 0...sampleCount {
             let t = Double(i) / Double(sampleCount)
             let cents = max(minCents, Int((Double(minCents) * pow(ratio, t)).rounded()))
-            samples.append((cents, recommendation(cents).winner.cardId))
+            guard let cardId = recommendation(cents)?.winner.cardId else { continue }
+            samples.append((cents, cardId))
         }
+
+        guard !samples.isEmpty else { return [] }
 
         var boundaries: [Int] = []
         for i in 1..<samples.count
@@ -224,7 +227,7 @@ public enum CategoryPickerAdvisor {
     /// `lowCardId`, found by bisection. The winner is a step function of amount, so this
     /// converges on the exact cent a real purchase would cross.
     static func binarySearchBoundaryCents(lowCents: Int, lowCardId: String, highCents: Int,
-                                          recommendation: (Int) -> Recommendation) -> Int {
+                                          recommendation: (Int) -> Recommendation?) -> Int {
         var lo = lowCents
         var hi = highCents
         while hi - lo > 1 {
@@ -254,8 +257,8 @@ public enum CategoryPickerAdvisor {
     /// `regimeToleranceCad` of the winner's, meaning the "change" is a coincidental exact-tie
     /// artifact rather than one card genuinely earning more than the other.
     static func isSameRegime(cardId: String, atCents cents: Int,
-                             recommendation: (Int) -> Recommendation) -> Bool {
-        let rec = recommendation(cents)
+                             recommendation: (Int) -> Recommendation?) -> Bool {
+        guard let rec = recommendation(cents) else { return false }
         if rec.winner.cardId == cardId { return true }
         guard let candidate = rec.allCandidates.first(where: { $0.cardId == cardId }),
               !candidate.excluded else { return false }

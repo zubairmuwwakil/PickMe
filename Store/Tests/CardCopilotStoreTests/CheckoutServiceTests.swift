@@ -158,4 +158,25 @@ final class CheckoutServiceTests: XCTestCase {
                      "recommending is not confirming — only reconcile promotes a merchant")
         XCTAssertEqual(merchants.first?.confirmationCount, 0)
     }
+
+    func testCannotAdviseThrowsCheckoutError() throws {
+        var unvaluedCatalogue = try SeedLoader.loadCatalogue()
+        unvaluedCatalogue.cards = unvaluedCatalogue.cards.map { card in
+            var c = card
+            c.program = Program(programId: "unknownProgram", unit: "point")
+            return c
+        }
+        var owner = try SeedLoader.loadOwnerState()
+        owner.ownedCardIds = unvaluedCatalogue.cards.map(\.cardId)
+        let unvaluedService = CheckoutService(catalogue: unvaluedCatalogue, ownerState: owner,
+                                              context: ModelContext(container))
+
+        XCTAssertThrowsError(try unvaluedService.recommend(merchant: merchant("Loblaws", poi: "MKPOICategoryFoodMarket"),
+                                                           amountCad: 50, asOf: asOf)) { error in
+            guard case CheckoutError.cannotAdvise(let reasons) = error else {
+                return XCTFail("expected CheckoutError.cannotAdvise, got \(error)")
+            }
+            XCTAssertFalse(reasons.isEmpty)
+        }
+    }
 }

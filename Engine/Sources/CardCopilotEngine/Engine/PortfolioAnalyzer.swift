@@ -200,7 +200,7 @@ public struct PortfolioAnalyzer {
                 }) else { continue }
 
                 let engine = RecommendationEngine(catalogue: subCatalogue, ownerState: state)
-                let candidates = engine.recommend(purchase, asOf: monthAsOf).allCandidates
+                let candidates = engine.recommendOrNil(purchase, asOf: monthAsOf)?.allCandidates ?? []
                 scorable.formUnion(candidates.map(\.cardId))
                 guard let best = candidates.first else { continue }
 

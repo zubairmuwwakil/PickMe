@@ -25,9 +25,17 @@ public struct Recommendation: Equatable, Sendable {
 /// Which direction the point valuation would have to move for the advice to change.
 public enum ValuationDirection: Sendable, Equatable { case below, above }
 
+/// Either advice, or an explicit refusal. The engine can now be genuinely unable to advise —
+/// a wallet whose every card is on an unvalued program — and inventing a $0.00 winner would
+/// present a refusal as advice.
+public enum RecommendationOutcome: Sendable, Equatable {
+    case advised(Recommendation)
+    case cannotAdvise(reasons: [String])
+}
+
 public struct RecommendationEngine {
     let catalogue: Catalogue
-    let ownerState: OwnerState
+    public let ownerState: OwnerState
 
     /// Catalogue valuation defaults are merged in here, beneath anything the owner has declared.
     /// This is the single funnel every scoring path reaches — including owner states restored
@@ -48,14 +56,16 @@ public struct RecommendationEngine {
         let ranked: [CandidateScore]
     }
 
-    public func recommend(_ purchase: PurchaseContext, asOf: String) -> Recommendation {
+    public func recommend(_ purchase: PurchaseContext, asOf: String) -> RecommendationOutcome {
         let candidateCards = ownerState.ownedCardIds.isEmpty
             ? catalogue.cards
             : catalogue.cards.filter { ownerState.ownedCardIds.contains($0.cardId) }
-        let scores = candidateCards
+        let scored = candidateCards
             .map { Scorer.score(card: $0, purchase: purchase, ownerState: ownerState, asOf: asOf) }
-            .filter { !$0.excluded }
-        precondition(!scores.isEmpty, "no scorable card — catalogue misconfigured")
+        let scores = scored.filter { !$0.excluded }
+        guard !scores.isEmpty else {
+            return .cannotAdvise(reasons: scored.compactMap(\.exclusionReason))
+        }
 
         let declared = rank(scores, purchase: purchase, value: { $0.netValueCad })
         let floor = rank(scores, purchase: purchase, value: { $0.floorNetValueCad })
@@ -104,18 +114,24 @@ public struct RecommendationEngine {
             }
         }
 
-        return Recommendation(winner: declared.winner,
-                              runnerUp: declared.runnerUp,
-                              switchedFromDefault: declared.switched,
-                              advantageOverDefaultCad: declared.advantage,
-                              defaultNotAccepted: declared.defaultNotAccepted,
-                              suppressedBetterCard: declared.suppressed,
-                              valuationSensitive: sensitive,
-                              valuationDirection: direction,
-                              alternateWinnerCardId: alternateId,
-                              breakevenCentsPerPoint: breakeven,
-                              declaredCentsPerPoint: declaredCents,
-                              allCandidates: declared.ranked)
+        return .advised(Recommendation(winner: declared.winner,
+                                       runnerUp: declared.runnerUp,
+                                       switchedFromDefault: declared.switched,
+                                       advantageOverDefaultCad: declared.advantage,
+                                       defaultNotAccepted: declared.defaultNotAccepted,
+                                       suppressedBetterCard: declared.suppressed,
+                                       valuationSensitive: sensitive,
+                                       valuationDirection: direction,
+                                       alternateWinnerCardId: alternateId,
+                                       breakevenCentsPerPoint: breakeven,
+                                       declaredCentsPerPoint: declaredCents,
+                                       allCandidates: declared.ranked))
+    }
+
+    /// For callers that only want `allCandidates` and treat a refusal as "no candidates".
+    public func recommendOrNil(_ purchase: PurchaseContext, asOf: String) -> Recommendation? {
+        guard case .advised(let r) = recommend(purchase, asOf: asOf) else { return nil }
+        return r
     }
 
     private func centsPerUnit(_ score: CandidateScore) -> Double {
