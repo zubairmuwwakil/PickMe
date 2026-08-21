@@ -2,6 +2,95 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-20 — card-catalogue 1.4: three cards were silently fee-free on FX; fixtures 1.2
+
+- **BUG FIX. `rbc-ion-plus-visa`, `bmo-ascend-world-elite` and `cibc-aventura-visa` shipped
+  `"fxRules": []`** — the only three cards in either catalogue with no FX rule at all. `Scorer`
+  reads "no active rule" as **zero** FX cost, so all three ranked as well as Wealthsimple on every
+  foreign-currency purchase. Each now declares the standard 2.5%. `catalogueVersion` `1.3` → `1.4`.
+- Tagged `sourceType: "inferred"`, not `issuerConfirmed`: 2.5% is each issuer's standard
+  conversion markup and is corroborated by published card reviews (checked 2026-08-20), but the
+  cardholder agreements themselves were not read. Each rule carries a `_note` saying so. Confirm
+  and re-tag when the agreements are checked.
+- **The gap was hidden behind another gap.** All three cards were unscorable until their programs
+  gained valuations the same day, so no fixture had ever exercised their FX path. The schema
+  cannot catch this — `"fxRules": []` is valid, and must stay valid, because *absent* and *zero*
+  are different claims. New gate `CatalogueIntegrityTests.testEveryCardDeclaresAnFxRule` requires
+  every card to state a rate. No allowlist: a genuinely fee-free card says `rate: 0.0` out loud,
+  as `wealthsimple-vip`, `scotia-gold-amex` and `scotia-passport-visa-infinite-plus` already do.
+- **`engine-fixtures.json` `1.1` → `1.2`. Four of the 27 expectations moved, on the `runnerUp`
+  field ONLY — every `winner` and `winnerValueCad` is unchanged.** The fixtures run against
+  `owner-state.json`, which owns all 27 cards, so the 14 previously-excluded cards were always in
+  the candidate field; valuing their programs let them place. Each `notes` field carries the
+  re-derived arithmetic.
+  - `costco-mastercard-only-200`: mbna $2.00 → westjet $3.00
+  - `rogers-cap-exhausted-postcap-400`: mbna $4.00 → westjet $6.00
+  - `owner-condition-unresolved-rogers-300`: mbna $3.00 → westjet $4.50
+  - `usd-online-165cad-crypto-inactive`: rogers $0.825 → scotia-gold-amex $1.65
+- The first three are the **same fact**: WestJet's 1.5 points/$ at the posted 1.0¢ is 1.5%, the
+  identical rate Rogers pays in cash. `rank()` breaks exact ties on `cardId` ascending, so Rogers
+  keeps every win and WestJet takes second. **New case 28, `westjet-rogers-exact-tie-100`**, pins
+  that tie explicitly — three cases had started depending on a tie-break nobody had asserted, and
+  a future revaluation should fail one case that explains itself rather than three that look like
+  unrelated regressions.
+- The fourth is the FX bug: `cibc-aventura-visa` briefly took that slot with a wrong $1.65 before
+  the fix. It is now `scotia-gold-amex`, which genuinely charges no FX and earns Scene+ 1x —
+  the right answer for a USD purchase, and the case that caught the bug.
+- **Known divergence: the Kotlin twin now fails these five cases.** `android`'s `Valuations` is
+  still the six-property struct — Tasks 3–7 of the valuation phase are Swift-only so far — so its
+  engine cannot value the ten new programs and still ranks them at $0.00. The fixture count
+  constant in `FixtureHarnessTest.kt` is bumped to 28, but parity is Task 11 and is not done here.
+  Android is not in CI (`.github/workflows/ci.yml` runs Swift only), so this does not gate merges.
+
+## 2026-08-20 — programs.json: sourced valuations for the last ten programs; programsVersion 1.1
+
+- **Every programId the catalogue declares is now valued.** `scenePlus`, `aeroplan`, `rbcAvion`,
+  `tdRewards`, `bmoRewards`, `aventura`, `nbcRewards`, `pcOptimum`, `westJetPoints` and
+  `amazonRewards` gain defaults, so `CatalogueIntegrityTests.knownUnvaluedPrograms` is EMPTY and
+  its ratchet is set to `0`. A card on a new program now fails CI at authoring time instead of
+  shipping as a silent exclusion.
+- `programsVersion` `1.0` → `1.1` (MINOR, additive — ten programs added, none revalued).
+- **One rule, applied uniformly**, recorded in the file's new `_method` key so the numbers mean
+  the same thing on every card:
+  - `centsPerPoint` = the best POSTED FIXED conversion the program publishes. A rate, never a
+    forecast of what some redemption might turn out to be worth.
+  - `floorCentsPerPoint` = the rate obtainable with nothing but the card — an unconditional
+    statement credit, no qualifying purchase and no second account. OMITTED where the program has
+    no cash redemption at all (`aeroplan`, `pcOptimum`, `westJetPoints`, `amazonRewards`), because
+    `Scorer` falls back to `centsPerPoint` and a fabricated floor would pass an assumption off as
+    a guarantee.
+  - `aspirationalCentsPerPoint` = a published benchmark ONLY where it exceeds the ranked value.
+    Only `aeroplan` (2.0¢) and `rbcAvion` (2.0¢) qualify; for the rest the benchmark sits at or
+    below the posted rate, so there is no upside band to disclose.
+- Ranked values, each with its source in `basis`: `scenePlus` 1.0¢ (floor 0.666667),
+  `aeroplan` 1.0¢, `rbcAvion` 0.58¢ (floor 0.58), `tdRewards` 0.5¢ (floor 0.25),
+  `bmoRewards` 0.666667¢ (floor 0.333333), `aventura` 1.0¢ (floor 0.625), `nbcRewards` 1.0¢
+  (floor 0.4), `pcOptimum` 0.1¢, `westJetPoints` 1.0¢, `amazonRewards` 1.0¢.
+- **`aeroplan` is ranked by transfer parity, not by benchmark.** It has no cash-out and posts no
+  fixed conversion, so there is no issuer fact to anchor to. Amex Membership Rewards converts to
+  Aeroplan 1:1 and is ranked here at 1.0¢; ranking Aeroplan above that would make one point worth
+  more after a free transfer than before it. The published 2.0¢ benchmark (Prince of Travel Q2
+  2026, as of 2026-05-01; Milesopedia 2026-01-01 agrees) is carried as the disclosure ceiling.
+- **`rbcAvion` is one programId over two currencies — a known defect, disclosed in its `basis`.**
+  `rbc-avion-visa-infinite` earns Avion Elite points (statement credit 0.58¢, flexible travel
+  credit 1.0¢, Air Travel Redemption Schedule up to ~2.3¢); `rbc-ion-plus-visa` earns Avion
+  Premium points, whose only fixed redemption is 0.58¢ and which cannot transfer to airlines.
+  0.58¢ is ranked because it is the one posted rate true for both. The override is per programId,
+  so an Elite owner cannot correct their card without over-valuing the ION+. Splitting the
+  programId is the real fix and is not done here.
+- **`westJetPoints` is WestJet POINTS, not the retired WestJet dollars.** The program converted on
+  2025-04-30; WestJet posts 100 points = C$1 off base fare, surcharges, bags and seats, and RBC's
+  product page states the earn as 1.5 and 2 points per dollar. That is what makes the catalogue's
+  earn figures and a 1.0¢ unit value agree with the card's marketed 1.5% return.
+- `pcOptimum` and `amazonRewards` are store-locked scrip valued at face. That is the same
+  question `ctMoney` carries a 0.95 usability factor for, but the `points` model has no such
+  factor; rather than invent a discount, each `basis` names the assumption and tells the owner to
+  override downward if they do not shop there.
+- Sources are named per entry and were checked 2026-08-20: issuer pages (Scotiabank, WestJet, PC
+  Financial, MBNA, RBC, TD) for posted rates, and Prince of Travel, Milesopedia, Frugal Flyer,
+  Money We Have and Ratehub for cash-out rates and benchmarks. Where two benchmarks disagree
+  (Avion 2.0 vs 1.6, Aventura 1.0 vs 1.2) neither is used for ranking.
+
 ## 2026-08-20 — programs.json: catalogue-level default valuations; catalogueVersion 1.3
 
 - **`programs.json` is read by the scoring path**, not just shipped: `RecommendationEngine.init`

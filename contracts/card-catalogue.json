@@ -1,5 +1,5 @@
 {
-  "catalogueVersion": "1.3",
+  "catalogueVersion": "1.4",
   "currency": "CAD",
   "_provenance": "docs/research/canadian-card-copilot-research-2026-08-15.md \u2014 all rules verified 2026-08-15 against issuer pages cited there.",
   "cards": [
@@ -2420,7 +2420,17 @@
         "programId": "rbcAvion",
         "unit": "point"
       },
-      "fxRules": [],
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "inferred",
+          "lastVerifiedAt": "2026-08-20",
+          "_note": "RBC applies a 2.5% foreign-currency conversion markup across its consumer credit cards; rbc-avion-visa-infinite in this catalogue carries the same rate as issuerConfirmed. Marked inferred because that issuer-wide policy, not this card's own agreement, is the source."
+        }
+      ],
       "earnRules": [
         {
           "ruleId": "rbc-ion-plus-base-1x",
@@ -2615,7 +2625,17 @@
         "programId": "bmoRewards",
         "unit": "point"
       },
-      "fxRules": [],
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "inferred",
+          "lastVerifiedAt": "2026-08-20",
+          "_note": "2.5% is BMO's standard foreign-transaction fee, corroborated by published card reviews (checked 2026-08-20). Marked inferred because the cardholder agreement itself was not read."
+        }
+      ],
       "earnRules": [
         {
           "ruleId": "bmo-ascend-base-1x",
@@ -2957,7 +2977,17 @@
         "programId": "aventura",
         "unit": "point"
       },
-      "fxRules": [],
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "inferred",
+          "lastVerifiedAt": "2026-08-20",
+          "_note": "2.5% is CIBC's standard foreign-currency conversion fee, corroborated by published card reviews (checked 2026-08-20); cibc-aventura-visa-infinite in this catalogue carries the same rate. Marked inferred because the cardholder agreement itself was not read."
+        }
+      ],
       "earnRules": [
         {
           "ruleId": "cibc-aventura-basic-base-1x",

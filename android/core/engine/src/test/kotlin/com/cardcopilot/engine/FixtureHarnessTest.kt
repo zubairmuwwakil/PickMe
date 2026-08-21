@@ -87,8 +87,8 @@ class FixtureHarnessTest {
         val content = stream.bufferedReader().use { it.readText() }
         val fixtureFile = json.decodeFromString<FixtureFile>(content)
 
-        assertEquals(27, fixtureFile.cases.size)
-        assertEquals(27, fixtureFile.cases.map { it.caseId }.toSet().size, "duplicate caseId")
+        assertEquals(28, fixtureFile.cases.size)
+        assertEquals(28, fixtureFile.cases.map { it.caseId }.toSet().size, "duplicate caseId")
 
         val catalogue = SeedLoader.loadCatalogue()
         var baseState = SeedLoader.loadOwnerState()
