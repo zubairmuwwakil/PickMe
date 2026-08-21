@@ -2,6 +2,56 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-20 — card-catalogue: 51 `scoredInV1: false` rules migrated to `requires`/`outOfScope`
+
+- **`scoredInV1: false` had no machine meaning.** 51 of the 96 earn rules carried it, and nothing
+  checked *why* — enabling a capability meant grepping the catalogue for flags to flip. Each rule
+  now declares either `requires: [<EngineCapability>]` ("not yet — turns on automatically when
+  this ships") or `outOfScope: {reason}` ("never — permanently inert"). Every existing `_note` is
+  kept.
+- **43 rules → `requires`.** Blockers were read off each rule's `_note` (or, for four rules with
+  no note of their own, the owning card's `_note`) against the mapping in
+  `docs/superpowers/plans/2026-08-20-p1-valuation-capability.md` Task 9: statement-period/annual
+  window → `cap.statementYear`; first-of-two/global/monthly-billing tiering →
+  `cap.globalGroup`; strict issuer-MCC matching → `predicate.mccStrict`; merchant
+  normalization/partner list/provider list → `predicate.merchantPartnerList`; needs
+  litres → `earn.perLitre`; card-marginal vs member earn → `earn.marginal`. A few rules (e.g.
+  `td-aeroplan-gas-grocery-ev-1_5x`, `bmo-eclipse-grocery-5x` and its three siblings) declare two
+  capabilities where the note states two distinct blockers — both must ship before the rule goes
+  live.
+- **5 rules → `outOfScope`**, all online booking channels (Expedia For TD, Amex Travel, CIBC
+  Rewards Centre, NBC à la carte travel), per spec §9.3: `cobalt-amex-travel-bonus`,
+  `cibc-dividend-expedia-2pct`, `td-fct-expedia-8x`, `cibc-aventura-rewards-centre-2x`,
+  `nbc-we-a-la-carte-travel-2x`. PickMe is an at-the-register copilot; these permanently do not
+  belong to it. `predicate.channelIdentity` is deliberately not an `EngineCapability` case, so a
+  future reader cannot build toward it by mistake.
+- **3 rules stay on `scoredInV1: false`, each with a `_note` explaining why it isn't `requires` or
+  `outOfScope` yet:**
+  - `scotia-gold-gas-transit-3x` — blocker unconfirmed. Its predicate and cap are both already
+    supported (plain category predicate on a `calendarYear` cap), so it looks disabled as a group
+    with its cap-sharing siblings rather than for a reason of its own. Needs a human check against
+    Scotia's terms before it gets a real marker.
+  - `amazon-ca-prime-2_5x`, `amazon-ca-nonprime-1_5x` — blocked on `CardState.flags`
+    (owner-linked Prime status), which is the *next* plan's scope, not an engine capability gap
+    this one can express.
+- **New regression gate:** `CapabilityGatingTests.testNoRuleIsDisabledWithoutAMachineReadableReason`
+  fails if any rule outside that allowlist of three carries `scoredInV1: false` with neither
+  `requires` nor `outOfScope` — so a future disabled rule can't ship without saying why.
+- **Schema:** `contracts/schema/card-catalogue.schema.json` documents `requires` and `outOfScope`,
+  marks `scoredInV1` `"x-status": "deprecated"`, and opens `earnRule.ownerConditions.items` from a
+  closed `enum` to a documented open string — matching how `benefits-catalogue.schema.json`
+  already treats `family`/`kind`. The closed enum previously let `amazonEligiblePrimeLinked` ship
+  with no `RuleMatcher` handler and no schema complaint; opening it doesn't add a handler, but it
+  stops the schema from claiming one exists.
+- **All 27 `engine-fixtures.json` cases pass byte-unchanged.** `requires` naming an unsupported
+  capability produces exactly the skip `scoredInV1: false` used to — no scoring outcome moved.
+  `catalogueVersion` stays `1.4`; this change is a marker migration, not new data.
+- **Fixed a pre-existing test in passing:**
+  `SpendDistributionTests.testPlaceholderProfileCoversEveryCategoryTheWalletAccelerates` filtered
+  live rules with a raw `rule.scoredInV1 != false` check, which read a rule's now-`nil`
+  `scoredInV1` (with `requires` doing the gating instead) as live. Switched it to
+  `RuleMatcher.isLive`, the same check the engine itself uses.
+
 ## 2026-08-20 — card-catalogue 1.4: three cards were silently fee-free on FX; fixtures 1.2
 
 - **BUG FIX. `rbc-ion-plus-visa`, `bmo-ascend-world-elite` and `cibc-aventura-visa` shipped

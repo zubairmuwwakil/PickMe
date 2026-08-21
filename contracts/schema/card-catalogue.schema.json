@@ -369,18 +369,49 @@
         "ownerConditions": {
           "type": "array",
           "items": {
-            "enum": [
+            "type": "string",
+            "x-known-values": [
               "rogersEligibleServiceLinked",
               "cryptoLevelUpProActive",
               "tangerineCategorySelected",
               "amazonEligiblePrimeLinked"
             ]
           },
-          "description": "Engine-defined gate ids \u2014 RuleMatcher.conditionsResolveTrue switches on these exact strings and treats any unknown id as unresolved (fails closed). A new id requires an engine code change."
+          "description": "OPEN vocabulary, same rules as benefits-catalogue.schema.json's family/kind \u2014 deliberately NOT a closed enum. RuleMatcher.conditionsResolveTrue switches on the known strings above and treats any unknown id as unresolved (fails closed), so unrecognised ids decode fine and simply never match rather than rejecting the whole catalogue load. A closed enum here is exactly what let amazonEligiblePrimeLinked ship with no RuleMatcher case and no schema complaint; opening it doesn't add a handler, but it stops the schema from claiming one exists. A new id still requires an engine code change to actually gate on."
         },
         "scoredInV1": {
           "type": "boolean",
-          "description": "false excludes the rule from RuleMatcher.isLive regardless of dates. Absent means true."
+          "x-status": "deprecated \u2014 superseded by requires/outOfScope",
+          "description": "false excludes the rule from RuleMatcher.isLive regardless of dates. Absent means true. Deprecated: a hand-set boolean carries no machine-readable reason and can't turn itself on when its blocker is fixed. New disabled rules should use requires or outOfScope instead; scoredInV1: false without either is only valid for a rule whose blocker is still unconfirmed (see the rule's _note)."
+        },
+        "requires": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "cap.calendarMonth",
+              "cap.calendarYear",
+              "cap.accountYear",
+              "cap.statementYear",
+              "cap.globalGroup",
+              "predicate.merchantPartnerList",
+              "predicate.mccStrict",
+              "earn.perLitre",
+              "earn.marginal"
+            ]
+          },
+          "description": "Engine capabilities this rule needs, matching EngineCapability's raw values (Engine/Sources/CardCopilotEngine/Models/EngineCapability.swift). RuleMatcher.isLive treats the rule as live only if every named capability is in EngineCapability.supported; an unrecognised or unsupported string skips the rule, same as scoredInV1: false did. Absent means no capability is needed. Turns the rule on automatically the day the named capability ships \u2014 no catalogue edit required. Mutually exclusive with outOfScope."
+        },
+        "outOfScope": {
+          "type": "object",
+          "required": ["reason"],
+          "properties": {
+            "reason": {
+              "type": "string",
+              "description": "Why this rule will never be scored by this engine, e.g. an online booking channel PickMe (an at-the-register copilot) does not cover. Human-facing; RuleMatcher.isLive only checks presence, not content."
+            }
+          },
+          "description": "Set when the rule is permanently out of scope \u2014 never to be built, as distinct from requires' \"not yet\". RuleMatcher.isLive always returns false when this is present, regardless of requires or scoredInV1. Mutually exclusive with requires: a rule ruled out permanently must not also declare a capability it is waiting on."
         }
       }
     },

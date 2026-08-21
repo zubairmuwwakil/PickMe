@@ -19,14 +19,14 @@ final class SpendDistributionTests: XCTestCase {
     func testPlaceholderProfileCoversEveryCategoryTheWalletAccelerates() throws {
         let deliberatelyOmitted = [
             "evCharging": "no EV assumed in this household",
-            "carRental": "Cobalt's only carRental rule is the amexTravel channel bonus, scoredInV1: false",
+            "carRental": "Cobalt's only carRental rule is the amexTravel channel bonus, outOfScope",
             "ownerSelectedTangerineCategory": "synthetic marker, resolved against the real categories",
         ]
 
         let catalogue = try SeedLoader.loadCatalogue()
         let accelerated = Set(catalogue.cards.flatMap { card in
             card.earnRules
-                .filter { $0.scoredInV1 != false }
+                .filter { RuleMatcher.isLive($0, asOf: "2026-08-20") }
                 .flatMap { $0.predicate.categories ?? [] }
         })
         let profile = SpendDistribution.placeholderCanadianHousehold
