@@ -3,6 +3,8 @@ package com.cardcopilot.engine.loading
 import com.cardcopilot.engine.models.BenefitsCatalogue
 import com.cardcopilot.engine.models.Catalogue
 import com.cardcopilot.engine.models.OwnerState
+import com.cardcopilot.engine.models.ProgramCatalogue
+import com.cardcopilot.engine.models.ProgramValuation
 import kotlinx.serialization.json.Json
 
 sealed class SeedLoaderException(message: String) : Exception(message) {
@@ -16,6 +18,11 @@ object SeedLoader {
     val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
+        // ProgramValuation puts its discriminator in the same object as the payload, under
+        // `model` — the shape the Swift twin's hand-written Codable produces. Any Json instance
+        // that decodes an OwnerState or a ProgramCatalogue needs this; the default `type` would
+        // read every valuation as an unknown model.
+        classDiscriminator = "model"
     }
 
     fun loadCatalogue(): Catalogue {
@@ -36,6 +43,26 @@ object SeedLoader {
 
     fun loadBenefitsCatalogue(): BenefitsCatalogue {
         return load("benefits-catalogue")
+    }
+
+    /**
+     * Catalogue-level default valuations. Owner state overrides any entry; a program present
+     * here and absent from owner state is valued by this file rather than excluded.
+     */
+    fun loadPrograms(): ProgramCatalogue = load("programs")
+
+    /**
+     * Throws rather than falling back to an empty map. programs.json is a resource compiled into
+     * the module, so failing to read it is a build or packaging fault, not a runtime condition an
+     * owner can be in. Degrading to empty would unvalue every program the owner has not declared,
+     * which is the exact failure this file exists to prevent.
+     */
+    val programValuationDefaults: Map<String, ProgramValuation> by lazy {
+        try {
+            loadPrograms().defaults
+        } catch (e: Exception) {
+            throw IllegalStateException("contracts/programs.json is unreadable", e)
+        }
     }
 
     fun validate(catalogueVersion: String) {

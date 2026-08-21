@@ -11,7 +11,19 @@ enum class Warning(val rawValue: String) {
     @SerialName("capNearlyExhausted") CAP_NEARLY_EXHAUSTED("capNearlyExhausted"),
     @SerialName("negativeNetValue") NEGATIVE_NET_VALUE("negativeNetValue"),
     @SerialName("fxAllowanceAssumed") FX_ALLOWANCE_ASSUMED("fxAllowanceAssumed"),
-    @SerialName("hypotheticalSelection") HYPOTHETICAL_SELECTION("hypotheticalSelection");
+    @SerialName("hypotheticalSelection") HYPOTHETICAL_SELECTION("hypotheticalSelection"),
+
+    /**
+     * This card's rewards program has no valuation. The card cannot be scored at all —
+     * distinct from being scored and losing.
+     */
+    @SerialName("unsupportedProgram") UNSUPPORTED_PROGRAM("unsupportedProgram"),
+
+    /**
+     * An earn rule requires an engine capability this build does not have. The rule is
+     * skipped; the card is still scored on its remaining rules.
+     */
+    @SerialName("unsupportedCapability") UNSUPPORTED_CAPABILITY("unsupportedCapability");
 
     companion object {
         fun fromRaw(raw: String): Warning? = entries.firstOrNull { it.rawValue == raw }
@@ -54,3 +66,13 @@ data class Recommendation(
     val declaredCentsPerPoint: Double? = null,
     val allCandidates: List<CandidateScore>
 )
+
+/**
+ * Either advice, or an explicit refusal. The engine can now be genuinely unable to advise —
+ * a wallet whose every card is on an unvalued program — and inventing a $0.00 winner would
+ * present a refusal as advice.
+ */
+sealed interface RecommendationOutcome {
+    data class Advised(val recommendation: Recommendation) : RecommendationOutcome
+    data class CannotAdvise(val reasons: List<String>) : RecommendationOutcome
+}

@@ -131,7 +131,17 @@ data class EarnRule(
     val predicate: Predicate = Predicate(),
     val capId: String? = null,
     val ownerConditions: List<String>? = null,
-    val scoredInV1: Boolean? = null
+    val scoredInV1: Boolean? = null,
+    /**
+     * Engine capabilities this rule needs, as [EngineCapability] raw values. Absent means none.
+     * A rule naming a capability this build lacks is skipped; it turns on by itself when that
+     * capability ships. Typed as `List<String>` rather than `List<EngineCapability>` so an
+     * unrecognised name is a gating decision made in code, not a decode failure that loses the
+     * whole catalogue — a card the engine cannot fully score is still a card it can partly score.
+     */
+    val requires: List<String>? = null,
+    /** Set when the rule will never be scored. Mutually exclusive with [requires]. */
+    val outOfScope: OutOfScope? = null
 )
 
 @Serializable

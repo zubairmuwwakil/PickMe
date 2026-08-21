@@ -6,6 +6,9 @@ import com.cardcopilot.engine.models.CardProduct
 import com.cardcopilot.engine.models.CardState
 import com.cardcopilot.engine.models.Earn
 import com.cardcopilot.engine.models.EarnRule
+import com.cardcopilot.engine.models.CashBackValuation
+import com.cardcopilot.engine.models.CroValuation
+import com.cardcopilot.engine.models.CtMoneyValuation
 import com.cardcopilot.engine.models.OwnerState
 import com.cardcopilot.engine.models.PointValuation
 import com.cardcopilot.engine.models.PurchaseContext
@@ -43,13 +46,27 @@ object Scorer {
             return excludedScore(Warning.NETWORK_NOT_ACCEPTED, "${card.network.rawValue} not accepted")
         }
 
-        val rule: EarnRule = when (val res = RuleMatcher.resolve(card, purchase, ownerState, asOf)) {
-            is RuleResolution.CardExcluded -> return excludedScore(Warning.UNRESOLVED_OWNER_STATE, res.reason)
-            is RuleResolution.Applied -> res.rule
-        }
+        val (rule: EarnRule, capabilityGaps: List<String>) =
+            when (val resolution = RuleMatcher.resolve(card, purchase, ownerState, asOf)) {
+                is RuleResolution.CardExcluded -> return excludedScore(resolution.warning, resolution.reason)
+                is RuleResolution.Applied -> resolution.rule to resolution.unsupportedCapabilities
+            }
 
         val warnings = mutableListOf<Warning>()
+        // A better rule matched this purchase and this build could not run it. The card keeps the
+        // number it can defend, and the owner is told the number is not the whole story.
+        if (capabilityGaps.isNotEmpty()) warnings.add(Warning.UNSUPPORTED_CAPABILITY)
         val state = ownerState.cardStates[card.cardId] ?: CardState()
+
+        // Ask before earning, not after: a program with no valuation cannot produce an honest
+        // number, and the honest answer is a refusal that names the gap. `units = 0` makes this a
+        // pure presence check — no model here can turn a missing valuation into a value.
+        if (valueCad(0.0, card.program.programId, ownerState.valuationsCad, state) == null) {
+            return excludedScore(
+                Warning.UNSUPPORTED_PROGRAM,
+                "no valuation for program ${card.program.programId}"
+            )
+        }
 
         var inCapCad = purchase.amountCad
         var overCapCad = 0.0
@@ -76,9 +93,11 @@ object Scorer {
         val postCapEarn = rule.capId?.let { id -> card.caps.firstOrNull { it.capId == id }?.postCapEarn }
         val units = earnUnits(rule.earn, inCapCad) + earnUnits(postCapEarn ?: rule.earn, overCapCad)
 
-        val gross = valueCad(units, card.program.programId, ownerState.valuationsCad, state, ValuationBand.DECLARED)
-        val grossFloor = valueCad(units, card.program.programId, ownerState.valuationsCad, state, ValuationBand.FLOOR)
-        val grossAspirational = valueCad(units, card.program.programId, ownerState.valuationsCad, state, ValuationBand.ASPIRATIONAL)
+        // Non-null asserted, not `?: 0.0`: the check above proves a valuation exists, and a zero
+        // fallback would quietly reinstate the zero-scoring bug if a refactor ever moved it.
+        val gross = valueCad(units, card.program.programId, ownerState.valuationsCad, state, ValuationBand.DECLARED)!!
+        val grossFloor = valueCad(units, card.program.programId, ownerState.valuationsCad, state, ValuationBand.FLOOR)!!
+        val grossAspirational = valueCad(units, card.program.programId, ownerState.valuationsCad, state, ValuationBand.ASPIRATIONAL)!!
 
         var fxCost = 0.0
         if (purchase.currency != "CAD") {
@@ -126,13 +145,22 @@ object Scorer {
         }
     }
 
+    /**
+     * Null means the program has no valuation — the card cannot be scored. Zero means the
+     * program is valued and this earn is worth nothing. Conflating them is how ten programs
+     * silently ranked last for four release batches.
+     *
+     * A pure function of the [valuations] passed in: catalogue defaults are merged into owner
+     * state up in `RecommendationEngine`'s constructor, deliberately not here, so a caller
+     * holding an empty [Valuations] gets null rather than a value it never declared.
+     */
     fun valueCad(
         units: Double,
         program: String,
         valuations: Valuations,
         state: CardState,
         band: ValuationBand = ValuationBand.DECLARED
-    ): Double {
+    ): Double? {
         fun cents(v: PointValuation): Double {
             return when (band) {
                 ValuationBand.DECLARED -> v.centsPerPoint
@@ -140,25 +168,21 @@ object Scorer {
                 ValuationBand.ASPIRATIONAL -> maxOf(v.aspirationalCentsPerPoint ?: v.centsPerPoint, v.centsPerPoint)
             }
         }
-
-        return when (program) {
-            "amexMembershipRewards" -> units * cents(valuations.amexMembershipRewards) / 100.0
-            "marriottBonvoy" -> units * cents(valuations.marriottBonvoy) / 100.0
-            "mbnaRewards" -> units * cents(valuations.mbnaRewards) / 100.0
-            "ctMoney" -> {
-                val v = valuations.ctMoney
-                units * v.cadPerUnit * (if (v.usabilityFactorApplied) v.optionalUsabilityFactor else 1.0)
-            }
-            "cro" -> {
-                val factor = if (state.croHandling == "autoSell") {
-                    valuations.cro.faceValueFactorIfAutoSold
-                } else {
-                    valuations.cro.defaultHeldRiskFactor
-                }
-                units * factor
-            }
-            "cashback" -> units * valuations.cashBack.cadPerDollar
-            else -> 0.0
+        // Dispatch on the valuation's model, not on the program's name. The name-keyed `when`
+        // this replaced could only ever value the six programs it listed, so a program gaining a
+        // valuation still had to gain a Kotlin branch — which is the coupling this refactor
+        // exists to remove.
+        return when (val valuation = valuations[program]) {
+            null -> null
+            is PointValuation -> units * cents(valuation) / 100.0
+            is CtMoneyValuation ->
+                units * valuation.cadPerUnit *
+                    (if (valuation.usabilityFactorApplied) valuation.optionalUsabilityFactor else 1.0)
+            is CroValuation -> units * (
+                if (state.croHandling == "autoSell") valuation.faceValueFactorIfAutoSold
+                else valuation.defaultHeldRiskFactor
+                )
+            is CashBackValuation -> units * valuation.cadPerDollar
         }
     }
 }

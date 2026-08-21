@@ -5,13 +5,23 @@ import com.cardcopilot.engine.models.Catalogue
 import com.cardcopilot.engine.models.OwnerState
 import com.cardcopilot.engine.models.PurchaseContext
 import com.cardcopilot.engine.models.Recommendation
+import com.cardcopilot.engine.models.RecommendationOutcome
 import com.cardcopilot.engine.models.ValuationDirection
+import com.cardcopilot.engine.models.applyingCatalogueValuationDefaults
 import kotlin.math.abs
 
 class RecommendationEngine(
     val catalogue: Catalogue,
-    val ownerState: OwnerState
+    ownerState: OwnerState
 ) {
+    /**
+     * Catalogue valuation defaults are merged in here, beneath anything the owner has declared.
+     * This is the single funnel every scoring path reaches — including owner states restored
+     * from a device, which never touch SeedLoader. Without it contracts/programs.json would be
+     * data nothing reads.
+     */
+    val ownerState: OwnerState = ownerState.applyingCatalogueValuationDefaults()
+
     private data class Verdict(
         val winner: CandidateScore,
         val runnerUp: CandidateScore?,
@@ -22,17 +32,18 @@ class RecommendationEngine(
         val ranked: List<CandidateScore>
     )
 
-    fun recommend(purchase: PurchaseContext, asOf: String): Recommendation {
+    fun recommend(purchase: PurchaseContext, asOf: String): RecommendationOutcome {
         val candidateCards = if (ownerState.ownedCardIds.isEmpty()) {
             catalogue.cards
         } else {
             val ownedSet = ownerState.ownedCardIds.toSet()
             catalogue.cards.filter { ownedSet.contains(it.cardId) }
         }
-        val scores = candidateCards
-            .map { Scorer.score(it, purchase, ownerState, asOf) }
-            .filter { !it.excluded }
-        check(scores.isNotEmpty()) { "no scorable card — catalogue misconfigured" }
+        val scored = candidateCards.map { Scorer.score(it, purchase, ownerState, asOf) }
+        val scores = scored.filter { !it.excluded }
+        if (scores.isEmpty()) {
+            return RecommendationOutcome.CannotAdvise(scored.mapNotNull { it.exclusionReason })
+        }
 
         val declared = rank(scores, purchase) { it.netValueCad }
         val floor = rank(scores, purchase) { it.floorNetValueCad }
@@ -81,21 +92,27 @@ class RecommendationEngine(
             }
         }
 
-        return Recommendation(
-            winner = declared.winner,
-            runnerUp = declared.runnerUp,
-            switchedFromDefault = declared.switched,
-            advantageOverDefaultCad = declared.advantage,
-            defaultNotAccepted = declared.defaultNotAccepted,
-            suppressedBetterCard = declared.suppressed,
-            valuationSensitive = sensitive,
-            valuationDirection = direction,
-            alternateWinnerCardId = alternateId,
-            breakevenCentsPerPoint = breakeven,
-            declaredCentsPerPoint = declaredCents,
-            allCandidates = declared.ranked
+        return RecommendationOutcome.Advised(
+            Recommendation(
+                winner = declared.winner,
+                runnerUp = declared.runnerUp,
+                switchedFromDefault = declared.switched,
+                advantageOverDefaultCad = declared.advantage,
+                defaultNotAccepted = declared.defaultNotAccepted,
+                suppressedBetterCard = declared.suppressed,
+                valuationSensitive = sensitive,
+                valuationDirection = direction,
+                alternateWinnerCardId = alternateId,
+                breakevenCentsPerPoint = breakeven,
+                declaredCentsPerPoint = declaredCents,
+                allCandidates = declared.ranked
+            )
         )
     }
+
+    /** For callers that only want `allCandidates` and treat a refusal as "no candidates". */
+    fun recommendOrNull(purchase: PurchaseContext, asOf: String): Recommendation? =
+        (recommend(purchase, asOf) as? RecommendationOutcome.Advised)?.recommendation
 
     private fun centsPerUnit(score: CandidateScore): Double {
         return if (score.rewardUnits > 0) (score.grossRewardCad / score.rewardUnits) * 100.0 else 0.0
