@@ -89,6 +89,23 @@ extension ProgramValuationTests {
         XCTAssertEqual(cro.defaultHeldRiskFactor, 0.8)
     }
 
+    /// MoneyTalks persisted the CRO redemption strategy under `model` before the modern
+    /// program valuation discriminator claimed that key. Existing server wallets must remain
+    /// readable after the iOS property was renamed to `redemptionModel`.
+    func testLegacyServerCroModelFieldStillDecodes() throws {
+        let legacy = Data("""
+        {
+          "cro": {"model": "reward-currency", "faceValueFactorIfAutoSold": 1.0,
+                  "defaultHeldRiskFactor": 0.8}
+        }
+        """.utf8)
+
+        let valuations = try JSONDecoder().decode(Valuations.self, from: legacy)
+        guard case .cro(let cro) = try XCTUnwrap(valuations["cro"])
+        else { return XCTFail("expected .cro") }
+        XCTAssertEqual(cro.redemptionModel, "reward-currency")
+    }
+
     func testNewProgramsShapeDecodes() throws {
         let modern = Data("""
         {"programs": {"aeroplan": {"model": "points", "centsPerPoint": 1.9}}}

@@ -140,6 +140,34 @@ public struct CroValuation: Codable, Equatable, Sendable {
         self.defaultHeldRiskFactor = defaultHeldRiskFactor
         self.basis = basis
     }
+
+    private enum CodingKeys: String, CodingKey {
+        case redemptionModel
+        case legacyModel = "model"
+        case faceValueFactorIfAutoSold
+        case defaultHeldRiskFactor
+        case basis
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let modern = try container.decodeIfPresent(String.self, forKey: .redemptionModel) {
+            redemptionModel = modern
+        } else {
+            redemptionModel = try container.decode(String.self, forKey: .legacyModel)
+        }
+        faceValueFactorIfAutoSold = try container.decode(Double.self, forKey: .faceValueFactorIfAutoSold)
+        defaultHeldRiskFactor = try container.decode(Double.self, forKey: .defaultHeldRiskFactor)
+        basis = try container.decodeIfPresent(String.self, forKey: .basis)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(redemptionModel, forKey: .redemptionModel)
+        try container.encode(faceValueFactorIfAutoSold, forKey: .faceValueFactorIfAutoSold)
+        try container.encode(defaultHeldRiskFactor, forKey: .defaultHeldRiskFactor)
+        try container.encodeIfPresent(basis, forKey: .basis)
+    }
 }
 
 public struct CashBackValuation: Codable, Equatable, Sendable {
