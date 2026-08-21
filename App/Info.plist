@@ -24,6 +24,8 @@
     <false/>
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.finance</string>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>Your location is used only on this device to detect arrival at merchants you have saved, so PickMe can suggest a card before you pay. It never tracks your route or leaves your phone.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
@@ -32,6 +34,8 @@
     <array>
         <string>location</string>
     </array>
+    <key>UIFileSharingEnabled</key>
+    <true/>
     <key>UILaunchScreen</key>
     <dict/>
     <key>NSSupportsLiveActivities</key>

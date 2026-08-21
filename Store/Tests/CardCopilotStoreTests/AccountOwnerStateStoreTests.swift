@@ -90,6 +90,90 @@ final class AccountOwnerStateStoreTests: XCTestCase {
         XCTAssertEqual(queue.pending(forUserID: "user-two"), other)
     }
 
+    func testFirstRunWalletSavesLocallyWhenSignedInAccountBindingWasNotPrepared() throws {
+        let accountStore = AccountOwnerStateStore(defaults: defaults, profilesKey: "profiles",
+                                                  activeUserKey: "bound", activeStore: activeStore)
+        let uploadQueue = OwnerStateUploadQueue(defaults: defaults, key: "uploads")
+        let cardRequests = CardRequestQueue(defaults: defaults, key: "guest-requests",
+                                            accountKey: "account-requests")
+        let saver = WalletSetupPersistence(accountStore: accountStore, uploadQueue: uploadQueue,
+                                           cardRequestQueue: cardRequests)
+        let wallet = try owner(defaultCardID: "amex-platinum")
+
+        let outcome = try saver.save(wallet, signedInUserID: "user-one", preparedSetupUserID: nil)
+
+        XCTAssertEqual(outcome, .savedLocallyAwaitingAccountBinding(userID: "user-one"))
+        XCTAssertEqual(activeStore.load(), wallet)
+        XCTAssertNil(accountStore.activeUserID)
+        XCTAssertNil(uploadQueue.pending(forUserID: "user-one"))
+    }
+
+    func testPreparedFirstRunAccountBindsWalletAndQueuesUpload() throws {
+        let accountStore = AccountOwnerStateStore(defaults: defaults, profilesKey: "profiles",
+                                                  activeUserKey: "bound", activeStore: activeStore)
+        let uploadQueue = OwnerStateUploadQueue(defaults: defaults, key: "uploads")
+        let cardRequests = CardRequestQueue(defaults: defaults, key: "guest-requests",
+                                            accountKey: "account-requests")
+        let pendingRequest = PendingCardRequest(issuer: "Issuer", cardName: "Pending Card")
+        cardRequests.enqueue(pendingRequest)
+        let saver = WalletSetupPersistence(accountStore: accountStore, uploadQueue: uploadQueue,
+                                           cardRequestQueue: cardRequests)
+        let wallet = try owner(defaultCardID: "amex-platinum")
+
+        let outcome = try saver.save(wallet, signedInUserID: "user-one",
+                                     preparedSetupUserID: "user-one")
+
+        XCTAssertEqual(outcome, .savedAndQueued(userID: "user-one"))
+        XCTAssertEqual(accountStore.activeUserID, "user-one")
+        XCTAssertEqual(accountStore.state(forUserID: "user-one"), wallet)
+        XCTAssertEqual(uploadQueue.pending(forUserID: "user-one"), wallet)
+        XCTAssertEqual(cardRequests.pending(forUserID: "user-one"), [pendingRequest])
+        XCTAssertTrue(cardRequests.pending().isEmpty)
+    }
+
+    func testEditingBoundWalletUpdatesProfileAndQueuesLatestValue() throws {
+        let accountStore = AccountOwnerStateStore(defaults: defaults, profilesKey: "profiles",
+                                                  activeUserKey: "bound", activeStore: activeStore)
+        let uploadQueue = OwnerStateUploadQueue(defaults: defaults, key: "uploads")
+        let cardRequests = CardRequestQueue(defaults: defaults, key: "guest-requests",
+                                            accountKey: "account-requests")
+        let saver = WalletSetupPersistence(accountStore: accountStore, uploadQueue: uploadQueue,
+                                           cardRequestQueue: cardRequests)
+        try accountStore.activate(try owner(defaultCardID: "amex-cobalt"), forUserID: "user-one")
+        let editedWallet = try owner(defaultCardID: "amex-platinum")
+
+        let outcome = try saver.save(editedWallet, signedInUserID: "user-one",
+                                     preparedSetupUserID: nil)
+
+        XCTAssertEqual(outcome, .savedAndQueued(userID: "user-one"))
+        XCTAssertEqual(activeStore.load(), editedWallet)
+        XCTAssertEqual(accountStore.state(forUserID: "user-one"), editedWallet)
+        XCTAssertEqual(uploadQueue.pending(forUserID: "user-one"), editedWallet)
+    }
+
+    func testDifferentSignedInAccountCannotOverwriteBoundWallet() throws {
+        let accountStore = AccountOwnerStateStore(defaults: defaults, profilesKey: "profiles",
+                                                  activeUserKey: "bound", activeStore: activeStore)
+        let uploadQueue = OwnerStateUploadQueue(defaults: defaults, key: "uploads")
+        let cardRequests = CardRequestQueue(defaults: defaults, key: "guest-requests",
+                                            accountKey: "account-requests")
+        let saver = WalletSetupPersistence(accountStore: accountStore, uploadQueue: uploadQueue,
+                                           cardRequestQueue: cardRequests)
+        let originalWallet = try owner(defaultCardID: "amex-cobalt")
+        try accountStore.activate(originalWallet, forUserID: "user-one")
+
+        let outcome = try saver.save(try owner(defaultCardID: "amex-platinum"),
+                                     signedInUserID: "user-two", preparedSetupUserID: nil)
+
+        XCTAssertEqual(outcome, .accountMismatch(activeUserID: "user-one",
+                                                 signedInUserID: "user-two"))
+        XCTAssertEqual(activeStore.load(), originalWallet)
+        XCTAssertEqual(accountStore.state(forUserID: "user-one"), originalWallet)
+        XCTAssertNil(accountStore.state(forUserID: "user-two"))
+        XCTAssertNil(uploadQueue.pending(forUserID: "user-one"))
+        XCTAssertNil(uploadQueue.pending(forUserID: "user-two"))
+    }
+
     func testCardRequestsStayWithTheirAccountAndUnscopedRequestsAreClaimedOnce() {
         let queue = CardRequestQueue(defaults: defaults, key: "guest-requests",
                                      accountKey: "account-requests")

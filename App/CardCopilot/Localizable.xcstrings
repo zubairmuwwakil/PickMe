@@ -354,6 +354,9 @@
         }
       }
     },
+    "Accept" : {
+
+    },
     "Account" : {
       "localizations" : {
         "fr-CA" : {
@@ -653,6 +656,9 @@
           }
         }
       }
+    },
+    "Amount" : {
+
     },
     "Amount charged" : {
       "localizations" : {
@@ -956,6 +962,12 @@
         }
       }
     },
+    "Charged" : {
+
+    },
+    "Checking connected tokens…" : {
+
+    },
     "Checkout stays available. Add the dedicated Inunity Clerk key and API URL to MoneyTalksConfiguration.swift, then return here to sign in." : {
       "localizations" : {
         "fr-CA" : {
@@ -1073,6 +1085,9 @@
         }
       }
     },
+    "Continue Privately" : {
+
+    },
     "Conversion fee" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1159,6 +1174,9 @@
           }
         }
       }
+    },
+    "Currency" : {
+
     },
     "CUSTOM AMOUNT" : {
       "localizations" : {
@@ -1584,6 +1602,9 @@
         }
       }
     },
+    "Filled in below. Change anything that looks wrong — an edited figure is recorded as your own, not as the capture's." : {
+
+    },
     "Find Nearby Merchant" : {
       "localizations" : {
         "fr-CA" : {
@@ -1653,6 +1674,9 @@
     "Foreign Currency Spend" : {
 
     },
+    "From your Apple Wallet" : {
+
+    },
     "fuel savings" : {
       "localizations" : {
         "fr-CA" : {
@@ -1678,6 +1702,9 @@
           }
         }
       }
+    },
+    "Get Started" : {
+
     },
     "Grocery" : {
 
@@ -1910,6 +1937,15 @@
         }
       }
     },
+    "Last attempt %@" : {
+
+    },
+    "Last sync attempt failed" : {
+
+    },
+    "Last sync needs attention" : {
+
+    },
     "Last synced" : {
       "localizations" : {
         "fr-CA" : {
@@ -1931,6 +1967,9 @@
       }
     },
     "Live evaluation using your active cards and customized point valuations." : {
+
+    },
+    "Loading this account's wallet" : {
 
     },
     "Location is used only for arrival detection at your saved merchants." : {
@@ -2046,6 +2085,9 @@
         }
       }
     },
+    "Name" : {
+
+    },
     "Nearby" : {
       "localizations" : {
         "fr-CA" : {
@@ -2085,6 +2127,9 @@
           }
         }
       }
+    },
+    "No account required to use PickMe. You can sign in anytime from Settings." : {
+
     },
     "No Applicable Coverage" : {
       "localizations" : {
@@ -2364,6 +2409,9 @@
     "Pay with" : {
 
     },
+    "Payment Method" : {
+
+    },
     "Per Card" : {
       "localizations" : {
         "fr-CA" : {
@@ -2394,6 +2442,9 @@
         }
       }
     },
+    "Pick the best card for every purchase, automatically maximizing your rewards and benefits." : {
+
+    },
     "PickMe" : {
       "localizations" : {
         "fr-CA" : {
@@ -2415,7 +2466,13 @@
         }
       }
     },
+    "PickMe could not verify whether this account already has a token. Retry sync before creating another one." : {
+
+    },
     "PickMe is actively monitoring when you arrive at your saved merchants to suggest the best card before you pay." : {
+
+    },
+    "PickMe keeps account wallets separate on this iPhone." : {
 
     },
     "Planned Amount" : {
@@ -2485,6 +2542,9 @@
           }
         }
       }
+    },
+    "Probe Wallet Purchase Fields" : {
+
     },
     "Protection Verdict" : {
       "localizations" : {
@@ -2638,6 +2698,12 @@
     "Restaurants" : {
 
     },
+    "Retry" : {
+
+    },
+    "Retry token check" : {
+
+    },
     "Review Mode" : {
       "localizations" : {
         "fr-CA" : {
@@ -2670,6 +2736,9 @@
           }
         }
       }
+    },
+    "Rows marked Captured were read from your Apple Wallet transaction. Check them and accept, or tap to change anything." : {
+
     },
     "Runner-up Comparison" : {
       "extractionState" : "stale",
@@ -2821,6 +2890,9 @@
           }
         }
       }
+    },
+    "Sign In or Create Account" : {
+
     },
     "Sign in to Inunity" : {
       "localizations" : {
@@ -3028,6 +3100,9 @@
         }
       }
     },
+    "Tapped" : {
+
+    },
     "Target Reached" : {
       "localizations" : {
         "fr-CA" : {
@@ -3047,6 +3122,9 @@
           }
         }
       }
+    },
+    "Temporarily records the Wallet Transaction values that Shortcuts passes to PickMe." : {
+
     },
     "The 3% CRO reward applies only while your Level Up Pro plan is active." : {
       "localizations" : {
@@ -3346,6 +3424,12 @@
         }
       }
     },
+    "Wallet not loaded" : {
+
+    },
+    "Wallet probe saved. Open Files, then On My iPhone, PickMe, WalletCaptureProbe, latest.json." : {
+
+    },
     "Wallet Shortcut token" : {
       "localizations" : {
         "fr-CA" : {
@@ -3375,6 +3459,9 @@
           }
         }
       }
+    },
+    "Welcome to PickMe" : {
+
     },
     "What actually posted" : {
       "localizations" : {
@@ -3543,6 +3630,9 @@
           }
         }
       }
+    },
+    "You're already signed in. PickMe is restoring your saved cards." : {
+
     },
     "Your account and your server data will be deleted. This iPhone's history is kept. This cannot be undone." : {
       "comment" : "human review before public launch",

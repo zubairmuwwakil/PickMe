@@ -56,6 +56,7 @@ struct CheckoutFlowView: View {
         case valuationSandbox
         case sync
         case settings
+        case welcome
         case walletSetup
         case ambientSetup
         case failed(String)
@@ -246,6 +247,18 @@ struct CheckoutFlowView: View {
                          onEraseLocalHistory: { eraseLocalHistory() },
                          onDeleteAccount: { erase in try await deleteAccount(eraseLocalHistory: erase) },
                          onDone: { stage = .idle })
+        case .welcome:
+            WelcomeGatewayView(
+                isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
+                isPreparingAccount: isPreparingAccount,
+                syncIssueMessage: syncIssue?.message,
+                onRetryAccountRestore: {
+                    Task { await prepareAccount(forUserID: Clerk.shared.user?.id) }
+                },
+                onContinuePrivately: {
+                    stage = .walletSetup
+                }
+            )
         case .walletSetup:
             if let deps, let seedOwnerState {
                 WalletSetupView(catalogue: deps.catalogue, seed: seedOwnerState,
@@ -287,7 +300,7 @@ struct CheckoutFlowView: View {
             deps = makeDependencies(catalogue: catalogue, candidates: candidates, owner: owner, benefits: benefits)
             configureAmbient(catalogue: catalogue, owner: owner)
             refreshHome()
-            if localOwner == nil { stage = .walletSetup }
+            if localOwner == nil { stage = .welcome }
         } catch {
             stage = .failed("Seed data failed to load: \(error.localizedDescription)")
         }
@@ -316,6 +329,7 @@ struct CheckoutFlowView: View {
                 applyOwnerState(cached, using: deps)
                 walletIsFirstRun = false
                 if case .walletSetup = stage { stage = .idle }
+                if case .welcome = stage { stage = .idle }
                 readySyncUserID = userID
                 return
             }
@@ -325,6 +339,7 @@ struct CheckoutFlowView: View {
                 applyOwnerState(cached, using: deps)
                 walletIsFirstRun = false
                 if case .walletSetup = stage { stage = .idle }
+                if case .welcome = stage { stage = .idle }
                 readySyncUserID = userID
                 return
             }
@@ -354,6 +369,7 @@ struct CheckoutFlowView: View {
                 applyOwnerState(remote, using: deps)
                 walletIsFirstRun = false
                 if case .walletSetup = stage { stage = .idle }
+                if case .welcome = stage { stage = .idle }
             } else {
                 let emptySetup = WalletSetup(ownedCardIds: [], defaultCardId: "",
                                              switchThreshold: OwnerStateBuilder.defaultSwitchThreshold,
@@ -588,23 +604,31 @@ struct CheckoutFlowView: View {
         guard let deps else { return }
         let owner = OwnerStateBuilder.make(setup: setup, catalogue: deps.catalogue)
         do {
-            if let signedInUserID = Clerk.shared.user?.id,
-               accountOwnerStateStore.activeUserID != signedInUserID {
-                guard accountSetupUserID == signedInUserID else {
-                    saveSyncIssue(kind: .error,
-                                  message: "This wallet is still linked to another account. Retry account setup before saving.",
-                                  forUserID: signedInUserID)
-                    return
-                }
-                try accountOwnerStateStore.activate(owner, forUserID: signedInUserID)
-                cardRequestQueue.claimUnscopedRequests(forUserID: signedInUserID)
-                readySyncUserID = signedInUserID
+            let signedInUserID = Clerk.shared.user?.id
+            let outcome = try WalletSetupPersistence(
+                accountStore: accountOwnerStateStore,
+                uploadQueue: ownerStateUploadQueue,
+                cardRequestQueue: cardRequestQueue
+            ).save(owner, signedInUserID: signedInUserID,
+                   preparedSetupUserID: accountSetupUserID)
+
+            switch outcome {
+            case .savedLocally:
+                break
+            case .savedLocallyAwaitingAccountBinding(let userID):
+                saveSyncIssue(
+                    kind: .warning,
+                    message: "Wallet saved on this iPhone. Account sync will retry when the connection is ready.",
+                    forUserID: userID
+                )
+            case .savedAndQueued(let userID):
+                if signedInUserID == userID { readySyncUserID = userID }
                 accountSetupUserID = nil
-            } else {
-                try accountOwnerStateStore.updateActive(owner)
-            }
-            if let boundUserID = accountOwnerStateStore.activeUserID {
-                try ownerStateUploadQueue.enqueue(owner, forUserID: boundUserID)
+            case .accountMismatch:
+                stage = .failed(
+                    "This wallet is linked to another account. Open Sync and Wallet Capture to choose the correct account before saving."
+                )
+                return
             }
         } catch {
             stage = .failed(error.localizedDescription)
