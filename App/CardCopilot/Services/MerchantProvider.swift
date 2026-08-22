@@ -22,8 +22,31 @@ final class LiveMerchantProvider: MerchantProviding {
         request.naturalLanguageQuery = text
         request.resultTypes = .pointOfInterest
         let search = MKLocalSearch(request: request)
-        let response = try await search.start()
-        return response.mapItems.map { Self.nearbyMerchant(from: $0, referenceCoordinate: nil) }
+        do {
+            let response = try await search.start()
+            let results = response.mapItems.map { Self.nearbyMerchant(from: $0, referenceCoordinate: nil) }
+            if !results.isEmpty { return results }
+            let fallback = Self.fallbackSearch(text)
+            return fallback.isEmpty ? results : fallback
+        } catch {
+            let fallback = Self.fallbackSearch(text)
+            if !fallback.isEmpty { return fallback }
+            throw error
+        }
+    }
+
+    private static func fallbackSearch(_ text: String) -> [NearbyMerchant] {
+        let matches = CanadianMerchantPreIndex.search(text, limit: 10)
+        return matches.map { match in
+            NearbyMerchant(
+                id: "preindex:\(match.id)",
+                name: match.name,
+                poiCategoryRaw: match.category,
+                latitude: 0,
+                longitude: 0,
+                distanceMeters: nil
+            )
+        }
     }
 
     private static func nearbyMerchant(from mapItem: MKMapItem,

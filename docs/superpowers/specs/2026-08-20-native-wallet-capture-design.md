@@ -1,13 +1,13 @@
 # Native Apple Wallet Capture Design
 
-**Status:** Approved 2026-08-20 after written-spec review. Five forks ratified in review (§0).
+**Status:** Approved 2026-08-20 after written-spec review; amended 2026-08-22. Six rulings are recorded in §0.
 **Products:** PickMe (native bridge, on-device verdict, capture status), Inunity (capture system of record)
 **Repositories:** `PickMe`, `MoneyTalks`
 **Delivery:** One throwaway Apple-boundary spike (§6) to settle parameter coercion, then direct full implementation. No feature flag, no staged rollout, no production path that gets thrown away. Automated verification is part of implementation, followed by one real-device Wallet check.
 
-## 0. Review rulings (2026-08-20)
+## 0. Review rulings and amendments
 
-This section records what the written-spec review changed. It is the diff against the pre-review draft; the body below already reflects it.
+This section records what the written-spec review and subsequent product decisions changed. It is the diff against the pre-review draft; the body below already reflects it.
 
 | # | Fork | Ruling |
 |---|---|---|
@@ -16,6 +16,7 @@ This section records what the written-spec review changed. It is the diff agains
 | R3 | Apple-boundary risk | **Spike first.** A stub intent proves Shortcuts→App-Intent parameter coercion before the schema is committed. |
 | R4 | Amount representation | **Both.** Raw Apple text for provenance plus a device-parsed decimal; the server prefers the decimal and flags disagreement. |
 | R5 | Better-card verdict | **On-device, with the server verdict as refinement.** PickMe computes and shows it immediately; Inunity's cap-aware verdict wins on the stored record when they disagree. |
+| R6 | Successful-capture feedback (2026-08-22 amendment) | **One immediate, truthful receipt after durable local persistence.** Show an in-app banner when PickMe is active and a local iOS notification otherwise. Better-card and offline states enrich the same receipt; server acceptance updates status without producing a second success alert. |
 
 ### Supersessions
 
@@ -41,6 +42,7 @@ PickMe remains independently useful as the offline card-recommendation product �
 
 - Reduce the Personal Automation to one parameterized app action.
 - Persist every meaningful Wallet trigger before attempting optional enrichment or networking.
+- Confirm every successfully persisted current Wallet capture visibly, without claiming server acceptance prematurely or emitting duplicate alerts.
 - Keep offline events indefinitely until Inunity accepts them or the user explicitly removes them.
 - Ensure one failed event never blocks another — locally *and* in the server's normalization queue.
 - Deliver the better-card verdict from on-device state, so it survives being offline.
@@ -132,10 +134,9 @@ Amount          <- Amount
 Name            <- Name
 Currency        <- Currency Code
 Card            <- Card or Pass
-Payment Method  <- Payment Method > Name      (candidate, see below)
 ```
 
-**Five confirmed properties plus one candidate.** Field inventory observed on-device 2026-08-20: the Wallet trigger's input can be cast in Shortcuts to a typed `Payment Method` entity carrying its own `Name` sub-property, distinct from the transaction's `Name` and from `Card or Pass`. The transaction is an object graph, not five flat strings, so the spike must enumerate the graph rather than assume the five leaves this design started from.
+**Five production properties.** The 2026-08-22 real-device App Intent probe showed that `Payment Method > Name` arrived byte-for-byte equal to the transaction's `Name`, not as an independent card signal. The production action therefore omits that ambiguous sixth mapping. Schema 2 keeps `paymentMethodRaw` optional only for backward compatibility and future Apple behavior; PickMe does not ask users to configure it.
 
 **What is already proven:** the Wallet trigger itself. `MoneyTalks/docs/plans/2026-08-16-wallet-capture-spec.md` records that the automation was manually tested and the trigger exposes transaction fields cleanly.
 
@@ -197,7 +198,7 @@ Rules:
 - The server prefers `amountDecimal` when present, falls back to parsing `amountRaw`, and **records a flag when its own parse of `amountRaw` disagrees with `amountDecimal`**. Disagreement is a signal worth keeping, not an error to suppress.
 - `amountDecodeStatus` distinguishes "Apple gave nothing" from "Apple gave something we could not decode". Only the second is a defect.
 - All Wallet fields are individually optional at runtime.
-- `paymentMethodRaw` is a raw observation and **never replaces `cardRaw`**. It exists because card resolution is a hard gate on the product's most valuable output: `wallet-events/route.ts` computes a verdict only when `cardAlias` resolves, and `cardAlias` is an exact-string lookup on `cardRaw`. An unresolved card produces no warning at all rather than a wrong one, so a second independent card signal is insurance against a silent failure. Capture it even before the server reads it — an uncaptured field is unrecoverable for every past transaction, while an ignored one costs a nullable column.
+- `paymentMethodRaw` remains nullable in the wire/server model for compatibility, but the production App Intent does not expose or populate it after the probe proved Apple's mapping falls back to transaction `Name`. When a legacy or future client supplies a genuinely distinct value, it never replaces `cardRaw`; it may be tried only as a secondary resolution key.
 - A meaningful incomplete event uploads for later correction.
 - If every Wallet field is empty, retain it locally as an automation-configuration error, do not promote it as a purchase, and notify the user.
 - Missing location never delays or loses a capture.
@@ -220,10 +221,11 @@ Actionable incompleteness means merchant and name are both absent, the amount is
 5. Atomically persist it to `pending`.
 6. If persistence fails, show a prominent **Purchase could not be saved** notification/result and retain a safe local diagnostic if possible.
 7. Compute the on-device verdict (§12a) from local state. This requires no network and must not be gated on one.
-8. Request a location for at most two seconds. Accept only a valid fix whose timestamp is no more than 60 seconds old.
-9. If location succeeds, atomically replace the queued payload with coordinates, accuracy, and the location timestamp. Record accuracy but do not reject an otherwise valid fresh fix solely for being imprecise; Inunity decides how much evidentiary weight it deserves.
-10. If location fails or is unavailable, record the safe reason and continue with the minimal event.
-11. Attempt the current event first, then independently attempt older pending events.
+8. After persistence and the local verdict succeed, publish exactly one current-event capture receipt. Use an in-app banner when PickMe is active and a local iOS notification when it is backgrounded or terminated. The ordinary copy is **Purchase received — saved securely**. A better-card warning or already-known offline state replaces or enriches that body instead of stacking another alert. Use the event ID as the notification identifier. Never show a success receipt when step 5 failed.
+9. Request a location for at most two seconds. Accept only a valid fix whose timestamp is no more than 60 seconds old.
+10. If location succeeds, atomically replace the queued payload with coordinates, accuracy, and the location timestamp. Record accuracy but do not reject an otherwise valid fresh fix solely for being imprecise; Inunity decides how much evidentiary weight it deserves.
+11. If location fails or is unavailable, record the safe reason and continue with the minimal event.
+12. Attempt the current event first, then independently attempt older pending events. Server acceptance updates the capture activity/status to **Synced** but does not generate a second current-event success alert.
 
 Omit the `location` object entirely when no acceptable fix exists. Never attach a later location to an old purchase because a later coordinate may no longer represent the purchase location.
 
@@ -400,13 +402,16 @@ Never silently discard pending purchases.
 
 Request notification permission in context during Wallet Capture setup. If notifications are denied, preserve durable capture status and return a concise App Intent result where possible.
 
+Every meaningful current Wallet trigger gets one visible receipt only after it is durably saved. The receipt is an in-app banner when PickMe is active and a local iOS notification when it is not. Lock-screen copy is generic by default: do not expose merchant, amount, currency, or the card used merely to prove capture. A better-card recommendation may name the recommended card under the user's existing notification-preview policy. The same event ID identifies all current-event feedback so richer state replaces the generic receipt instead of producing duplicate banners.
+
 | Outcome | Notification behaviour |
 |---|---|
-| Ordinary online success | Silent. |
-| Current-event better-card warning | Immediate, computed on-device — fires whether or not the network is available (R5). |
+| Ordinary current-event capture | Immediate after durable local persistence: **Purchase received — saved securely**. Do not imply that Inunity has accepted it yet. |
+| Current-event better-card warning | Immediate and combined with the capture receipt, computed on-device — fires whether or not the network is available (R5). Do not also show the generic success receipt. |
+| Confirmed online acceptance | Update capture activity/status to **Synced** without a second success alert. |
 | Server refinement disagrees with the on-device verdict | Silent; update the event record only. Never contradict a warning the user already saw. |
-| First offline capture | "Purchase saved offline. It will sync automatically." |
-| Additional offline captures | Update the same notification with the queued count. |
+| First known-offline capture | The same current-event receipt says **Purchase received — saved offline. It will sync automatically.** |
+| Additional offline captures | Each current event still receives one receipt; update the offline queued count without a separate backlog alert. |
 | Backlog uploaded | One aggregate "N purchases synced" summary. |
 | Authentication blocked | One actionable reconnect notification. |
 | Actionable incomplete/quarantined event | Actionable notification offering review and a diagnostic report. |
@@ -518,7 +523,7 @@ Automated verification is part of implementation. It is deliverable **only becau
 - missing-field behaviour;
 - device-locale amount decoding across en_CA, fr_CA, and at least one period-as-thousands locale, plus the undecodable path;
 - on-device verdict correctness, including the offline path and the stale-cap disagreement path;
-- notification aggregation and diagnostic redaction;
+- current-event receipt only after successful persistence, foreground/background routing, stable event-ID replacement, warning/offline composition without duplicates, notification aggregation, and diagnostic redaction;
 - schema 1/schema 2 server compatibility, including schema 1's required `merchantRaw` and the renamed amount fields;
 - exact and cross-source idempotency through the existing dedup rules;
 - targeted real-time normalization, **including the 100-merchant-null head-of-line regression test** (§12);
@@ -528,7 +533,7 @@ Automated verification is part of implementation. It is deliverable **only becau
 - provisional accrual and correction reversal;
 - declined, duplicate, adjusted, and permanent-delete actions.
 
-After implementation, one real-device checklist verifies the Apple-controlled boundary: the full property mapping, successful purchase, declined attempt, PickMe terminated, no service, and location unavailable. This is final verification, not a staged rollout.
+After implementation, one real-device checklist verifies the Apple-controlled boundary: the full property mapping, a successful purchase with exactly one visible receipt, foreground in-app and background/terminated local-notification routing, declined attempt, no service, and location unavailable. This is final verification, not a staged rollout.
 
 Deployment keeps the server backward-compatible so deployment order cannot strand the existing Wallet Capture V2 queue.
 
@@ -536,6 +541,7 @@ Deployment keeps the server backward-compatible so deployment order cannot stran
 
 - No event received by the App Intent is lost to location, verdict computation, or networking.
 - A local persistence failure is visible and never reported as safely queued.
+- Every successfully persisted current Wallet capture produces exactly one visible receipt; a failed persistence produces none, and later server acceptance does not produce a duplicate success alert.
 - One failed or malformed event never blocks another — in the device outbox or the server's normalization queue.
 - Offline events remain until accepted or explicitly removed.
 - **A better-card warning fires on an offline capture**, with no network at any point.

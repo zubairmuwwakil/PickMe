@@ -22,23 +22,12 @@ struct CheckoutFlowView: View {
     @State private var completionQueue: [StoredPrediction] = []
     @State private var reconcileQueue: [StoredPrediction] = []
     @State private var metrics: ExperimentMetrics?
-    @State private var lastSyncedAt: Date?
-    @State private var walletFeedback: [WalletFeedback] = []
-    @State private var walletInstallations: [WalletInstallation] = []
-    @State private var syncIssue: SyncStatusIssue?
-    @State private var isSyncing = false
-    @State private var isPreparingAccount = false
-    @State private var readySyncUserID: String?
-    @State private var accountSetupUserID: String?
+    @State private var sync = SyncCoordinator()
     @State private var ambient = AmbientLocationService()
     @State private var ambientDiagnostics = SuppressionLog()
     @State private var seedOwnerState: OwnerState?
     @State private var walletIsFirstRun = false
-    private let ownerStateLocalStore = OwnerStateLocalStore()
-    private let accountOwnerStateStore = AccountOwnerStateStore()
-    private let ownerStateUploadQueue = OwnerStateUploadQueue()
-    private let syncMetadataStore = SyncMetadataStore()
-    private let cardRequestQueue = CardRequestQueue()
+    @State private var selectedTab: AppTab = .copilot
 
     enum Stage {
         case idle
@@ -95,24 +84,27 @@ struct CheckoutFlowView: View {
         }
     }
 
+    private var rootTitle: String {
+        switch selectedTab {
+        case .copilot: return "PickMe"
+        case .activity: return "Activity"
+        case .wallet: return "My Wallet"
+        case .perks: return "Protection & Perks"
+        case .you: return "Account & Settings"
+        }
+    }
+
     var body: some View {
         NavigationStack {
             content
-                .navigationTitle("PickMe")
+                .navigationTitle(isAtRoot ? rootTitle : "PickMe")
                 .toolbar {
-                    // Only the root screen owns these. Every other stage supplies its own Done
-                    // button, and leaving the root buttons visible offered a reviewer a gear that
-                    // led back to the screen they were already on.
                     if isAtRoot {
                         ToolbarItem(placement: .topBarTrailing) {
                             Button { stage = .sync } label: {
-                                Image(systemName: lastSyncedAt == nil ? "icloud" : "checkmark.icloud")
+                                Image(systemName: sync.lastSyncedAt == nil ? "icloud" : "checkmark.icloud")
                             }
                             .accessibilityLabel("Sync and Wallet Capture")
-                        }
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button { stage = .settings } label: { Image(systemName: "gearshape") }
-                                .accessibilityLabel("Settings")
                         }
                     }
                 }
@@ -122,7 +114,10 @@ struct CheckoutFlowView: View {
             await prepareAccount(forUserID: Clerk.shared.user?.id)
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { ambientDiagnostics = ambient.diagnostics }
+            if phase == .active {
+                ambientDiagnostics = ambient.diagnostics
+                Task { await autoSyncIfStale() }
+            }
         }
     }
 
@@ -135,28 +130,95 @@ struct CheckoutFlowView: View {
     private var content: some View {
         switch stage {
         case .idle:
-            HomeView(valueRecoveredCad: valueRecoveredCad,
-                     pendingValueCad: pendingValueCad,
-                     merchants: homeMerchants,
-                     isSortedByRecentLocation: cachedLocation?.isRecent == true,
-                     locationDenied: locationDenied,
-                     finishCount: completionQueue.count,
-                     reconcileCount: reconcileQueue.count,
-                     confirmedCount: metrics?.confirmedCount ?? 0,
-                     ambientDiagnostics: ambientDiagnostics,
-                     ambientEnabled: ambient.isEnabled,
-                     onInstantRepeat: { merchant in startInstantRepeat(merchant) },
-                     onFindNearby: { Task { await findNearby() } },
-                     onSearch: { text in Task { await search(text) } },
-                     onFinish: { stage = .finish },
-                     onReconcile: { stage = .reconcile },
-                     onDashboard: { stage = .dashboard },
-                     onProtectionLens: { stage = .protectionLens(BenefitContext(kind: .flight)) },
-                     onBenefits: { stage = .benefitsReference },
-                     onCategoryPicker: { stage = .categoryPicker },
-                     onWalletHealth: { stage = .walletHealth },
-                     onValuationSandbox: { stage = .valuationSandbox },
-                     onConfigureAmbient: { stage = .ambientSetup })
+            ZStack(alignment: .bottom) {
+                Group {
+                    switch selectedTab {
+                    case .copilot:
+                        HomeView(valueRecoveredCad: valueRecoveredCad,
+                                 pendingValueCad: pendingValueCad,
+                                 merchants: homeMerchants,
+                                 isSortedByRecentLocation: cachedLocation?.isRecent == true,
+                                 locationDenied: locationDenied,
+                                 finishCount: completionQueue.count,
+                                 reconcileCount: reconcileQueue.count,
+                                 confirmedCount: metrics?.confirmedCount ?? 0,
+                                 ambientDiagnostics: ambientDiagnostics,
+                                 ambientEnabled: ambient.isEnabled,
+                                 lastSyncedAt: sync.lastSyncedAt,
+                                 syncIssueMessage: sync.syncIssue?.message,
+                                 onOpenSync: { stage = .sync },
+                                 onSelectPreIndexedMerchant: { match in
+                                     stage = .amount(merchant: NearbyMerchant(id: "preindex:\(match.id)",
+                                                                              name: match.name,
+                                                                              poiCategoryRaw: match.category,
+                                                                              latitude: 0,
+                                                                              longitude: 0,
+                                                                              distanceMeters: nil))
+                                 },
+                                 onInstantRepeat: { merchant in startInstantRepeat(merchant) },
+                                 onFindNearby: { Task { await findNearby() } },
+                                 onSearch: { text in Task { await search(text) } },
+                                 onFinish: { stage = .finish },
+                                 onReconcile: { stage = .reconcile },
+                                 onDashboard: { stage = .dashboard },
+                                 onProtectionLens: { stage = .protectionLens(BenefitContext(kind: .flight)) },
+                                 onBenefits: { stage = .benefitsReference },
+                                 onCategoryPicker: { stage = .categoryPicker },
+                                 onWalletHealth: { stage = .walletHealth },
+                                 onValuationSandbox: { stage = .valuationSandbox },
+                                 onConfigureAmbient: { stage = .ambientSetup })
+                    case .activity:
+                        ActivityHubView(
+                            finishCount: completionQueue.count,
+                            reconcileCount: reconcileQueue.count,
+                            metrics: metrics,
+                            valueRecoveredCad: valueRecoveredCad,
+                            pendingValueCad: pendingValueCad,
+                            onFinish: { stage = .finish },
+                            onReconcile: { stage = .reconcile },
+                            onOpenDashboard: { stage = .dashboard }
+                        )
+                    case .wallet:
+                        WalletHubView(
+                            deps: deps,
+                            onCategoryPicker: { stage = .categoryPicker },
+                            onWalletHealth: { stage = .walletHealth },
+                            onValuationSandbox: { stage = .valuationSandbox },
+                            onEditWallet: { stage = .walletSetup }
+                        )
+                    case .perks:
+                        PerksHubView(
+                            deps: deps,
+                            onProtectionLens: { kind in stage = .protectionLens(BenefitContext(kind: kind)) },
+                            onBenefitsReference: { stage = .benefitsReference }
+                        )
+                    case .you:
+                        YouHubView(
+                            isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
+                            accountEmail: Clerk.shared.user?.primaryEmailAddress?.emailAddress,
+                            lastSyncedAt: sync.lastSyncedAt,
+                            syncIssue: sync.syncIssue,
+                            ambientEnabled: ambient.isEnabled,
+                            ambientDiagnostics: ambientDiagnostics,
+                            onOpenSync: { stage = .sync },
+                            onOpenAmbient: { stage = .ambientSetup },
+                            onEditWallet: { stage = .walletSetup },
+                            onSignIn: { stage = .sync },
+                            onSignOut: { Task { await signOut() } },
+                            onEraseLocalHistory: { eraseLocalHistory() },
+                            onDeleteAccount: { erase in try await deleteAccount(eraseLocalHistory: erase) }
+                        )
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                FloatingGlassNavBar(
+                    selectedTab: $selectedTab,
+                    activityBadgeCount: completionQueue.count + reconcileQueue.count,
+                    hasYouAlert: sync.syncIssue != nil || (!ambient.isEnabled)
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         case .locating:
             ProgressView("Finding nearby merchants…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -174,6 +236,7 @@ struct CheckoutFlowView: View {
                                deps: deps,
                                onCompare: { kind in stage = .protectionLens(BenefitContext(kind: kind)) },
                                onDone: {
+                                   LiveActivityManager.shared.endActivity()
                                    refreshHome()
                                    stage = .idle
                                })
@@ -223,21 +286,21 @@ struct CheckoutFlowView: View {
             }
         case .sync:
             SyncCenterView(isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
-                           lastSyncedAt: lastSyncedAt,
-                           feedback: walletFeedback,
-                           installations: walletInstallations,
-                           syncIssue: syncIssue,
-                           isSyncing: isSyncing,
-                           isPreparingAccount: isPreparingAccount,
-                           isAccountReady: readySyncUserID == Clerk.shared.user?.id,
+                           lastSyncedAt: sync.lastSyncedAt,
+                           feedback: sync.walletFeedback,
+                           installations: sync.walletInstallations,
+                           syncIssue: sync.syncIssue,
+                           isSyncing: sync.isSyncing,
+                           isPreparingAccount: sync.isPreparingAccount,
+                           isAccountReady: sync.readySyncUserID == Clerk.shared.user?.id,
                            onSync: { Task { await syncFromUI() } },
                            onCreateInstallation: { label in try await createInstallation(label: label) },
                            onDone: { stage = .idle })
         case .settings:
             SettingsView(isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
                          accountEmail: Clerk.shared.user?.primaryEmailAddress?.emailAddress,
-                         lastSyncedAt: lastSyncedAt,
-                         syncIssue: syncIssue,
+                         lastSyncedAt: sync.lastSyncedAt,
+                         syncIssue: sync.syncIssue,
                          ambientEnabled: ambient.isEnabled,
                          onOpenSync: { stage = .sync },
                          onOpenAmbient: { stage = .ambientSetup },
@@ -250,8 +313,8 @@ struct CheckoutFlowView: View {
         case .welcome:
             WelcomeGatewayView(
                 isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
-                isPreparingAccount: isPreparingAccount,
-                syncIssueMessage: syncIssue?.message,
+                isPreparingAccount: sync.isPreparingAccount,
+                syncIssueMessage: sync.syncIssue?.message,
                 onRetryAccountRestore: {
                     Task { await prepareAccount(forUserID: Clerk.shared.user?.id) }
                 },
@@ -292,7 +355,7 @@ struct CheckoutFlowView: View {
             let catalogue = try SeedLoader.loadCatalogue()
             let candidates = try SeedLoader.loadCandidateCatalogue()
             let seedOwner = try SeedLoader.loadOwnerState()
-            let localOwner = ownerStateLocalStore.load()
+            let localOwner = sync.ownerStateLocalStore.load()
             let owner = localOwner ?? seedOwner
             seedOwnerState = seedOwner
             walletIsFirstRun = localOwner == nil
@@ -310,47 +373,47 @@ struct CheckoutFlowView: View {
     /// possible; a different, previously unseen account is seeded from its server wallet instead
     /// of inheriting the prior account's cards. A server miss opens a genuinely empty setup flow.
     private func prepareAccount(forUserID userID: String?) async {
-        restoreSyncMetadata(forUserID: userID)
-        walletFeedback = []
-        walletInstallations = []
-        readySyncUserID = nil
-        accountSetupUserID = nil
+        sync.restoreSyncMetadata(forUserID: userID)
+        sync.walletFeedback = []
+        sync.walletInstallations = []
+        sync.readySyncUserID = nil
+        sync.accountSetupUserID = nil
         guard let userID else { return }
 
         loadDependencies()
         guard let deps else { return }
-        isPreparingAccount = true
-        defer { isPreparingAccount = false }
+        sync.isPreparingAccount = true
+        defer { sync.isPreparingAccount = false }
 
         do {
-            if accountOwnerStateStore.activeUserID == userID,
-               let cached = accountOwnerStateStore.state(forUserID: userID) {
-                try accountOwnerStateStore.activate(cached, forUserID: userID)
+            if sync.accountOwnerStateStore.activeUserID == userID,
+               let cached = sync.accountOwnerStateStore.state(forUserID: userID) {
+                try sync.accountOwnerStateStore.activate(cached, forUserID: userID)
                 applyOwnerState(cached, using: deps)
                 walletIsFirstRun = false
                 if case .walletSetup = stage { stage = .idle }
                 if case .welcome = stage { stage = .idle }
-                readySyncUserID = userID
+                sync.readySyncUserID = userID
                 return
             }
 
-            if let cached = accountOwnerStateStore.state(forUserID: userID) {
-                try accountOwnerStateStore.activate(cached, forUserID: userID)
+            if let cached = sync.accountOwnerStateStore.state(forUserID: userID) {
+                try sync.accountOwnerStateStore.activate(cached, forUserID: userID)
                 applyOwnerState(cached, using: deps)
                 walletIsFirstRun = false
                 if case .walletSetup = stage { stage = .idle }
                 if case .welcome = stage { stage = .idle }
-                readySyncUserID = userID
+                sync.readySyncUserID = userID
                 return
             }
 
             // Migration and first account attachment: an existing unbound device wallet belongs to
             // the first account the owner signs into. A first-run bundled seed is never adopted.
-            if accountOwnerStateStore.activeUserID == nil, !walletIsFirstRun {
-                try accountOwnerStateStore.activate(deps.ownerState, forUserID: userID)
-                try ownerStateUploadQueue.enqueue(deps.ownerState, forUserID: userID)
-                cardRequestQueue.claimUnscopedRequests(forUserID: userID)
-                readySyncUserID = userID
+            if sync.accountOwnerStateStore.activeUserID == nil, !walletIsFirstRun {
+                try sync.accountOwnerStateStore.activate(deps.ownerState, forUserID: userID)
+                try sync.ownerStateUploadQueue.enqueue(deps.ownerState, forUserID: userID)
+                sync.cardRequestQueue.claimUnscopedRequests(forUserID: userID)
+                sync.readySyncUserID = userID
                 return
             }
 
@@ -358,13 +421,13 @@ struct CheckoutFlowView: View {
                   let baseURL = MoneyTalksConfiguration.apiBaseURL else {
                 throw MoneyTalksAPIError.unavailableConfiguration
             }
-            let shouldClaimUnscopedRequests = accountOwnerStateStore.activeUserID == nil
+            let shouldClaimUnscopedRequests = sync.accountOwnerStateStore.activeUserID == nil
             let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
             if let remote = try await OwnerStateSyncService(client: client).seedFromRemote(),
                !remote.ownedCardIds.isEmpty {
-                try accountOwnerStateStore.activate(remote, forUserID: userID)
+                try sync.accountOwnerStateStore.activate(remote, forUserID: userID)
                 if shouldClaimUnscopedRequests {
-                    cardRequestQueue.claimUnscopedRequests(forUserID: userID)
+                    sync.cardRequestQueue.claimUnscopedRequests(forUserID: userID)
                 }
                 applyOwnerState(remote, using: deps)
                 walletIsFirstRun = false
@@ -377,12 +440,12 @@ struct CheckoutFlowView: View {
                 let empty = OwnerStateBuilder.make(setup: emptySetup, catalogue: deps.catalogue)
                 applyOwnerState(empty, using: deps)
                 walletIsFirstRun = true
-                accountSetupUserID = userID
+                sync.accountSetupUserID = userID
                 stage = .walletSetup
             }
-            readySyncUserID = userID
+            sync.readySyncUserID = userID
         } catch {
-            saveSyncFailure(error, forUserID: userID)
+            sync.saveSyncFailure(error, forUserID: userID)
         }
     }
 
@@ -478,7 +541,7 @@ struct CheckoutFlowView: View {
     /// disagree with the queue it annotates — a stale proposal would offer to fill a field that
     /// was filled a moment ago.
     private var captureProposals: [UUID: CaptureProposal] {
-        Dictionary(CaptureMatcher.proposals(for: completionQueue, from: walletFeedback)
+        Dictionary(CaptureMatcher.proposals(for: completionQueue, from: sync.walletFeedback)
                     .map { ($0.predictionId, $0) },
                    uniquingKeysWith: { first, _ in first })
     }
@@ -550,51 +613,23 @@ struct CheckoutFlowView: View {
         }
     }
 
+    private func autoSyncIfStale() async {
+        guard let deps else { return }
+        if let result = await sync.autoSyncIfStale(ownerState: deps.ownerState, catalogue: deps.catalogue) {
+            applyOwnerState(result.ownerState, using: deps)
+        }
+    }
+
     private func syncCapsSilently() async {
-        guard MoneyTalksConfiguration.isConfigured, !isSyncing, let baseURL = MoneyTalksConfiguration.apiBaseURL,
-              let userID = Clerk.shared.user?.id, readySyncUserID == userID,
-              accountOwnerStateStore.activeUserID == userID, let deps else { return }
-        isSyncing = true
-        defer { isSyncing = false }
-        do {
-            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
-            try await flushQueuedOwnerState(forUserID: userID, using: client)
-            let result = try await OwnerStateSyncService(client: client).sync(ownerState: deps.ownerState, catalogue: deps.catalogue)
-            self.deps = makeDependencies(catalogue: deps.catalogue, candidates: deps.candidateCatalogue,
-                                         owner: result.ownerState, benefits: deps.benefits)
-            try accountOwnerStateStore.updateActive(result.ownerState)
-            configureAmbient(catalogue: deps.catalogue, owner: result.ownerState)
-            walletFeedback = result.feedback
-            if let installations = result.installations {
-                walletInstallations = installations
-            }
-            lastSyncedAt = result.lastSyncedAt
-            syncMetadataStore.save(lastSyncedAt: result.lastSyncedAt, forUserID: userID)
-            var warnings: [String] = []
-            if result.installationRefreshError != nil {
-                warnings.append("Connected Wallet tokens could not be refreshed.")
-            }
-            do {
-                try await flushQueuedCardRequests(forUserID: userID, using: client)
-            } catch {
-                warnings.append("A queued card request could not be sent yet.")
-            }
-            if warnings.isEmpty {
-                clearSyncIssue(forUserID: userID)
-            } else {
-                saveSyncIssue(kind: .warning,
-                              message: "Caps and feedback synced, but \(warnings.joined(separator: " "))",
-                              forUserID: userID)
-            }
-        } catch {
-            // A1: existing local state is usable; connectivity must never interrupt checkout.
-            saveSyncFailure(error, forUserID: userID)
+        guard let deps else { return }
+        if let result = await sync.syncCapsSilently(ownerState: deps.ownerState, catalogue: deps.catalogue) {
+            applyOwnerState(result.ownerState, using: deps)
         }
     }
 
     private func syncFromUI() async {
         guard let userID = Clerk.shared.user?.id else { return }
-        if readySyncUserID != userID {
+        if sync.readySyncUserID != userID {
             await prepareAccount(forUserID: userID)
         }
         await syncCapsSilently()
@@ -606,24 +641,24 @@ struct CheckoutFlowView: View {
         do {
             let signedInUserID = Clerk.shared.user?.id
             let outcome = try WalletSetupPersistence(
-                accountStore: accountOwnerStateStore,
-                uploadQueue: ownerStateUploadQueue,
-                cardRequestQueue: cardRequestQueue
+                accountStore: sync.accountOwnerStateStore,
+                uploadQueue: sync.ownerStateUploadQueue,
+                cardRequestQueue: sync.cardRequestQueue
             ).save(owner, signedInUserID: signedInUserID,
-                   preparedSetupUserID: accountSetupUserID)
+                   preparedSetupUserID: sync.accountSetupUserID)
 
             switch outcome {
             case .savedLocally:
                 break
             case .savedLocallyAwaitingAccountBinding(let userID):
-                saveSyncIssue(
+                sync.saveSyncIssue(
                     kind: .warning,
                     message: "Wallet saved on this iPhone. Account sync will retry when the connection is ready.",
                     forUserID: userID
                 )
             case .savedAndQueued(let userID):
-                if signedInUserID == userID { readySyncUserID = userID }
-                accountSetupUserID = nil
+                if signedInUserID == userID { sync.readySyncUserID = userID }
+                sync.accountSetupUserID = nil
             case .accountMismatch:
                 stage = .failed(
                     "This wallet is linked to another account. Open Sync and Wallet Capture to choose the correct account before saving."
@@ -643,20 +678,20 @@ struct CheckoutFlowView: View {
         // Setup remains usable offline. The durable outbox retries on every sync until the server
         // has the exact wallet needed to evaluate Wallet Capture feedback.
         guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
-              let userID = Clerk.shared.user?.id, readySyncUserID == userID,
-              accountOwnerStateStore.activeUserID == userID else { return }
+              let userID = Clerk.shared.user?.id, sync.readySyncUserID == userID,
+              sync.accountOwnerStateStore.activeUserID == userID else { return }
         do {
             let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
-            try await flushQueuedOwnerState(forUserID: userID, using: client)
+            try await sync.flushQueuedOwnerState(forUserID: userID, using: client)
         } catch {
-            saveSyncFailure(error, forUserID: userID)
+            sync.saveSyncFailure(error, forUserID: userID)
         }
     }
 
     private func requestCard(_ request: PendingCardRequest) async -> Bool {
         guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
-              let userID = Clerk.shared.user?.id, readySyncUserID == userID,
-              accountOwnerStateStore.activeUserID == userID else {
+              let userID = Clerk.shared.user?.id, sync.readySyncUserID == userID,
+              sync.accountOwnerStateStore.activeUserID == userID else {
             enqueueCardRequestForCurrentProfile(request)
             return false
         }
@@ -671,26 +706,11 @@ struct CheckoutFlowView: View {
     }
 
     private func enqueueCardRequestForCurrentProfile(_ request: PendingCardRequest) {
-        if let userID = accountOwnerStateStore.activeUserID {
-            cardRequestQueue.enqueue(request, forUserID: userID)
+        if let userID = sync.accountOwnerStateStore.activeUserID {
+            sync.cardRequestQueue.enqueue(request, forUserID: userID)
         } else {
-            cardRequestQueue.enqueue(request)
+            sync.cardRequestQueue.enqueue(request)
         }
-    }
-
-    private func flushQueuedCardRequests(forUserID userID: String,
-                                         using client: MoneyTalksAPIClient) async throws {
-        for request in cardRequestQueue.pending(forUserID: userID) {
-            try await client.createCardRequest(request)
-            cardRequestQueue.remove(request, forUserID: userID)
-        }
-    }
-
-    private func flushQueuedOwnerState(forUserID userID: String,
-                                       using client: MoneyTalksAPIClient) async throws {
-        guard let pending = ownerStateUploadQueue.pending(forUserID: userID) else { return }
-        try await client.updateOwnerState(pending)
-        ownerStateUploadQueue.remove(forUserID: userID)
     }
 
     /// Erasing the device history on its own — no account required, and nothing on the server is
@@ -718,10 +738,10 @@ struct CheckoutFlowView: View {
         // could be hours away. Arrival monitoring for merchants the owner just erased stops now.
         if eraseLocalHistory { self.eraseLocalHistory() }
         if let deletedUserID {
-            syncMetadataStore.remove(forUserID: deletedUserID)
-            ownerStateUploadQueue.remove(forUserID: deletedUserID)
-            cardRequestQueue.removeAll(forUserID: deletedUserID)
-            accountOwnerStateStore.removeProfile(forUserID: deletedUserID)
+            sync.syncMetadataStore.remove(forUserID: deletedUserID)
+            sync.ownerStateUploadQueue.remove(forUserID: deletedUserID)
+            sync.cardRequestQueue.removeAll(forUserID: deletedUserID)
+            sync.accountOwnerStateStore.removeProfile(forUserID: deletedUserID)
         }
         try? await Clerk.shared.auth.signOut()
         resetSyncedState()
@@ -737,19 +757,9 @@ struct CheckoutFlowView: View {
     /// Clears account-only presentation state. The synced wallet remains in the offline owner-state
     /// store, while the per-account timestamp can be restored if this account signs in again.
     private func resetSyncedState() {
-        lastSyncedAt = nil
-        syncIssue = nil
-        walletFeedback = []
-        walletInstallations = []
-        readySyncUserID = nil
-        accountSetupUserID = nil
+        sync.resetSyncedState()
         deps = nil
         loadDependencies()
-    }
-
-    private func restoreSyncMetadata(forUserID userID: String?) {
-        lastSyncedAt = userID.flatMap { syncMetadataStore.lastSyncedAt(forUserID: $0) }
-        syncIssue = userID.flatMap { syncMetadataStore.issue(forUserID: $0) }
     }
 
     private func applyOwnerState(_ owner: OwnerState, using existing: Dependencies) {
@@ -759,56 +769,8 @@ struct CheckoutFlowView: View {
         refreshHome()
     }
 
-    private func saveSyncFailure(_ error: Error, forUserID userID: String) {
-        #if DEBUG
-        print("❌ PickMe sync error: \(error)")
-        #endif
-        let message: String
-        if let apiError = error as? MoneyTalksAPIError {
-            switch apiError {
-            case .unauthenticated:
-                message = "Your sign-in expired. Sign in again, then retry sync."
-            case .unavailableConfiguration:
-                message = "Sync is not configured in this build. Your on-device wallet is still available."
-            case .unexpectedResponse:
-                message = "Inunity could not finish the sync. Your on-device wallet is still available."
-            }
-        } else if let urlError = error as? URLError {
-            switch urlError.code {
-            case .notConnectedToInternet, .networkConnectionLost, .timedOut,
-                 .cannotConnectToHost, .cannotFindHost:
-                message = "Could not reach Inunity. Check your connection and retry."
-            default:
-                message = "Sync could not finish. Your on-device wallet is still available."
-            }
-        } else {
-            message = "Sync could not finish. Your on-device wallet is still available."
-        }
-        saveSyncIssue(kind: .error, message: message, forUserID: userID)
-    }
-
-    private func saveSyncIssue(kind: SyncStatusIssue.Kind, message: String, forUserID userID: String) {
-        let issue = SyncStatusIssue(kind: kind, message: message)
-        syncMetadataStore.save(issue: issue, forUserID: userID)
-        if Clerk.shared.user?.id == userID { syncIssue = issue }
-    }
-
-    private func clearSyncIssue(forUserID userID: String) {
-        syncMetadataStore.clearIssue(forUserID: userID)
-        if Clerk.shared.user?.id == userID { syncIssue = nil }
-    }
-
     private func createInstallation(label: String) async throws -> String {
-        guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
-              let userID = Clerk.shared.user?.id, readySyncUserID == userID,
-              accountOwnerStateStore.activeUserID == userID else {
-            throw MoneyTalksAPIError.unavailableConfiguration
-        }
-        let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
-        let installation = try await client.createWalletInstallation(label: label)
-        guard let token = installation.token else { throw MoneyTalksAPIError.unexpectedResponse(-1) }
-        walletInstallations.insert(installation, at: 0)
-        return token
+        try await sync.createInstallation(label: label)
     }
 
     private func makeDependencies(catalogue: Catalogue, candidates: Catalogue, owner: OwnerState,

@@ -145,7 +145,9 @@ struct ValuationSandboxView: View {
         // Build customized owner state with current slider values
         var customOwner = deps.ownerState
         customOwner.valuationsCad[points: "amexMembershipRewards"]?.centsPerPoint = amexMrCents
-        customOwner.valuationsCad[points: "mbnaRewards"]?.centsPerPoint = avionCents
+        customOwner.valuationsCad[points: "rbcAvion"]?.centsPerPoint = avionCents
+        customOwner.valuationsCad[points: "aeroplan"]?.centsPerPoint = aeroplanCents
+        customOwner.valuationsCad[points: "scenePlus"]?.centsPerPoint = scenePlusCents
 
         let context = PurchaseContext(amountCad: sample.amountCad, category: sample.category)
         let engine = RecommendationEngine(catalogue: deps.catalogue, ownerState: customOwner)

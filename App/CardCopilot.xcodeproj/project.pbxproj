@@ -25,6 +25,7 @@
 		A1000031 /* CardCopilotStore in Frameworks */ = {isa = PBXBuildFile; productRef = A1000030 /* CardCopilotStore */; };
 		A1000041 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1000040 /* ClerkKit */; };
 		A1000043 /* ClerkKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1000042 /* ClerkKitUI */; };
+		A2000061 /* CardCopilotCapture in Frameworks */ = {isa = PBXBuildFile; productRef = A2000060 /* CardCopilotCapture */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -217,6 +218,7 @@
 			files = (
 				A1000010 /* CardCopilotEngine in Frameworks */,
 				A1000031 /* CardCopilotStore in Frameworks */,
+				A2000061 /* CardCopilotCapture in Frameworks */,
 				A1000041 /* ClerkKit in Frameworks */,
 				A1000043 /* ClerkKitUI in Frameworks */,
 			);
@@ -412,6 +414,7 @@
 			packageProductDependencies = (
 				A1000009 /* CardCopilotEngine */,
 				A1000030 /* CardCopilotStore */,
+				A2000060 /* CardCopilotCapture */,
 				A1000040 /* ClerkKit */,
 				A1000042 /* ClerkKitUI */,
 			);
@@ -1576,6 +1579,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1000044 /* XCRemoteSwiftPackageReference "clerk-ios" */;
 			productName = ClerkKitUI;
+		};
+		A2000060 /* CardCopilotCapture */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CardCopilotCapture;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

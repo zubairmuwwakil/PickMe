@@ -1,6 +1,7 @@
 import SwiftUI
 import ClerkKitUI
 import CardCopilotStore
+import CardCopilotCapture
 
 /// Optional account and capture setup; checkout itself remains entirely offline-capable.
 struct SyncCenterView: View {
@@ -22,6 +23,8 @@ struct SyncCenterView: View {
     @State private var tokenError: String?
     @State private var isCreatingToken = false
     @State private var isShowingCreateForm = false
+    @State private var nativePendingCount = 0
+    @State private var nativeQuarantinedCount = 0
 
     private var activeInstallations: [WalletInstallation] {
         installations.filter { $0.revokedAt == nil }
@@ -42,6 +45,7 @@ struct SyncCenterView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: onDone).font(.headline) } }
         .sheet(isPresented: $authIsPresented) { AuthView() }
+        .task { await refreshNativeCaptureStatus() }
     }
 
     private var configurationRequired: some View {
@@ -105,25 +109,143 @@ struct SyncCenterView: View {
                 Button(isSyncing ? "Syncing…" : "Sync now", action: onSync).buttonStyle(.borderedProminent).disabled(isSyncing)
             }.padding(18).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
             installationSection
+            nativeCaptureStatusSection
             if !feedback.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Recent capture feedback").font(.headline)
-                    ForEach(feedback.prefix(5)) { item in
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(item.warning ?? item.verdict.capitalized).font(.subheadline.weight(.semibold))
-                            Text(item.merchantRaw ?? "Unknown merchant").font(.footnote).foregroundStyle(.secondary)
-                        }
-                        if item.id != feedback.prefix(5).last?.id { Divider() }
-                    }
-                }.padding(16).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+                feedbackSection
             }
         }.task { onSync() }
     }
 
+    private var nativeCaptureStatusSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Capture status", systemImage: "checkmark.shield").font(.headline)
+            LabeledContent("Waiting to sync", value: "\(nativePendingCount)")
+            LabeledContent("Needs attention", value: "\(nativeQuarantinedCount)")
+            HStack {
+                Button("Retry now") { onSync(); Task { await refreshNativeCaptureStatus() } }
+                    .buttonStyle(.bordered)
+                Link("Open transactions in Inunity", destination: URL(string: "https://inunity.ca/purchases")!)
+                    .font(.footnote)
+            }
+            Text("Location is optional. Purchases remain on this iPhone until Inunity accepts them; invalid records are retained for review instead of deleted.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        .padding(16).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func refreshNativeCaptureStatus() async {
+        let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
+            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        guard let store = try? WalletOutboxStore(root: root) else { return }
+        nativePendingCount = (try? await store.captures(in: .pending).count) ?? 0
+        nativeQuarantinedCount = (try? await store.captures(in: .quarantined).count) ?? 0
+    }
+
+    private var feedbackSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Recent capture feedback").font(.headline)
+            ForEach(feedback.prefix(5)) { item in
+                feedbackRow(for: item)
+                if item.id != feedback.prefix(5).last?.id {
+                    Divider()
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func feedbackRow(for item: WalletFeedback) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline) {
+                feedbackVerdictLabel(for: item)
+                Spacer()
+                Text(item.capturedAt.formatted(date: .abbreviated, time: .shortened))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 6) {
+                Text(displayMerchant(for: item))
+                    .font(.subheadline.weight(.semibold))
+
+                if let formattedAmount = formattedAmount(for: item) {
+                    Text("·")
+                        .foregroundStyle(.tertiary)
+                    Text(formattedAmount)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if let cardText = displayCard(for: item) {
+                Text(cardText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    @ViewBuilder
+    private func feedbackVerdictLabel(for item: WalletFeedback) -> some View {
+        if let warning = item.warning?.trimmingCharacters(in: .whitespacesAndNewlines), !warning.isEmpty {
+            Label(warning, systemImage: "exclamationmark.triangle.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.orange)
+        } else {
+            switch item.verdict.lowercased() {
+            case "best", "optimal":
+                Label("Best card used", systemImage: "checkmark.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.green)
+            case "suboptimal", "better_card_available":
+                Label("Better card available", systemImage: "arrow.triangle.2.circlepath")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.orange)
+            case "unknown":
+                Label("Captured", systemImage: "arrow.down.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            default:
+                Text(item.verdict.capitalized)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+            }
+        }
+    }
+
+    private func displayMerchant(for item: WalletFeedback) -> String {
+        if let normalized = item.merchantNormalized?.trimmingCharacters(in: .whitespacesAndNewlines), !normalized.isEmpty {
+            return normalized
+        }
+        if let raw = item.merchantRaw?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty {
+            return raw
+        }
+        return "Wallet transaction"
+    }
+
+    private func formattedAmount(for item: WalletFeedback) -> String? {
+        guard let minor = item.amountMinor else { return nil }
+        let amount = Double(minor) / 100.0
+        let currency = item.currency?.uppercased()
+        if let currency, currency != "CAD" {
+            return String(format: "$%.2f %@", amount, currency)
+        }
+        return String(format: "$%.2f", amount)
+    }
+
+    private func displayCard(for item: WalletFeedback) -> String? {
+        if let cardRaw = item.cardRaw?.trimmingCharacters(in: .whitespacesAndNewlines), !cardRaw.isEmpty {
+            return "Card: \(cardRaw)"
+        }
+        return nil
+    }
+
     private var installationSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Wallet Shortcut token", systemImage: "wallet.pass").font(.headline)
-            Text("Create one token for this device, copy it once, then paste it into the shared Wallet Capture Shortcut. The Shortcut’s assembly contract is in MoneyTalks/docs/plans/2026-08-16-wallet-capture-spec.md.").font(.footnote).foregroundStyle(.secondary)
+            Label("Native Wallet Capture", systemImage: "wallet.pass").font(.headline)
+            Text("Create one secure connection for this iPhone, then add “Send Wallet Purchase to Inunity” directly to your Wallet Transaction automation and map Merchant, Amount, Name, Currency Code, and Card or Pass. PickMe saves each tap locally before syncing it.").font(.footnote).foregroundStyle(.secondary)
             if isSyncing && activeInstallations.isEmpty && installationToken == nil {
                 ProgressView("Checking connected tokens…")
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -132,10 +254,12 @@ struct SyncCenterView: View {
                 Text("PickMe could not verify whether this account already has a token. Retry sync before creating another one.")
                     .font(.footnote).foregroundStyle(.secondary)
                 Button("Retry token check", action: onSync).buttonStyle(.bordered)
-            } else if let installationToken {
-                Text(installationToken).font(.footnote.monospaced()).textSelection(.enabled).padding(12).frame(maxWidth: .infinity, alignment: .leading).background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10))
-                Button("Copy token") { UIPasteboard.general.string = installationToken }.buttonStyle(.bordered)
-                Text("This is the only time PickMe displays this token. Store it in the Shortcut, not a note.").font(.caption).foregroundStyle(.secondary)
+            } else if installationToken != nil {
+                Label("Connected securely", systemImage: "checkmark.shield.fill")
+                    .font(.subheadline.weight(.semibold)).foregroundStyle(.green)
+                Text("The write-only installation credential is protected on this iPhone. It is not copied into Shortcuts or displayed on screen.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Link("Open Shortcuts", destination: URL(string: "shortcuts://")!).buttonStyle(.bordered)
             } else if !activeInstallations.isEmpty && !isShowingCreateForm {
                 VStack(alignment: .leading, spacing: 10) {
                     Label("Connected", systemImage: "checkmark.circle.fill")
@@ -161,7 +285,7 @@ struct SyncCenterView: View {
             } else {
                 TextField("Installation name", text: $installationName).textFieldStyle(.roundedBorder)
                 HStack {
-                    Button(isCreatingToken ? "Creating…" : "Create installation token") { Task { await createInstallationToken() } }
+                    Button(isCreatingToken ? "Connecting…" : "Connect native Wallet Capture") { Task { await createInstallationToken() } }
                         .buttonStyle(.bordered).disabled(isCreatingToken || isSyncing || installationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     if !activeInstallations.isEmpty {
                         Button("Cancel") {

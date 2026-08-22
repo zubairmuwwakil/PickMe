@@ -25,16 +25,37 @@ public struct WhichCardIntent: AppIntent {
             return .result(dialog: "Open PickMe at checkout or specify a store like Costco, Tim Hortons, or Groceries.")
         }
 
+        // Try to load engine dependencies
+        guard let catalogue = try? SeedLoader.loadCatalogue(),
+              let ownerState = OwnerStateLocalStore().load() ?? (try? SeedLoader.loadOwnerState()) else {
+            return .result(dialog: "PickMe could not load card rules. Open PickMe to verify your wallet.")
+        }
+        let today = Date().formatted(.iso8601.year().month().day())
+        let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
+
         // 1. Check Pre-Indexed Canadian Merchants
         let preIndexed = CanadianMerchantPreIndex.search(trimmedQuery, limit: 1)
         if let merchant = preIndexed.first {
-            let categoryName = merchant.category
-            let networkInfo = merchant.acceptedNetworks.contains(.amex) ? "" : " (Note: \(merchant.name) doesn't take Amex)."
-            let resultMessage = "For \(merchant.name) (\(categoryName)), check your top card in PickMe\(networkInfo)."
+            let context = PurchaseContext(amountCad: 50.0, category: merchant.category, mcc: merchant.mcc, merchantBrand: merchant.merchantBrand, acceptedNetworks: merchant.acceptedNetworks)
+            let outcome = engine.recommend(context, asOf: today)
+            if case .advised(let rec) = outcome {
+                let winnerCard = catalogue.cards.first { $0.cardId == rec.winner.cardId }?.officialName ?? rec.winner.cardId
+                let networkWarning = merchant.acceptedNetworks.contains(.amex) ? "" : " (Note: \(merchant.name) does not take Amex)."
+                let resultMessage = "For \(merchant.name), use your \(winnerCard)\(networkWarning)."
+                return .result(dialog: IntentDialog(stringLiteral: resultMessage))
+            }
+        }
+
+        // 2. Fallback on general category prediction
+        let prediction = predict(poiCategoryRaw: nil, merchantName: trimmedQuery)
+        let context = PurchaseContext(amountCad: 50.0, category: prediction.category)
+        let outcome = engine.recommend(context, asOf: today)
+        if case .advised(let rec) = outcome {
+            let winnerCard = catalogue.cards.first { $0.cardId == rec.winner.cardId }?.officialName ?? rec.winner.cardId
+            let resultMessage = "For \(trimmedQuery), your best card is \(winnerCard)."
             return .result(dialog: IntentDialog(stringLiteral: resultMessage))
         }
 
-        // 2. Fallback on general category
         return .result(dialog: IntentDialog(stringLiteral: "Looking up the best card for \(trimmedQuery)... Open PickMe to see your wallet rank."))
     }
 }
