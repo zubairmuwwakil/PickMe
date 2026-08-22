@@ -12,6 +12,7 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -157,12 +158,33 @@ object ValuationsSerializer : KSerializer<Valuations> {
 
         val programs = mutableMapOf<String, ProgramValuation>()
         for ((legacyKey, serializer, programId) in legacyKeys) {
-            val element = root[legacyKey] ?: continue
+            val raw = root[legacyKey] ?: continue
+            val element = if (legacyKey == "cro") normalizeLegacyCro(raw) else raw
             programs[programId] = jsonDecoder.json.decodeFromJsonElement(serializer, element)
         }
         // Anything else in a legacy block — `rogersEligibleServiceRedemption`, say — is not a
         // catalogue programId and has no ProgramValuation model. Ignored, never fatal.
         return Valuations(programs)
+    }
+
+    /**
+     * MoneyTalks persisted the CRO redemption strategy under `model` before [ProgramValuation]'s
+     * discriminator claimed that key, so server wallets written before 2026-08-20 carry it there.
+     * The Swift twin accepts the same alias on [CroValuation] itself (c8a51a5); a wallet that
+     * decodes on iOS and throws on Android is a broken contract, not a Kotlin bug.
+     *
+     * Applied here rather than on [CroValuation]'s own serializer deliberately. Kotlin resolves
+     * the discriminator through the polymorphic serializer, so teaching the subclass to also read
+     * `model` would put an alias and the discriminator on the same key in the *modern* path — the
+     * one every future wallet uses. This branch only ever sees legacy blocks, which have no
+     * discriminator, so the ambiguity cannot arise. `redemptionModel` still wins when both are
+     * present, matching Swift.
+     */
+    private fun normalizeLegacyCro(element: JsonElement): JsonElement {
+        val obj = element as? JsonObject ?: return element
+        val legacy = obj["model"]
+        if (legacy == null || obj.containsKey("redemptionModel")) return element
+        return JsonObject(obj - "model" + ("redemptionModel" to legacy))
     }
 
     override fun serialize(encoder: Encoder, value: Valuations) {

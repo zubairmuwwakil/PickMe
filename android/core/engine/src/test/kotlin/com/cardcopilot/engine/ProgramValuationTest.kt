@@ -134,6 +134,24 @@ class ProgramValuationTest {
         assertEquals(0.8, (v["cro"] as CroValuation).defaultHeldRiskFactor)
     }
 
+    /**
+     * MoneyTalks persisted the CRO redemption strategy under `model` before the modern program
+     * valuation discriminator claimed that key. Existing server wallets must remain readable
+     * after the property was renamed to `redemptionModel`. The Swift twin accepts the alias
+     * (c8a51a5); a wallet that decodes on iOS and throws on Android is a broken contract.
+     */
+    @Test
+    fun legacyServerCroModelFieldStillDecodes() {
+        val legacy = """
+        {
+          "cro": {"model": "reward-currency", "faceValueFactorIfAutoSold": 1.0,
+                  "defaultHeldRiskFactor": 0.8}
+        }
+        """.trimIndent()
+        val v = json.decodeFromString(Valuations.serializer(), legacy)
+        assertEquals("reward-currency", (v["cro"] as CroValuation).redemptionModel)
+    }
+
     @Test
     fun newProgramsShapeDecodes() {
         val modern = """{"programs": {"aeroplan": {"model": "points", "centsPerPoint": 1.9}}}"""
