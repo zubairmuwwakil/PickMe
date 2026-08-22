@@ -1,5 +1,39 @@
 import SwiftUI
 
+// MARK: - Remote card photo loader
+// Tries https://assets.inunity.ca/cards/{cardId}.webp first,
+// then falls back to the local gradient design.
+
+private struct CardPhotoView: View {
+    let cardId: String
+    let cornerRadius: CGFloat
+    let fallback: AnyView
+
+    private var remoteURL: URL? {
+        URL(string: "https://assets.inunity.ca/cards/\(cardId).webp")
+    }
+
+    var body: some View {
+        if let url = remoteURL {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                case .failure, .empty:
+                    fallback
+                @unknown default:
+                    fallback
+                }
+            }
+        } else {
+            fallback
+        }
+    }
+}
+
 /// A sleek, physical credit card representation for visual recognition at checkout.
 struct CardArtView: View {
     let cardId: String
@@ -20,34 +54,66 @@ struct CardArtView: View {
         }
     }
 
+    // MARK: Hero card — real photo overlaid on gradient, text floats above
     private var heroCard: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Top Bar: Issuer & Contactless Wave
-            HStack(alignment: .top) {
+        ZStack(alignment: .bottomLeading) {
+            // Layer 1: gradient background (always present)
+            gradientBackground
+                .frame(maxWidth: .infinity)
+                .frame(height: 200)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+            // Layer 2: real card photo from Cloudflare R2 (fills the card)
+            CardPhotoView(
+                cardId: cardId,
+                cornerRadius: 18,
+                fallback: AnyView(Color.clear)   // transparent — gradient already showing
+            )
+            .frame(maxWidth: .infinity)
+            .frame(height: 200)
+
+            // Layer 3: subtle bottom gradient scrim so text stays legible
+            LinearGradient(
+                colors: [Color.black.opacity(0.55), Color.clear],
+                startPoint: .bottom,
+                endPoint: .center
+            )
+            .frame(height: 200)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+            // Layer 4: card text overlay
+            heroTextOverlay
+                .padding(18)
+        }
+        .shadow(color: style.gradientColors.first?.opacity(0.35) ?? Color.black.opacity(0.2), radius: 16, x: 0, y: 8)
+    }
+
+    private var heroTextOverlay: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(style.issuer.uppercased())
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .tracking(1.2)
-                        .foregroundStyle(style.textColor.opacity(0.8))
-                    Text(officialName)
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
-                        .foregroundStyle(style.textColor)
-                        .lineLimit(1)
+                    if let headline = rewardHeadline {
+                        Text("TOP REWARD")
+                            .font(.system(size: 9, weight: .black, design: .rounded))
+                            .tracking(1.0)
+                            .foregroundStyle(style.accentColor)
+                        Text(headline)
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                    } else {
+                        Text(officialName)
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                        Text(style.issuer)
+                            .font(.system(size: 11, weight: .medium, design: .rounded))
+                            .foregroundStyle(Color.white.opacity(0.75))
+                    }
                 }
 
                 Spacer()
 
-                Image(systemName: "wave.3.right")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(style.textColor.opacity(0.7))
-            }
-
-            Spacer(minLength: 16)
-
-            // Center: EMV Chip Graphic
-            HStack(spacing: 8) {
-                emvChipView
-                Spacer()
                 if let returnText = effectiveReturnText {
                     Text(returnText)
                         .font(.system(size: 14, weight: .bold, design: .rounded))
@@ -55,86 +121,52 @@ struct CardArtView: View {
                         .padding(.vertical, 5)
                         .background(
                             Capsule()
-                                .fill(style.isDark ? Color.white.opacity(0.2) : Color.black.opacity(0.12))
+                                .fill(Color.white.opacity(0.22))
                         )
-                        .foregroundStyle(style.textColor)
+                        .foregroundStyle(.white)
                 }
-            }
-
-            Spacer(minLength: 16)
-
-            // Bottom Bar: Reward Headline & Network
-            HStack(alignment: .bottom) {
-                if let headline = rewardHeadline {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("TOP REWARD")
-                            .font(.system(size: 9, weight: .black, design: .rounded))
-                            .tracking(1.0)
-                            .foregroundStyle(style.accentColor)
-                        Text(headline)
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
-                            .foregroundStyle(style.textColor)
-                            .lineLimit(1)
-                    }
-                } else {
-                    Text("••••  ••••  ••••  ••••")
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
-                        .foregroundStyle(style.textColor.opacity(0.5))
-                }
-
-                Spacer()
-
-                Text(style.network.rawValue)
-                    .font(.system(size: 10, weight: .heavy, design: .rounded))
-                    .tracking(0.8)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(style.textColor.opacity(0.15))
-                    )
-                    .foregroundStyle(style.textColor.opacity(0.9))
             }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity)
-        .frame(height: 200)
-        .background(
-            ZStack {
-                LinearGradient(
-                    colors: style.gradientColors,
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-
-                // Subtle card lighting overlay
-                LinearGradient(
-                    colors: [Color.white.opacity(0.15), Color.clear, Color.black.opacity(0.2)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(Color.white.opacity(style.isDark ? 0.22 : 0.4), lineWidth: 1)
-            }
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .shadow(color: style.gradientColors.first?.opacity(0.35) ?? Color.black.opacity(0.2), radius: 16, x: 0, y: 8)
     }
 
+    private var gradientBackground: some View {
+        ZStack {
+            LinearGradient(
+                colors: style.gradientColors,
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            LinearGradient(
+                colors: [Color.white.opacity(0.15), Color.clear, Color.black.opacity(0.2)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(Color.white.opacity(style.isDark ? 0.22 : 0.4), lineWidth: 1)
+        }
+    }
+
+    // MARK: Compact row card — real photo thumbnail, fallback to gradient pill
     private var compactCard: some View {
         HStack(spacing: 12) {
-            ZStack {
-                LinearGradient(
-                    colors: style.gradientColors,
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+            CardPhotoView(
+                cardId: cardId,
+                cornerRadius: 6,
+                fallback: AnyView(
+                    ZStack {
+                        LinearGradient(
+                            colors: style.gradientColors,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        Image(systemName: "creditcard.fill")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(style.textColor.opacity(0.9))
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 )
-                Image(systemName: "creditcard.fill")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(style.textColor.opacity(0.9))
-            }
-            .frame(width: 38, height: 26)
+            )
+            .frame(width: 57, height: 38)
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
@@ -204,16 +236,23 @@ struct CardMiniBadge: View {
     }
 
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: style.gradientColors,
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+        CardPhotoView(
+            cardId: cardId,
+            cornerRadius: size * 0.22,
+            fallback: AnyView(
+                ZStack {
+                    LinearGradient(
+                        colors: style.gradientColors,
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    Image(systemName: "creditcard.fill")
+                        .font(.system(size: size * 0.45, weight: .bold))
+                        .foregroundStyle(style.textColor.opacity(0.9))
+                }
+                .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
             )
-            Image(systemName: "creditcard.fill")
-                .font(.system(size: size * 0.45, weight: .bold))
-                .foregroundStyle(style.textColor.opacity(0.9))
-        }
+        )
         .frame(width: size * 1.5, height: size)
         .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
         .overlay(
