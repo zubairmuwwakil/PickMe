@@ -2,10 +2,8 @@ import AppIntents
 import CardCopilotCapture
 import CardCopilotEngine
 import CardCopilotStore
-@preconcurrency import CoreLocation
 import Foundation
 import UIKit
-import UserNotifications
 import ClerkKit
 
 struct WalletCaptureIntent: AppIntent {
@@ -22,30 +20,49 @@ struct WalletCaptureIntent: AppIntent {
     init() {}
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
+        guard WalletCaptureSettingsStore().load().isEnabled else {
+            return .result(dialog: "Wallet Capture is disabled. Open PickMe to enable it again.")
+        }
         let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
             ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let outbox = try WalletOutboxStore(root: root)
+        let diagnostics = try? WalletCaptureDiagnosticsStore(root: root)
         let credential = WalletCaptureCredentialStore().load()
+        let connection = WalletCaptureSettingsStore().load()
+        let credentialIsValidated = credential.map {
+            connection.connectionVerifiedAt != nil && connection.boundUserID == $0.boundUserID
+        } ?? false
+        let usableCredential = credentialIsValidated ? credential : nil
         let signedInUserID = await MainActor.run { Clerk.shared.user?.id }
-        let accountMismatch = credential.map { signedInUserID != nil && signedInUserID != $0.boundUserID } ?? false
-        let uploader = accountMismatch ? nil : credential.flatMap { credential in
+        let routing = WalletCaptureAccountRouting.decide(credentialBoundUserID: usableCredential?.boundUserID,
+                                                        signedInUserID: signedInUserID)
+        let accountMismatch = usableCredential != nil && routing == .unassigned
+        let uploader = accountMismatch ? nil : usableCredential.flatMap { credential in
             MoneyTalksConfiguration.apiBaseURL.map { WalletCaptureHTTPUploader(baseURL: $0, token: credential.token) }
         }
         let catalogue = try? SeedLoader.loadCatalogue()
         let ownerState = OwnerStateLocalStore().load() ?? (try? SeedLoader.loadOwnerState())
+        let aliases = WalletCardAliasStore()
+        let capSyncAt = usableCredential.flatMap { SyncMetadataStore().lastSyncedAt(forUserID: $0.boundUserID) }
         let coordinator = WalletCaptureCoordinator(
             outbox: outbox,
             uploader: uploader,
+            diagnostics: diagnostics,
             locationProvider: { await WalletIntentLocationSampler.sample() },
-            receiptPublisher: { event, offline in
-                let verdict = catalogue.flatMap { catalogue in ownerState.flatMap { owner in
-                    WalletCaptureIntent.localVerdict(event: event, catalogue: catalogue, ownerState: owner)
-                }}
-                await WalletCaptureReceiptPublisher.publish(eventID: event.eventId, offline: offline,
-                                                             recommendedCard: verdict.flatMap { verdict in
+            verdictProvider: { event in
+                guard let catalogue, let ownerState else { return .init(issue: "ownerStateUnavailable", capDataIsStale: true) }
+                return WalletCaptureIntent.localVerdict(event: event, catalogue: catalogue,
+                                                        ownerState: ownerState, aliases: aliases,
+                                                        capSyncAt: capSyncAt)
+            },
+            receiptPublisher: { receipt in
+                let name = receipt.verdict.verdict.flatMap { verdict in
                     catalogue?.cards.first(where: { $0.cardId == verdict.recommendedCardID })?.officialName
-                })
-            })
+                }
+                await WalletCaptureNotificationCoordinator.publish(receipt, catalogueCardName: name)
+            },
+            drainObserver: { summary in await WalletCaptureNotificationCoordinator.publishDrain(summary) },
+            isOffline: { WalletCaptureNetworkMonitor.shared.isOffline })
         let info = Bundle.main.infoDictionary ?? [:]
         let osVersion = await MainActor.run { UIDevice.current.systemVersion }
         let client = WalletCaptureClient(
@@ -54,59 +71,40 @@ struct WalletCaptureIntent: AppIntent {
             osVersion: osVersion,
             locale: Locale.current.identifier)
         do {
-            _ = try await coordinator.capture(
+            let event = try await coordinator.capture(
                 .init(merchant: merchant, amount: amount, transactionName: transactionName,
                       currency: currency, card: card, paymentMethod: nil),
                 client: client, locale: .current, timezone: .current,
-                unassigned: credential == nil || accountMismatch)
-            return .result(dialog: credential == nil || accountMismatch
+                unassigned: routing == .unassigned)
+            if !event.isMeaningful {
+                return .result(dialog: "No Wallet fields arrived. The trigger was retained for review; check the automation mappings in PickMe.")
+            }
+            return .result(dialog: routing == .unassigned
                 ? "Purchase saved on this iPhone. Connect Wallet Capture in PickMe to sync it."
                 : "Purchase received and saved securely.")
-        } catch WalletCaptureError.emptyInput {
-            return .result(dialog: "No Wallet fields arrived. Check the automation mappings in Shortcuts.")
         } catch {
-            await WalletCaptureReceiptPublisher.failure()
+            await WalletCaptureNotificationCoordinator.persistenceFailure()
             return .result(dialog: "Purchase could not be saved. Open PickMe for capture status.")
         }
     }
 
     private static func localVerdict(event: WalletCaptureEvent, catalogue: Catalogue,
-                                     ownerState: OwnerState) -> WalletCaptureVerdict? {
+                                     ownerState: OwnerState, aliases: WalletCardAliasStore,
+                                     capSyncAt: Date?) -> WalletCaptureVerdictEvaluation {
         let normalizedRaw = event.transaction.cardRaw?.lowercased().filter(\.isLetter)
-        let used = catalogue.cards.first { $0.officialName.lowercased().filter(\.isLetter) == normalizedRaw }?.cardId
+        let exactOfficial = catalogue.cards.first { $0.officialName.lowercased().filter(\.isLetter) == normalizedRaw }?.cardId
+        let used = aliases.cardID(for: event.transaction.cardRaw) ?? exactOfficial
+        guard used != nil else { return .init(issue: "cardAliasUnresolved", capDataIsStale: isStale(capSyncAt)) }
         let merchant = event.transaction.merchantRaw ?? event.transaction.transactionNameRaw ?? ""
         let category = CardCopilotStore.predict(poiCategoryRaw: nil, merchantName: merchant).category
-        return WalletCaptureVerdictEvaluator.evaluate(event: event, catalogue: catalogue,
-                                                      ownerState: ownerState, usedCardID: used,
-                                                      category: category)
+        let verdict = WalletCaptureVerdictEvaluator.evaluate(event: event, catalogue: catalogue,
+                                                             ownerState: ownerState, usedCardID: used,
+                                                             category: category)
+        return .init(verdict: verdict, capDataIsStale: isStale(capSyncAt))
     }
-}
 
-private enum WalletCaptureReceiptPublisher {
-    static func publish(eventID: String, offline: Bool, recommendedCard: String?) async {
-        let content = UNMutableNotificationContent()
-        content.title = "Purchase received"
-        if let recommendedCard { content.body = "Saved securely. \(recommendedCard) would have earned more." }
-        else { content.body = offline ? "Saved offline. It will sync automatically." : "Saved securely." }
-        content.sound = .default
-        try? await UNUserNotificationCenter.current().add(.init(identifier: eventID, content: content, trigger: nil))
-    }
-    static func failure() async {
-        let content = UNMutableNotificationContent(); content.title = "Purchase could not be saved"
-        content.body = "Open PickMe to review Wallet Capture."; content.sound = .defaultCritical
-        try? await UNUserNotificationCenter.current().add(.init(identifier: "wallet-capture-persistence-failure", content: content, trigger: nil))
-    }
-}
-
-private enum WalletIntentLocationSampler {
-    /// The real-device probe received no new fix inside the two-second budget. Reuse only an
-    /// already-warm, fresh ambient fix; otherwise capture continues without location.
-    @MainActor static func sample() -> WalletCaptureLocation? {
-        let manager = CLLocationManager()
-        guard manager.authorizationStatus == .authorizedAlways || manager.authorizationStatus == .authorizedWhenInUse,
-              let value = manager.location,
-              Date().timeIntervalSince(value.timestamp) <= 60 else { return nil }
-        return .init(latitude: value.coordinate.latitude, longitude: value.coordinate.longitude,
-                     horizontalAccuracyMeters: value.horizontalAccuracy, capturedAt: value.timestamp)
+    private static func isStale(_ date: Date?) -> Bool {
+        guard let date else { return true }
+        return Date().timeIntervalSince(date) > 24 * 60 * 60
     }
 }

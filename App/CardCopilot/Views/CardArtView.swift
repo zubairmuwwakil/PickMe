@@ -1,5 +1,7 @@
 import SwiftUI
 
+private let physicalCardAspectRatio: CGFloat = 85.60 / 53.98
+
 // MARK: - Remote card photo loader
 // Tries https://assets.inunity.ca/cards/{cardId}.webp first,
 // then falls back to the local gradient design.
@@ -59,9 +61,6 @@ struct CardArtView: View {
         ZStack(alignment: .bottomLeading) {
             // Layer 1: gradient background (always present)
             gradientBackground
-                .frame(maxWidth: .infinity)
-                .frame(height: 200)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
             // Layer 2: real card photo from Cloudflare R2 (fills the card)
             CardPhotoView(
@@ -69,8 +68,7 @@ struct CardArtView: View {
                 cornerRadius: 18,
                 fallback: AnyView(Color.clear)   // transparent — gradient already showing
             )
-            .frame(maxWidth: .infinity)
-            .frame(height: 200)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             // Layer 3: subtle bottom gradient scrim so text stays legible
             LinearGradient(
@@ -78,13 +76,13 @@ struct CardArtView: View {
                 startPoint: .bottom,
                 endPoint: .center
             )
-            .frame(height: 200)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
             // Layer 4: card text overlay
             heroTextOverlay
                 .padding(18)
         }
+        .aspectRatio(physicalCardAspectRatio, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .shadow(color: style.gradientColors.first?.opacity(0.35) ?? Color.black.opacity(0.2), radius: 16, x: 0, y: 8)
     }
 

@@ -3,6 +3,7 @@ import SwiftData
 import CoreLocation
 import CardCopilotEngine
 import CardCopilotStore
+import CardCopilotCapture
 import ClerkKit
 
 /// The core loop: find or search the merchant, capture the amount, show the answer.
@@ -28,6 +29,7 @@ struct CheckoutFlowView: View {
     @State private var seedOwnerState: OwnerState?
     @State private var walletIsFirstRun = false
     @State private var selectedTab: AppTab = .copilot
+    @State private var walletBannerCenter = WalletCaptureBannerCenter.shared
 
     enum Stage {
         case idle
@@ -94,6 +96,13 @@ struct CheckoutFlowView: View {
         }
     }
 
+    private var captureBoundAccountLabel: String? {
+        guard let credential = WalletCaptureCredentialStore().load() else { return nil }
+        guard let current = Clerk.shared.user else { return "Connected account (signed out)" }
+        guard current.id == credential.boundUserID else { return "Different Inunity account — relink required" }
+        return current.primaryEmailAddress?.emailAddress ?? String(current.id.prefix(12))
+    }
+
     var body: some View {
         NavigationStack {
             content
@@ -109,16 +118,32 @@ struct CheckoutFlowView: View {
                     }
                 }
         }
-        .task { loadDependencies() }
+        .overlay(alignment: .top) {
+            if let banner = walletBannerCenter.banner {
+                WalletCaptureBannerView(banner: banner) { walletBannerCenter.dismiss() }
+                    .padding(.top, 8).transition(.move(edge: .top).combined(with: .opacity)).zIndex(100)
+            }
+        }
+        .animation(.spring(duration: 0.35), value: walletBannerCenter.banner)
+        .task {
+            loadDependencies()
+            _ = WalletCaptureNetworkMonitor.shared
+            await sync.drainWalletCaptures()
+            if WalletCaptureDeepLinkStore.consume() { stage = .sync }
+        }
         .task(id: Clerk.shared.user?.id) {
             await prepareAccount(forUserID: Clerk.shared.user?.id)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 ambientDiagnostics = ambient.diagnostics
-                Task { await autoSyncIfStale() }
+                Task { await sync.drainWalletCaptures(); await autoSyncIfStale() }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .walletCaptureConnectivityRestored)) { _ in
+            Task { await sync.drainWalletCaptures() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openWalletCaptureStatus)) { _ in stage = .sync }
     }
 
     private var isAtRoot: Bool {
@@ -295,6 +320,15 @@ struct CheckoutFlowView: View {
                            isAccountReady: sync.readySyncUserID == Clerk.shared.user?.id,
                            onSync: { Task { await syncFromUI() } },
                            onCreateInstallation: { label in try await createInstallation(label: label) },
+                           boundAccountLabel: captureBoundAccountLabel,
+                           isCaptureBoundToCurrentAccount: WalletCaptureCredentialStore().load()?.boundUserID == Clerk.shared.user?.id,
+                           onTestCaptureConnection: { await sync.testWalletCaptureConnection() },
+                           onAssignUnassigned: { try await sync.assignUnassignedCaptures() },
+                           onDeleteUnassigned: { try await sync.deleteUnassignedCaptures() },
+                           onDisableCapture: { delete in try await sync.disableWalletCapture(deleteUnsent: delete) },
+                           onSubmitDiagnostic: { report in try await sync.submitDiagnostic(report) },
+                           onDeleteSubmittedDiagnostic: { id in try await sync.deleteSubmittedDiagnostic(id: id) },
+                           onListSubmittedDiagnostics: { try await sync.listSubmittedDiagnostics() },
                            onDone: { stage = .idle })
         case .settings:
             SettingsView(isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
@@ -743,6 +777,12 @@ struct CheckoutFlowView: View {
             sync.cardRequestQueue.removeAll(forUserID: deletedUserID)
             sync.accountOwnerStateStore.removeProfile(forUserID: deletedUserID)
         }
+        WalletCaptureCredentialStore().remove()
+        WalletCaptureSettingsStore().setEnabled(false)
+        WalletCaptureSettingsStore().clearConnection()
+        let captureRoot = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
+            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        if let outbox = try? WalletOutboxStore(root: captureRoot) { try? await outbox.deleteAll() }
         try? await Clerk.shared.auth.signOut()
         resetSyncedState()
         stage = .idle

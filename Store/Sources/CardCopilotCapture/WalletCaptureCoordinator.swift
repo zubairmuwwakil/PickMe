@@ -5,13 +5,35 @@ public protocol WalletCaptureUploading: Sendable {
 }
 
 public struct WalletCaptureHTTPUploader: WalletCaptureUploading, @unchecked Sendable {
+    private let baseURL: URL
     private let endpoint: URL
     private let token: String
     private let session: URLSession
 
     public init(baseURL: URL, token: String, session: URLSession = .shared) {
+        self.baseURL = baseURL
         endpoint = baseURL.appendingPathComponent("api/v1/wallet-events")
         self.token = token; self.session = session
+    }
+
+    public func testConnection() async -> Bool {
+        do {
+            var request = URLRequest(url: baseURL.appendingPathComponent("api/v1/wallet-installations/test"))
+            request.httpMethod = "POST"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let (_, response) = try await session.data(for: request)
+            return (response as? HTTPURLResponse).map { 200..<300 ~= $0.statusCode } == true
+        } catch { return false }
+    }
+
+    public func revokeInstallation() async -> Bool {
+        do {
+            var request = URLRequest(url: baseURL.appendingPathComponent("api/v1/wallet-installations/revoke"))
+            request.httpMethod = "POST"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let (_, response) = try await session.data(for: request)
+            return (response as? HTTPURLResponse).map { 200..<300 ~= $0.statusCode } == true
+        } catch { return false }
     }
 
     public func upload(_ event: WalletCaptureEvent) async -> WalletUploadResult {
@@ -24,48 +46,77 @@ public struct WalletCaptureHTTPUploader: WalletCaptureUploading, @unchecked Send
             request.httpBody = try encoder.encode(event)
             let (data, response) = try await session.data(for: request)
             guard let http = response as? HTTPURLResponse else { return .init(.retry, safeError: "invalidResponse") }
-            let disposition = (try? JSONDecoder().decode(Response.self, from: data).disposition)
-            if http.statusCode == 401 { return .init(.authenticationRequired, safeError: "authenticationRequired") }
-            if http.statusCode == 429 {
-                return .init(.retry, retryAfter: Self.retryDate(http.value(forHTTPHeaderField: "Retry-After")), safeError: "rateLimited")
+            let decoded = try? JSONDecoder().decode(Response.self, from: data)
+            let disposition = decoded?.disposition
+            if http.statusCode == 401 || http.statusCode == 403 {
+                return .init(.authenticationRequired, safeError: "authenticationRequired", httpStatus: http.statusCode)
             }
-            if (500...).contains(http.statusCode) { return .init(.retry, safeError: "serverUnavailable") }
-            if (400...).contains(http.statusCode) { return .init(disposition == "invalid" ? .invalid : .retry, safeError: "http\(http.statusCode)") }
+            if http.statusCode == 429 {
+                return .init(.retry, retryAfter: Self.retryDate(http.value(forHTTPHeaderField: "Retry-After")), safeError: "rateLimited", httpStatus: http.statusCode)
+            }
+            if (500...).contains(http.statusCode) { return .init(.retry, safeError: "serverUnavailable", httpStatus: http.statusCode) }
+            if (400...).contains(http.statusCode) { return .init(disposition == "invalid" ? .invalid : .retry, safeError: "http\(http.statusCode)", httpStatus: http.statusCode) }
             switch disposition {
-            case "accepted": return .init(.accepted)
-            case "duplicate": return .init(.duplicate)
-            case "authenticationRequired": return .init(.authenticationRequired)
-            case "invalid": return .init(.invalid)
-            default: return .init(.retry, safeError: "undecodableResponse")
+            case "accepted": return .init(.accepted, httpStatus: http.statusCode, serverEventID: decoded?.eventId, refinementVerdict: decoded?.refinement?.verdict)
+            case "duplicate": return .init(.duplicate, httpStatus: http.statusCode, serverEventID: decoded?.eventId)
+            case "authenticationRequired": return .init(.authenticationRequired, httpStatus: http.statusCode)
+            case "invalid": return .init(.invalid, httpStatus: http.statusCode)
+            default: return .init(.retry, safeError: "undecodableResponse", httpStatus: http.statusCode)
             }
         } catch {
             return .init(.retry, safeError: "networkUnavailable")
         }
     }
 
-    private struct Response: Decodable { let disposition: String? }
+    private struct Response: Decodable {
+        struct Refinement: Decodable { let verdict: String? }
+        let disposition: String?
+        let eventId: String?
+        let refinement: Refinement?
+    }
     private static func retryDate(_ value: String?) -> Date? {
-        guard let value, let seconds = TimeInterval(value) else { return nil }
-        return Date().addingTimeInterval(max(0, seconds))
+        guard let value else { return nil }
+        if let seconds = TimeInterval(value) { return Date().addingTimeInterval(max(0, seconds)) }
+        return HTTPDateFormatter.date(from: value)
+    }
+
+    private enum HTTPDateFormatter {
+        static func date(from value: String) -> Date? {
+            let formatter = DateFormatter(); formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.timeZone = TimeZone(secondsFromGMT: 0); formatter.dateFormat = "EEE',' dd MMM yyyy HH':'mm':'ss z"
+            return formatter.date(from: value)
+        }
     }
 }
 
 public actor WalletCaptureCoordinator {
-    public typealias LocationProvider = @Sendable () async -> WalletCaptureLocation?
-    public typealias ReceiptPublisher = @Sendable (WalletCaptureEvent, Bool) async -> Void
+    public typealias LocationProvider = @Sendable () async -> WalletLocationEnrichment
+    public typealias VerdictProvider = @Sendable (WalletCaptureEvent) async -> WalletCaptureVerdictEvaluation
+    public typealias ReceiptPublisher = @Sendable (WalletCaptureReceipt) async -> Void
+    public typealias DrainObserver = @Sendable (WalletCaptureDrainSummary) async -> Void
 
     private let outbox: WalletOutboxStore
     private let uploader: (any WalletCaptureUploading)?
     private let locationProvider: LocationProvider
+    private let verdictProvider: VerdictProvider
     private let receiptPublisher: ReceiptPublisher
+    private let drainObserver: DrainObserver
+    private let diagnostics: WalletCaptureDiagnosticsStore?
+    private let isOffline: @Sendable () -> Bool
     private let now: @Sendable () -> Date
 
     public init(outbox: WalletOutboxStore, uploader: (any WalletCaptureUploading)?,
-                locationProvider: @escaping LocationProvider = { nil },
-                receiptPublisher: @escaping ReceiptPublisher = { _, _ in },
+                diagnostics: WalletCaptureDiagnosticsStore? = nil,
+                locationProvider: @escaping LocationProvider = { .unavailable },
+                verdictProvider: @escaping VerdictProvider = { _ in .init() },
+                receiptPublisher: @escaping ReceiptPublisher = { _ in },
+                drainObserver: @escaping DrainObserver = { _ in },
+                isOffline: @escaping @Sendable () -> Bool = { false },
                 now: @escaping @Sendable () -> Date = Date.init) {
-        self.outbox = outbox; self.uploader = uploader; self.locationProvider = locationProvider
-        self.receiptPublisher = receiptPublisher; self.now = now
+        self.outbox = outbox; self.uploader = uploader; self.diagnostics = diagnostics
+        self.locationProvider = locationProvider; self.verdictProvider = verdictProvider
+        self.receiptPublisher = receiptPublisher; self.drainObserver = drainObserver
+        self.isOffline = isOffline; self.now = now
     }
 
     @discardableResult
@@ -78,43 +129,102 @@ public actor WalletCaptureCoordinator {
             merchantRaw: input.merchant, transactionNameRaw: input.transactionName,
             amountRaw: input.amount, amountDecimal: decoded.decimal, amountDecodeStatus: decoded.status,
             currencyRaw: input.currency, cardRaw: input.card, paymentMethodRaw: payment)
-        guard [input.merchant, input.amount, input.transactionName, input.currency, input.card, payment]
-            .contains(where: { $0?.isEmpty == false }) else { throw WalletCaptureError.emptyInput }
         let event = WalletCaptureEvent(schemaVersion: 2, captureVersion: 1,
             source: "apple_wallet_automation", transport: "pickme_app_intent",
             eventId: UUID().uuidString, capturedAt: now(), timezone: timezone.identifier,
             transaction: transaction, location: nil, client: client)
-        var queued = WalletQueuedCapture(event: event, deliveryState: .pending, attemptCount: 0,
+        let meaningful = event.isMeaningful
+        var queued = WalletQueuedCapture(event: event, deliveryState: meaningful ? .pending : .quarantined, attemptCount: 0,
             lastAttemptAt: nil, nextRetryAt: nil, safeError: nil,
             timeline: [.init(at: now(), stage: "walletFieldsReceived"),
-                       .init(at: now(), stage: "amount\(decoded.status.rawValue.capitalized)"),
-                       .init(at: now(), stage: "savedLocally")])
-        do { try await outbox.persist(queued, to: unassigned ? .unassigned : .pending) }
-        catch { throw WalletCaptureError.localPersistenceFailed }
+                       .init(at: now(), stage: "amount\(decoded.status.rawValue.capitalized)")])
+        if !meaningful {
+            queued.safeError = "automationMappingEmpty"
+            queued.timeline.append(.init(at: now(), stage: "configurationError", detail: "allWalletFieldsEmpty"))
+        }
+        let bucket: WalletOutboxBucket = meaningful ? (unassigned ? .unassigned : .pending) : .quarantined
+        do {
+            try await outbox.persist(queued, to: bucket)
+            queued.timeline.append(.init(at: now(), stage: "savedLocally"))
+            try? await outbox.appendTimeline(eventID: event.eventId, stage: "savedLocally")
+        } catch {
+            queued.safeError = "localPersistenceFailed"
+            queued.timeline.append(.init(at: now(), stage: "localPersistenceFailed"))
+            try? await diagnostics?.begin(queued)
+            throw WalletCaptureError.localPersistenceFailed
+        }
+        try? await diagnostics?.begin(queued)
 
-        await receiptPublisher(event, uploader == nil)
+        let verdict = meaningful ? await verdictProvider(event) : .init(issue: "allWalletFieldsEmpty")
+        try? await outbox.appendTimeline(eventID: event.eventId, stage: "verdictComputedOnDevice",
+                                         detail: verdict.capDataIsStale ? "capDataStale" : verdict.issue)
+        try? await diagnostics?.append(eventID: event.eventId, stage: "verdictComputedOnDevice",
+                                       detail: verdict.capDataIsStale ? "capDataStale" : verdict.issue)
+        let receiptKind: WalletCaptureReceiptKind = !meaningful ? .configurationError
+            : (unassigned ? .savedAwaitingAccount : (isOffline() || uploader == nil ? .savedOffline : .savedSecurely))
+        await receiptPublisher(.init(event: event, kind: receiptKind, verdict: verdict))
 
-        if let location = await locationProvider() {
+        guard meaningful else { return event }
+        let enrichment = await locationProvider()
+        if let location = enrichment.location, abs(now().timeIntervalSince(location.capturedAt)) <= 60 {
             try? await outbox.enrich(eventID: event.eventId, location: location)
+            try? await diagnostics?.append(eventID: event.eventId, stage: "locationCaptured", detail: accuracyCategory(location.horizontalAccuracyMeters))
             queued.event.location = location
+        } else {
+            let outcome: WalletLocationOutcome = enrichment.location == nil ? enrichment.outcome : .staleFix
+            try? await outbox.appendTimeline(eventID: event.eventId, stage: "locationUnavailable", detail: outcome.rawValue)
+            try? await diagnostics?.append(eventID: event.eventId, stage: "locationUnavailable", detail: outcome.rawValue)
         }
         if !unassigned { await drain(currentEventID: event.eventId) }
         return event
     }
 
-    public func drain(currentEventID: String? = nil) async {
-        guard let uploader else { return }
+    @discardableResult
+    public func drain(currentEventID: String? = nil) async -> WalletCaptureDrainSummary {
+        var summary = WalletCaptureDrainSummary()
+        guard let uploader else { return summary }
         try? await outbox.recoverStaleInflight(olderThan: now().addingTimeInterval(-300))
-        guard var pending = try? await outbox.captures(in: .pending) else { return }
+        guard var pending = try? await outbox.captures(in: .pending) else { return summary }
         if let currentEventID, let index = pending.firstIndex(where: { $0.event.eventId == currentEventID }) {
             pending.insert(pending.remove(at: index), at: 0)
         }
         for item in pending {
+            if item.deliveryState == .authenticationBlocked { summary.authenticationBlocked += 1; continue }
             if let retry = item.nextRetryAt, retry > now() { continue }
             guard var claimed = try? await outbox.claim(item.event.eventId) else { continue }
             claimed.attemptCount += 1; claimed.lastAttemptAt = now()
+            claimed.timeline.append(.init(at: now(), stage: "uploadAttempted"))
+            try? await outbox.persist(claimed, to: .inflight)
             let result = await uploader.upload(claimed.event)
+            switch result.disposition {
+            case .accepted:
+                summary.accepted += 1
+                if claimed.event.eventId != currentEventID { summary.backlogUploaded += 1 }
+            case .duplicate:
+                summary.duplicates += 1
+                if claimed.event.eventId != currentEventID { summary.backlogUploaded += 1 }
+            case .authenticationRequired: summary.authenticationBlocked += 1
+            case .invalid: summary.quarantined += 1
+            case .retry: summary.retainedForRetry += 1
+            }
+            if result.disposition == .accepted || result.disposition == .duplicate {
+                try? await diagnostics?.update(eventID: claimed.event.eventId, capture: claimed, result: result)
+                try? await diagnostics?.complete(eventID: claimed.event.eventId, disposition: result.disposition, result: result)
+            } else {
+                var diagnosticCapture = claimed
+                diagnosticCapture.deliveryState = result.disposition == .invalid ? .quarantined :
+                    (result.disposition == .authenticationRequired ? .authenticationBlocked : .pending)
+                try? await diagnostics?.update(eventID: claimed.event.eventId, capture: diagnosticCapture, result: result)
+            }
             try? await outbox.resolve(claimed, result: result)
         }
+        await drainObserver(summary)
+        return summary
+    }
+
+    private func accuracyCategory(_ meters: Double) -> String {
+        if meters <= 25 { return "precise" }
+        if meters <= 100 { return "nearby" }
+        return "coarse"
     }
 }

@@ -44,13 +44,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your location is used only on this device to detect arrival at merchants you have saved, so PickMe can suggest a card before you pay. It never tracks your route or leaves your phone."
+            "value" : "Your location helps PickMe suggest a card at saved merchants. If you enable Wallet Capture, one fresh checkout location may be sent securely to Inunity with that purchase; PickMe never tracks your route."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre position sert seulement sur cet appareil à détecter votre arrivée chez les commerces que vous avez enregistrés, afin que PickMe puisse vous suggérer une carte avant le paiement. L’app ne suit jamais votre trajet et votre position ne quitte pas votre téléphone."
+            "value" : "Votre position aide PickMe à suggérer une carte chez les commerces enregistrés. Si vous activez la capture Wallet, une position récente au moment de l’achat peut être envoyée de façon sécurisée à Inunity avec cet achat; PickMe ne suit jamais votre trajet."
           }
         }
       }
@@ -62,13 +62,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your location is used only on this device to identify a nearby merchant when you ask, or to detect arrival at merchants you have saved. It never tracks your route or leaves your phone."
+            "value" : "Your location identifies nearby merchants when you ask. If you enable Wallet Capture, one fresh checkout location may be sent securely to Inunity with that purchase; PickMe never tracks your route."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre position sert seulement sur cet appareil à repérer un commerce près de vous lorsque vous le demandez, ou à détecter votre arrivée chez les commerces que vous avez enregistrés. L’app ne suit jamais votre trajet et votre position ne quitte pas votre téléphone."
+            "value" : "Votre position repère les commerces à proximité lorsque vous le demandez. Si vous activez la capture Wallet, une position récente au moment de l’achat peut être envoyée de façon sécurisée à Inunity avec cet achat; PickMe ne suit jamais votre trajet."
           }
         }
       }

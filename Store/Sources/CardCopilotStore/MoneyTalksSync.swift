@@ -144,6 +144,12 @@ public actor MoneyTalksAPIClient {
         return try await send(request)
     }
 
+    public func revokeWalletInstallation(id: String) async throws {
+        var request = try await authenticatedRequest(path: "api/v1/wallet-installations/\(id)")
+        request.httpMethod = "DELETE"
+        try await sendIgnoringBody(request)
+    }
+
     /// Apple 5.1.1(v) account deletion. The same route wipes data without touching the account
     /// when no scope is sent, so the scope is stated explicitly rather than defaulted into.
     public func deleteAccount() async throws {

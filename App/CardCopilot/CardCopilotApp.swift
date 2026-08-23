@@ -5,6 +5,7 @@ import ClerkKit
 
 @main
 struct CardCopilotApp: App {
+    @UIApplicationDelegateAdaptor(CardCopilotAppDelegate.self) private var appDelegate
     init() {
         if let publishableKey = MoneyTalksConfiguration.clerkPublishableKey,
            publishableKey.hasPrefix("pk_") {

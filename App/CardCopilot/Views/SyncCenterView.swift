@@ -15,19 +15,30 @@ struct SyncCenterView: View {
     let isAccountReady: Bool
     let onSync: () -> Void
     let onCreateInstallation: (String) async throws -> String
+    let boundAccountLabel: String?
+    let isCaptureBoundToCurrentAccount: Bool
+    let onTestCaptureConnection: () async -> Bool
+    let onAssignUnassigned: () async throws -> Void
+    let onDeleteUnassigned: () async throws -> Void
+    let onDisableCapture: (Bool) async throws -> Void
+    let onSubmitDiagnostic: (WalletCaptureDiagnosticReport) async throws -> WalletSubmittedDiagnostic
+    let onDeleteSubmittedDiagnostic: (String) async throws -> Void
+    let onListSubmittedDiagnostics: () async throws -> [WalletSubmittedDiagnostic]
     let onDone: () -> Void
 
     @State private var authIsPresented = false
     @State private var installationName = "My iPhone"
-    @State private var installationToken: String?
+    @State private var installationWasCreated = false
     @State private var tokenError: String?
     @State private var isCreatingToken = false
     @State private var isShowingCreateForm = false
-    @State private var nativePendingCount = 0
-    @State private var nativeQuarantinedCount = 0
 
     private var activeInstallations: [WalletInstallation] {
         installations.filter { $0.revokedAt == nil }
+    }
+
+    private var hasLocalCredential: Bool {
+        installationWasCreated || WalletCaptureCredentialStore().load() != nil
     }
 
     var body: some View {
@@ -45,7 +56,6 @@ struct SyncCenterView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: onDone).font(.headline) } }
         .sheet(isPresented: $authIsPresented) { AuthView() }
-        .task { await refreshNativeCaptureStatus() }
     }
 
     private var configurationRequired: some View {
@@ -55,10 +65,13 @@ struct SyncCenterView: View {
 
     private var signInRequired: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label("Keep your caps in sync", systemImage: "arrow.triangle.2.circlepath").font(.title3.weight(.bold))
-            Text("Sign in only to sync cap usage, view capture feedback, and create a Wallet Shortcut installation token. Checkout recommendations work without an account or connection.").foregroundStyle(.secondary)
-            Button("Sign in to Inunity") { authIsPresented = true }.buttonStyle(.borderedProminent)
-        }.padding(18).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+            VStack(alignment: .leading, spacing: 16) {
+                Label("Keep your caps in sync", systemImage: "arrow.triangle.2.circlepath").font(.title3.weight(.bold))
+                Text("Sign in only to sync cap usage, view capture feedback, and create a Wallet Capture connection. Checkout recommendations work without an account or connection.").foregroundStyle(.secondary)
+                Button("Sign in to Inunity") { authIsPresented = true }.buttonStyle(.borderedProminent)
+            }.padding(18).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+            nativeCaptureStatusSection
+        }
     }
 
     private var preparingAccount: some View {
@@ -117,28 +130,13 @@ struct SyncCenterView: View {
     }
 
     private var nativeCaptureStatusSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label("Capture status", systemImage: "checkmark.shield").font(.headline)
-            LabeledContent("Waiting to sync", value: "\(nativePendingCount)")
-            LabeledContent("Needs attention", value: "\(nativeQuarantinedCount)")
-            HStack {
-                Button("Retry now") { onSync(); Task { await refreshNativeCaptureStatus() } }
-                    .buttonStyle(.bordered)
-                Link("Open transactions in Inunity", destination: URL(string: "https://inunity.ca/purchases")!)
-                    .font(.footnote)
-            }
-            Text("Location is optional. Purchases remain on this iPhone until Inunity accepts them; invalid records are retained for review instead of deleted.")
-                .font(.caption).foregroundStyle(.secondary)
-        }
-        .padding(16).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
-    }
-
-    private func refreshNativeCaptureStatus() async {
-        let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
-            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        guard let store = try? WalletOutboxStore(root: root) else { return }
-        nativePendingCount = (try? await store.captures(in: .pending).count) ?? 0
-        nativeQuarantinedCount = (try? await store.captures(in: .quarantined).count) ?? 0
+        CaptureStatusView(boundAccountLabel: boundAccountLabel,
+            canAssignUnassigned: isCaptureBoundToCurrentAccount,
+            onRetry: { onSync() }, onTestConnection: onTestCaptureConnection,
+            onAssignUnassigned: onAssignUnassigned, onDeleteUnassigned: onDeleteUnassigned,
+            onDisable: onDisableCapture, onSubmitDiagnostic: onSubmitDiagnostic,
+            onDeleteSubmittedDiagnostic: onDeleteSubmittedDiagnostic,
+            onListSubmittedDiagnostics: onListSubmittedDiagnostics)
     }
 
     private var feedbackSection: some View {
@@ -246,25 +244,30 @@ struct SyncCenterView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Native Wallet Capture", systemImage: "wallet.pass").font(.headline)
             Text("Create one secure connection for this iPhone, then add “Send Wallet Purchase to Inunity” directly to your Wallet Transaction automation and map Merchant, Amount, Name, Currency Code, and Card or Pass. PickMe saves each tap locally before syncing it.").font(.footnote).foregroundStyle(.secondary)
-            if isSyncing && activeInstallations.isEmpty && installationToken == nil {
+            if isSyncing && activeInstallations.isEmpty && !hasLocalCredential {
                 ProgressView("Checking connected tokens…")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 8)
-            } else if syncIssue != nil && activeInstallations.isEmpty && installationToken == nil {
+            } else if syncIssue != nil && activeInstallations.isEmpty && !hasLocalCredential {
                 Text("PickMe could not verify whether this account already has a token. Retry sync before creating another one.")
                     .font(.footnote).foregroundStyle(.secondary)
                 Button("Retry token check", action: onSync).buttonStyle(.bordered)
-            } else if installationToken != nil {
+            } else if hasLocalCredential && isCaptureBoundToCurrentAccount && !isShowingCreateForm {
                 Label("Connected securely", systemImage: "checkmark.shield.fill")
                     .font(.subheadline.weight(.semibold)).foregroundStyle(.green)
                 Text("The write-only installation credential is protected on this iPhone. It is not copied into Shortcuts or displayed on screen.")
                     .font(.caption).foregroundStyle(.secondary)
                 Link("Open Shortcuts", destination: URL(string: "shortcuts://")!).buttonStyle(.bordered)
-            } else if !activeInstallations.isEmpty && !isShowingCreateForm {
+            } else if (hasLocalCredential || !activeInstallations.isEmpty) && !isShowingCreateForm {
                 VStack(alignment: .leading, spacing: 10) {
-                    Label("Connected", systemImage: "checkmark.circle.fill")
+                    Label(hasLocalCredential ? "Relink this iPhone" : "Server connection found",
+                          systemImage: hasLocalCredential ? "person.crop.circle.badge.exclamationmark" : "icloud")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(hasLocalCredential ? .orange : .secondary)
+                    Text(!hasLocalCredential
+                         ? "A server installation exists, but this app needs a fresh device-only credential before it can send captures."
+                         : "The device credential belongs to another Inunity account. Creating a connection here replaces it safely.")
+                        .font(.caption).foregroundStyle(.secondary)
                     ForEach(activeInstallations) { item in
                         VStack(alignment: .leading, spacing: 2) {
                             Text(item.label).font(.subheadline.weight(.semibold))
@@ -273,7 +276,7 @@ struct SyncCenterView: View {
                         }
                         if item.id != activeInstallations.last?.id { Divider() }
                     }
-                    Button("Create another token") {
+                    Button(hasLocalCredential ? "Relink to this account" : "Connect this iPhone") {
                         withAnimation { isShowingCreateForm = true }
                     }
                     .buttonStyle(.bordered)
@@ -304,7 +307,8 @@ struct SyncCenterView: View {
         isCreatingToken = true; tokenError = nil
         defer { isCreatingToken = false }
         do {
-            installationToken = try await onCreateInstallation(installationName)
+            _ = try await onCreateInstallation(installationName)
+            installationWasCreated = true
             isShowingCreateForm = false
             installationName = "My iPhone"
         }

@@ -86,6 +86,8 @@ public final class SyncCoordinator {
             let result = try await OwnerStateSyncService(client: client).sync(ownerState: ownerState, catalogue: catalogue)
 
             walletFeedback = result.feedback
+            let aliasStore = WalletCardAliasStore()
+            for item in result.feedback { aliasStore.merge(raw: item.cardRaw, cardID: item.resolvedCardId) }
             if let installations = result.installations {
                 walletInstallations = installations
             }
@@ -148,30 +150,134 @@ public final class SyncCoordinator {
         let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
         let installation = try await client.createWalletInstallation(label: label)
         guard let token = installation.token else { throw MoneyTalksAPIError.unexpectedResponse(-1) }
+        if let previous = WalletCaptureCredentialStore().load(), previous.installationID != installation.id {
+            let revoked = await WalletCaptureHTTPUploader(baseURL: baseURL, token: previous.token).revokeInstallation()
+            if !revoked {
+                try? await client.revokeWalletInstallation(id: installation.id)
+                throw MoneyTalksAPIError.unexpectedResponse(409, detail: "The previous Wallet Capture connection could not be safely replaced.")
+            }
+        }
         try WalletCaptureCredentialStore().save(.init(token: token,
                                                       installationID: installation.id,
                                                       boundUserID: userID))
         let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
             ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         if let outbox = try? WalletOutboxStore(root: root) {
-            // Creating a connection from this signed-in setup screen is the explicit account choice.
-            try await outbox.assignUnassignedToPending()
+            try await outbox.releaseAuthenticationBlocks()
         }
+        WalletCaptureSettingsStore().setEnabled(true)
         walletInstallations.insert(installation, at: 0)
         return token
     }
 
-    public func drainWalletCaptures(forUserID userID: String) async {
+    public func drainWalletCaptures(forUserID userID: String? = nil) async {
         guard let credential = WalletCaptureCredentialStore().load(),
-              credential.boundUserID == userID,
+              userID == nil || credential.boundUserID == userID,
               let baseURL = MoneyTalksConfiguration.apiBaseURL else { return }
+        if let signedInUserID = Clerk.shared.user?.id, signedInUserID != credential.boundUserID { return }
         let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
             ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         guard let outbox = try? WalletOutboxStore(root: root) else { return }
-        let coordinator = WalletCaptureCoordinator(
-            outbox: outbox,
-            uploader: WalletCaptureHTTPUploader(baseURL: baseURL, token: credential.token))
+        let coordinator = WalletCaptureCoordinator(outbox: outbox,
+            uploader: WalletCaptureHTTPUploader(baseURL: baseURL, token: credential.token),
+            diagnostics: try? WalletCaptureDiagnosticsStore(root: root),
+            drainObserver: { summary in await WalletCaptureNotificationCoordinator.publishDrain(summary) },
+            isOffline: { WalletCaptureNetworkMonitor.shared.isOffline })
         await coordinator.drain()
+    }
+
+    public func testWalletCaptureConnection() async -> Bool {
+        guard let credential = WalletCaptureCredentialStore().load(),
+              Clerk.shared.user?.id == credential.boundUserID,
+              let baseURL = MoneyTalksConfiguration.apiBaseURL else { return false }
+        let valid = await WalletCaptureHTTPUploader(baseURL: baseURL, token: credential.token).testConnection()
+        if valid { WalletCaptureSettingsStore().markConnectionVerified(boundUserID: credential.boundUserID) }
+        return valid
+    }
+
+    public func assignUnassignedCaptures() async throws {
+        guard let credential = WalletCaptureCredentialStore().load(),
+              let signedInUserID = Clerk.shared.user?.id,
+              credential.boundUserID == signedInUserID else {
+            throw URLError(.userAuthenticationRequired)
+        }
+        let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
+            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let outbox = try WalletOutboxStore(root: root)
+        let assigned = try await outbox.captures(in: .unassigned)
+        try await outbox.assignUnassignedToPending()
+        if let diagnostics = try? WalletCaptureDiagnosticsStore(root: root) {
+            for var capture in assigned {
+                capture.deliveryState = .pending
+                try? await diagnostics.update(eventID: capture.event.eventId, capture: capture)
+            }
+        }
+        await drainWalletCaptures(forUserID: Clerk.shared.user?.id)
+    }
+
+    public func deleteUnassignedCaptures() async throws {
+        let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
+            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let outbox = try WalletOutboxStore(root: root)
+        let diagnostics = try? WalletCaptureDiagnosticsStore(root: root)
+        for capture in try await outbox.captures(in: .unassigned) {
+            try await outbox.delete(eventID: capture.event.eventId, from: .unassigned)
+            try? await diagnostics?.delete(eventID: capture.event.eventId)
+        }
+    }
+
+    public func disableWalletCapture(deleteUnsent: Bool) async throws {
+        guard let credential = WalletCaptureCredentialStore().load() else {
+            WalletCaptureSettingsStore().setEnabled(false); return
+        }
+        if !deleteUnsent { await drainWalletCaptures(forUserID: credential.boundUserID) }
+        let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
+            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        var explicitlyDeletedIDs: [String] = []
+        if let outbox = try? WalletOutboxStore(root: root) {
+            let pending = (try? await outbox.captures(in: .pending)) ?? []
+            let inflight = (try? await outbox.captures(in: .inflight)) ?? []
+            let unassigned = (try? await outbox.captures(in: .unassigned)) ?? []
+            let quarantined = (try? await outbox.captures(in: .quarantined)) ?? []
+            let unsent = pending + inflight + unassigned + quarantined
+            if !deleteUnsent && !unsent.isEmpty {
+                throw URLError(.cannotConnectToHost)
+            }
+            explicitlyDeletedIDs = unsent.map(\.event.eventId)
+        }
+        guard let baseURL = MoneyTalksConfiguration.apiBaseURL,
+              await WalletCaptureHTTPUploader(baseURL: baseURL, token: credential.token).revokeInstallation() else {
+            throw URLError(.userAuthenticationRequired)
+        }
+        if deleteUnsent, let outbox = try? WalletOutboxStore(root: root) {
+            try await outbox.deleteAllUnsent()
+            if let diagnostics = try? WalletCaptureDiagnosticsStore(root: root) {
+                for eventID in explicitlyDeletedIDs { try? await diagnostics.delete(eventID: eventID) }
+            }
+        }
+        WalletCaptureCredentialStore().remove(); WalletCaptureSettingsStore().setEnabled(false)
+        WalletCaptureSettingsStore().clearConnection()
+    }
+
+    public func submitDiagnostic(_ report: WalletCaptureDiagnosticReport) async throws -> WalletSubmittedDiagnostic {
+        guard let baseURL = MoneyTalksConfiguration.apiBaseURL else { throw MoneyTalksAPIError.unavailableConfiguration }
+        return try await WalletCaptureDiagnosticsHTTPClient(baseURL: baseURL) {
+            try await Clerk.shared.auth.getToken()
+        }.submit(report)
+    }
+
+    public func deleteSubmittedDiagnostic(id: String) async throws {
+        guard let baseURL = MoneyTalksConfiguration.apiBaseURL else { throw MoneyTalksAPIError.unavailableConfiguration }
+        try await WalletCaptureDiagnosticsHTTPClient(baseURL: baseURL) {
+            try await Clerk.shared.auth.getToken()
+        }.delete(id: id)
+    }
+
+    public func listSubmittedDiagnostics() async throws -> [WalletSubmittedDiagnostic] {
+        guard let baseURL = MoneyTalksConfiguration.apiBaseURL else { throw MoneyTalksAPIError.unavailableConfiguration }
+        return try await WalletCaptureDiagnosticsHTTPClient(baseURL: baseURL) {
+            try await Clerk.shared.auth.getToken()
+        }.list()
     }
 
     public func restoreSyncMetadata(forUserID userID: String?) {

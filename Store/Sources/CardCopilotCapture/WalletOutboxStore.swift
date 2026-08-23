@@ -31,7 +31,7 @@ public actor WalletOutboxStore {
     public func claim(_ eventID: String) throws -> WalletQueuedCapture? {
         let source = file(eventID, in: .pending), target = file(eventID, in: .inflight)
         guard FileManager.default.fileExists(atPath: source.path) else { return nil }
-        try? FileManager.default.removeItem(at: target)
+        guard !FileManager.default.fileExists(atPath: target.path) else { return nil }
         try FileManager.default.moveItem(at: source, to: target)
         var capture = try decoder.decode(WalletQueuedCapture.self, from: Data(contentsOf: target))
         capture.deliveryState = .inflight
@@ -42,6 +42,7 @@ public actor WalletOutboxStore {
     public func recoverStaleInflight(olderThan cutoff: Date) throws {
         for capture in try captures(in: .inflight) where (capture.lastAttemptAt ?? capture.event.capturedAt) < cutoff {
             var recovered = capture; recovered.deliveryState = .pending
+            recovered.timeline.append(.init(stage: "staleClaimRecovered"))
             try persist(recovered)
             try? FileManager.default.removeItem(at: file(capture.event.eventId, in: .inflight))
         }
@@ -59,6 +60,17 @@ public actor WalletOutboxStore {
         }
     }
 
+    public func appendTimeline(eventID: String, stage: String, detail: String? = nil) throws {
+        for bucket in [WalletOutboxBucket.pending, .inflight, .unassigned, .quarantined] {
+            let url = file(eventID, in: bucket)
+            guard FileManager.default.fileExists(atPath: url.path) else { continue }
+            var capture = try decoder.decode(WalletQueuedCapture.self, from: Data(contentsOf: url))
+            capture.timeline.append(.init(stage: stage, detail: detail))
+            try write(capture, to: url)
+            return
+        }
+    }
+
     public func resolve(_ capture: WalletQueuedCapture, result: WalletUploadResult) throws {
         let inflight = file(capture.event.eventId, in: .inflight)
         switch result.disposition {
@@ -66,18 +78,40 @@ public actor WalletOutboxStore {
             try? FileManager.default.removeItem(at: inflight)
         case .authenticationRequired:
             var value = capture; value.deliveryState = .authenticationBlocked; value.safeError = result.safeError
+            value.timeline.append(.init(stage: "authenticationBlocked"))
             try write(value, to: file(value.event.eventId, in: .pending)); try? FileManager.default.removeItem(at: inflight)
         case .retry:
             var value = capture; value.deliveryState = .pending; value.nextRetryAt = result.retryAfter; value.safeError = result.safeError
+            value.timeline.append(.init(stage: "uploadRetained", detail: result.safeError))
             try write(value, to: file(value.event.eventId, in: .pending)); try? FileManager.default.removeItem(at: inflight)
         case .invalid:
             var value = capture; value.deliveryState = .quarantined; value.safeError = result.safeError
+            value.timeline.append(.init(stage: "quarantined", detail: result.safeError))
             try write(value, to: file(value.event.eventId, in: .quarantined)); try? FileManager.default.removeItem(at: inflight)
         }
     }
 
     public func deleteAll() throws {
         for bucket in WalletOutboxBucket.allCases { for url in try urls(in: bucket) { try FileManager.default.removeItem(at: url) } }
+    }
+
+    public func deleteAllUnsent() throws {
+        for bucket in [WalletOutboxBucket.pending, .inflight, .unassigned, .quarantined] {
+            for url in try urls(in: bucket) { try FileManager.default.removeItem(at: url) }
+        }
+    }
+
+    public func delete(eventID: String, from bucket: WalletOutboxBucket) throws {
+        let target = file(eventID, in: bucket)
+        if FileManager.default.fileExists(atPath: target.path) { try FileManager.default.removeItem(at: target) }
+    }
+
+    public func releaseAuthenticationBlocks() throws {
+        for var capture in try captures(in: .pending) where capture.deliveryState == .authenticationBlocked {
+            capture.deliveryState = .pending; capture.safeError = nil; capture.nextRetryAt = nil
+            capture.timeline.append(.init(stage: "authenticationRestored"))
+            try persist(capture)
+        }
     }
 
     /// Called only after the owner explicitly connects/relinks the destination account.
@@ -98,5 +132,9 @@ public actor WalletOutboxStore {
         // Foundation implements `.atomic` as a sibling temp-file write followed by rename,
         // preserving the previous complete record until the replacement is durable.
         try data.write(to: url, options: [.atomic])
+        #if os(iOS) || os(tvOS) || os(watchOS)
+        try? FileManager.default.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
+                                               ofItemAtPath: url.path)
+        #endif
     }
 }

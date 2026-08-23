@@ -45,9 +45,7 @@ struct WalletHubView: View {
                                 ForEach(cards, id: \.cardId) { card in
                                     VStack(alignment: .leading, spacing: 8) {
                                         CardArtView(cardId: card.cardId, officialName: card.officialName, isHero: true)
-                                            .frame(width: 240, height: 145)
-                                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                                            .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
+                                            .frame(width: 240)
 
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(card.officialName)

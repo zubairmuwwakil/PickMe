@@ -27,9 +27,9 @@
     <key>LSSupportsOpeningDocumentsInPlace</key>
     <true/>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Your location is used only on this device to detect arrival at merchants you have saved, so PickMe can suggest a card before you pay. It never tracks your route or leaves your phone.</string>
+	<string>Your location helps PickMe suggest a card at saved merchants. If you enable Wallet Capture, one fresh checkout location may be sent securely to Inunity with that purchase; PickMe never tracks your route.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Your location is used only on this device to identify a nearby merchant when you ask, or to detect arrival at merchants you have saved. It never tracks your route or leaves your phone.</string>
+	<string>Your location identifies nearby merchants when you ask. If you enable Wallet Capture, one fresh checkout location may be sent securely to Inunity with that purchase; PickMe never tracks your route.</string>
     <key>UIBackgroundModes</key>
     <array>
         <string>location</string>
