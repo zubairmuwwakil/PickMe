@@ -379,9 +379,6 @@
         }
       }
     },
-    "A server installation exists, but this app needs a fresh device-only credential before it can send captures." : {
-
-    },
     "About" : {
       "localizations" : {
         "fr-CA" : {
@@ -1179,9 +1176,6 @@
     "Connect native Wallet Capture" : {
 
     },
-    "Connect this iPhone" : {
-
-    },
     "Connected securely" : {
 
     },
@@ -1273,6 +1267,9 @@
           }
         }
       }
+    },
+    "Create replacement connection" : {
+
     },
     "Created %@" : {
 
@@ -2545,6 +2542,9 @@
     "Offline on-device checkout" : {
 
     },
+    "Old server connections found" : {
+
+    },
     "On" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2586,6 +2586,9 @@
         }
       }
     },
+    "Only the selected server credential is revoked. Purchases already saved on this iPhone are not deleted." : {
+
+    },
     "Open PickMe at checkout or specify a store like Costco, Tim Hortons, or Groceries." : {
 
     },
@@ -2624,6 +2627,9 @@
           }
         }
       }
+    },
+    "Other active connections (%lld)" : {
+
     },
     "Outside Canada" : {
       "localizations" : {
@@ -3002,6 +3008,12 @@
     "Review queued events" : {
 
     },
+    "Revoke" : {
+
+    },
+    "Revoke this old connection?" : {
+
+    },
     "Reward Currency Valuations" : {
 
     },
@@ -3157,9 +3169,6 @@
 
     },
     "Sent securely; expires %@" : {
-
-    },
-    "Server connection found" : {
 
     },
     "Set up" : {
@@ -3576,6 +3585,9 @@
           }
         }
       }
+    },
+    "These records cannot restore their device-only secrets after a reinstall. Create a replacement connection; saved purchases stay on this iPhone until you approve their account." : {
+
     },
     "This cannot be undone, and it cannot be restored for you." : {
       "comment" : "human review before public launch",
