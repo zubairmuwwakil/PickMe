@@ -38,8 +38,10 @@ final class CatalogueIntegrityTests: XCTestCase {
         "ownerState.amexAccountAnniversaryMonth", "ownerState.rbcAccountAnniversaryMonth",
     ]
 
+    /// Every product, candidates included — they are the same corpus since 2026-08-24, so this
+    /// gate can no longer miss a card by looking in only one of two files.
     private func allCards() throws -> [CardProduct] {
-        try SeedLoader.loadCatalogue().cards + SeedLoader.loadCandidateCatalogue().cards
+        try SeedLoader.loadCatalogue().cards
     }
 
     /// The valued set is read from programs.json, not mirrored here. A hand-copied list would be

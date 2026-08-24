@@ -10,18 +10,28 @@ public enum SeedLoader {
     /// reviewed breaking-shape change — see contracts/CHANGELOG.md.
     static let supportedCatalogueMajorVersion = 1
 
+    /// candidate-catalogue.json became a list of cardIds in 2.0 (was full card definitions).
+    static let supportedCandidateCatalogueMajorVersion = 2
+
     public static func loadCatalogue() throws -> Catalogue {
         let catalogue: Catalogue = try load("card-catalogue")
         try validate(catalogueVersion: catalogue.catalogueVersion)
         return catalogue
     }
 
-    /// Products researched for acquisition analysis. Kept separate from the wallet catalogue so
-    /// loading them can never make an unowned product eligible at checkout.
-    public static func loadCandidateCatalogue() throws -> Catalogue {
-        let catalogue: Catalogue = try load("candidate-catalogue")
-        try validate(catalogueVersion: catalogue.catalogueVersion)
-        return catalogue
+    /// Which catalogue products are researched acquisition candidates.
+    ///
+    /// This returns IDS, not card definitions. Until 2026-08-24 the file carried full duplicate
+    /// definitions, and they had already drifted from the same cards elsewhere — identical rates
+    /// under different ruleIds, and two different ids for Simplii. Rules and ledgers key on those
+    /// ids, so the drift was not cosmetic. A card defined in one place cannot disagree with itself.
+    ///
+    /// Candidates staying unowned is now enforced where it belongs — against `ownedCardIds` in
+    /// AcquisitionAnalyzer — rather than by keeping a second copy of the card.
+    public static func loadCandidateCatalogue() throws -> CandidateSet {
+        let candidates: CandidateSet = try load("candidate-catalogue")
+        try validate(candidateCatalogueVersion: candidates.candidateCatalogueVersion)
+        return candidates
     }
 
     public static func loadOwnerState() throws -> OwnerState {
@@ -62,6 +72,14 @@ public enum SeedLoader {
               let major = Int(majorComponent),
               major == supportedCatalogueMajorVersion else {
             throw SeedLoaderError.unsupportedCatalogueVersion(catalogueVersion)
+        }
+    }
+
+    static func validate(candidateCatalogueVersion: String) throws {
+        guard let majorComponent = candidateCatalogueVersion.split(separator: ".", maxSplits: 1).first,
+              let major = Int(majorComponent),
+              major == supportedCandidateCatalogueMajorVersion else {
+            throw SeedLoaderError.unsupportedCatalogueVersion(candidateCatalogueVersion)
         }
     }
 

@@ -65,24 +65,27 @@ public struct AcquisitionAnalysis: Equatable, Sendable {
 }
 
 public struct AcquisitionAnalyzer {
-    let walletCatalogue: Catalogue
-    let candidateCatalogue: Catalogue
+    let catalogue: Catalogue
+    /// References into `catalogue`, not definitions — see CandidateSet.
+    let candidateCardIds: [String]
     let ownerState: OwnerState
 
-    public init(walletCatalogue: Catalogue, candidateCatalogue: Catalogue,
-                ownerState: OwnerState) {
-        self.walletCatalogue = walletCatalogue
-        self.candidateCatalogue = candidateCatalogue
+    public init(catalogue: Catalogue, candidateCardIds: [String], ownerState: OwnerState) {
+        self.catalogue = catalogue
+        self.candidateCardIds = candidateCardIds
         self.ownerState = ownerState
     }
 
     public func analyze(_ distribution: SpendDistribution, asOf: String) -> AcquisitionAnalysis {
         let owned = Set(ownerState.ownedCardIds)
-        var knownCatalogue = walletCatalogue
-        let walletProductIds = Set(walletCatalogue.cards.map(\.cardId))
-        knownCatalogue.cards += candidateCatalogue.cards.filter {
-            !walletProductIds.contains($0.cardId)
-        }
+        // One corpus: wallet products and researched candidates are the same cards, so there is
+        // nothing to merge and nothing that can disagree. What still must hold is that a candidate
+        // never becomes a checkout option, and that is enforced below against ownedCardIds — the
+        // only thing that ever decided it. Note RecommendationEngine independently filters the
+        // catalogue by ownedCardIds, so a wider corpus cannot leak into a checkout pick.
+        let knownCatalogue = catalogue
+        let productsById = Dictionary(catalogue.cards.map { ($0.cardId, $0) },
+                                      uniquingKeysWith: { first, _ in first })
         let walletIds = owned.intersection(knownCatalogue.cards.map(\.cardId))
         let baselineAnalyzer = PortfolioAnalyzer(catalogue: knownCatalogue,
                                                  ownerState: ownerState,
@@ -92,7 +95,10 @@ public struct AcquisitionAnalyzer {
             distribution.buckets.map { ($0.label, $0.annualCad) })
 
         var results: [AcquisitionCandidate] = []
-        for card in candidateCatalogue.cards where !owned.contains(card.cardId) {
+        // An id naming no product is skipped rather than fatal: a candidate list that outruns the
+        // corpus should cost that one candidate, not every recommendation on the page.
+        for cardId in candidateCardIds where !owned.contains(cardId) {
+            guard let card = productsById[cardId] else { continue }
             let combinedIds = walletIds.union([card.cardId])
             let combined = PortfolioAnalyzer(catalogue: knownCatalogue,
                                              ownerState: ownerState,

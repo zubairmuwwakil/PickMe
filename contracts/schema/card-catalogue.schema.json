@@ -404,7 +404,9 @@
         },
         "outOfScope": {
           "type": "object",
-          "required": ["reason"],
+          "required": [
+            "reason"
+          ],
           "properties": {
             "reason": {
               "type": "string",
@@ -647,8 +649,39 @@
         },
         "lastVerifiedAt": {
           "type": "string"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Issuer pages the amount and period were read from. Required when sourceType is issuerConfirmed (enforced by allOf below) and optional otherwise \u2014 an inferred credit has no citation by definition, and requiring one would force either deleting unverified data or inventing a source for it."
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "sourceType": {
+                "const": "issuerConfirmed"
+              }
+            },
+            "required": [
+              "sourceType"
+            ]
+          },
+          "then": {
+            "required": [
+              "sources"
+            ],
+            "properties": {
+              "sources": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

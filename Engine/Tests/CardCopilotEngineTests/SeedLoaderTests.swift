@@ -4,7 +4,8 @@ import XCTest
 final class SeedLoaderTests: XCTestCase {
     func testCatalogueLoadsAllCards() throws {
         let catalogue = try SeedLoader.loadCatalogue()
-        XCTAssertEqual(catalogue.cards.count, 27)
+        // Every supported product, not just the seed owner's wallet (one corpus, 2026-08-24).
+        XCTAssertEqual(catalogue.cards.count, 41)
         let cobalt = try XCTUnwrap(catalogue.cards.first { $0.cardId == "amex-cobalt" })
         XCTAssertEqual(cobalt.fee.annualCad ?? 0, 191.88, accuracy: 0.005)
         XCTAssertEqual(cobalt.network, .amex)
@@ -18,12 +19,18 @@ final class SeedLoaderTests: XCTestCase {
         XCTAssertEqual(crypto.kind, .prepaid)
     }
 
-    func testCandidateCatalogueLoadsSeparately() throws {
+    /// Candidates are references into the one corpus. The property that matters is no longer
+    /// "these are separate cards" — it is that every id resolves, so a candidate can never be a
+    /// product the catalogue does not define.
+    func testCandidateCatalogueIsIdReferencesThatAllResolve() throws {
         let candidates = try SeedLoader.loadCandidateCatalogue()
-        XCTAssertEqual(candidates.cards.count, 6)
-        XCTAssertTrue(candidates.cards.allSatisfy {
-            $0.lastVerifiedAt == "2026-08-16"
-        })
+        let catalogue = try SeedLoader.loadCatalogue()
+        let known = Set(catalogue.cards.map(\.cardId))
+
+        XCTAssertEqual(candidates.cardIds.count, 6)
+        XCTAssertEqual(Set(candidates.cardIds).count, candidates.cardIds.count, "no duplicate ids")
+        let unresolved = candidates.cardIds.filter { !known.contains($0) }
+        XCTAssertEqual(unresolved, [], "every candidate id must name a card in the catalogue")
     }
 
     func testOwnerStateLoads() throws {

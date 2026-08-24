@@ -1,5 +1,5 @@
 {
-  "catalogueVersion": "1.4",
+  "catalogueVersion": "1.5",
   "currency": "CAD",
   "_provenance": "docs/research/canadian-card-copilot-research-2026-08-15.md \u2014 all rules verified 2026-08-15 against issuer pages cited there.",
   "cards": [
@@ -92,21 +92,27 @@
       "credits": [
         {
           "creditId": "platinum-travel-credit",
-          "label": "Annual travel credit",
-          "valueCad": 200.0,
-          "period": "calendarYear",
-          "sourceType": "inferred",
-          "lastVerifiedAt": "2026-08-19",
-          "_note": "Migrated 2026-08-19 from the Inunity hub's hand-authored card presets, which carried no issuer citation. Labelled inferred, NOT issuerConfirmed: it is the only non-issuer-confirmed data in this catalogue and must be verified against the issuer page before launch (D3's sourcing bar). Promote to issuerConfirmed with a real lastVerifiedAt at that point."
+          "label": "Annual Travel Credit",
+          "valueCad": 200,
+          "period": "accountYear",
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-23",
+          "sources": [
+            "https://www.americanexpress.com/en-ca/benefits/travel/the-platinum-card/index.shtml"
+          ],
+          "_note": "Basic Cardmember: one C$200 credit per Cardmembership anniversary year for one C$200+ travel booking charged to the Platinum Card through American Express Travel Online or Platinum Card Travel Service. Account must be in good standing. Must be used in the anniversary year issued; no carry-forward; cancelling after use does not restore it."
         },
         {
           "creditId": "platinum-dining-credit",
-          "label": "Annual dining credit",
-          "valueCad": 200.0,
+          "label": "Annual Dining Credit",
+          "valueCad": 200,
           "period": "calendarYear",
-          "sourceType": "inferred",
-          "lastVerifiedAt": "2026-08-19",
-          "_note": "Migrated 2026-08-19 from the Inunity hub's hand-authored card presets, which carried no issuer citation. Labelled inferred, NOT issuerConfirmed: it is the only non-issuer-confirmed data in this catalogue and must be verified against the issuer page before launch (D3's sourcing bar). Promote to issuerConfirmed with a real lastVerifiedAt at that point."
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-23",
+          "sources": [
+            "https://www.americanexpress.com/ca/en/credit-cards/card-types/rewards-cards/index.html"
+          ],
+          "_note": "Basic Cardmember must enrol through Amex Offers. One C$200 statement credit per calendar-year redemption period follows one C$200+ transaction (tax and gratuity included) at a participating restaurant; charge must be made directly by the restaurant. Supplementary Card spend is ineligible."
         }
       ]
     },
@@ -1939,12 +1945,15 @@
       "credits": [
         {
           "creditId": "td-fct-expedia-credit",
-          "label": "Annual Expedia For TD travel credit",
-          "valueCad": 100.0,
+          "label": "Annual TD Travel Credit",
+          "valueCad": 100,
           "period": "calendarYear",
-          "sourceType": "inferred",
-          "lastVerifiedAt": "2026-08-19",
-          "_note": "Migrated 2026-08-19 from the Inunity hub's hand-authored card presets, which carried no issuer citation. Labelled inferred, NOT issuerConfirmed: it is the only non-issuer-confirmed data in this catalogue and must be verified against the issuer page before launch (D3's sourcing bar). Promote to issuerConfirmed with a real lastVerifiedAt at that point."
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-23",
+          "sources": [
+            "https://www.td.com/ca/en/personal-banking/products/credit-cards/travel-rewards/first-class-travel-visa-infinite-card"
+          ],
+          "_note": "One C$100 credit on the first eligible C$500+ Expedia For TD purchase posted in a calendar year: a hotel, motel, lodging or vacation-rental purchase, or a vacation package combining lodging with transportation. Account must be open, active and in good standing."
         }
       ]
     },
@@ -2094,12 +2103,16 @@
       "credits": [
         {
           "creditId": "bmo-eclipse-lifestyle-credit",
-          "label": "Annual lifestyle credit",
-          "valueCad": 50.0,
-          "period": "calendarYear",
-          "sourceType": "inferred",
-          "lastVerifiedAt": "2026-08-19",
-          "_note": "Migrated 2026-08-19 from the Inunity hub's hand-authored card presets, which carried no issuer citation. Labelled inferred, NOT issuerConfirmed: it is the only non-issuer-confirmed data in this catalogue and must be verified against the issuer page before launch (D3's sourcing bar). Promote to issuerConfirmed with a real lastVerifiedAt at that point."
+          "label": "Anniversary Lifestyle Credit",
+          "valueCad": 50,
+          "period": "accountYear",
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-23",
+          "sources": [
+            "https://www.bmo.com/pdf/bmo-eclipse-visa-infinite-benefit-guide-en.pdf",
+            "https://www.bmo.com/main/personal/credit-cards/bmo-eclipse-visa-infinite/"
+          ],
+          "_note": "Primary Cardholder: one C$50 statement credit in each annual period starting at the account anniversary/annual-fee renewal, after a C$50+ purchase posts while the account is open and in good standing; paid within two statement cycles. Issuer terms state the cadence but do not state a carry-forward rule, so no carry-forward is modelled."
         }
       ]
     },
@@ -2334,12 +2347,15 @@
       "credits": [
         {
           "creditId": "nbc-we-travel-credit",
-          "label": "Annual travel enhancement credit (airport parking, baggage, seat selection)",
-          "valueCad": 150.0,
+          "label": "Annual travel-expense reimbursement",
+          "valueCad": 150,
           "period": "calendarYear",
-          "sourceType": "inferred",
-          "lastVerifiedAt": "2026-08-19",
-          "_note": "Migrated 2026-08-19 from the Inunity hub's hand-authored card presets, which carried no issuer citation. Labelled inferred, NOT issuerConfirmed: it is the only non-issuer-confirmed data in this catalogue and must be verified against the issuer page before launch (D3's sourcing bar). Promote to issuerConfirmed with a real lastVerifiedAt at that point."
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-23",
+          "sources": [
+            "https://www.nbc.ca/personal/mastercard-credit-cards/world-elite.html"
+          ],
+          "_note": "Primary cardholder only, with account in good standing: up to C$150 per account from January 1 to December 31 for charged airport parking, baggage, seat-selection, worldwide airport-lounge-access or airline-ticket-upgrade fees. Submit proof within 60 days; unused amount does not carry forward."
         }
       ]
     },
@@ -3206,6 +3222,1713 @@
         "https://www.americanexpress.com/en-ca/benefits/simplycash-card/"
       ],
       "lastVerifiedAt": "2026-08-18"
+    },
+    {
+      "cardId": "simplii-cashback-visa",
+      "officialName": "Simplii Financial Cash Back Visa Card",
+      "issuer": "Simplii Financial / CIBC",
+      "network": "visa",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 0
+      },
+      "program": {
+        "programId": "cashback",
+        "unit": "cad"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "simplii-base-0_5pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.005
+          },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "simplii-dining-4pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.04
+          },
+          "predicate": {
+            "categories": [
+              "dining"
+            ],
+            "mccInclude": [
+              5811,
+              5812,
+              5813,
+              5814
+            ]
+          },
+          "capId": "simplii-dining-calendarYear"
+        },
+        {
+          "ruleId": "simplii-everyday-1_5pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.015
+          },
+          "predicate": {
+            "categories": [
+              "gasStation",
+              "grocery",
+              "drugStore",
+              "recurring"
+            ],
+            "mccInclude": [
+              5411,
+              5541,
+              5542,
+              5912
+            ],
+            "recurringViaNetworkIndicator": true
+          },
+          "capId": "simplii-everyday-calendarYear"
+        }
+      ],
+      "caps": [
+        {
+          "capId": "simplii-dining-calendarYear",
+          "measure": "spendCad",
+          "limit": 5000,
+          "period": "calendarYear",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": {
+            "type": "cashback",
+            "rate": 0.005
+          },
+          "proration": true
+        },
+        {
+          "capId": "simplii-everyday-calendarYear",
+          "measure": "spendCad",
+          "limit": 15000,
+          "period": "calendarYear",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": {
+            "type": "cashback",
+            "rate": 0.005
+          },
+          "proration": true
+        }
+      ],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.simplii.com/en/credit-cards/cash-back-visa.html",
+        "https://www.simplii.com/content/dam/simplii-public-assets/documents/pdf/credit-cards/cash-back-visa-benefits-guide.pdf"
+      ],
+      "lastVerifiedAt": "2026-08-16"
+    },
+    {
+      "cardId": "amex-simplycash-preferred",
+      "officialName": "SimplyCash Preferred Card from American Express",
+      "issuer": "American Express Canada",
+      "network": "amex",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 119.88,
+        "monthlyCad": 9.99,
+        "billing": "monthly"
+      },
+      "program": {
+        "programId": "cashback",
+        "unit": "cad"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "simplycash-preferred-base-2pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.02
+          },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "simplycash-preferred-gas-grocery-4pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.04
+          },
+          "predicate": {
+            "categories": [
+              "gasStation",
+              "grocery"
+            ],
+            "mccInclude": [
+              5411,
+              5541,
+              5542
+            ],
+            "country": "CA",
+            "merchantExclude": [
+              "costco"
+            ]
+          },
+          "capId": "simplycash-preferred-gas-grocery-accountYear"
+        }
+      ],
+      "caps": [
+        {
+          "capId": "simplycash-preferred-gas-grocery-accountYear",
+          "measure": "spendCad",
+          "limit": 30000,
+          "period": "accountYear",
+          "anchor": "ownerState.amexAccountAnniversaryMonth",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": {
+            "type": "cashback",
+            "rate": 0.02
+          },
+          "proration": true
+        }
+      ],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.americanexpress.com/en-ca/credit-cards/simply-cash-preferred/",
+        "https://www.americanexpress.com/en-ca/benefits/simplycashpreferred-card/"
+      ],
+      "lastVerifiedAt": "2026-08-16"
+    },
+    {
+      "cardId": "bmo-cashback-world-elite",
+      "officialName": "BMO CashBack World Elite Mastercard",
+      "issuer": "Bank of Montreal",
+      "network": "mastercard",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 139
+      },
+      "program": {
+        "programId": "cashback",
+        "unit": "cad"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "bmo-cashback-we-base-1pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.01
+          },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "bmo-cashback-we-grocery-5pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.05
+          },
+          "predicate": {
+            "categories": [
+              "grocery"
+            ],
+            "mccInclude": [
+              5411
+            ],
+            "country": "CA"
+          },
+          "capId": "bmo-cashback-we-grocery-monthly"
+        },
+        {
+          "ruleId": "bmo-cashback-we-transit-4pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.04
+          },
+          "predicate": {
+            "categories": [
+              "transit"
+            ],
+            "mccInclude": [
+              4111,
+              4112,
+              4121,
+              4131,
+              4789
+            ],
+            "country": "CA"
+          },
+          "capId": "bmo-cashback-we-transit-monthly"
+        },
+        {
+          "ruleId": "bmo-cashback-we-gas-3pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.03
+          },
+          "predicate": {
+            "categories": [
+              "gasStation",
+              "evCharging"
+            ],
+            "mccInclude": [
+              5541,
+              5542,
+              5552
+            ],
+            "country": "CA"
+          },
+          "capId": "bmo-cashback-we-gas-monthly"
+        },
+        {
+          "ruleId": "bmo-cashback-we-recurring-2pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.02
+          },
+          "predicate": {
+            "categories": [
+              "recurring"
+            ],
+            "country": "CA",
+            "recurringViaNetworkIndicator": true
+          },
+          "capId": "bmo-cashback-we-recurring-monthly"
+        }
+      ],
+      "caps": [
+        {
+          "capId": "bmo-cashback-we-grocery-monthly",
+          "measure": "spendCad",
+          "limit": 500,
+          "period": "calendarMonth",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": {
+            "type": "cashback",
+            "rate": 0.01
+          },
+          "proration": true
+        },
+        {
+          "capId": "bmo-cashback-we-transit-monthly",
+          "measure": "spendCad",
+          "limit": 300,
+          "period": "calendarMonth",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": {
+            "type": "cashback",
+            "rate": 0.01
+          },
+          "proration": true
+        },
+        {
+          "capId": "bmo-cashback-we-gas-monthly",
+          "measure": "spendCad",
+          "limit": 300,
+          "period": "calendarMonth",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": {
+            "type": "cashback",
+            "rate": 0.01
+          },
+          "proration": true
+        },
+        {
+          "capId": "bmo-cashback-we-recurring-monthly",
+          "measure": "spendCad",
+          "limit": 500,
+          "period": "calendarMonth",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": {
+            "type": "cashback",
+            "rate": 0.01
+          },
+          "proration": true
+        }
+      ],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.bmo.com/en-ca/main/personal/credit-cards/bmo-cashback-world-elite-mastercard/",
+        "https://www.bmo.com/popups/main/personal/credit-cards/terms-and-conditions-en.html"
+      ],
+      "lastVerifiedAt": "2026-08-16"
+    },
+    {
+      "cardId": "mbna-smart-cash-world",
+      "officialName": "MBNA Smart Cash World Mastercard",
+      "issuer": "MBNA / TD Bank",
+      "network": "mastercard",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 39
+      },
+      "program": {
+        "programId": "cashback",
+        "unit": "cad"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "mbna-smart-cash-world-base-1pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.01
+          },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "mbna-smart-cash-world-gas-grocery-2pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.02
+          },
+          "predicate": {
+            "categories": [
+              "gasStation",
+              "grocery"
+            ],
+            "mccInclude": [
+              5411,
+              5541,
+              5542
+            ]
+          },
+          "capId": "mbna-smart-cash-world-gas-grocery-monthly"
+        }
+      ],
+      "caps": [
+        {
+          "capId": "mbna-smart-cash-world-gas-grocery-monthly",
+          "measure": "spendCad",
+          "limit": 500,
+          "period": "calendarMonth",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": {
+            "type": "cashback",
+            "rate": 0.01
+          },
+          "proration": true
+        }
+      ],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.mbna.ca/en/credit-cards/cash-back/smart-cash-world-mastercard"
+      ],
+      "lastVerifiedAt": "2026-08-16"
+    },
+    {
+      "cardId": "home-trust-preferred-visa",
+      "officialName": "Home Trust Preferred Visa",
+      "issuer": "Home Trust Company",
+      "network": "visa",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 0
+      },
+      "program": {
+        "programId": "cashback",
+        "unit": "cad"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "home-trust-foreign-no-reward",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0
+          },
+          "predicate": {},
+          "capId": null,
+          "_note": "Foreign-currency purchases have no FX surcharge but are not eligible for cash back."
+        },
+        {
+          "ruleId": "home-trust-cad-1pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.01
+          },
+          "predicate": {
+            "currency": "CAD"
+          },
+          "capId": null
+        }
+      ],
+      "caps": [],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.hometrust.ca/credit-cards/preferred-visa-card/"
+      ],
+      "lastVerifiedAt": "2026-08-16",
+      "_eligibilityNote": "Not available in Quebec."
+    },
+    {
+      "cardId": "rbc-cashback-preferred-we",
+      "officialName": "RBC Cash Back Preferred World Elite Mastercard",
+      "issuer": "Royal Bank of Canada",
+      "network": "mastercard",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 99
+      },
+      "program": {
+        "programId": "cashback",
+        "unit": "cad"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "rbc-cashback-preferred-base-1pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.01
+          },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "rbc-cashback-preferred-1_5pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-16",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.015
+          },
+          "predicate": {},
+          "capId": "rbc-cashback-preferred-accountYear"
+        }
+      ],
+      "caps": [
+        {
+          "capId": "rbc-cashback-preferred-accountYear",
+          "measure": "spendCad",
+          "limit": 25000,
+          "period": "accountYear",
+          "anchor": "ownerState.rbcAccountAnniversaryMonth",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": {
+            "type": "cashback",
+            "rate": 0.01
+          },
+          "proration": true
+        }
+      ],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.rbcroyalbank.com/credit-cards/cash-back/rbc-preferred-world-elite-mastercard.html"
+      ],
+      "lastVerifiedAt": "2026-08-16",
+      "_eligibilityNote": "Issuer states $80,000 personal or $150,000 household minimum annual income."
+    },
+    {
+      "cardId": "amex-aeroplan-reserve",
+      "officialName": "American Express Aeroplan Reserve Card",
+      "issuer": "American Express Canada",
+      "network": "amex",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 599
+      },
+      "program": {
+        "programId": "aeroplan",
+        "unit": "point"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "amex-aeroplan-reserve-base",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 1.25
+          },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "amex-aeroplan-reserve-air-canada-3x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 3
+          },
+          "predicate": {
+            "merchantInclude": [
+              "Air Canada",
+              "Air Canada Vacations"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "3x points on eligible purchases made directly with Air Canada and Air Canada Vacations.",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        },
+        {
+          "ruleId": "amex-aeroplan-reserve-dining-2x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 2
+          },
+          "predicate": {
+            "categories": [
+              "dining",
+              "foodDelivery"
+            ],
+            "country": "CA"
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "2x points on eligible dining and food delivery purchases in Canada."
+        }
+      ],
+      "caps": [],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.americanexpress.com/en-ca/credit-cards/aeroplan-reserve/"
+      ],
+      "lastVerifiedAt": "2026-08-24",
+      "_note": "Includes complimentary Air Canada Maple Leaf Lounge access in North America, free first checked bag, and annual worldwide companion pass qualification."
+    },
+    {
+      "cardId": "td-aeroplan-visa-infinite-privilege",
+      "officialName": "TD Aeroplan Visa Infinite Privilege Card",
+      "issuer": "TD Canada Trust",
+      "network": "visa",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 599
+      },
+      "program": {
+        "programId": "aeroplan",
+        "unit": "point"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "td-aeroplan-vip-base",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 1.25
+          },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "td-aeroplan-vip-air-canada-2x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 2
+          },
+          "predicate": {
+            "merchantInclude": [
+              "Air Canada",
+              "Air Canada Vacations"
+            ]
+          },
+          "capId": "td-aeroplan-vip-accelerated-annual",
+          "scoredInV1": false,
+          "_note": "2x points on eligible Air Canada purchases (including Air Canada Vacations).",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        },
+        {
+          "ruleId": "td-aeroplan-vip-accelerated-1_5x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 1.5
+          },
+          "predicate": {
+            "categories": [
+              "gasStation",
+              "grocery",
+              "travel",
+              "dining"
+            ]
+          },
+          "capId": "td-aeroplan-vip-accelerated-annual",
+          "scoredInV1": false,
+          "_note": "1.5x points on eligible gas, grocery, travel, and dining purchases."
+        }
+      ],
+      "caps": [
+        {
+          "capId": "td-aeroplan-vip-accelerated-annual",
+          "measure": "spendCad",
+          "limit": 100000,
+          "period": "calendarYear",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": {
+            "type": "points",
+            "pointsPerCad": 1.25
+          },
+          "proration": true,
+          "_note": "Combined $100,000 annual net purchase cap on accelerated 2x and 1.5x earn rates per calendar year."
+        }
+      ],
+      "credits": [
+        {
+          "creditId": "td-aeroplan-vip-nexus-credit",
+          "label": "NEXUS Application Fee Rebate",
+          "valueCad": 100,
+          "period": "accountYear",
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "sources": [
+            "https://www.td.com/ca/en/personal-banking/products/credit-cards/aeroplan/aeroplan-visa-infinite-privilege-card"
+          ],
+          "_note": "Up to C$100 statement credit every 48 months for NEXUS application or renewal fees charged to the Card."
+        }
+      ],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.td.com/ca/en/personal-banking/products/credit-cards/aeroplan/aeroplan-visa-infinite-privilege-card"
+      ],
+      "lastVerifiedAt": "2026-08-24"
+    },
+    {
+      "cardId": "cibc-aeroplan-visa-infinite-privilege",
+      "officialName": "CIBC Aeroplan Visa Infinite Privilege Card",
+      "issuer": "CIBC",
+      "network": "visa",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 599
+      },
+      "program": {
+        "programId": "aeroplan",
+        "unit": "point"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "cibc-aeroplan-vip-base",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 1.25
+          },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "cibc-aeroplan-vip-air-canada-2x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 2
+          },
+          "predicate": {
+            "merchantInclude": [
+              "Air Canada",
+              "Air Canada Vacations"
+            ]
+          },
+          "capId": "cibc-aeroplan-vip-accelerated-annual",
+          "scoredInV1": false,
+          "_note": "2x points on eligible Air Canada purchases.",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        },
+        {
+          "ruleId": "cibc-aeroplan-vip-accelerated-1_5x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 1.5
+          },
+          "predicate": {
+            "categories": [
+              "gasStation",
+              "grocery",
+              "travel",
+              "dining"
+            ]
+          },
+          "capId": "cibc-aeroplan-vip-accelerated-annual",
+          "scoredInV1": false,
+          "_note": "1.5x points on eligible gas, grocery, travel, and dining purchases."
+        }
+      ],
+      "caps": [
+        {
+          "capId": "cibc-aeroplan-vip-accelerated-annual",
+          "measure": "spendCad",
+          "limit": 100000,
+          "period": "calendarYear",
+          "resetTimeZone": "America/Toronto",
+          "postCapEarn": {
+            "type": "points",
+            "pointsPerCad": 1.25
+          },
+          "proration": true,
+          "_note": "Combined $100,000 annual net purchase cap on accelerated categories per calendar year."
+        }
+      ],
+      "credits": [
+        {
+          "creditId": "cibc-aeroplan-vip-nexus-credit",
+          "label": "NEXUS Fee Rebate",
+          "valueCad": 100,
+          "period": "accountYear",
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "sources": [
+            "https://www.cibc.com/en/personal-banking/credit-cards/all-credit-cards/aeroplan-visa-infinite-privilege-card.html"
+          ],
+          "_note": "One C$100 statement credit every 4 years for NEXUS application or renewal."
+        }
+      ],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.cibc.com/en/personal-banking/credit-cards/all-credit-cards/aeroplan-visa-infinite-privilege-card.html"
+      ],
+      "lastVerifiedAt": "2026-08-24"
+    },
+    {
+      "cardId": "amex-gold-rewards",
+      "officialName": "American Express Gold Rewards Card",
+      "issuer": "American Express Canada",
+      "network": "amex",
+      "kind": "charge",
+      "fee": {
+        "annualCad": 250
+      },
+      "program": {
+        "programId": "amexMembershipRewards",
+        "unit": "point"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "gold-rewards-base-1x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 1
+          },
+          "predicate": {},
+          "capId": null
+        },
+        {
+          "ruleId": "gold-rewards-travel-2x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 2
+          },
+          "predicate": {
+            "categories": [
+              "travel",
+              "lodging"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "2x points on eligible flights, hotels, car rentals, and tour operators."
+        },
+        {
+          "ruleId": "gold-rewards-gas-grocery-drug-2x",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 2
+          },
+          "predicate": {
+            "categories": [
+              "gasStation",
+              "grocery",
+              "drugStore"
+            ],
+            "country": "CA"
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "2x points on eligible standalone gas stations, grocery stores, and drugstores in Canada."
+        },
+        {
+          "ruleId": "gold-rewards-amex-travel-bonus",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 2
+          },
+          "predicate": {
+            "channels": [
+              "amexTravel"
+            ],
+            "categories": [
+              "lodging",
+              "carRental"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "+1 bonus point per dollar on eligible hotel and car rental bookings through Amex Travel."
+        }
+      ],
+      "caps": [],
+      "credits": [
+        {
+          "creditId": "gold-travel-credit",
+          "label": "Annual Travel Credit",
+          "valueCad": 100,
+          "period": "calendarYear",
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "sources": [
+            "https://www.americanexpress.com/en-ca/charge-cards/gold-rewards-card/"
+          ],
+          "_note": "One C$100 statement credit per calendar year for a single travel booking of C$100 or more made through Amex Travel Online."
+        }
+      ],
+      "perTransactionRewardVisibility": "ownerObserved",
+      "sources": [
+        "https://www.americanexpress.com/en-ca/charge-cards/gold-rewards-card/"
+      ],
+      "lastVerifiedAt": "2026-08-24",
+      "_note": "Includes 4 complimentary Plaza Premium lounge passes per calendar year."
+    },
+    {
+      "cardId": "pc-financial-world-elite",
+      "officialName": "PC Financial World Elite Mastercard",
+      "issuer": "President's Choice Bank",
+      "network": "mastercard",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 0
+      },
+      "program": {
+        "programId": "pcOptimum",
+        "unit": "point"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "pc-we-base-10pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 10
+          },
+          "predicate": {},
+          "capId": null,
+          "_note": "10 PC Optimum points per $1 on everywhere purchases (1% value)."
+        },
+        {
+          "ruleId": "pc-we-loblaw-grocery-30pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 30
+          },
+          "predicate": {
+            "categories": [
+              "grocery"
+            ],
+            "merchantInclude": [
+              "Loblaws",
+              "No Frills",
+              "Real Canadian Superstore",
+              "Fortinos",
+              "Independent",
+              "Valu-mart",
+              "Zehrs",
+              "T&T",
+              "Maxi",
+              "Provigo"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "30 PC Optimum points per $1 at participating Loblaw banner grocery stores (3% value).",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        },
+        {
+          "ruleId": "pc-we-shoppers-45pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 45
+          },
+          "predicate": {
+            "categories": [
+              "drugStore"
+            ],
+            "merchantInclude": [
+              "Shoppers Drug Mart",
+              "Pharmaprix"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "45 PC Optimum points per $1 at Shoppers Drug Mart and Pharmaprix (4.5% value).",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        },
+        {
+          "ruleId": "pc-we-esso-mobil-30pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 30
+          },
+          "predicate": {
+            "categories": [
+              "gasStation"
+            ],
+            "merchantInclude": [
+              "Esso",
+              "Mobil"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "At least 30 PC Optimum points per litre at Esso and Mobil stations in Canada.",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        },
+        {
+          "ruleId": "pc-we-pc-travel-30pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 30
+          },
+          "predicate": {
+            "categories": [
+              "travel"
+            ],
+            "merchantInclude": [
+              "PC Travel"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "30 PC Optimum points per $1 on PC Travel bookings (3% value).",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        }
+      ],
+      "caps": [],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.pcfinancial.ca/en/credit-cards/world-elite-mastercard/"
+      ],
+      "lastVerifiedAt": "2026-08-24"
+    },
+    {
+      "cardId": "desjardins-odyssey-world-elite",
+      "officialName": "Desjardins Odyssey World Elite Mastercard",
+      "issuer": "F\u00e9d\u00e9ration des caisses Desjardins du Qu\u00e9bec",
+      "network": "mastercard",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 130
+      },
+      "program": {
+        "programId": "cashback",
+        "unit": "cad"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "desjardins-odyssey-we-base-1_5pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.015
+          },
+          "predicate": {},
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "1.5% in BONUSDOLLARS on all other eligible purchases."
+        },
+        {
+          "ruleId": "desjardins-odyssey-we-grocery-3pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.03
+          },
+          "predicate": {
+            "categories": [
+              "grocery"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "3% in BONUSDOLLARS on eligible grocery store purchases."
+        },
+        {
+          "ruleId": "desjardins-odyssey-we-dining-3pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.03
+          },
+          "predicate": {
+            "categories": [
+              "dining",
+              "foodDelivery"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "3% in BONUSDOLLARS on restaurants and dining purchases."
+        },
+        {
+          "ruleId": "desjardins-odyssey-we-entertainment-3pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.03
+          },
+          "predicate": {
+            "categories": [
+              "entertainment"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "3% in BONUSDOLLARS on entertainment purchases and show tickets."
+        },
+        {
+          "ruleId": "desjardins-odyssey-we-green-transit-3pct",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "cashback",
+            "rate": 0.03
+          },
+          "predicate": {
+            "categories": [
+              "transit",
+              "evCharging"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "3% in BONUSDOLLARS on alternative transportation (public transit, EV charging, train, bike share)."
+        }
+      ],
+      "caps": [],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.desjardins.com/ca/personal/loans-credit/credit-cards/odyssey-world-elite-mastercard/index.jsp"
+      ],
+      "lastVerifiedAt": "2026-08-24",
+      "_note": "Includes 8 free accesses per year to the Desjardins Odyssey Lounge at Montreal-Trudeau Airport (YUL)."
+    },
+    {
+      "cardId": "pc-financial-mastercard",
+      "officialName": "PC Financial Mastercard",
+      "issuer": "President's Choice Bank",
+      "network": "mastercard",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 0
+      },
+      "program": {
+        "programId": "pcOptimum",
+        "unit": "point"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "pc-mc-base-10pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 10
+          },
+          "predicate": {},
+          "capId": null,
+          "_note": "10 PC Optimum points per $1 on everywhere purchases (1% value)."
+        },
+        {
+          "ruleId": "pc-mc-loblaw-grocery-10pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 10
+          },
+          "predicate": {
+            "categories": [
+              "grocery"
+            ],
+            "merchantInclude": [
+              "Loblaws",
+              "No Frills",
+              "Real Canadian Superstore",
+              "Fortinos",
+              "Independent",
+              "Valu-mart",
+              "Zehrs",
+              "T&T",
+              "Maxi",
+              "Provigo"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "10 PC Optimum points per $1 at participating Loblaw banner grocery stores (1% value).",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        },
+        {
+          "ruleId": "pc-mc-shoppers-25pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 25
+          },
+          "predicate": {
+            "categories": [
+              "drugStore"
+            ],
+            "merchantInclude": [
+              "Shoppers Drug Mart",
+              "Pharmaprix"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "25 PC Optimum points per $1 at Shoppers Drug Mart and Pharmaprix (2.5% value).",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        },
+        {
+          "ruleId": "pc-mc-esso-mobil-30pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 30
+          },
+          "predicate": {
+            "categories": [
+              "gasStation"
+            ],
+            "merchantInclude": [
+              "Esso",
+              "Mobil"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "At least 30 PC Optimum points per litre at Esso and Mobil stations in Canada.",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        },
+        {
+          "ruleId": "pc-mc-pc-travel-20pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 20
+          },
+          "predicate": {
+            "categories": [
+              "travel"
+            ],
+            "merchantInclude": [
+              "PC Travel"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "20 PC Optimum points per $1 on PC Travel bookings (2% value).",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        }
+      ],
+      "caps": [],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.pcfinancial.ca/en/credit-cards/mastercard/"
+      ],
+      "lastVerifiedAt": "2026-08-24"
+    },
+    {
+      "cardId": "pc-financial-world-mastercard",
+      "officialName": "PC Financial World Mastercard",
+      "issuer": "President's Choice Bank",
+      "network": "mastercard",
+      "kind": "credit",
+      "fee": {
+        "annualCad": 0
+      },
+      "program": {
+        "programId": "pcOptimum",
+        "unit": "point"
+      },
+      "fxRules": [
+        {
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "rate": 0.025,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24"
+        }
+      ],
+      "earnRules": [
+        {
+          "ruleId": "pc-world-base-10pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 10
+          },
+          "predicate": {},
+          "capId": null,
+          "_note": "10 PC Optimum points per $1 on everywhere purchases (1% value)."
+        },
+        {
+          "ruleId": "pc-world-loblaw-grocery-20pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 20
+          },
+          "predicate": {
+            "categories": [
+              "grocery"
+            ],
+            "merchantInclude": [
+              "Loblaws",
+              "No Frills",
+              "Real Canadian Superstore",
+              "Fortinos",
+              "Independent",
+              "Valu-mart",
+              "Zehrs",
+              "T&T",
+              "Maxi",
+              "Provigo"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "20 PC Optimum points per $1 at participating Loblaw banner grocery stores (2% value).",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        },
+        {
+          "ruleId": "pc-world-shoppers-35pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 35
+          },
+          "predicate": {
+            "categories": [
+              "drugStore"
+            ],
+            "merchantInclude": [
+              "Shoppers Drug Mart",
+              "Pharmaprix"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "35 PC Optimum points per $1 at Shoppers Drug Mart and Pharmaprix (3.5% value).",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        },
+        {
+          "ruleId": "pc-world-esso-mobil-30pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 30
+          },
+          "predicate": {
+            "categories": [
+              "gasStation"
+            ],
+            "merchantInclude": [
+              "Esso",
+              "Mobil"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "At least 30 PC Optimum points per litre at Esso and Mobil stations in Canada.",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        },
+        {
+          "ruleId": "pc-world-pc-travel-20pts",
+          "status": "current",
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "sourceType": "issuerConfirmed",
+          "lastVerifiedAt": "2026-08-24",
+          "earn": {
+            "type": "points",
+            "pointsPerCad": 20
+          },
+          "predicate": {
+            "categories": [
+              "travel"
+            ],
+            "merchantInclude": [
+              "PC Travel"
+            ]
+          },
+          "capId": null,
+          "scoredInV1": false,
+          "_note": "20 PC Optimum points per $1 on PC Travel bookings (2% value).",
+          "requires": [
+            "predicate.merchantPartnerList"
+          ]
+        }
+      ],
+      "caps": [],
+      "perTransactionRewardVisibility": "issuerConfirmed",
+      "sources": [
+        "https://www.pcfinancial.ca/en/credit-cards/world-mastercard/"
+      ],
+      "lastVerifiedAt": "2026-08-24"
     }
   ]
 }

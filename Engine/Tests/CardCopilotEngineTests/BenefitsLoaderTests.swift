@@ -9,11 +9,31 @@ final class BenefitsLoaderTests: XCTestCase {
         XCTAssertFalse(benefits.triggers.consumableCategories.isEmpty)
     }
 
-    func testEveryWalletCardHasABenefitsEntry() throws {
-        // Cross-file consistency: the benefits catalogue mirrors the earn catalogue's wallet.
-        let wallet = try SeedLoader.loadCatalogue().cards.map(\.cardId)
-        let benefits = try SeedLoader.loadBenefitsCatalogue()
-        XCTAssertEqual(Set(benefits.cards.map(\.cardId)), Set(wallet))
+    /// Once the catalogue became every supported product (2026-08-24) this could no longer be an
+    /// equality: 14 researched products have no insurance certificate read yet. The promise that
+    /// still has to hold is the one a user can actually notice — a card they HOLD always has
+    /// benefits — plus a ratchet so a new product cannot quietly widen the uncovered set.
+    func testEveryOwnedCardHasABenefitsEntry() throws {
+        let benefits = Set(try SeedLoader.loadBenefitsCatalogue().cards.map(\.cardId))
+        let owned = Set(try SeedLoader.loadOwnerState().ownedCardIds)
+        XCTAssertTrue(owned.isSubset(of: benefits),
+                      "owned cards with no benefits entry: \(owned.subtracting(benefits).sorted())")
+    }
+
+    /// The ratchet. Products without a benefits entry are listed by name, so adding one is a
+    /// deliberate act with a reviewer, not a silent gap.
+    func testProductsWithoutBenefitsAreExactlyTheKnownGap() throws {
+        let knownGap: Set<String> = [
+            "amex-aeroplan-reserve", "amex-gold-rewards", "amex-simplycash-preferred",
+            "bmo-cashback-world-elite", "cibc-aeroplan-visa-infinite-privilege",
+            "desjardins-odyssey-world-elite", "home-trust-preferred-visa",
+            "mbna-smart-cash-world", "pc-financial-mastercard", "pc-financial-world-elite",
+            "pc-financial-world-mastercard", "rbc-cashback-preferred-we",
+            "simplii-cashback-visa", "td-aeroplan-visa-infinite-privilege",
+        ]
+        let catalogue = Set(try SeedLoader.loadCatalogue().cards.map(\.cardId))
+        let benefits = Set(try SeedLoader.loadBenefitsCatalogue().cards.map(\.cardId))
+        XCTAssertEqual(catalogue.subtracting(benefits), knownGap)
     }
 
     func testBenefitsProvenanceIsHonest() throws {

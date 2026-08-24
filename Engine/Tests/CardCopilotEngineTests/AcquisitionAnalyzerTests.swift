@@ -6,20 +6,36 @@ import XCTest
 /// keep/cancel suite pins marginal value.
 final class AcquisitionAnalyzerTests: XCTestCase {
     private func analyzer(ownerState: OwnerState? = nil) throws -> AcquisitionAnalyzer {
-        AcquisitionAnalyzer(walletCatalogue: try SeedLoader.loadCatalogue(),
-                            candidateCatalogue: try SeedLoader.loadCandidateCatalogue(),
+        AcquisitionAnalyzer(catalogue: try SeedLoader.loadCatalogue(),
+                            candidateCardIds: try SeedLoader.loadCandidateCatalogue().cardIds,
                             ownerState: try ownerState ?? SeedLoader.loadOwnerState())
     }
 
-    func testCandidateCatalogueIsSeparateFromTheOwnedWallet() throws {
-        let wallet = try SeedLoader.loadCatalogue()
+    /// Replaces `testCandidateCatalogueIsSeparateFromTheOwnedWallet`, whose two assertions both
+    /// encoded the conflation removed on 2026-08-24: that the catalogue IS the owner's wallet, and
+    /// that candidates live in a second card corpus. Neither holds now — the catalogue is every
+    /// supported product, and candidates are ids into it.
+    ///
+    /// What must still hold is the property those assertions were protecting: ownership, not file
+    /// membership, decides eligibility. A candidate is by definition unowned, and
+    /// RecommendationEngine scores only `ownedCardIds` (RecommendationEngine.swift), so widening
+    /// the corpus cannot put an unowned product in front of someone at a till. The 27 golden
+    /// fixtures are the empirical half of that claim.
+    func testCandidatesResolveInTheCorpusAndAreNeverOwned() throws {
+        let catalogue = try SeedLoader.loadCatalogue()
         let candidates = try SeedLoader.loadCandidateCatalogue()
         let owner = try SeedLoader.loadOwnerState()
+        let known = Set(catalogue.cards.map(\.cardId))
+        let owned = Set(owner.ownedCardIds)
 
-        XCTAssertEqual(Set(wallet.cards.map(\.cardId)), Set(owner.ownedCardIds))
-        XCTAssertTrue(Set(wallet.cards.map(\.cardId))
-            .isDisjoint(with: candidates.cards.map(\.cardId)))
-        XCTAssertEqual(candidates.cards.count, 6)
+        XCTAssertEqual(candidates.cardIds.count, 6)
+        XCTAssertTrue(Set(candidates.cardIds).isSubset(of: known),
+                      "a candidate must name a product the catalogue defines")
+        XCTAssertTrue(Set(candidates.cardIds).isDisjoint(with: owned),
+                      "a candidate is by definition a card the owner does not hold")
+        XCTAssertTrue(owned.isSubset(of: known),
+                      "the owner cannot hold a card the catalogue does not define")
+        XCTAssertEqual(known.count, catalogue.cards.count, "no duplicate cardIds in the corpus")
     }
 
     /// BMO earns $120 gross across gas and transit, but the existing wallet already earns $72 on
@@ -54,13 +70,13 @@ final class AcquisitionAnalyzerTests: XCTestCase {
 
     func testOwnedCandidateIsNeverPresentedAsSomethingToAcquire() throws {
         var owner = try SeedLoader.loadOwnerState()
-        owner.ownedCardIds.append("simplii-cash-back-visa")
+        owner.ownedCardIds.append("simplii-cashback-visa")
 
         let result = try analyzer(ownerState: owner)
             .analyze(.placeholderCanadianHousehold, asOf: "2026-08-20")
 
-        XCTAssertNil(result.candidate("simplii-cash-back-visa"))
-        XCTAssertTrue(result.walletCardIds.contains("simplii-cash-back-visa"),
+        XCTAssertNil(result.candidate("simplii-cashback-visa"))
+        XCTAssertTrue(result.walletCardIds.contains("simplii-cashback-visa"),
                       "an owned former candidate belongs in the baseline, not merely off the list")
         XCTAssertEqual(result.candidates.count, 5)
     }

@@ -44,9 +44,13 @@ struct WalletHealthView: View {
         Dictionary(uniqueKeysWithValues: deps.catalogue.cards.map { ($0.cardId, $0.officialName) })
     }
 
+    /// Names come from the one corpus now; the candidate list only says WHICH products are
+    /// candidates, so there is no second place for a card's name to disagree with itself.
     private var candidateNames: [String: String] {
-        Dictionary(uniqueKeysWithValues:
-            deps.candidateCatalogue.cards.map { ($0.cardId, $0.officialName) })
+        let byId = Dictionary(deps.catalogue.cards.map { ($0.cardId, $0.officialName) },
+                              uniquingKeysWith: { first, _ in first })
+        return Dictionary(uniqueKeysWithValues:
+            deps.candidateCardIds.compactMap { id in byId[id].map { (id, $0) } })
     }
 
     var body: some View {
@@ -93,8 +97,8 @@ struct WalletHealthView: View {
         analysis = PortfolioAnalyzer(catalogue: deps.catalogue, ownerState: deps.ownerState)
             .analyze(activeDistribution, asOf: today)
         acquisitionAnalysis = AcquisitionAnalyzer(
-            walletCatalogue: deps.catalogue,
-            candidateCatalogue: deps.candidateCatalogue,
+            catalogue: deps.catalogue,
+            candidateCardIds: deps.candidateCardIds,
             ownerState: deps.ownerState)
             .analyze(activeDistribution, asOf: today)
     }

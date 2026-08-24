@@ -164,7 +164,7 @@ final class CardVisualThemeTests: XCTestCase {
     @MainActor
     func testRenderCategoryPickerGridScreenshot() throws {
         let catalogue = try SeedLoader.loadCatalogue()
-        let candidateCatalogue = try SeedLoader.loadCandidateCatalogue()
+        let candidateCardIds = try SeedLoader.loadCandidateCatalogue().cardIds
         let ownerState = try SeedLoader.loadOwnerState()
         let benefits = try SeedLoader.loadBenefitsCatalogue()
         let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
@@ -180,7 +180,7 @@ final class CardVisualThemeTests: XCTestCase {
         let provider = LiveMerchantProvider()
         let deps = CheckoutFlowView.Dependencies(
             catalogue: catalogue,
-            candidateCatalogue: candidateCatalogue,
+            candidateCardIds: candidateCardIds,
             ownerState: ownerState,
             benefits: benefits,
             service: service,

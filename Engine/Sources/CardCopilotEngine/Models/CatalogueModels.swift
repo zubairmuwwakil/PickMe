@@ -190,6 +190,21 @@ public struct CardProduct: Codable, Equatable, Identifiable, Sendable {
     public var id: String { cardId }
 }
 
+/// The researched acquisition candidates, as references into `Catalogue` — never as card
+/// definitions. Holding definitions here is what let the same card disagree with itself
+/// (see SeedLoader.loadCandidateCatalogue).
+public struct CandidateSet: Codable, Equatable, Sendable {
+    public var candidateCatalogueVersion: String
+    public var cardIds: [String]
+
+    public init(candidateCatalogueVersion: String = "2.0", cardIds: [String] = []) {
+        self.candidateCatalogueVersion = candidateCatalogueVersion
+        self.cardIds = cardIds
+    }
+
+    public static var empty: CandidateSet { CandidateSet() }
+}
+
 public struct Catalogue: Codable, Equatable, Sendable {
     public var catalogueVersion: String
     public var currency: String

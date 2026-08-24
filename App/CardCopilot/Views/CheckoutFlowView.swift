@@ -55,7 +55,8 @@ struct CheckoutFlowView: View {
 
     struct Dependencies {
         let catalogue: Catalogue
-        let candidateCatalogue: Catalogue
+        /// Ids into `catalogue`, not a second card corpus (one corpus, 2026-08-24).
+        let candidateCardIds: [String]
         let ownerState: OwnerState
         let benefits: BenefitsCatalogue
         let service: CheckoutService
@@ -388,7 +389,7 @@ struct CheckoutFlowView: View {
         guard deps == nil else { return }
         do {
             let catalogue = try SeedLoader.loadCatalogue()
-            let candidates = try SeedLoader.loadCandidateCatalogue()
+            let candidates = try SeedLoader.loadCandidateCatalogue().cardIds
             let seedOwner = try SeedLoader.loadOwnerState()
             let localOwner = sync.ownerStateLocalStore.load()
             let owner = localOwner ?? seedOwner
@@ -704,7 +705,7 @@ struct CheckoutFlowView: View {
             stage = .failed(error.localizedDescription)
             return
         }
-        self.deps = makeDependencies(catalogue: deps.catalogue, candidates: deps.candidateCatalogue,
+        self.deps = makeDependencies(catalogue: deps.catalogue, candidates: deps.candidateCardIds,
                                      owner: owner, benefits: deps.benefits)
         configureAmbient(catalogue: deps.catalogue, owner: owner)
         walletIsFirstRun = false
@@ -804,7 +805,7 @@ struct CheckoutFlowView: View {
     }
 
     private func applyOwnerState(_ owner: OwnerState, using existing: Dependencies) {
-        deps = makeDependencies(catalogue: existing.catalogue, candidates: existing.candidateCatalogue,
+        deps = makeDependencies(catalogue: existing.catalogue, candidates: existing.candidateCardIds,
                                 owner: owner, benefits: existing.benefits)
         configureAmbient(catalogue: existing.catalogue, owner: owner)
         refreshHome()
@@ -814,9 +815,9 @@ struct CheckoutFlowView: View {
         try await sync.createInstallation(label: label)
     }
 
-    private func makeDependencies(catalogue: Catalogue, candidates: Catalogue, owner: OwnerState,
+    private func makeDependencies(catalogue: Catalogue, candidates: [String], owner: OwnerState,
                                   benefits: BenefitsCatalogue) -> Dependencies {
-        Dependencies(catalogue: catalogue, candidateCatalogue: candidates, ownerState: owner, benefits: benefits,
+        Dependencies(catalogue: catalogue, candidateCardIds: candidates, ownerState: owner, benefits: benefits,
                      service: CheckoutService(catalogue: catalogue, ownerState: owner, context: modelContext),
                      explainer: RecommendationExplainer(catalogue: catalogue),
                      engine: RecommendationEngine(catalogue: catalogue, ownerState: owner), provider: LiveMerchantProvider())

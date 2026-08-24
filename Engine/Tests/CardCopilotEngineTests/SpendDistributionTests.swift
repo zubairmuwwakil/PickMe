@@ -23,8 +23,12 @@ final class SpendDistributionTests: XCTestCase {
             "ownerSelectedTangerineCategory": "synthetic marker, resolved against the real categories",
         ]
 
+        // The catalogue is every supported product since 2026-08-24, so scanning all of it would
+        // demand the placeholder profile cover categories no card the owner HOLDS accelerates.
+        // The claim this test makes is about the owner's wallet, so it reads the owner's wallet.
         let catalogue = try SeedLoader.loadCatalogue()
-        let accelerated = Set(catalogue.cards.flatMap { card in
+        let owned = Set(try SeedLoader.loadOwnerState().ownedCardIds)
+        let accelerated = Set(catalogue.cards.filter { owned.contains($0.cardId) }.flatMap { card in
             card.earnRules
                 .filter { RuleMatcher.isLive($0, asOf: "2026-08-20") }
                 .flatMap { $0.predicate.categories ?? [] }
