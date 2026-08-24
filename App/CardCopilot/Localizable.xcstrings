@@ -324,6 +324,15 @@
         }
       }
     },
+    "1. Allow notifications so a background Wallet tap can confirm it was saved." : {
+
+    },
+    "2. Location is optional. When allowed, PickMe tries for a fresh fix for at most two seconds." : {
+
+    },
+    "3. In Shortcuts, create a Wallet Transaction automation that runs immediately. Add “Send Wallet Purchase to Inunity” and map Merchant, Amount, Name, Currency Code, and Card or Pass." : {
+
+    },
     "90-day purchase security & extended manufacturer warranty" : {
 
     },
@@ -369,6 +378,9 @@
           }
         }
       }
+    },
+    "A server installation exists, but this app needs a fresh device-only credential before it can send captures." : {
+
     },
     "About" : {
       "localizations" : {
@@ -451,6 +463,12 @@
 
     },
     "All purchases have card & cost recorded" : {
+
+    },
+    "Allow notifications" : {
+
+    },
+    "Allow optional location" : {
 
     },
     "Ambient" : {
@@ -798,6 +816,9 @@
         }
       }
     },
+    "Attempts" : {
+
+    },
     "Awaiting Evidence" : {
       "localizations" : {
         "fr-CA" : {
@@ -900,7 +921,7 @@
         }
       }
     },
-    "Capture status" : {
+    "Capture is disabled" : {
 
     },
     "Captured" : {
@@ -1087,6 +1108,9 @@
         }
       }
     },
+    "Choose where saved captures go" : {
+
+    },
     "Classification" : {
       "localizations" : {
         "fr-CA" : {
@@ -1155,7 +1179,7 @@
     "Connect native Wallet Capture" : {
 
     },
-    "Connected" : {
+    "Connect this iPhone" : {
 
     },
     "Connected securely" : {
@@ -1165,6 +1189,9 @@
 
     },
     "Connecting…" : {
+
+    },
+    "Connection tested — waiting for your first Wallet tap" : {
 
     },
     "Continue" : {
@@ -1222,9 +1249,6 @@
         }
       }
     },
-    "Create another token" : {
-
-    },
     "Create installation token" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1263,6 +1287,9 @@
           }
         }
       }
+    },
+    "Credentials, authorization headers, device identifiers, network names, and precise coordinates are never included." : {
+
     },
     "Crypto.com Royal Indigo" : {
       "localizations" : {
@@ -1320,6 +1347,9 @@
         }
       }
     },
+    "Delete" : {
+
+    },
     "Delete Account" : {
       "comment" : "human review before public launch",
       "localizations" : {
@@ -1341,6 +1371,18 @@
           }
         }
       }
+    },
+    "Delete submitted report now" : {
+
+    },
+    "Delete these unsent captures" : {
+
+    },
+    "Delete this local capture?" : {
+
+    },
+    "Delete unsent purchases and disable" : {
+
     },
     "Delete your Inunity account" : {
       "comment" : "human review before public launch",
@@ -1384,6 +1426,15 @@
           }
         }
       }
+    },
+    "Diagnostic" : {
+
+    },
+    "Diagnostic preview" : {
+
+    },
+    "Disable Wallet Capture" : {
+
     },
     "Dominant Protection Card" : {
       "localizations" : {
@@ -1620,6 +1671,9 @@
         }
       }
     },
+    "Event" : {
+
+    },
     "Every purchase has its card and amount" : {
 
     },
@@ -1709,6 +1763,9 @@
     "Experiment Scoreboard" : {
 
     },
+    "Expires %@" : {
+
+    },
     "fee" : {
       "localizations" : {
         "fr-CA" : {
@@ -1773,6 +1830,9 @@
       }
     },
     "Finish Purchases" : {
+
+    },
+    "Finish setup" : {
 
     },
     "Fitness and Sports Clubs" : {
@@ -1934,6 +1994,12 @@
         }
       }
     },
+    "Include transaction details in report" : {
+
+    },
+    "Included by your choice" : {
+
+    },
     "Installation name" : {
       "localizations" : {
         "fr-CA" : {
@@ -1955,6 +2021,9 @@
       }
     },
     "Insurance & Verified Benefits" : {
+
+    },
+    "Inunity owns purchase history; PickMe saves each Wallet tap locally before syncing it." : {
 
     },
     "Issuer" : {
@@ -2110,9 +2179,6 @@
     "Loading this account's wallet" : {
 
     },
-    "Location is optional. Purchases remain on this iPhone until Inunity accepts them; invalid records are retained for review instead of deleted." : {
-
-    },
     "Location is used only for arrival detection at your saved merchants." : {
       "comment" : "human review before public launch",
       "localizations" : {
@@ -2215,6 +2281,9 @@
         }
       }
     },
+    "Missing: %@" : {
+
+    },
     "Mobile Device" : {
       "localizations" : {
         "fr-CA" : {
@@ -2253,9 +2322,6 @@
           }
         }
       }
-    },
-    "Needs attention" : {
-
     },
     "net / yr" : {
       "localizations" : {
@@ -2350,6 +2416,9 @@
         }
       }
     },
+    "No queued captures" : {
+
+    },
     "No relevant insurance coverage found in your wallet for this category." : {
       "localizations" : {
         "fr-CA" : {
@@ -2390,7 +2459,7 @@
         }
       }
     },
-    "No Wallet fields arrived. Check the automation mappings in Shortcuts." : {
+    "No Wallet fields arrived. The trigger was retained for review; check the automation mappings in PickMe." : {
 
     },
     "None — Correct" : {
@@ -2707,6 +2776,9 @@
     "Preferences & Privacy" : {
 
     },
+    "Prepare diagnostic report" : {
+
+    },
     "Privacy Policy" : {
       "localizations" : {
         "fr-CA" : {
@@ -2764,6 +2836,12 @@
           }
         }
       }
+    },
+    "Queued captures" : {
+
+    },
+    "Queued purchases are never discarded without your choice." : {
+
     },
     "QUICK PRESETS" : {
       "localizations" : {
@@ -2855,7 +2933,22 @@
         }
       }
     },
+    "Redacted by default" : {
+
+    },
+    "Relink this iPhone" : {
+
+    },
+    "Relink to this account" : {
+
+    },
+    "Relink Wallet Capture to the signed-in account before assigning these captures." : {
+
+    },
     "Rental Car CDW" : {
+
+    },
+    "Replace the old Dictionary + Run Wallet Capture V2 actions only after the first native capture succeeds." : {
 
     },
     "Replaces %@ on %@ of annual spend." : {
@@ -2906,6 +2999,9 @@
         }
       }
     },
+    "Review queued events" : {
+
+    },
     "Reward Currency Valuations" : {
 
     },
@@ -2942,6 +3038,9 @@
           }
         }
       }
+    },
+    "Safe error" : {
+
     },
     "Save" : {
       "localizations" : {
@@ -3042,7 +3141,25 @@
         }
       }
     },
+    "Send diagnostic report" : {
+
+    },
+    "Send queued purchases, then disable" : {
+
+    },
+    "Send them to this account" : {
+
+    },
     "Send Wallet Purchase to Inunity" : {
+
+    },
+    "Sending…" : {
+
+    },
+    "Sent securely; expires %@" : {
+
+    },
+    "Server connection found" : {
 
     },
     "Set up" : {
@@ -3091,7 +3208,11 @@
     "Sign In" : {
 
     },
+    "Sign in only to sync cap usage, view capture feedback, and create a Wallet Capture connection. Checkout recommendations work without an account or connection." : {
+
+    },
     "Sign in only to sync cap usage, view capture feedback, and create a Wallet Shortcut installation token. Checkout recommendations work without an account or connection." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3200,6 +3321,9 @@
         }
       }
     },
+    "State" : {
+
+    },
     "Statement observation" : {
       "localizations" : {
         "fr-CA" : {
@@ -3219,6 +3343,9 @@
           }
         }
       }
+    },
+    "Submitted diagnostics" : {
+
     },
     "Suggests the optimal credit card for a given merchant or category." : {
 
@@ -3342,6 +3469,12 @@
         }
       }
     },
+    "Test secure connection" : {
+
+    },
+    "Testing…" : {
+
+    },
     "The 3% CRO reward applies only while your Level Up Pro plan is active." : {
       "localizations" : {
         "fr-CA" : {
@@ -3392,6 +3525,9 @@
         }
       }
     },
+    "The device credential belongs to another Inunity account. Creating a connection here replaces it safely." : {
+
+    },
     "The higher 2% rate requires an eligible Rogers, Fido, Shaw, Comwave, or Sportsnet+ service linked to your account." : {
       "localizations" : {
         "fr-CA" : {
@@ -3426,6 +3562,9 @@
       }
     },
     "The write-only installation credential is protected on this iPhone. It is not copied into Shortcuts or displayed on screen." : {
+
+    },
+    "These captures arrived while no account was connected or a different account was signed in. They will not be sent until you choose." : {
 
     },
     "These published benchmarks are starting points. PickMe assumes the cents-per-point values above; recommendations disclose when the answer flips." : {
@@ -3504,6 +3643,12 @@
           }
         }
       }
+    },
+    "This removes the unsent capture and its local diagnostic evidence." : {
+
+    },
+    "Timeline" : {
+
     },
     "To turn off arrival alerts or change location permissions, visit iPhone Settings." : {
 
@@ -3623,9 +3768,6 @@
         }
       }
     },
-    "Waiting to sync" : {
-
-    },
     "Wallet" : {
       "localizations" : {
         "fr-CA" : {
@@ -3645,6 +3787,12 @@
           }
         }
       }
+    },
+    "Wallet Capture is disabled. Open PickMe to enable it again." : {
+
+    },
+    "Wallet Capture status" : {
+
     },
     "Wallet Health" : {
       "localizations" : {

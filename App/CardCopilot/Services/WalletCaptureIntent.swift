@@ -20,12 +20,36 @@ struct WalletCaptureIntent: AppIntent {
     init() {}
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        guard WalletCaptureSettingsStore().load().isEnabled else {
+        let info = Bundle.main.infoDictionary ?? [:]
+        let osVersion = await MainActor.run { UIDevice.current.systemVersion }
+        let client = WalletCaptureClient(
+            appVersion: info["CFBundleShortVersionString"] as? String ?? "unknown",
+            buildNumber: info["CFBundleVersion"] as? String ?? "unknown",
+            osVersion: osVersion,
+            locale: Locale.current.identifier)
+        let input = WalletCaptureInput(merchant: merchant, amount: amount, transactionName: transactionName,
+                                       currency: currency, card: card, paymentMethod: nil)
+        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let runLogs = try? WalletCaptureShortcutRunLogStore(documentsDirectory: documents)
+        let enabled = WalletCaptureSettingsStore().load().isEnabled
+        let run = WalletCaptureShortcutRunLog(input: input, client: client, captureEnabled: enabled)
+        try? await runLogs?.begin(run)
+
+        guard enabled else {
+            try? await runLogs?.finish(runID: run.runID, outcome: "captureDisabled")
             return .result(dialog: "Wallet Capture is disabled. Open PickMe to enable it again.")
         }
         let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
             ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let outbox = try WalletOutboxStore(root: root)
+        let outbox: WalletOutboxStore
+        do {
+            outbox = try WalletOutboxStore(root: root)
+        } catch {
+            try? await runLogs?.finish(runID: run.runID, outcome: "captureFailed",
+                                       safeError: "localStoreUnavailable")
+            await WalletCaptureNotificationCoordinator.persistenceFailure()
+            return .result(dialog: "Purchase could not be saved. Open PickMe for capture status.")
+        }
         let diagnostics = try? WalletCaptureDiagnosticsStore(root: root)
         let credential = WalletCaptureCredentialStore().load()
         let connection = WalletCaptureSettingsStore().load()
@@ -63,26 +87,27 @@ struct WalletCaptureIntent: AppIntent {
             },
             drainObserver: { summary in await WalletCaptureNotificationCoordinator.publishDrain(summary) },
             isOffline: { WalletCaptureNetworkMonitor.shared.isOffline })
-        let info = Bundle.main.infoDictionary ?? [:]
-        let osVersion = await MainActor.run { UIDevice.current.systemVersion }
-        let client = WalletCaptureClient(
-            appVersion: info["CFBundleShortVersionString"] as? String ?? "unknown",
-            buildNumber: info["CFBundleVersion"] as? String ?? "unknown",
-            osVersion: osVersion,
-            locale: Locale.current.identifier)
         do {
             let event = try await coordinator.capture(
-                .init(merchant: merchant, amount: amount, transactionName: transactionName,
-                      currency: currency, card: card, paymentMethod: nil),
+                input,
                 client: client, locale: .current, timezone: .current,
                 unassigned: routing == .unassigned)
+            let diagnostic = try? await diagnostics?.record(eventID: event.eventId)
             if !event.isMeaningful {
+                try? await runLogs?.finish(runID: run.runID, outcome: "mappingIncomplete", event: event,
+                                            diagnostic: diagnostic)
                 return .result(dialog: "No Wallet fields arrived. The trigger was retained for review; check the automation mappings in PickMe.")
             }
+            try? await runLogs?.finish(runID: run.runID,
+                                        outcome: diagnostic?.deliveryState == .accepted || diagnostic?.deliveryState == .duplicate
+                                            ? "savedAndDelivered" : "savedLocally",
+                                        event: event, diagnostic: diagnostic)
             return .result(dialog: routing == .unassigned
                 ? "Purchase saved on this iPhone. Connect Wallet Capture in PickMe to sync it."
                 : "Purchase received and saved securely.")
         } catch {
+            try? await runLogs?.finish(runID: run.runID, outcome: "captureFailed",
+                                        safeError: "localPersistenceFailed")
             await WalletCaptureNotificationCoordinator.persistenceFailure()
             return .result(dialog: "Purchase could not be saved. Open PickMe for capture status.")
         }

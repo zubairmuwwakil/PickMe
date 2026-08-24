@@ -123,6 +123,102 @@ final class WalletCaptureTests: XCTestCase {
         XCTAssertEqual((included.transactionDetails?["merchant"] ?? nil), "Store")
     }
 
+    func testShortcutRunLogRecordsFieldPresenceWithoutRawTransactionDetails() async throws {
+        let documents = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: documents) }
+        let logs = try WalletCaptureShortcutRunLogStore(documentsDirectory: documents)
+        let run = WalletCaptureShortcutRunLog(runID: "run", startedAt: Date(),
+                                              input: input, client: client, captureEnabled: true)
+        try await logs.begin(run)
+        let diagnostic = WalletCaptureDiagnosticRecord(eventID: "event", createdAt: Date(), completedAt: nil,
+            deliveryState: .pending, amountDecodeStatus: .decoded, missingFields: [], attemptCount: 1,
+            safeError: "offline", httpStatus: nil, serverEventID: nil, timeline: [], event: nil)
+        try await logs.finish(runID: "run", outcome: "savedLocally", event: queued(eventID: "event").event,
+                              diagnostic: diagnostic)
+
+        let records = try await logs.records()
+        let saved = try XCTUnwrap(records.first)
+        XCTAssertTrue(saved.input.merchantPresent)
+        XCTAssertTrue(saved.input.amountPresent)
+        XCTAssertTrue(saved.input.cardPresent)
+        XCTAssertEqual(saved.outcome, "savedLocally")
+        XCTAssertEqual(saved.deliveryState, "pending")
+        XCTAssertEqual(saved.safeError, "offline")
+        XCTAssertNotNil(saved.finishedAt)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: documents
+            .appendingPathComponent(WalletCaptureShortcutRunLogStore.directoryName)
+            .appendingPathComponent("run.json").path))
+        let encoded = try String(contentsOf: documents
+            .appendingPathComponent(WalletCaptureShortcutRunLogStore.directoryName)
+            .appendingPathComponent("run.json"), encoding: .utf8)
+        XCTAssertFalse(encoded.contains("Store"))
+        XCTAssertFalse(encoded.contains("$1.00"))
+        XCTAssertFalse(encoded.contains("Card"))
+
+        let accepted = WalletCaptureDiagnosticRecord(eventID: "event", createdAt: Date(), completedAt: Date(),
+            deliveryState: .accepted, amountDecodeStatus: .decoded, missingFields: [], attemptCount: 2,
+            safeError: nil, httpStatus: 201, serverEventID: "server-event", timeline: [], event: nil)
+        try await logs.refreshDelivery(eventID: "event", diagnostic: accepted)
+        let refreshedRecords = try await logs.records()
+        let refreshed = try XCTUnwrap(refreshedRecords.first)
+        XCTAssertEqual(refreshed.outcome, "savedAndDelivered")
+        XCTAssertEqual(refreshed.deliveryState, "accepted")
+        XCTAssertEqual(refreshed.httpStatus, 201)
+        XCTAssertEqual(refreshed.serverEventID, "server-event")
+        XCTAssertNil(refreshed.safeError)
+    }
+
+    func testShortcutRunLogExpiresOldRecords() async throws {
+        let documents = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: documents) }
+        let now = Date(timeIntervalSince1970: 40 * 24 * 60 * 60)
+        let logs = try WalletCaptureShortcutRunLogStore(documentsDirectory: documents, now: { now })
+        let old = WalletCaptureShortcutRunLog(runID: "old", startedAt: .init(timeIntervalSince1970: 1),
+                                              input: input, client: client, captureEnabled: true)
+        try await logs.begin(old)
+
+        let retained = try await logs.records()
+        XCTAssertTrue(retained.isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: documents
+            .appendingPathComponent(WalletCaptureShortcutRunLogStore.directoryName)
+            .appendingPathComponent("old.json").path))
+    }
+
+    func testShortcutRunLogMigratesLegacyRawFieldsToPresenceOnly() async throws {
+        let documents = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: documents) }
+        let startedAt = Date()
+        let logs = try WalletCaptureShortcutRunLogStore(documentsDirectory: documents, now: { startedAt })
+        let original = WalletCaptureShortcutRunLog(runID: "legacy", startedAt: startedAt,
+                                                   input: input, client: client, captureEnabled: true)
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: encoder.encode(original)) as? [String: Any])
+        object["input"] = ["merchant": "Private Merchant", "amount": "EC$30.00", "card": "Private Card"]
+        let directory = documents.appendingPathComponent(WalletCaptureShortcutRunLogStore.directoryName)
+        let file = directory.appendingPathComponent("legacy.json")
+        try JSONSerialization.data(withJSONObject: object).write(to: file)
+
+        let migrated = try await logs.records()
+        XCTAssertTrue(try XCTUnwrap(migrated.first).input.merchantPresent)
+        let rewritten = try String(contentsOf: file, encoding: .utf8)
+        XCTAssertFalse(rewritten.contains("Private Merchant"))
+        XCTAssertFalse(rewritten.contains("EC$30.00"))
+        XCTAssertFalse(rewritten.contains("Private Card"))
+        XCTAssertTrue(rewritten.contains("merchantPresent"))
+    }
+
+    func testStatusUsesUnassignedOutboxWhenDiagnosticsAreMissing() async throws {
+        let (root, outbox, diagnostics) = try makeStores(); defer { try? FileManager.default.removeItem(at: root) }
+        let capturedAt = Date(timeIntervalSince1970: 1234)
+        try await outbox.persist(queued(eventID: "unassigned", capturedAt: capturedAt), to: .unassigned)
+
+        let status = await diagnostics.status(outbox: outbox)
+
+        XCTAssertEqual(status.lastTriggerAt, capturedAt)
+        XCTAssertEqual(status.oldestPendingAt, capturedAt)
+        XCTAssertEqual(status.unassignedCount, 1)
+    }
+
     func testCompletedDiagnosticsExpireButPendingDiagnosticsRemain() async throws {
         let now = Date(timeIntervalSince1970: 10_000_000)
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

@@ -320,6 +320,7 @@ struct CheckoutFlowView: View {
                            isAccountReady: sync.readySyncUserID == Clerk.shared.user?.id,
                            onSync: { Task { await syncFromUI() } },
                            onCreateInstallation: { label in try await createInstallation(label: label) },
+                           onRevokeInstallation: { id in try await sync.revokeWalletInstallation(id: id) },
                            boundAccountLabel: captureBoundAccountLabel,
                            isCaptureBoundToCurrentAccount: WalletCaptureCredentialStore().load()?.boundUserID == Clerk.shared.user?.id,
                            onTestCaptureConnection: { await sync.testWalletCaptureConnection() },

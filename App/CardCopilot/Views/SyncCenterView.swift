@@ -15,6 +15,7 @@ struct SyncCenterView: View {
     let isAccountReady: Bool
     let onSync: () -> Void
     let onCreateInstallation: (String) async throws -> String
+    let onRevokeInstallation: (String) async throws -> Void
     let boundAccountLabel: String?
     let isCaptureBoundToCurrentAccount: Bool
     let onTestCaptureConnection: () async -> Bool
@@ -32,6 +33,7 @@ struct SyncCenterView: View {
     @State private var tokenError: String?
     @State private var isCreatingToken = false
     @State private var isShowingCreateForm = false
+    @State private var pendingRevocation: WalletInstallation?
 
     private var activeInstallations: [WalletInstallation] {
         installations.filter { $0.revokedAt == nil }
@@ -39,6 +41,11 @@ struct SyncCenterView: View {
 
     private var hasLocalCredential: Bool {
         installationWasCreated || WalletCaptureCredentialStore().load() != nil
+    }
+
+    private var localInstallationID: String? { WalletCaptureCredentialStore().load()?.installationID }
+    private var otherActiveInstallations: [WalletInstallation] {
+        activeInstallations.filter { $0.id != localInstallationID }
     }
 
     var body: some View {
@@ -56,6 +63,13 @@ struct SyncCenterView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: onDone).font(.headline) } }
         .sheet(isPresented: $authIsPresented) { AuthView() }
+        .alert("Revoke this old connection?", isPresented: .init(
+            get: { pendingRevocation != nil }, set: { if !$0 { pendingRevocation = nil } })) {
+            Button("Revoke", role: .destructive) { Task { await revokePendingInstallation() } }
+            Button("Cancel", role: .cancel) { pendingRevocation = nil }
+        } message: {
+            Text("Only the selected server credential is revoked. Purchases already saved on this iPhone are not deleted.")
+        }
     }
 
     private var configurationRequired: some View {
@@ -258,25 +272,24 @@ struct SyncCenterView: View {
                 Text("The write-only installation credential is protected on this iPhone. It is not copied into Shortcuts or displayed on screen.")
                     .font(.caption).foregroundStyle(.secondary)
                 Link("Open Shortcuts", destination: URL(string: "shortcuts://")!).buttonStyle(.bordered)
+                if !otherActiveInstallations.isEmpty {
+                    DisclosureGroup("Other active connections (\(otherActiveInstallations.count))") {
+                        installationRows(otherActiveInstallations, allowRevocation: true)
+                            .padding(.top, 8)
+                    }.font(.caption)
+                }
             } else if (hasLocalCredential || !activeInstallations.isEmpty) && !isShowingCreateForm {
                 VStack(alignment: .leading, spacing: 10) {
-                    Label(hasLocalCredential ? "Relink this iPhone" : "Server connection found",
+                    Label(hasLocalCredential ? "Relink this iPhone" : "Old server connections found",
                           systemImage: hasLocalCredential ? "person.crop.circle.badge.exclamationmark" : "icloud")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(hasLocalCredential ? .orange : .secondary)
                     Text(!hasLocalCredential
-                         ? "A server installation exists, but this app needs a fresh device-only credential before it can send captures."
+                         ? "These records cannot restore their device-only secrets after a reinstall. Create a replacement connection; saved purchases stay on this iPhone until you approve their account."
                          : "The device credential belongs to another Inunity account. Creating a connection here replaces it safely.")
                         .font(.caption).foregroundStyle(.secondary)
-                    ForEach(activeInstallations) { item in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(item.label).font(.subheadline.weight(.semibold))
-                            Text("Created \(item.createdAt.formatted(date: .abbreviated, time: .shortened))")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                        if item.id != activeInstallations.last?.id { Divider() }
-                    }
-                    Button(hasLocalCredential ? "Relink to this account" : "Connect this iPhone") {
+                    installationRows(activeInstallations, allowRevocation: false)
+                    Button(hasLocalCredential ? "Relink to this account" : "Create replacement connection") {
                         withAnimation { isShowingCreateForm = true }
                     }
                     .buttonStyle(.bordered)
@@ -318,5 +331,31 @@ struct SyncCenterView: View {
             #endif
             tokenError = error.localizedDescription
         }
+    }
+
+    @ViewBuilder
+    private func installationRows(_ values: [WalletInstallation], allowRevocation: Bool) -> some View {
+        ForEach(values) { item in
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.label).font(.subheadline.weight(.semibold))
+                    Text("Created \(item.createdAt.formatted(date: .abbreviated, time: .shortened))")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                if allowRevocation {
+                    Button("Revoke", role: .destructive) { pendingRevocation = item }
+                        .font(.caption).buttonStyle(.borderless)
+                }
+            }
+            if item.id != values.last?.id { Divider() }
+        }
+    }
+
+    private func revokePendingInstallation() async {
+        guard let item = pendingRevocation else { return }
+        pendingRevocation = nil
+        do { try await onRevokeInstallation(item.id); tokenError = nil }
+        catch { tokenError = error.localizedDescription }
     }
 }

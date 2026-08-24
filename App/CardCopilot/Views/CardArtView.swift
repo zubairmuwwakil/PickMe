@@ -3,7 +3,7 @@ import SwiftUI
 private let physicalCardAspectRatio: CGFloat = 85.60 / 53.98
 
 // MARK: - Remote card photo loader
-// Tries https://assets.inunity.ca/cards/{cardId}.webp first,
+// Tries https://inunity.ca/cards/{cardId}.webp first,
 // then falls back to the local gradient design.
 
 private struct CardPhotoView: View {
@@ -12,7 +12,7 @@ private struct CardPhotoView: View {
     let fallback: AnyView
 
     private var remoteURL: URL? {
-        URL(string: "https://assets.inunity.ca/cards/\(cardId).webp")
+        URL(string: "https://inunity.ca/cards/\(cardId).webp")
     }
 
     var body: some View {

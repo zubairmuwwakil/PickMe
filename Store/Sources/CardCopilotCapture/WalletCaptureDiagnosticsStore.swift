@@ -125,6 +125,10 @@ public actor WalletCaptureDiagnosticsStore {
         return try readRecords()
     }
 
+    public func record(eventID: String) throws -> WalletCaptureDiagnosticRecord? {
+        try load(eventID)
+    }
+
     private func readRecords() throws -> [WalletCaptureDiagnosticRecord] {
         try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
@@ -163,13 +167,18 @@ public actor WalletCaptureDiagnosticsStore {
         let quarantined = (try? await outbox.captures(in: .quarantined)) ?? []
         let records = (try? records()) ?? []
         let queued = pending + inflight
+        let localCaptures = queued + unassigned + quarantined
         let latestProblem = records.first { $0.safeError != nil || $0.deliveryState == .quarantined || $0.deliveryState == .authenticationBlocked }
-        return .init(lastTriggerAt: records.map(\.createdAt).max(),
+        let latestLocalProblem = localCaptures
+            .filter { $0.safeError != nil || $0.deliveryState == .quarantined || $0.deliveryState == .authenticationBlocked }
+            .max { $0.event.capturedAt < $1.event.capturedAt }
+        return .init(lastTriggerAt: (records.map(\.createdAt) + localCaptures.map(\.event.capturedAt)).max(),
             lastAcceptedAt: records.compactMap(\.completedAt).max(),
             pendingCount: queued.count, unassignedCount: unassigned.count,
-            quarantinedCount: quarantined.count, oldestPendingAt: queued.map(\.event.capturedAt).min(),
-            lastSafeError: latestProblem?.safeError,
-            failingStage: latestProblem?.timeline.last?.stage)
+            quarantinedCount: quarantined.count,
+            oldestPendingAt: (queued + unassigned).map(\.event.capturedAt).min(),
+            lastSafeError: latestProblem?.safeError ?? latestLocalProblem?.safeError,
+            failingStage: latestProblem?.timeline.last?.stage ?? latestLocalProblem?.timeline.last?.stage)
     }
 
     private func load(_ eventID: String) throws -> WalletCaptureDiagnosticRecord? {
