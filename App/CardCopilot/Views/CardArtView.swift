@@ -2,9 +2,10 @@ import SwiftUI
 
 private let physicalCardAspectRatio: CGFloat = 85.60 / 53.98
 
-// MARK: - Remote card photo loader
-// Tries https://inunity.ca/cards/{cardId}.webp first,
-// then falls back to the local gradient design.
+// MARK: - Card photo loader
+// Checks local bundled image in Assets.xcassets first,
+// then falls back to https://inunity.ca/cards/{cardId}.png,
+// and finally to the gradient design.
 
 private struct CardPhotoView: View {
     let cardId: String
@@ -12,11 +13,16 @@ private struct CardPhotoView: View {
     let fallback: AnyView
 
     private var remoteURL: URL? {
-        URL(string: "https://inunity.ca/cards/\(cardId).webp")
+        URL(string: "https://inunity.ca/cards/\(cardId).png")
     }
 
     var body: some View {
-        if let url = remoteURL {
+        if let uiImage = UIImage(named: cardId) {
+            Image(uiImage: uiImage)
+                .resizable()
+                .scaledToFill()
+                .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        } else if let url = remoteURL {
             AsyncImage(url: url) { phase in
                 switch phase {
                 case .success(let image):
