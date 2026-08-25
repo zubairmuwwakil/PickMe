@@ -11,6 +11,19 @@ jobs:
   # which runs Fixtures/engine-fixtures.json — the golden-fixture spec that is the merge gate for
   # this repo's card-decision semantics (see ../../CLAUDE.md). Store tests run in the same job
   # because Store depends on Engine and both must pass to merge.
+  # The contract set is published as an immutable, content-addressed release that consumers pin
+  # (contracts/RELEASE.json, scripts/release-catalogue.sh). Two mistakes must never reach main:
+  # a stamp stale against the files it describes, and files changed without catalogueVersion
+  # moving — which would let one published release id describe two different sets of bytes.
+  # Cheap and dependency-free, so it gates every PR rather than only releases.
+  catalogue-release:
+    name: catalogue-release (stamp is current)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify RELEASE.json describes the contracts in this commit
+        run: ./scripts/release-catalogue.sh --check
+
   engine-fixtures:
     name: engine-fixtures (swift test)
     runs-on: macos-15
