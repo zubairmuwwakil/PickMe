@@ -40,6 +40,18 @@ final class CatalogueIntegrityTests: XCTestCase {
 
     /// Every product, candidates included — they are the same corpus since 2026-08-24, so this
     /// gate can no longer miss a card by looking in only one of two files.
+    /// Desjardins Odyssey WE shipped with EVERY rule disabled, base rate included, so the card sat
+    /// in the catalogue earning literally nothing — visible only to someone reading the JSON. A
+    /// card that cannot earn on any purchase is never intentional; it is a rule that was disabled
+    /// and never re-enabled. This is the general form of that bug.
+    func testEveryCardCanEarnSomething() throws {
+        let asOf = "2026-08-20"
+        let dead = try allCards()
+            .filter { card in !card.earnRules.contains { RuleMatcher.isLive($0, asOf: asOf) } }
+            .map(\.cardId)
+        XCTAssertEqual(dead, [], "cards with no live earn rule — they can never earn anything")
+    }
+
     private func allCards() throws -> [CardProduct] {
         try SeedLoader.loadCatalogue().cards
     }

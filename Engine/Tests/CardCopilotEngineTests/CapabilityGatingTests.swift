@@ -175,28 +175,6 @@ extension CapabilityGatingTests {
             "amazon-ca-prime-2_5x",            // unblocked by CardState.flags, next plan
             "amazon-ca-nonprime-1_5x",
 
-            // Imported 2026-08-24 with the products below, which were authored against the older
-            // `scoredInV1` vocabulary and never migrated to requires/outOfScope. Their sibling
-            // rules that name partner merchants were annotated mechanically
-            // (requires: predicate.merchantPartnerList); THESE are plain category rules with no
-            // capability missing, so no honest reason could be inferred for them — inventing one
-            // would let them switch on when an unrelated capability ships.
-            //
-            // Desjardins is the urgent one: its BASE rule is disabled too, so that card earns
-            // nothing at all while appearing in the catalogue. Whoever authored these must say
-            // whether they are unverified (a sourceType concern, not a scoring gate) or genuinely
-            // blocked. Until then they are declared here rather than hidden.
-            "amex-aeroplan-reserve-dining-2x",
-            "td-aeroplan-vip-accelerated-1_5x",
-            "cibc-aeroplan-vip-accelerated-1_5x",
-            "gold-rewards-travel-2x",
-            "gold-rewards-gas-grocery-drug-2x",
-            "gold-rewards-amex-travel-bonus",
-            "desjardins-odyssey-we-base-1_5pct",
-            "desjardins-odyssey-we-grocery-3pct",
-            "desjardins-odyssey-we-dining-3pct",
-            "desjardins-odyssey-we-entertainment-3pct",
-            "desjardins-odyssey-we-green-transit-3pct",
         ]
         let allRules: [EarnRule] = try SeedLoader.loadCatalogue().cards.flatMap(\.earnRules)
         let undeclared: [EarnRule] = allRules.filter { rule in
