@@ -113,4 +113,13 @@ final class CopilotSessionTests: XCTestCase {
         // no location means no distance sort.
         XCTAssertFalse(session.cachedLocation?.isRecent ?? false)
     }
+
+    /// An empty query must not reach MapKit. The old code guarded with
+    /// `guard let deps, !text.isEmpty` and silently returned, leaving the owner on a spinner.
+    func testEmptySearchReturnsNothingFoundWithoutCallingTheProvider() async throws {
+        let context = try makeContext()
+        let session = CopilotSession()
+        let outcome = await session.search("", using: try makeGraph(context: context))
+        XCTAssertEqual(outcome, .nothingFound(query: ""))
+    }
 }

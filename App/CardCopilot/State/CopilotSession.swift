@@ -108,6 +108,88 @@ final class CopilotSession {
 
     func noteLocationDenied() { locationDenied = true }
 
+    /// Finds shops near the owner. Returns an outcome rather than setting navigation, so the
+    /// mapping to a step stays a pure function that tests can exercise.
+    func findNearby(using graph: DependencyGraph) async -> FlowOutcome {
+        do {
+            let location = try await LocationProvider().requestLocation()
+            cachedLocation = CachedLocation(latitude: location.latitude,
+                                            longitude: location.longitude,
+                                            capturedAt: Date())
+            refresh(using: graph)
+            let merchants = try await graph.provider.nearby(latitude: location.latitude,
+                                                            longitude: location.longitude)
+            return merchants.isEmpty ? .nothingFound(query: nil) : .found(merchants)
+        } catch is LocationUnavailable {
+            // Permission declined: Apple requires the manual path to stand on its own.
+            locationDenied = true
+            return .locationDenied
+        } catch {
+            return .failed(error.localizedDescription)
+        }
+    }
+
+    /// The Apple guideline 5.1.1 fallback: carries no location bias and must work with zero
+    /// location access.
+    func search(_ text: String, using graph: DependencyGraph) async -> FlowOutcome {
+        guard !text.isEmpty else { return .nothingFound(query: text) }
+        do {
+            let merchants = try await graph.provider.search(text: text)
+            return merchants.isEmpty ? .nothingFound(query: text) : .found(merchants)
+        } catch {
+            return .failed(error.localizedDescription)
+        }
+    }
+
+    /// Scores a purchase. Returns a step directly rather than an outcome: a recommendation
+    /// carries a `CheckoutResult`, which no other outcome case can hold.
+    ///
+    /// Ported verbatim from `CheckoutFlowView.recommend` (846-line predecessor): the Live
+    /// Activity start is not incidental UI, it is the reason the owner opens the app mid-checkout
+    /// at all, so the fork/single branch, headline, and advantage text must survive the move.
+    func recommend(merchant: NearbyMerchant, amount: Double?,
+                   using graph: DependencyGraph) -> CheckoutStep {
+        do {
+            let today = Date().formatted(.iso8601.year().month().day())
+            let result = try graph.service.recommend(merchant: merchant,
+                                                     amountCad: amount,
+                                                     asOf: today)
+            refresh(using: graph)
+
+            let (winnerCardId, headline, advantageCad, isFork): (String, String, Double?, Bool) = {
+                switch result.outcome {
+                case .single(let rec):
+                    let returnText = String(format: "$%.2f back", rec.winner.netValueCad)
+                    return (rec.winner.cardId, returnText, rec.advantageOverDefaultCad, false)
+                case .fork(let branches):
+                    if let first = branches.first {
+                        let returnText = String(format: "$%.2f back", first.recommendation.winner.netValueCad)
+                        return (first.recommendation.winner.cardId, returnText,
+                                first.recommendation.advantageOverDefaultCad, true)
+                    }
+                    return ("", "", nil, true)
+                }
+            }()
+            let cardName = graph.catalogue.cards.first { $0.cardId == winnerCardId }?.officialName ?? winnerCardId
+            let meta = CategoryVisuals.meta(for: result.prediction.category)
+            let advantageText = advantageCad.map { String(format: "+$%.2f", $0) } ?? ""
+            LiveActivityManager.shared.startRecommendationActivity(
+                merchantName: merchant.name,
+                cardName: cardName,
+                cardId: winnerCardId,
+                multiplierHeadline: headline,
+                advantageDescription: advantageText,
+                categoryDisplayName: meta.displayName,
+                categoryIcon: meta.icon,
+                isFork: isFork
+            )
+            return .recommendation(result)
+        } catch {
+            report(FlowError(error))
+            return .idle
+        }
+    }
+
     private func sortedHomeMerchants(_ merchants: [StoredMerchant]) -> [StoredMerchant] {
         guard let cachedLocation, cachedLocation.isRecent else {
             return merchants.sorted { $0.lastSeenAt > $1.lastSeenAt }
@@ -122,7 +204,4 @@ final class CopilotSession {
             return lhs.lastSeenAt > rhs.lastSeenAt
         }
     }
-
-    // Set by the flow operations in Task 6.
-    fileprivate func setCachedLocation(_ location: CachedLocation?) { cachedLocation = location }
 }
