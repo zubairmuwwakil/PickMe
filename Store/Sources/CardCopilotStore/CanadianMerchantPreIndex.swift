@@ -110,10 +110,10 @@ public struct CanadianMerchantPreIndex: Sendable {
         PreIndexedMerchant(name: "7-Eleven Canada", category: "gasStation", mcc: 5541),
 
         // MARK: - Pharmacy & Personal Care
-        PreIndexedMerchant(name: "Shoppers Drug Mart", category: "other", mcc: 5912, merchantBrand: "shoppers", notes: "Codes as MCC 5912 Drugstore (not grocery on Amex/Visa/MC)."),
-        PreIndexedMerchant(name: "Rexall", category: "other", mcc: 5912),
-        PreIndexedMerchant(name: "Jean Coutu", category: "other", mcc: 5912),
-        PreIndexedMerchant(name: "Pharmaprix", category: "other", mcc: 5912, merchantBrand: "shoppers"),
+        PreIndexedMerchant(name: "Shoppers Drug Mart", category: "drugStore", mcc: 5912, merchantBrand: "shoppers", notes: "Codes as MCC 5912 Drugstore (not grocery on Amex/Visa/MC)."),
+        PreIndexedMerchant(name: "Rexall", category: "drugStore", mcc: 5912),
+        PreIndexedMerchant(name: "Jean Coutu", category: "drugStore", mcc: 5912),
+        PreIndexedMerchant(name: "Pharmaprix", category: "drugStore", mcc: 5912, merchantBrand: "shoppers"),
         PreIndexedMerchant(name: "Sephora", category: "other", mcc: 5977),
 
         // MARK: - Liquor & Cannabis

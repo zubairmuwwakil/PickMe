@@ -883,7 +883,7 @@
     {
       "id": "jean-coutu",
       "displayName": "Jean Coutu",
-      "category": "other",
+      "category": "drugStore",
       "matchKeys": [
         "jean coutu"
       ],
@@ -1247,7 +1247,7 @@
     {
       "id": "pharmaprix",
       "displayName": "Pharmaprix",
-      "category": "other",
+      "category": "drugStore",
       "matchKeys": [
         "pharmaprix"
       ],
@@ -1391,7 +1391,7 @@
     {
       "id": "rexall",
       "displayName": "Rexall",
-      "category": "other",
+      "category": "drugStore",
       "matchKeys": [
         "rexall"
       ],
@@ -1533,7 +1533,7 @@
     {
       "id": "shoppers-drug-mart",
       "displayName": "Shoppers Drug Mart",
-      "category": "other",
+      "category": "drugStore",
       "matchKeys": [
         "shoppers drug mart",
         "shoppers dm",
