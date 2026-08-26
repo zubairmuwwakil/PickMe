@@ -24,6 +24,15 @@ jobs:
       - name: Verify RELEASE.json describes the contracts in this commit
         run: ./scripts/release-catalogue.sh --check
 
+      # merchant-pack.json is generated from CanadianMerchantPreIndex.swift and is
+      # deliberately NOT in release-catalogue.sh's digest (see the generator's header:
+      # merchant facts move on a different cadence from card rate facts, and folding
+      # them together would invalidate every consumer's catalogue pin every time a
+      # coffee chain is added). It still needs a gate, or the published pack silently
+      # drifts from the Swift table it claims to publish.
+      - name: Verify merchant-pack.json matches its Swift source
+        run: node scripts/generate-merchant-pack.mjs --check
+
   engine-fixtures:
     name: engine-fixtures (swift test)
     runs-on: macos-15
