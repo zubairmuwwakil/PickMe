@@ -23,593 +23,508 @@ enum CardVisualTheme {
         case prepaid = "PREPAID"
     }
 
-    /// All card IDs that have an explicit, dedicated style in `style(for:)`.
+    /// All card IDs that have an explicit, dedicated style in `styles`.
     ///
-    /// This is a second copy of the switch's case labels, and nothing in the language keeps the
-    /// two in step — a Swift switch cannot be enumerated. That is not theoretical: five cards had
-    /// styles that were never registered here, and `simplii-cash-back-visa` had a style keyed to a
-    /// cardId the catalogue has never contained, so it rendered as a generic fallback while
-    /// looking correct in this file. `CardVisualThemeTests` is the only thing that catches either,
-    /// which is why it must stay strict.
-    static let definedCardIds: Set<String> = [
-        "amex-cobalt",
-        "amex-platinum",
-        "amex-bonvoy",
-        "amex-simplycash",
-        "mbna-rewards-we",
-        "scotia-momentum-vi-plus",
-        "tangerine-moneyback-world",
-        "triangle-we",
-        "wealthsimple-vip",
-        "rogers-red-we",
-        "cryptocom-royal-indigo",
-        "scotia-gold-amex",
-        "td-aeroplan-visa-infinite",
-        "rbc-avion-visa-infinite",
-        "cibc-dividend-visa-infinite",
-        "scotia-passport-visa-infinite-plus",
-        "td-first-class-travel-visa-infinite",
-        "bmo-eclipse-visa-infinite",
-        "cibc-aventura-visa-infinite",
-        "national-bank-world-elite",
-        "pc-insiders-world-elite",
-        "rbc-ion-plus-visa",
-        "td-cash-back-visa-infinite",
-        "bmo-ascend-world-elite",
-        "westjet-rbc-world-elite",
-        "amazon-ca-rewards-mastercard",
-        "cibc-aventura-visa",
+    /// Derived from `styles.keys`, so it can never drift from the styles it describes — unlike a
+    /// switch statement's case labels, which cannot be enumerated and had to be copied here by
+    /// hand. That copy is what let five cards go missing and let `simplii-cash-back-visa` sit
+    /// keyed to a cardId the catalogue has never contained. `CardVisualThemeTests` still checks
+    /// this set against the live catalogue; it just can't drift from `styles` anymore.
+    static let definedCardIds: Set<String> = Set(styles.keys)
 
-        // Previously styled but never registered here.
-        "amex-simplycash-preferred",
-        "bmo-cashback-world-elite",
-        "home-trust-preferred-visa",
-        "mbna-smart-cash-world",
-        "rbc-cashback-preferred-we",
-        "simplii-cashback-visa",
-
-        // Added when the catalogue reached 41 cards.
-        "amex-aeroplan-reserve",
-        "amex-gold-rewards",
-        "cibc-aeroplan-visa-infinite-privilege",
-        "desjardins-odyssey-world-elite",
-        "pc-financial-mastercard",
-        "pc-financial-world-elite",
-        "pc-financial-world-mastercard",
-        "td-aeroplan-visa-infinite-privilege",
-    ]
-
-    static func style(for cardId: String) -> CardStyle {
-        switch cardId {
+    static let styles: [String: CardStyle] = [
         // MARK: - American Express Cards
-        case "amex-cobalt":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Cobalt",
-                issuer: "American Express",
-                network: .amex,
-                gradientColors: [Color(red: 0.08, green: 0.22, blue: 0.45), Color(red: 0.12, green: 0.38, blue: 0.72)],
-                textColor: .white,
-                accentColor: Color(red: 0.45, green: 0.82, blue: 1.0),
-                isDark: true
-            )
-        case "amex-platinum":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Platinum",
-                issuer: "American Express",
-                network: .amex,
-                gradientColors: [Color(red: 0.82, green: 0.85, blue: 0.88), Color(red: 0.58, green: 0.63, blue: 0.68)],
-                textColor: Color(red: 0.12, green: 0.15, blue: 0.18),
-                accentColor: Color(red: 0.2, green: 0.25, blue: 0.3),
-                isDark: false
-            )
-        case "amex-bonvoy":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Bonvoy",
-                issuer: "Marriott / Amex",
-                network: .amex,
-                gradientColors: [Color(red: 0.11, green: 0.16, blue: 0.28), Color(red: 0.2, green: 0.14, blue: 0.32)],
-                textColor: .white,
-                accentColor: Color(red: 0.95, green: 0.78, blue: 0.45),
-                isDark: true
-            )
-        case "amex-simplycash":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "SimplyCash",
-                issuer: "American Express",
-                network: .amex,
-                gradientColors: [Color(red: 0.06, green: 0.26, blue: 0.52), Color(red: 0.02, green: 0.14, blue: 0.32)],
-                textColor: .white,
-                accentColor: Color(red: 0.75, green: 0.90, blue: 1.0),
-                isDark: true
-            )
-        case "amex-simplycash-preferred":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "SimplyCash Preferred",
-                issuer: "American Express",
-                network: .amex,
-                gradientColors: [Color(red: 0.04, green: 0.16, blue: 0.36), Color(red: 0.01, green: 0.08, blue: 0.20)],
-                textColor: .white,
-                accentColor: Color(red: 0.50, green: 0.82, blue: 1.0),
-                isDark: true
-            )
-        case "scotia-gold-amex":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Scotia Gold",
-                issuer: "Scotiabank",
-                network: .amex,
-                gradientColors: [Color(red: 0.72, green: 0.56, blue: 0.22), Color(red: 0.42, green: 0.30, blue: 0.10)],
-                textColor: .white,
-                accentColor: Color(red: 1.0, green: 0.90, blue: 0.55),
-                isDark: true
-            )
-        case "amex-gold-rewards":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Gold Rewards",
-                issuer: "American Express",
-                network: .amex,
-                // Light champagne, dark text — the same treatment as amex-platinum rather than
-                // scotia-gold-amex's dark gold. Two "gold" cards that read alike at a glance
-                // defeat the point of card art in a wallet chosen at a till.
-                gradientColors: [Color(red: 0.88, green: 0.76, blue: 0.48), Color(red: 0.70, green: 0.56, blue: 0.28)],
-                textColor: Color(red: 0.18, green: 0.13, blue: 0.04),
-                accentColor: Color(red: 0.34, green: 0.24, blue: 0.06),
-                isDark: false
-            )
-        case "amex-aeroplan-reserve":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Aeroplan Reserve",
-                issuer: "Air Canada / Amex",
-                network: .amex,
-                gradientColors: [Color(red: 0.10, green: 0.13, blue: 0.20), Color(red: 0.03, green: 0.04, blue: 0.08)],
-                textColor: .white,
-                accentColor: Color(red: 0.92, green: 0.24, blue: 0.26),
-                isDark: true
-            )
+        "amex-cobalt": CardStyle(
+            cardId: "amex-cobalt",
+            shortName: "Cobalt",
+            issuer: "American Express",
+            network: .amex,
+            gradientColors: [Color(red: 0.08, green: 0.22, blue: 0.45), Color(red: 0.12, green: 0.38, blue: 0.72)],
+            textColor: .white,
+            accentColor: Color(red: 0.45, green: 0.82, blue: 1.0),
+            isDark: true
+        ),
+        "amex-platinum": CardStyle(
+            cardId: "amex-platinum",
+            shortName: "Platinum",
+            issuer: "American Express",
+            network: .amex,
+            gradientColors: [Color(red: 0.82, green: 0.85, blue: 0.88), Color(red: 0.58, green: 0.63, blue: 0.68)],
+            textColor: Color(red: 0.12, green: 0.15, blue: 0.18),
+            accentColor: Color(red: 0.2, green: 0.25, blue: 0.3),
+            isDark: false
+        ),
+        "amex-bonvoy": CardStyle(
+            cardId: "amex-bonvoy",
+            shortName: "Bonvoy",
+            issuer: "Marriott / Amex",
+            network: .amex,
+            gradientColors: [Color(red: 0.11, green: 0.16, blue: 0.28), Color(red: 0.2, green: 0.14, blue: 0.32)],
+            textColor: .white,
+            accentColor: Color(red: 0.95, green: 0.78, blue: 0.45),
+            isDark: true
+        ),
+        "amex-simplycash": CardStyle(
+            cardId: "amex-simplycash",
+            shortName: "SimplyCash",
+            issuer: "American Express",
+            network: .amex,
+            gradientColors: [Color(red: 0.06, green: 0.26, blue: 0.52), Color(red: 0.02, green: 0.14, blue: 0.32)],
+            textColor: .white,
+            accentColor: Color(red: 0.75, green: 0.90, blue: 1.0),
+            isDark: true
+        ),
+        "amex-simplycash-preferred": CardStyle(
+            cardId: "amex-simplycash-preferred",
+            shortName: "SimplyCash Preferred",
+            issuer: "American Express",
+            network: .amex,
+            gradientColors: [Color(red: 0.04, green: 0.16, blue: 0.36), Color(red: 0.01, green: 0.08, blue: 0.20)],
+            textColor: .white,
+            accentColor: Color(red: 0.50, green: 0.82, blue: 1.0),
+            isDark: true
+        ),
+        "scotia-gold-amex": CardStyle(
+            cardId: "scotia-gold-amex",
+            shortName: "Scotia Gold",
+            issuer: "Scotiabank",
+            network: .amex,
+            gradientColors: [Color(red: 0.72, green: 0.56, blue: 0.22), Color(red: 0.42, green: 0.30, blue: 0.10)],
+            textColor: .white,
+            accentColor: Color(red: 1.0, green: 0.90, blue: 0.55),
+            isDark: true
+        ),
+        // Light champagne, dark text — the same treatment as amex-platinum rather than
+        // scotia-gold-amex's dark gold. Two "gold" cards that read alike at a glance
+        // defeat the point of card art in a wallet chosen at a till.
+        "amex-gold-rewards": CardStyle(
+            cardId: "amex-gold-rewards",
+            shortName: "Gold Rewards",
+            issuer: "American Express",
+            network: .amex,
+            gradientColors: [Color(red: 0.88, green: 0.76, blue: 0.48), Color(red: 0.70, green: 0.56, blue: 0.28)],
+            textColor: Color(red: 0.18, green: 0.13, blue: 0.04),
+            accentColor: Color(red: 0.34, green: 0.24, blue: 0.06),
+            isDark: false
+        ),
+        "amex-aeroplan-reserve": CardStyle(
+            cardId: "amex-aeroplan-reserve",
+            shortName: "Aeroplan Reserve",
+            issuer: "Air Canada / Amex",
+            network: .amex,
+            gradientColors: [Color(red: 0.10, green: 0.13, blue: 0.20), Color(red: 0.03, green: 0.04, blue: 0.08)],
+            textColor: .white,
+            accentColor: Color(red: 0.92, green: 0.24, blue: 0.26),
+            isDark: true
+        ),
 
         // MARK: - Visa Cards
-        case "scotia-momentum-vi-plus":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Momentum",
-                issuer: "Scotiabank",
-                network: .visaInfinite,
-                gradientColors: [Color(red: 0.65, green: 0.08, blue: 0.12), Color(red: 0.38, green: 0.03, blue: 0.06)],
-                textColor: .white,
-                accentColor: Color(red: 1.0, green: 0.82, blue: 0.4),
-                isDark: true
-            )
-        case "scotia-passport-visa-infinite-plus":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Scotia Passport",
-                issuer: "Scotiabank",
-                network: .visaInfinite,
-                gradientColors: [Color(red: 0.08, green: 0.26, blue: 0.35), Color(red: 0.03, green: 0.10, blue: 0.18)],
-                textColor: .white,
-                accentColor: Color(red: 0.35, green: 0.85, blue: 0.95),
-                isDark: true
-            )
-        case "td-aeroplan-visa-infinite":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "TD Aeroplan",
-                issuer: "TD",
-                network: .visaInfinite,
-                gradientColors: [Color(red: 0.08, green: 0.22, blue: 0.15), Color(red: 0.03, green: 0.08, blue: 0.05)],
-                textColor: .white,
-                accentColor: Color(red: 0.25, green: 0.85, blue: 0.42),
-                isDark: true
-            )
-        case "td-first-class-travel-visa-infinite":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "TD First Class",
-                issuer: "TD",
-                network: .visaInfinite,
-                gradientColors: [Color(red: 0.04, green: 0.30, blue: 0.18), Color(red: 0.01, green: 0.12, blue: 0.07)],
-                textColor: .white,
-                accentColor: Color(red: 1.0, green: 0.84, blue: 0.40),
-                isDark: true
-            )
-        case "td-cash-back-visa-infinite":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "TD Cash Back",
-                issuer: "TD",
-                network: .visaInfinite,
-                gradientColors: [Color(red: 0.10, green: 0.24, blue: 0.18), Color(red: 0.04, green: 0.10, blue: 0.08)],
-                textColor: .white,
-                accentColor: Color(red: 0.30, green: 0.90, blue: 0.50),
-                isDark: true
-            )
-        case "rbc-avion-visa-infinite":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "RBC Avion",
-                issuer: "RBC",
-                network: .visaInfinite,
-                gradientColors: [Color(red: 0.06, green: 0.20, blue: 0.48), Color(red: 0.02, green: 0.08, blue: 0.25)],
-                textColor: .white,
-                accentColor: Color(red: 1.0, green: 0.82, blue: 0.15),
-                isDark: true
-            )
-        case "rbc-ion-plus-visa":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "RBC ION+",
-                issuer: "RBC",
-                network: .visa,
-                gradientColors: [Color(red: 0.72, green: 0.10, blue: 0.38), Color(red: 0.38, green: 0.04, blue: 0.20)],
-                textColor: .white,
-                accentColor: Color(red: 1.0, green: 0.45, blue: 0.60),
-                isDark: true
-            )
-        case "cibc-dividend-visa-infinite":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "CIBC Dividend",
-                issuer: "CIBC",
-                network: .visaInfinite,
-                gradientColors: [Color(red: 0.58, green: 0.06, blue: 0.15), Color(red: 0.28, green: 0.02, blue: 0.08)],
-                textColor: .white,
-                accentColor: Color(red: 0.95, green: 0.75, blue: 0.80),
-                isDark: true
-            )
-        case "cibc-aventura-visa":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "CIBC Aventura",
-                issuer: "CIBC",
-                network: .visa,
-                gradientColors: [Color(red: 0.45, green: 0.08, blue: 0.16), Color(red: 0.10, green: 0.12, blue: 0.28)],
-                textColor: .white,
-                accentColor: Color(red: 0.85, green: 0.90, blue: 0.98),
-                isDark: true
-            )
-        case "cibc-aventura-visa-infinite":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "CIBC Aventura VI",
-                issuer: "CIBC",
-                network: .visaInfinite,
-                gradientColors: [Color(red: 0.52, green: 0.05, blue: 0.14), Color(red: 0.15, green: 0.05, blue: 0.18)],
-                textColor: .white,
-                accentColor: Color(red: 1.0, green: 0.82, blue: 0.45),
-                isDark: true
-            )
-        case "bmo-eclipse-visa-infinite":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "BMO eclipse",
-                issuer: "BMO",
-                network: .visaInfinite,
-                gradientColors: [Color(red: 0.14, green: 0.12, blue: 0.35), Color(red: 0.06, green: 0.04, blue: 0.18)],
-                textColor: .white,
-                accentColor: Color(red: 0.75, green: 0.55, blue: 1.0),
-                isDark: true
-            )
-        case "wealthsimple-vip":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Wealthsimple VIP",
-                issuer: "Wealthsimple",
-                network: .visaInfinitePrivilege,
-                gradientColors: [Color(red: 0.12, green: 0.13, blue: 0.15), Color(red: 0.04, green: 0.04, blue: 0.05)],
-                textColor: .white,
-                accentColor: Color(red: 0.75, green: 0.78, blue: 0.82),
-                isDark: true
-            )
-        case "cryptocom-royal-indigo":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Royal Indigo",
-                issuer: "Crypto.com",
-                network: .prepaid,
-                gradientColors: [Color(red: 0.18, green: 0.14, blue: 0.44), Color(red: 0.08, green: 0.06, blue: 0.22)],
-                textColor: .white,
-                accentColor: Color(red: 0.7, green: 0.65, blue: 0.95),
-                isDark: true
-            )
+        "scotia-momentum-vi-plus": CardStyle(
+            cardId: "scotia-momentum-vi-plus",
+            shortName: "Momentum",
+            issuer: "Scotiabank",
+            network: .visaInfinite,
+            gradientColors: [Color(red: 0.65, green: 0.08, blue: 0.12), Color(red: 0.38, green: 0.03, blue: 0.06)],
+            textColor: .white,
+            accentColor: Color(red: 1.0, green: 0.82, blue: 0.4),
+            isDark: true
+        ),
+        "scotia-passport-visa-infinite-plus": CardStyle(
+            cardId: "scotia-passport-visa-infinite-plus",
+            shortName: "Scotia Passport",
+            issuer: "Scotiabank",
+            network: .visaInfinite,
+            gradientColors: [Color(red: 0.08, green: 0.26, blue: 0.35), Color(red: 0.03, green: 0.10, blue: 0.18)],
+            textColor: .white,
+            accentColor: Color(red: 0.35, green: 0.85, blue: 0.95),
+            isDark: true
+        ),
+        "td-aeroplan-visa-infinite": CardStyle(
+            cardId: "td-aeroplan-visa-infinite",
+            shortName: "TD Aeroplan",
+            issuer: "TD",
+            network: .visaInfinite,
+            gradientColors: [Color(red: 0.08, green: 0.22, blue: 0.15), Color(red: 0.03, green: 0.08, blue: 0.05)],
+            textColor: .white,
+            accentColor: Color(red: 0.25, green: 0.85, blue: 0.42),
+            isDark: true
+        ),
+        "td-first-class-travel-visa-infinite": CardStyle(
+            cardId: "td-first-class-travel-visa-infinite",
+            shortName: "TD First Class",
+            issuer: "TD",
+            network: .visaInfinite,
+            gradientColors: [Color(red: 0.04, green: 0.30, blue: 0.18), Color(red: 0.01, green: 0.12, blue: 0.07)],
+            textColor: .white,
+            accentColor: Color(red: 1.0, green: 0.84, blue: 0.40),
+            isDark: true
+        ),
+        "td-cash-back-visa-infinite": CardStyle(
+            cardId: "td-cash-back-visa-infinite",
+            shortName: "TD Cash Back",
+            issuer: "TD",
+            network: .visaInfinite,
+            gradientColors: [Color(red: 0.10, green: 0.24, blue: 0.18), Color(red: 0.04, green: 0.10, blue: 0.08)],
+            textColor: .white,
+            accentColor: Color(red: 0.30, green: 0.90, blue: 0.50),
+            isDark: true
+        ),
+        "rbc-avion-visa-infinite": CardStyle(
+            cardId: "rbc-avion-visa-infinite",
+            shortName: "RBC Avion",
+            issuer: "RBC",
+            network: .visaInfinite,
+            gradientColors: [Color(red: 0.06, green: 0.20, blue: 0.48), Color(red: 0.02, green: 0.08, blue: 0.25)],
+            textColor: .white,
+            accentColor: Color(red: 1.0, green: 0.82, blue: 0.15),
+            isDark: true
+        ),
+        "rbc-ion-plus-visa": CardStyle(
+            cardId: "rbc-ion-plus-visa",
+            shortName: "RBC ION+",
+            issuer: "RBC",
+            network: .visa,
+            gradientColors: [Color(red: 0.72, green: 0.10, blue: 0.38), Color(red: 0.38, green: 0.04, blue: 0.20)],
+            textColor: .white,
+            accentColor: Color(red: 1.0, green: 0.45, blue: 0.60),
+            isDark: true
+        ),
+        "cibc-dividend-visa-infinite": CardStyle(
+            cardId: "cibc-dividend-visa-infinite",
+            shortName: "CIBC Dividend",
+            issuer: "CIBC",
+            network: .visaInfinite,
+            gradientColors: [Color(red: 0.58, green: 0.06, blue: 0.15), Color(red: 0.28, green: 0.02, blue: 0.08)],
+            textColor: .white,
+            accentColor: Color(red: 0.95, green: 0.75, blue: 0.80),
+            isDark: true
+        ),
+        "cibc-aventura-visa": CardStyle(
+            cardId: "cibc-aventura-visa",
+            shortName: "CIBC Aventura",
+            issuer: "CIBC",
+            network: .visa,
+            gradientColors: [Color(red: 0.45, green: 0.08, blue: 0.16), Color(red: 0.10, green: 0.12, blue: 0.28)],
+            textColor: .white,
+            accentColor: Color(red: 0.85, green: 0.90, blue: 0.98),
+            isDark: true
+        ),
+        "cibc-aventura-visa-infinite": CardStyle(
+            cardId: "cibc-aventura-visa-infinite",
+            shortName: "CIBC Aventura VI",
+            issuer: "CIBC",
+            network: .visaInfinite,
+            gradientColors: [Color(red: 0.52, green: 0.05, blue: 0.14), Color(red: 0.15, green: 0.05, blue: 0.18)],
+            textColor: .white,
+            accentColor: Color(red: 1.0, green: 0.82, blue: 0.45),
+            isDark: true
+        ),
+        "bmo-eclipse-visa-infinite": CardStyle(
+            cardId: "bmo-eclipse-visa-infinite",
+            shortName: "BMO eclipse",
+            issuer: "BMO",
+            network: .visaInfinite,
+            gradientColors: [Color(red: 0.14, green: 0.12, blue: 0.35), Color(red: 0.06, green: 0.04, blue: 0.18)],
+            textColor: .white,
+            accentColor: Color(red: 0.75, green: 0.55, blue: 1.0),
+            isDark: true
+        ),
+        "wealthsimple-vip": CardStyle(
+            cardId: "wealthsimple-vip",
+            shortName: "Wealthsimple VIP",
+            issuer: "Wealthsimple",
+            network: .visaInfinitePrivilege,
+            gradientColors: [Color(red: 0.12, green: 0.13, blue: 0.15), Color(red: 0.04, green: 0.04, blue: 0.05)],
+            textColor: .white,
+            accentColor: Color(red: 0.75, green: 0.78, blue: 0.82),
+            isDark: true
+        ),
+        "cryptocom-royal-indigo": CardStyle(
+            cardId: "cryptocom-royal-indigo",
+            shortName: "Royal Indigo",
+            issuer: "Crypto.com",
+            network: .prepaid,
+            gradientColors: [Color(red: 0.18, green: 0.14, blue: 0.44), Color(red: 0.08, green: 0.06, blue: 0.22)],
+            textColor: .white,
+            accentColor: Color(red: 0.7, green: 0.65, blue: 0.95),
+            isDark: true
+        ),
         // Was keyed "simplii-cash-back-visa", which is not a cardId the catalogue has ever
         // contained — so this style was unreachable and the card rendered as a generic fallback.
-        case "simplii-cashback-visa":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Simplii Cash Back",
-                issuer: "Simplii Financial",
-                network: .visa,
-                gradientColors: [Color(red: 0.82, green: 0.12, blue: 0.36), Color(red: 0.50, green: 0.04, blue: 0.22)],
-                textColor: .white,
-                accentColor: Color(red: 1.0, green: 0.85, blue: 0.90),
-                isDark: true
-            )
-        case "home-trust-preferred-visa":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Home Trust Preferred",
-                issuer: "Home Trust",
-                network: .visa,
-                gradientColors: [Color(red: 0.08, green: 0.16, blue: 0.32), Color(red: 0.04, green: 0.08, blue: 0.18)],
-                textColor: .white,
-                accentColor: Color(red: 0.95, green: 0.78, blue: 0.35),
-                isDark: true
-            )
-        case "td-aeroplan-visa-infinite-privilege":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "TD Aeroplan VIP",
-                issuer: "TD",
-                network: .visaInfinitePrivilege,
-                // Deliberately darker than td-aeroplan-visa-infinite's green, with a gold rather
-                // than green accent: an owner can hold both, and the pick is worthless if the two
-                // are indistinguishable in the half-second before the photo loads.
-                gradientColors: [Color(red: 0.05, green: 0.14, blue: 0.10), Color(red: 0.01, green: 0.04, blue: 0.03)],
-                textColor: .white,
-                accentColor: Color(red: 0.95, green: 0.82, blue: 0.50),
-                isDark: true
-            )
-        case "cibc-aeroplan-visa-infinite-privilege":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "CIBC Aeroplan VIP",
-                issuer: "CIBC",
-                network: .visaInfinitePrivilege,
-                // Darker than cibc-dividend-visa-infinite's crimson, for the same reason.
-                gradientColors: [Color(red: 0.32, green: 0.04, blue: 0.10), Color(red: 0.10, green: 0.01, blue: 0.03)],
-                textColor: .white,
-                accentColor: Color(red: 1.0, green: 0.45, blue: 0.45),
-                isDark: true
-            )
+        "simplii-cashback-visa": CardStyle(
+            cardId: "simplii-cashback-visa",
+            shortName: "Simplii Cash Back",
+            issuer: "Simplii Financial",
+            network: .visa,
+            gradientColors: [Color(red: 0.82, green: 0.12, blue: 0.36), Color(red: 0.50, green: 0.04, blue: 0.22)],
+            textColor: .white,
+            accentColor: Color(red: 1.0, green: 0.85, blue: 0.90),
+            isDark: true
+        ),
+        "home-trust-preferred-visa": CardStyle(
+            cardId: "home-trust-preferred-visa",
+            shortName: "Home Trust Preferred",
+            issuer: "Home Trust",
+            network: .visa,
+            gradientColors: [Color(red: 0.08, green: 0.16, blue: 0.32), Color(red: 0.04, green: 0.08, blue: 0.18)],
+            textColor: .white,
+            accentColor: Color(red: 0.95, green: 0.78, blue: 0.35),
+            isDark: true
+        ),
+        // Deliberately darker than td-aeroplan-visa-infinite's green, with a gold rather
+        // than green accent: an owner can hold both, and the pick is worthless if the two
+        // are indistinguishable in the half-second before the photo loads.
+        "td-aeroplan-visa-infinite-privilege": CardStyle(
+            cardId: "td-aeroplan-visa-infinite-privilege",
+            shortName: "TD Aeroplan VIP",
+            issuer: "TD",
+            network: .visaInfinitePrivilege,
+            gradientColors: [Color(red: 0.05, green: 0.14, blue: 0.10), Color(red: 0.01, green: 0.04, blue: 0.03)],
+            textColor: .white,
+            accentColor: Color(red: 0.95, green: 0.82, blue: 0.50),
+            isDark: true
+        ),
+        // Darker than cibc-dividend-visa-infinite's crimson, for the same reason.
+        "cibc-aeroplan-visa-infinite-privilege": CardStyle(
+            cardId: "cibc-aeroplan-visa-infinite-privilege",
+            shortName: "CIBC Aeroplan VIP",
+            issuer: "CIBC",
+            network: .visaInfinitePrivilege,
+            gradientColors: [Color(red: 0.32, green: 0.04, blue: 0.10), Color(red: 0.10, green: 0.01, blue: 0.03)],
+            textColor: .white,
+            accentColor: Color(red: 1.0, green: 0.45, blue: 0.45),
+            isDark: true
+        ),
 
         // MARK: - Mastercard Cards
-        case "mbna-rewards-we":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "MBNA Rewards",
-                issuer: "MBNA / TD",
-                network: .mastercardWorldElite,
-                gradientColors: [Color(red: 0.15, green: 0.18, blue: 0.24), Color(red: 0.08, green: 0.35, blue: 0.48)],
-                textColor: .white,
-                accentColor: Color(red: 0.3, green: 0.85, blue: 0.95),
-                isDark: true
-            )
-        case "mbna-smart-cash-world":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Smart Cash World",
-                issuer: "MBNA / TD",
-                network: .mastercard,
-                gradientColors: [Color(red: 0.30, green: 0.34, blue: 0.38), Color(red: 0.16, green: 0.18, blue: 0.22)],
-                textColor: .white,
-                accentColor: Color(red: 0.25, green: 0.85, blue: 0.45),
-                isDark: true
-            )
-        case "tangerine-moneyback-world":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Money-Back",
-                issuer: "Tangerine",
-                network: .mastercard,
-                gradientColors: [Color(red: 0.95, green: 0.45, blue: 0.05), Color(red: 0.8, green: 0.3, blue: 0.02)],
-                textColor: .white,
-                accentColor: .white,
-                isDark: true
-            )
-        case "triangle-we":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Triangle",
-                issuer: "Canadian Tire",
-                network: .mastercardWorldElite,
-                gradientColors: [Color(red: 0.78, green: 0.12, blue: 0.14), Color(red: 0.45, green: 0.08, blue: 0.1)],
-                textColor: .white,
-                accentColor: Color(red: 0.95, green: 0.9, blue: 0.9),
-                isDark: true
-            )
-        case "rogers-red-we":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Rogers Red",
-                issuer: "Rogers Bank",
-                network: .mastercardWorldElite,
-                gradientColors: [Color(red: 0.85, green: 0.15, blue: 0.15), Color(red: 0.6, green: 0.08, blue: 0.08)],
-                textColor: .white,
-                accentColor: .white,
-                isDark: true
-            )
-        case "national-bank-world-elite":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "NBC World Elite",
-                issuer: "National Bank",
-                network: .mastercardWorldElite,
-                gradientColors: [Color(red: 0.76, green: 0.07, blue: 0.18), Color(red: 0.38, green: 0.00, blue: 0.06)],
-                textColor: .white,
-                accentColor: .white,
-                isDark: true
-            )
-        case "pc-insiders-world-elite":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "PC Insiders WE",
-                issuer: "PC Financial",
-                network: .mastercardWorldElite,
-                gradientColors: [Color(red: 0.12, green: 0.12, blue: 0.14), Color(red: 0.05, green: 0.05, blue: 0.06)],
-                textColor: .white,
-                accentColor: Color(red: 0.90, green: 0.12, blue: 0.15),
-                isDark: true
-            )
-        case "bmo-ascend-world-elite":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "BMO Ascend WE",
-                issuer: "BMO",
-                network: .mastercardWorldElite,
-                gradientColors: [Color(red: 0.04, green: 0.22, blue: 0.45), Color(red: 0.02, green: 0.08, blue: 0.20)],
-                textColor: .white,
-                accentColor: Color(red: 0.45, green: 0.85, blue: 1.0),
-                isDark: true
-            )
-        case "bmo-cashback-world-elite":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "BMO CashBack WE",
-                issuer: "BMO",
-                network: .mastercardWorldElite,
-                gradientColors: [Color(red: 0.05, green: 0.25, blue: 0.50), Color(red: 0.02, green: 0.10, blue: 0.24)],
-                textColor: .white,
-                accentColor: Color(red: 0.90, green: 0.15, blue: 0.15),
-                isDark: true
-            )
-        case "westjet-rbc-world-elite":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "WestJet RBC WE",
-                issuer: "RBC",
-                network: .mastercardWorldElite,
-                gradientColors: [Color(red: 0.00, green: 0.35, blue: 0.45), Color(red: 0.01, green: 0.12, blue: 0.22)],
-                textColor: .white,
-                accentColor: Color(red: 0.20, green: 0.85, blue: 0.85),
-                isDark: true
-            )
-        case "rbc-cashback-preferred-we":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "RBC Cash Back WE",
-                issuer: "RBC",
-                network: .mastercardWorldElite,
-                gradientColors: [Color(red: 0.08, green: 0.18, blue: 0.35), Color(red: 0.03, green: 0.08, blue: 0.18)],
-                textColor: .white,
-                accentColor: Color(red: 1.0, green: 0.80, blue: 0.20),
-                isDark: true
-            )
-        case "amazon-ca-rewards-mastercard":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Amazon.ca Rewards",
-                issuer: "MBNA / TD",
-                network: .mastercard,
-                gradientColors: [Color(red: 0.14, green: 0.18, blue: 0.22), Color(red: 0.08, green: 0.10, blue: 0.14)],
-                textColor: .white,
-                accentColor: Color(red: 1.0, green: 0.60, blue: 0.0),
-                isDark: true
-            )
-        case "desjardins-odyssey-world-elite":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "Desjardins Odyssey",
-                issuer: "Desjardins",
-                network: .mastercardWorldElite,
-                gradientColors: [Color(red: 0.00, green: 0.42, blue: 0.26), Color(red: 0.00, green: 0.17, blue: 0.11)],
-                textColor: .white,
-                accentColor: Color(red: 0.45, green: 0.95, blue: 0.65),
-                isDark: true
-            )
+        "mbna-rewards-we": CardStyle(
+            cardId: "mbna-rewards-we",
+            shortName: "MBNA Rewards",
+            issuer: "MBNA / TD",
+            network: .mastercardWorldElite,
+            gradientColors: [Color(red: 0.15, green: 0.18, blue: 0.24), Color(red: 0.08, green: 0.35, blue: 0.48)],
+            textColor: .white,
+            accentColor: Color(red: 0.3, green: 0.85, blue: 0.95),
+            isDark: true
+        ),
+        "mbna-smart-cash-world": CardStyle(
+            cardId: "mbna-smart-cash-world",
+            shortName: "Smart Cash World",
+            issuer: "MBNA / TD",
+            network: .mastercard,
+            gradientColors: [Color(red: 0.30, green: 0.34, blue: 0.38), Color(red: 0.16, green: 0.18, blue: 0.22)],
+            textColor: .white,
+            accentColor: Color(red: 0.25, green: 0.85, blue: 0.45),
+            isDark: true
+        ),
+        "tangerine-moneyback-world": CardStyle(
+            cardId: "tangerine-moneyback-world",
+            shortName: "Money-Back",
+            issuer: "Tangerine",
+            network: .mastercard,
+            gradientColors: [Color(red: 0.95, green: 0.45, blue: 0.05), Color(red: 0.8, green: 0.3, blue: 0.02)],
+            textColor: .white,
+            accentColor: .white,
+            isDark: true
+        ),
+        "triangle-we": CardStyle(
+            cardId: "triangle-we",
+            shortName: "Triangle",
+            issuer: "Canadian Tire",
+            network: .mastercardWorldElite,
+            gradientColors: [Color(red: 0.78, green: 0.12, blue: 0.14), Color(red: 0.45, green: 0.08, blue: 0.1)],
+            textColor: .white,
+            accentColor: Color(red: 0.95, green: 0.9, blue: 0.9),
+            isDark: true
+        ),
+        "rogers-red-we": CardStyle(
+            cardId: "rogers-red-we",
+            shortName: "Rogers Red",
+            issuer: "Rogers Bank",
+            network: .mastercardWorldElite,
+            gradientColors: [Color(red: 0.85, green: 0.15, blue: 0.15), Color(red: 0.6, green: 0.08, blue: 0.08)],
+            textColor: .white,
+            accentColor: .white,
+            isDark: true
+        ),
+        "national-bank-world-elite": CardStyle(
+            cardId: "national-bank-world-elite",
+            shortName: "NBC World Elite",
+            issuer: "National Bank",
+            network: .mastercardWorldElite,
+            gradientColors: [Color(red: 0.76, green: 0.07, blue: 0.18), Color(red: 0.38, green: 0.00, blue: 0.06)],
+            textColor: .white,
+            accentColor: .white,
+            isDark: true
+        ),
+        "pc-insiders-world-elite": CardStyle(
+            cardId: "pc-insiders-world-elite",
+            shortName: "PC Insiders WE",
+            issuer: "PC Financial",
+            network: .mastercardWorldElite,
+            gradientColors: [Color(red: 0.12, green: 0.12, blue: 0.14), Color(red: 0.05, green: 0.05, blue: 0.06)],
+            textColor: .white,
+            accentColor: Color(red: 0.90, green: 0.12, blue: 0.15),
+            isDark: true
+        ),
+        "bmo-ascend-world-elite": CardStyle(
+            cardId: "bmo-ascend-world-elite",
+            shortName: "BMO Ascend WE",
+            issuer: "BMO",
+            network: .mastercardWorldElite,
+            gradientColors: [Color(red: 0.04, green: 0.22, blue: 0.45), Color(red: 0.02, green: 0.08, blue: 0.20)],
+            textColor: .white,
+            accentColor: Color(red: 0.45, green: 0.85, blue: 1.0),
+            isDark: true
+        ),
+        "bmo-cashback-world-elite": CardStyle(
+            cardId: "bmo-cashback-world-elite",
+            shortName: "BMO CashBack WE",
+            issuer: "BMO",
+            network: .mastercardWorldElite,
+            gradientColors: [Color(red: 0.05, green: 0.25, blue: 0.50), Color(red: 0.02, green: 0.10, blue: 0.24)],
+            textColor: .white,
+            accentColor: Color(red: 0.90, green: 0.15, blue: 0.15),
+            isDark: true
+        ),
+        "westjet-rbc-world-elite": CardStyle(
+            cardId: "westjet-rbc-world-elite",
+            shortName: "WestJet RBC WE",
+            issuer: "RBC",
+            network: .mastercardWorldElite,
+            gradientColors: [Color(red: 0.00, green: 0.35, blue: 0.45), Color(red: 0.01, green: 0.12, blue: 0.22)],
+            textColor: .white,
+            accentColor: Color(red: 0.20, green: 0.85, blue: 0.85),
+            isDark: true
+        ),
+        "rbc-cashback-preferred-we": CardStyle(
+            cardId: "rbc-cashback-preferred-we",
+            shortName: "RBC Cash Back WE",
+            issuer: "RBC",
+            network: .mastercardWorldElite,
+            gradientColors: [Color(red: 0.08, green: 0.18, blue: 0.35), Color(red: 0.03, green: 0.08, blue: 0.18)],
+            textColor: .white,
+            accentColor: Color(red: 1.0, green: 0.80, blue: 0.20),
+            isDark: true
+        ),
+        "amazon-ca-rewards-mastercard": CardStyle(
+            cardId: "amazon-ca-rewards-mastercard",
+            shortName: "Amazon.ca Rewards",
+            issuer: "MBNA / TD",
+            network: .mastercard,
+            gradientColors: [Color(red: 0.14, green: 0.18, blue: 0.22), Color(red: 0.08, green: 0.10, blue: 0.14)],
+            textColor: .white,
+            accentColor: Color(red: 1.0, green: 0.60, blue: 0.0),
+            isDark: true
+        ),
+        "desjardins-odyssey-world-elite": CardStyle(
+            cardId: "desjardins-odyssey-world-elite",
+            shortName: "Desjardins Odyssey",
+            issuer: "Desjardins",
+            network: .mastercardWorldElite,
+            gradientColors: [Color(red: 0.00, green: 0.42, blue: 0.26), Color(red: 0.00, green: 0.17, blue: 0.11)],
+            textColor: .white,
+            accentColor: Color(red: 0.45, green: 0.95, blue: 0.65),
+            isDark: true
+        ),
 
         // The PC Financial family is four cards deep and the brand is a single near-black, so
         // luminance alone cannot separate them. They step from mid-slate to warm charcoal and
         // carry a different accent each — red, orange, gold — against pc-insiders-world-elite's
         // neutral near-black with red. An owner can plausibly hold two of these at once.
-        case "pc-financial-mastercard":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "PC Financial MC",
-                issuer: "PC Financial",
-                network: .mastercard,
-                gradientColors: [Color(red: 0.34, green: 0.35, blue: 0.38), Color(red: 0.18, green: 0.19, blue: 0.21)],
-                textColor: .white,
-                accentColor: Color(red: 0.95, green: 0.20, blue: 0.22),
-                isDark: true
-            )
-        case "pc-financial-world-mastercard":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "PC Financial World",
-                issuer: "PC Financial",
-                network: .mastercard,
-                gradientColors: [Color(red: 0.22, green: 0.24, blue: 0.30), Color(red: 0.10, green: 0.11, blue: 0.15)],
-                textColor: .white,
-                accentColor: Color(red: 1.0, green: 0.55, blue: 0.15),
-                isDark: true
-            )
-        case "pc-financial-world-elite":
-            return CardStyle(
-                cardId: cardId,
-                shortName: "PC Financial WE",
-                issuer: "PC Financial",
-                network: .mastercardWorldElite,
-                gradientColors: [Color(red: 0.20, green: 0.15, blue: 0.13), Color(red: 0.09, green: 0.06, blue: 0.05)],
-                textColor: .white,
-                accentColor: Color(red: 0.95, green: 0.80, blue: 0.45),
-                isDark: true
-            )
+        "pc-financial-mastercard": CardStyle(
+            cardId: "pc-financial-mastercard",
+            shortName: "PC Financial MC",
+            issuer: "PC Financial",
+            network: .mastercard,
+            gradientColors: [Color(red: 0.34, green: 0.35, blue: 0.38), Color(red: 0.18, green: 0.19, blue: 0.21)],
+            textColor: .white,
+            accentColor: Color(red: 0.95, green: 0.20, blue: 0.22),
+            isDark: true
+        ),
+        "pc-financial-world-mastercard": CardStyle(
+            cardId: "pc-financial-world-mastercard",
+            shortName: "PC Financial World",
+            issuer: "PC Financial",
+            network: .mastercard,
+            gradientColors: [Color(red: 0.22, green: 0.24, blue: 0.30), Color(red: 0.10, green: 0.11, blue: 0.15)],
+            textColor: .white,
+            accentColor: Color(red: 1.0, green: 0.55, blue: 0.15),
+            isDark: true
+        ),
+        "pc-financial-world-elite": CardStyle(
+            cardId: "pc-financial-world-elite",
+            shortName: "PC Financial WE",
+            issuer: "PC Financial",
+            network: .mastercardWorldElite,
+            gradientColors: [Color(red: 0.20, green: 0.15, blue: 0.13), Color(red: 0.09, green: 0.06, blue: 0.05)],
+            textColor: .white,
+            accentColor: Color(red: 0.95, green: 0.80, blue: 0.45),
+            isDark: true
+        ),
+    ]
+
+    static func style(for cardId: String) -> CardStyle {
+        if let style = styles[cardId] {
+            return style
+        }
 
         // MARK: - Smart Fallback for Custom or Unstyled Cards
-        default:
-            let lower = cardId.lowercased()
-            let inferredNetwork: CardNetwork
-            if lower.contains("amex") || lower.hasPrefix("american-express") {
-                inferredNetwork = .amex
-            } else if lower.contains("vip") || lower.contains("privilege") {
-                inferredNetwork = .visaInfinitePrivilege
-            } else if lower.contains("infinite") || lower.contains("-vi") {
-                inferredNetwork = .visaInfinite
-            } else if lower.contains("visa") {
-                inferredNetwork = .visa
-            } else if lower.contains("world-elite") || lower.contains("-we") {
-                inferredNetwork = .mastercardWorldElite
-            } else if lower.contains("mastercard") || lower.contains("-mc") {
-                inferredNetwork = .mastercard
-            } else if lower.contains("prepaid") {
-                inferredNetwork = .prepaid
-            } else {
-                inferredNetwork = .visa
-            }
-
-            let inferredIssuer: String
-            if lower.contains("amex") || lower.contains("american-express") {
-                inferredIssuer = "American Express"
-            } else if lower.contains("td-") || lower.contains("td") {
-                inferredIssuer = "TD"
-            } else if lower.contains("scotia") {
-                inferredIssuer = "Scotiabank"
-            } else if lower.contains("cibc") {
-                inferredIssuer = "CIBC"
-            } else if lower.contains("rbc") {
-                inferredIssuer = "RBC"
-            } else if lower.contains("bmo") {
-                inferredIssuer = "BMO"
-            } else if lower.contains("tangerine") {
-                inferredIssuer = "Tangerine"
-            } else if lower.contains("wealthsimple") {
-                inferredIssuer = "Wealthsimple"
-            } else {
-                inferredIssuer = "Card"
-            }
-
-            let cleanedName = cardId
-                .replacingOccurrences(of: "-", with: " ")
-                .capitalized
-
-            return CardStyle(
-                cardId: cardId,
-                shortName: cleanedName,
-                issuer: inferredIssuer,
-                network: inferredNetwork,
-                gradientColors: [Color(red: 0.25, green: 0.3, blue: 0.38), Color(red: 0.15, green: 0.18, blue: 0.24)],
-                textColor: .white,
-                accentColor: .white,
-                isDark: true
-            )
+        let lower = cardId.lowercased()
+        let inferredNetwork: CardNetwork
+        if lower.contains("amex") || lower.hasPrefix("american-express") {
+            inferredNetwork = .amex
+        } else if lower.contains("vip") || lower.contains("privilege") {
+            inferredNetwork = .visaInfinitePrivilege
+        } else if lower.contains("infinite") || lower.contains("-vi") {
+            inferredNetwork = .visaInfinite
+        } else if lower.contains("visa") {
+            inferredNetwork = .visa
+        } else if lower.contains("world-elite") || lower.contains("-we") {
+            inferredNetwork = .mastercardWorldElite
+        } else if lower.contains("mastercard") || lower.contains("-mc") {
+            inferredNetwork = .mastercard
+        } else if lower.contains("prepaid") {
+            inferredNetwork = .prepaid
+        } else {
+            inferredNetwork = .visa
         }
+
+        let inferredIssuer: String
+        if lower.contains("amex") || lower.contains("american-express") {
+            inferredIssuer = "American Express"
+        } else if lower.contains("td-") || lower.contains("td") {
+            inferredIssuer = "TD"
+        } else if lower.contains("scotia") {
+            inferredIssuer = "Scotiabank"
+        } else if lower.contains("cibc") {
+            inferredIssuer = "CIBC"
+        } else if lower.contains("rbc") {
+            inferredIssuer = "RBC"
+        } else if lower.contains("bmo") {
+            inferredIssuer = "BMO"
+        } else if lower.contains("tangerine") {
+            inferredIssuer = "Tangerine"
+        } else if lower.contains("wealthsimple") {
+            inferredIssuer = "Wealthsimple"
+        } else {
+            inferredIssuer = "Card"
+        }
+
+        let cleanedName = cardId
+            .replacingOccurrences(of: "-", with: " ")
+            .capitalized
+
+        return CardStyle(
+            cardId: cardId,
+            shortName: cleanedName,
+            issuer: inferredIssuer,
+            network: inferredNetwork,
+            gradientColors: [Color(red: 0.25, green: 0.3, blue: 0.38), Color(red: 0.15, green: 0.18, blue: 0.24)],
+            textColor: .white,
+            accentColor: .white,
+            isDark: true
+        )
     }
 }
 
