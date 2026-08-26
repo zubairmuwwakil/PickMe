@@ -7,6 +7,7 @@ import SwiftData
 /// actually tapped, and what the charge actually came to.
 final class PurchaseRecordTests: XCTestCase {
     var container: ModelContainer!
+    var context: ModelContext!
     var log: PredictionLog!
 
     override func setUpWithError() throws {
@@ -14,7 +15,8 @@ final class PurchaseRecordTests: XCTestCase {
             for: StoredPrediction.self, StoredPurchase.self, StoredObservation.self,
             StoredMerchant.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true))
-        log = PredictionLog(context: ModelContext(container))
+        context = ModelContext(container)
+        log = PredictionLog(context: context)
     }
 
     /// Winner earns $7.00 on a scored $140; the default card would have earned $2.80. The
@@ -209,7 +211,7 @@ final class LogSnapshotTests: XCTestCase {
         try log.confirm(mp, observedCategory: "wholesaleClub", missClass: .wrongCategory, note: nil)
     }
 
-    func testSnapshotMatchesTheFourSeparateQueries() throws {
+    func testSnapshotMatchesTheSeparateQueries() throws {
         try populate()
         let snapshot = try log.snapshot()
 
@@ -218,6 +220,8 @@ final class LogSnapshotTests: XCTestCase {
         XCTAssertEqual(snapshot.awaitingCompletion.map(\.id), try log.awaitingCompletion().map(\.id))
         XCTAssertEqual(snapshot.awaitingConfirmation.map(\.id),
                        try log.awaitingConfirmation().map(\.id))
+        XCTAssertEqual(snapshot.recentPurchases.map(\.id),
+                       try log.recentPurchases().map(\.id))
     }
 
     /// Guards the guard: if populate() ever stops covering the interesting states, the equivalence
@@ -228,6 +232,7 @@ final class LogSnapshotTests: XCTestCase {
         XCTAssertEqual(snapshot.awaitingCompletion.count, 1)
         XCTAssertEqual(snapshot.awaitingConfirmation.count, 1)
         XCTAssertEqual(snapshot.metrics.confirmedCount, 2)
+        XCTAssertEqual(snapshot.recentPurchases.count, 4) // 4 of the 5 populated predictions have purchases
         XCTAssertGreaterThan(snapshot.valueRecovered.confirmedCad, 0)
         XCTAssertGreaterThan(snapshot.valueRecovered.pendingCad, 0)
     }
@@ -237,6 +242,7 @@ final class LogSnapshotTests: XCTestCase {
         XCTAssertEqual(snapshot.valueRecovered, .zero)
         XCTAssertTrue(snapshot.awaitingCompletion.isEmpty)
         XCTAssertTrue(snapshot.awaitingConfirmation.isEmpty)
+        XCTAssertTrue(snapshot.recentPurchases.isEmpty)
         XCTAssertNil(snapshot.metrics.categoryAccuracy)
     }
 }
@@ -246,6 +252,7 @@ final class LogSnapshotTests: XCTestCase {
 /// lives inside a SwiftUI body where nothing can assert on it.
 final class MissingFactsTests: XCTestCase {
     var container: ModelContainer!
+    var context: ModelContext!
     var log: PredictionLog!
 
     override func setUpWithError() throws {
@@ -253,7 +260,8 @@ final class MissingFactsTests: XCTestCase {
             for: StoredPrediction.self, StoredPurchase.self, StoredObservation.self,
             StoredMerchant.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true))
-        log = PredictionLog(context: ModelContext(container))
+        context = ModelContext(container)
+        log = PredictionLog(context: context)
     }
 
     private func prediction() throws -> StoredPrediction {
@@ -299,5 +307,26 @@ final class MissingFactsTests: XCTestCase {
         let queued = try log.awaitingCompletion().compactMap(\.purchase)
         XCTAssertEqual(queued.map(\.id), [incomplete.id])
         XCTAssertTrue(queued.allSatisfy { !$0.missingFacts.isEmpty })
+    }
+
+    func testUpdateCategoryUpdatesObservationAndPromotesMerchant() throws {
+        let p = try log.record(StoredPrediction(
+            merchantName: "Loblaws", merchantIdentifier: "poi-123",
+            predictedCategory: "grocery", confidenceSource: .brandPrior,
+            winnerCardId: "amex-cobalt", winnerValueCad: 7.00,
+            scoredAmountCad: 140, headline: "Use American Express Cobalt Card."))
+        let purchase = try log.recordPurchase(for: p, cardUsedId: "amex-cobalt", cardSource: .atTill)
+        try log.recordAmount(50.0, source: .atTill, on: purchase)
+
+        let merchant = StoredMerchant(name: "Loblaws", identifier: "poi-123", poiCategoryRaw: "FoodMarket",
+                                      latitude: 43.65, longitude: -79.38)
+        context.insert(merchant)
+        try context.save()
+
+        try log.updateCategory(for: p, to: "dining")
+
+        XCTAssertEqual(p.predictedCategory, "dining")
+        XCTAssertEqual(p.purchase?.observation?.observedCategory, "dining")
+        XCTAssertEqual(merchant.confirmedCategory, "dining")
     }
 }

@@ -8,11 +8,11 @@ import SwiftData
 /// privacy question about people, and the reason it exists as a separate, longer constant.
 public let discoveryRetention: TimeInterval = 90 * 24 * 60 * 60
 
-// The persisted models of schema version 1. Declared as an extension of
-// `CardCopilotSchemaV1` (see Schema.swift) rather than at file scope, so that a future
-// version can hold a differently shaped model of the same name. The unqualified names
-// remain available through the typealiases in Schema.swift, so call sites are unchanged.
-extension CardCopilotSchemaV1 {
+// The persisted models of schema version 2 — the spatial cache is unchanged from V1, but it moves
+// with the rest of the current shape so that "which version am I looking at?" has one answer per
+// file. V1's frozen copies live in `SchemaV1Models.swift`. The unqualified names remain available
+// through the typealiases in Schema.swift, so call sites are unchanged.
+extension CardCopilotSchemaV2 {
 
     /// One ~1 km grid cell that discovery has looked at. `areaCount == 0` is a recorded answer, not
     /// an absence: it is what stops the owner's own street being re-queried forever.

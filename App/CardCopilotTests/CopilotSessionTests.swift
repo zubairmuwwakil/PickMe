@@ -8,7 +8,7 @@ import CardCopilotStore
 final class CopilotSessionTests: XCTestCase {
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(versionedSchema: CardCopilotSchemaV1.self)
+        let schema = Schema(versionedSchema: CardCopilotSchemaV2.self)
         let container = try ModelContainer(
             for: schema,
             migrationPlan: CardCopilotMigrationPlan.self,
@@ -39,6 +39,7 @@ final class CopilotSessionTests: XCTestCase {
         XCTAssertEqual(session.pendingValueCad, 0)
         XCTAssertTrue(session.completionQueue.isEmpty)
         XCTAssertTrue(session.reconcileQueue.isEmpty)
+        XCTAssertTrue(session.recentPurchases.isEmpty)
         XCTAssertNil(session.lastError)
     }
 

@@ -191,6 +191,22 @@ public struct PredictionLog {
         merchant.confirmedCategory = observedCategory
     }
 
+    /// Reclassifies a transaction's category and updates the Merchant Truth Graph.
+    public func updateCategory(for prediction: StoredPrediction, to newCategory: String) throws {
+        prediction.predictedCategory = newCategory
+        if let purchase = prediction.purchase {
+            if let observation = purchase.observation {
+                observation.observedCategory = newCategory
+            } else {
+                let observation = StoredObservation(observedCategory: newCategory, confirmedAt: Date())
+                context.insert(observation)
+                observation.purchase = purchase
+            }
+        }
+        try promoteMerchant(for: prediction, observedCategory: newCategory)
+        try context.save()
+    }
+
     public func allPredictions() throws -> [StoredPrediction] {
         try context.fetch(FetchDescriptor<StoredPrediction>(
             sortBy: [SortDescriptor(\.recordedAt, order: .reverse)]))
@@ -225,6 +241,16 @@ public struct PredictionLog {
         }
     }
 
+    /// Complete or incomplete purchases recorded in the log, newest first.
+    public func recentPurchases(limit: Int = 20) throws -> [StoredPrediction] {
+        Self.recentPurchases(from: try allPredictions(), limit: limit)
+    }
+
+    private static func recentPurchases(from predictions: [StoredPrediction], limit: Int = 20) -> [StoredPrediction] {
+        let purchases = predictions.filter { $0.purchase != nil }
+        return Array(purchases.prefix(limit))
+    }
+
     /// Everything the home screen needs, from one fetch.
     ///
     /// The four accessors below stay — they are the readable unit and every test asserts against
@@ -236,14 +262,16 @@ public struct PredictionLog {
         public let awaitingCompletion: [StoredPrediction]
         public let awaitingConfirmation: [StoredPrediction]
         public let metrics: ExperimentMetrics
+        public let recentPurchases: [StoredPrediction]
     }
 
-    public func snapshot() throws -> LogSnapshot {
+    public func snapshot(recentLimit: Int = 20) throws -> LogSnapshot {
         let predictions = try allPredictions()
         return LogSnapshot(valueRecovered: Self.valueRecovered(from: predictions),
                            awaitingCompletion: Self.awaitingCompletion(from: predictions),
                            awaitingConfirmation: Self.awaitingConfirmation(from: predictions),
-                           metrics: Self.metrics(from: predictions))
+                           metrics: Self.metrics(from: predictions),
+                           recentPurchases: Self.recentPurchases(from: predictions, limit: recentLimit))
     }
 
     public func metrics() throws -> ExperimentMetrics {

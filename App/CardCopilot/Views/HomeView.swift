@@ -16,11 +16,11 @@ struct HomeView: View {
     let confirmedCount: Int
     let ambientDiagnostics: SuppressionLog
     let ambientEnabled: Bool
-    let lastSyncedAt: Date?
-    let syncIssueMessage: String?
-    let onOpenSync: () -> Void
+    let deps: CheckoutFlowView.Dependencies?
     let onSelectPreIndexedMerchant: ((PreIndexedMerchant) -> Void)?
     let onInstantRepeat: (StoredMerchant) -> Void
+    let onLogPurchase: ((StoredMerchant, Double) -> Void)?
+    let onOpenDetails: ((StoredMerchant, Double) -> Void)?
     let onFindNearby: () -> Void
     let onSearch: (String) -> Void
     let onFinish: () -> Void
@@ -39,62 +39,16 @@ struct HomeView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                valueRecoveredCard
-                if lastSyncedAt != nil || syncIssueMessage != nil {
-                    syncStatusRow
-                }
                 primaryCheckoutSection
-                ambientDiagnosticsRow
                 instantRepeatsSection
+                ambientDiagnosticsRow
+                valueRecoveredCard
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .padding(.bottom, 90)
         }
         .background(Color(.systemGroupedBackground))
-    }
-
-    private var syncStatusRow: some View {
-        Button(action: onOpenSync) {
-            HStack(spacing: 10) {
-                if let syncIssueMessage {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
-                    Text(syncIssueMessage)
-                        .font(.caption)
-                        .foregroundStyle(.primary)
-                        .lineLimit(2)
-                } else if let lastSyncedAt {
-                    let isStale = Date().timeIntervalSince(lastSyncedAt) > 3600
-                    Image(systemName: isStale ? "arrow.triangle.2.circlepath" : "checkmark.icloud.fill")
-                        .foregroundStyle(isStale ? .orange : .secondary)
-                    Text(syncTimestampText(lastSyncedAt))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func syncTimestampText(_ date: Date) -> String {
-        let seconds = Int(Date().timeIntervalSince(date))
-        if seconds < 60 {
-            return "Synced just now"
-        } else if seconds < 3600 {
-            let mins = max(1, seconds / 60)
-            return "Synced \(mins)m ago"
-        } else {
-            let hours = seconds / 3600
-            return "Last synced \(hours)h ago"
-        }
     }
 
     private var ambientDiagnosticsRow: some View {
@@ -385,9 +339,30 @@ struct HomeView: View {
                         .fill(Color(.secondarySystemGroupedBackground))
                 )
             } else {
-                LazyVStack(spacing: 8) {
+                LazyVStack(spacing: 12) {
                     ForEach(merchants) { merchant in
-                        merchantRow(merchant)
+                        if let deps {
+                            InstantRepeatCardView(
+                                merchant: merchant,
+                                deps: deps,
+                                onLogPurchase: { m, amt in
+                                    if let onLogPurchase {
+                                        onLogPurchase(m, amt)
+                                    } else {
+                                        onInstantRepeat(m)
+                                    }
+                                },
+                                onOpenDetails: { m, amt in
+                                    if let onOpenDetails {
+                                        onOpenDetails(m, amt)
+                                    } else {
+                                        onInstantRepeat(m)
+                                    }
+                                }
+                            )
+                        } else {
+                            merchantRow(merchant)
+                        }
                     }
                 }
             }

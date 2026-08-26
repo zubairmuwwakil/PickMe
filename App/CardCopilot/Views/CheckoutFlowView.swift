@@ -22,6 +22,7 @@ struct CheckoutFlowView: View {
     /// Purchases missing a card or a charge: one field each, no statement needed.
     @State private var completionQueue: [StoredPrediction] = []
     @State private var reconcileQueue: [StoredPrediction] = []
+    @State private var recentPurchases: [StoredPrediction] = []
     @State private var metrics: ExperimentMetrics?
     @State private var sync = SyncCoordinator()
     @State private var ambient = AmbientLocationService()
@@ -111,10 +112,12 @@ struct CheckoutFlowView: View {
                 .toolbar {
                     if isAtRoot {
                         ToolbarItem(placement: .topBarTrailing) {
-                            Button { stage = .sync } label: {
-                                Image(systemName: sync.lastSyncedAt == nil ? "icloud" : "checkmark.icloud")
-                            }
-                            .accessibilityLabel("Sync and Wallet Capture")
+                            SyncStatusToolbarButton(
+                                isSyncing: sync.isSyncing || sync.isPreparingAccount,
+                                lastSyncedAt: sync.lastSyncedAt,
+                                syncIssue: sync.syncIssue,
+                                action: { stage = .sync }
+                            )
                         }
                     }
                 }
@@ -170,9 +173,7 @@ struct CheckoutFlowView: View {
                                  confirmedCount: metrics?.confirmedCount ?? 0,
                                  ambientDiagnostics: ambientDiagnostics,
                                  ambientEnabled: ambient.isEnabled,
-                                 lastSyncedAt: sync.lastSyncedAt,
-                                 syncIssueMessage: sync.syncIssue?.message,
-                                 onOpenSync: { stage = .sync },
+                                 deps: deps,
                                  onSelectPreIndexedMerchant: { match in
                                      stage = .amount(merchant: NearbyMerchant(id: "preindex:\(match.id)",
                                                                               name: match.name,
@@ -182,6 +183,8 @@ struct CheckoutFlowView: View {
                                                                               distanceMeters: nil))
                                  },
                                  onInstantRepeat: { merchant in startInstantRepeat(merchant) },
+                                 onLogPurchase: { merchant, amount in logInstantPurchase(merchant, amount: amount) },
+                                 onOpenDetails: { merchant, amount in startInstantRepeatWithAmount(merchant, amount: amount) },
                                  onFindNearby: { Task { await findNearby() } },
                                  onSearch: { text in Task { await search(text) } },
                                  onFinish: { stage = .finish },
@@ -200,9 +203,22 @@ struct CheckoutFlowView: View {
                             metrics: metrics,
                             valueRecoveredCad: valueRecoveredCad,
                             pendingValueCad: pendingValueCad,
+                            recentPurchases: recentPurchases,
+                            cards: deps?.walletCards ?? [],
                             onFinish: { stage = .finish },
                             onReconcile: { stage = .reconcile },
-                            onOpenDashboard: { stage = .dashboard }
+                            onOpenDashboard: { stage = .dashboard },
+                            onSelectPurchase: { prediction in
+                                if prediction.purchase?.isComplete == false {
+                                    stage = .finish
+                                }
+                            },
+                            onUpdateCategory: { prediction, newCategory in
+                                if let deps {
+                                    try? deps.service.log.updateCategory(for: prediction, to: newCategory)
+                                    refreshHome()
+                                }
+                            }
                         )
                     case .wallet:
                         WalletHubView(
@@ -304,7 +320,7 @@ struct CheckoutFlowView: View {
             }
         case .walletHealth:
             if let deps {
-                WalletHealthView(deps: deps, onDone: { stage = .idle })
+                WalletHealthView(deps: deps, recentPurchases: recentPurchases, onDone: { stage = .idle })
             }
         case .valuationSandbox:
             if let deps {
@@ -572,6 +588,59 @@ struct CheckoutFlowView: View {
                                                  distanceMeters: nil))
     }
 
+    private func startInstantRepeatWithAmount(_ merchant: StoredMerchant, amount: Double) {
+        let nearby = NearbyMerchant(id: merchant.identifier ?? merchant.id.uuidString,
+                                    name: merchant.name,
+                                    poiCategoryRaw: merchant.poiCategoryRaw,
+                                    latitude: merchant.latitude,
+                                    longitude: merchant.longitude,
+                                    distanceMeters: nil)
+        recommend(merchant: nearby, amount: amount)
+    }
+
+    private func logInstantPurchase(_ merchant: StoredMerchant, amount: Double) {
+        guard let deps else { return }
+        let nearby = NearbyMerchant(id: merchant.identifier ?? merchant.id.uuidString,
+                                    name: merchant.name,
+                                    poiCategoryRaw: merchant.poiCategoryRaw,
+                                    latitude: merchant.latitude,
+                                    longitude: merchant.longitude,
+                                    distanceMeters: nil)
+        do {
+            let today = Date().formatted(.iso8601.year().month().day())
+            let result = try deps.service.recommend(merchant: nearby,
+                                                    amountCad: amount,
+                                                    asOf: today)
+            let winnerCardId: String = {
+                switch result.outcome {
+                case .single(let rec): return rec.winner.cardId
+                case .fork(let branches): return branches.first?.recommendation.winner.cardId ?? ""
+                }
+            }()
+            let allPredictions = try deps.service.log.allPredictions()
+            if let stored = allPredictions.first(where: { $0.id == result.storedPredictionId }) {
+                let purchase = try deps.service.log.recordPurchase(for: stored, cardUsedId: winnerCardId, cardSource: .atTill)
+                try deps.service.log.recordAmount(amount, source: .atTill, on: purchase)
+            }
+            refreshHome()
+
+            let cardName = deps.catalogue.cards.first { $0.cardId == winnerCardId }?.officialName ?? winnerCardId
+            let meta = CategoryVisuals.meta(for: result.prediction.category)
+            LiveActivityManager.shared.startRecommendationActivity(
+                merchantName: merchant.name,
+                cardName: cardName,
+                cardId: winnerCardId,
+                multiplierHeadline: String(format: "$%.2f logged", amount),
+                advantageDescription: "1-Tap Checkout",
+                categoryDisplayName: meta.displayName,
+                categoryIcon: meta.icon,
+                isFork: false
+            )
+        } catch {
+            stage = .failed(error.localizedDescription)
+        }
+    }
+
     /// What the Apple Wallet Shortcut already answered for the checkouts still in the finish
     /// queue. Recomputed from the two published facts rather than stored, so it can never
     /// disagree with the queue it annotates — a stale proposal would offer to fill a field that
@@ -642,6 +711,7 @@ struct CheckoutFlowView: View {
             pendingValueCad = snapshot.valueRecovered.pendingCad
             completionQueue = snapshot.awaitingCompletion
             reconcileQueue = snapshot.awaitingConfirmation
+            recentPurchases = snapshot.recentPurchases
             metrics = snapshot.metrics
             homeMerchants = sortedHomeMerchants(try deps.service.knownMerchants())
         } catch {

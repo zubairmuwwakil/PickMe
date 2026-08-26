@@ -1,6 +1,7 @@
 import XCTest
 import CardCopilotEngine
 import CardCopilotStore
+import CardCopilotCapture
 @testable import CardCopilot
 
 @MainActor
@@ -80,5 +81,26 @@ final class SyncCoordinatorTests: XCTestCase {
 
         let result = await coordinator.autoSyncIfStale(ownerState: owner, catalogue: catalogue, maxAge: 900)
         XCTAssertNil(result)
+    }
+
+    func testDisableWalletCaptureDeletesUnsentAndClearsCredentialsLocallyEvenIfRemoteFails() async throws {
+        let coordinator = SyncCoordinator()
+        let credentialStore = WalletCaptureCredentialStore(service: "ca.pickme.tests.disable-\(UUID().uuidString)")
+        let settingsStore = WalletCaptureSettingsStore(suiteName: "ca.pickme.tests.disable-settings-\(UUID().uuidString)")
+
+        do {
+            try credentialStore.save(.init(token: "invalid-or-unreachable-token", installationID: "inst_123", boundUserID: "user_123"))
+        } catch {
+            // Keychain save may fail in unsigned test runners without Keychain entitlement (-34018)
+        }
+        settingsStore.markConnectionVerified(boundUserID: "user_123")
+        XCTAssertTrue(settingsStore.load().isEnabled)
+
+        // Calling disableWalletCapture with deleteUnsent: true must succeed locally without throwing URLError -1013
+        try await coordinator.disableWalletCapture(deleteUnsent: true)
+
+        XCTAssertNil(WalletCaptureCredentialStore().load())
+        XCTAssertFalse(WalletCaptureSettingsStore().load().isEnabled)
+        XCTAssertNil(WalletCaptureSettingsStore().load().connectionVerifiedAt)
     }
 }

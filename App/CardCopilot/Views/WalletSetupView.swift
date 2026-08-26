@@ -14,6 +14,7 @@ struct WalletSetupView: View {
 
     @State private var page = 0
     @State private var setup: WalletSetup
+    @State private var searchText = ""
     @State private var issuer = ""
     @State private var cardName = ""
     @State private var requestMessage: String?
@@ -69,26 +70,81 @@ struct WalletSetupView: View {
         }
     }
 
+    private var filteredCards: [CardProduct] {
+        Self.filterCards(catalogue.cards, matching: searchText)
+    }
+
+    private var searchBar: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.secondary)
+
+            TextField("Search cards (e.g. Cobalt, Scotia, Visa)", text: $searchText)
+                .font(.system(size: 15))
+                .textInputAutocapitalization(.never)
+                .disableAutocorrection(true)
+
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 15))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear search")
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+    }
+
     private var pickerPage: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Which cards do you own?").font(.title2.bold())
                 Text("Choose every card in your wallet. PickMe only recommends cards you select.")
                     .foregroundStyle(.secondary)
-                ForEach(catalogue.cards) { card in
-                    Button { toggle(card.cardId) } label: {
-                        HStack {
-                            CardArtView(cardId: card.cardId, officialName: card.officialName, isHero: false)
-                            Image(systemName: setup.ownedCardIds.contains(card.cardId) ? "checkmark.circle.fill" : "circle")
-                                .font(.title2)
-                                .foregroundStyle(setup.ownedCardIds.contains(card.cardId) ? Color.accentColor : Color.secondary)
-                        }
-                        .padding(12)
-                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+
+                searchBar
+
+                if filteredCards.isEmpty {
+                    VStack(spacing: 10) {
+                        Image(systemName: "creditcard.and.123")
+                            .font(.system(size: 36))
+                            .foregroundStyle(.secondary)
+                        Text("No cards found for \"\(searchText)\"")
+                            .font(.headline)
+                        Text("You can request to add this card using the form below.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(card.officialName)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                } else {
+                    ForEach(filteredCards) { card in
+                        Button { toggle(card.cardId) } label: {
+                            HStack {
+                                CardArtView(cardId: card.cardId, officialName: card.officialName, isHero: false)
+                                Image(systemName: setup.ownedCardIds.contains(card.cardId) ? "checkmark.circle.fill" : "circle")
+                                    .font(.title2)
+                                    .foregroundStyle(setup.ownedCardIds.contains(card.cardId) ? Color.accentColor : Color.secondary)
+                            }
+                            .padding(12)
+                            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(card.officialName)
+                    }
                 }
+
                 GroupBox("My card isn't listed") {
                     VStack(alignment: .leading, spacing: 10) {
                         TextField("Issuer", text: $issuer).textInputAutocapitalization(.words)
@@ -106,6 +162,30 @@ struct WalletSetupView: View {
                 }
             }
             .padding()
+        }
+        .scrollDismissesKeyboard(.interactively)
+    }
+
+    static func filterCards(_ cards: [CardProduct], matching query: String) -> [CardProduct] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return cards }
+        let tokens = trimmed.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        return cards.filter { card in
+            let style = CardVisualTheme.style(for: card.cardId)
+            let searchableFields = [
+                card.officialName,
+                card.issuer,
+                card.network.rawValue,
+                card.cardId,
+                style.shortName,
+                style.issuer,
+                style.network.rawValue
+            ]
+            return tokens.allSatisfy { token in
+                searchableFields.contains { field in
+                    field.localizedCaseInsensitiveContains(token)
+                }
+            }
         }
     }
 

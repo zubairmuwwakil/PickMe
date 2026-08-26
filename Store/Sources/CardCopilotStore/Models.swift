@@ -40,11 +40,16 @@ public enum CaptureSource: String, Codable, Sendable, CaseIterable {
     case walletCapture
 }
 
-// The persisted models of schema version 1. Declared as an extension of
-// `CardCopilotSchemaV1` (see Schema.swift) rather than at file scope, so that a future
-// version can hold a differently shaped model of the same name. The unqualified names
-// remain available through the typealiases in Schema.swift, so call sites are unchanged.
-extension CardCopilotSchemaV1 {
+// The persisted models of schema version 2 — the shapes the app writes today. Declared as an
+// extension of `CardCopilotSchemaV2` (see Schema.swift) rather than at file scope, so that V1 can
+// hold its own, differently shaped `StoredPrediction` of the same name; V1's copies are frozen in
+// `SchemaV1Models.swift`. The unqualified names remain available through the typealiases in
+// Schema.swift, so call sites are unchanged.
+//
+// Unqualified `StoredPurchase` below means `CardCopilotSchemaV2`'s own member: an enclosing type's
+// members shadow the module-level typealias. That is what keeps each version's relationships inside
+// that version once two of them exist.
+extension CardCopilotSchemaV2 {
 
     /// What the app said at the moment of payment. Never edited after it is written:
     /// corrections arrive as a separate `StoredObservation`. Accuracy measured against a
@@ -55,7 +60,7 @@ extension CardCopilotSchemaV1 {
         public private(set) var recordedAt: Date = Date()
         public private(set) var merchantName: String = ""
         public private(set) var merchantIdentifier: String?
-        public private(set) var predictedCategory: String = ""
+        public var predictedCategory: String = ""
         public private(set) var confidenceSourceRaw: String = ConfidenceSource.fallback.rawValue
         public private(set) var winnerCardId: String = ""
         public private(set) var winnerValueCad: Double = 0
@@ -81,6 +86,19 @@ extension CardCopilotSchemaV1 {
         /// The point valuation in force when this advice was given — without it, a later
         /// valuation change would silently invalidate the arithmetic check.
         public private(set) var valuationCentsPerPoint: Double?
+        /// The contract release that scored this prediction, e.g. `card-contracts@1.6`.
+        ///
+        /// Flat rather than inside `frozenInputs` because the accuracy claim aggregates over it —
+        /// "what was our hit rate under 1.6?" is a predicate across many rows, and a blob would
+        /// force decoding every one. Nil means the row predates provenance; it is never backfilled.
+        public private(set) var contractRelease: String?
+        /// The digest of the contract bytes, recorded alongside the release id so the row is
+        /// self-verifying against RELEASE.json rather than trusting a version string.
+        public private(set) var contractDigest: String?
+        /// The winning card's `ScoredRuleSnapshot`, JSON-encoded. Opaque here on purpose: the
+        /// snapshot's shape is contract semantics and versions itself, so widening it must never
+        /// require a store migration.
+        public private(set) var frozenInputs: Data?
         public private(set) var headline: String = ""
 
         /// The till record, created when the owner states they bought something here. A prediction
@@ -100,6 +118,8 @@ extension CardCopilotSchemaV1 {
                     defaultCardValueCad: Double? = nil, winnerRuleId: String? = nil,
                     runnerUpCardId: String? = nil, runnerUpValueCad: Double? = nil,
                     scoredAmountCad: Double? = nil, valuationCentsPerPoint: Double? = nil,
+                    contractRelease: String? = nil, contractDigest: String? = nil,
+                    frozenInputs: Data? = nil,
                     headline: String, recordedAt: Date = Date()) {
             self.id = UUID()
             self.recordedAt = recordedAt
@@ -117,6 +137,9 @@ extension CardCopilotSchemaV1 {
             self.runnerUpValueCad = runnerUpValueCad
             self.scoredAmountCad = scoredAmountCad
             self.valuationCentsPerPoint = valuationCentsPerPoint
+            self.contractRelease = contractRelease
+            self.contractDigest = contractDigest
+            self.frozenInputs = frozenInputs
             self.headline = headline
         }
     }
@@ -171,7 +194,7 @@ extension CardCopilotSchemaV1 {
     public final class StoredObservation {
         public private(set) var id: UUID = UUID()
         public private(set) var confirmedAt: Date = Date()
-        public private(set) var observedCategory: String = ""
+        public var observedCategory: String = ""
         /// Reward units the statement actually posted for this transaction — points for a points
         /// card, dollars for cash back. Optional and never inferred: a statement that shows no
         /// per-transaction reward line leaves this unknown, which excludes the row from the

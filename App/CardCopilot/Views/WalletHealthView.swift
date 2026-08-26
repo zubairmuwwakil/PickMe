@@ -1,5 +1,6 @@
 import SwiftUI
 import CardCopilotEngine
+import CardCopilotStore
 
 /// Surfaces `PortfolioAnalyzer` — the keep/cancel question — for the first time anywhere in the
 /// app. Two facts stay visible everywhere on this screen, never buried behind a tap:
@@ -7,6 +8,7 @@ import CardCopilotEngine
 /// verdict is marginal, never gross (decision #17).
 struct WalletHealthView: View {
     let deps: CheckoutFlowView.Dependencies
+    var recentPurchases: [StoredPrediction] = []
     let onDone: () -> Void
 
     @State private var analysis: PortfolioAnalysis?
@@ -20,24 +22,37 @@ struct WalletHealthView: View {
     }
 
     private enum SpendProfileChoice: String, CaseIterable, Identifiable {
+        case personalized = "Your Real Spend"
         case standard = "Standard ($40k)"
         case student = "Student ($18k)"
         case traveler = "Traveler ($84k)"
         var id: String { rawValue }
-
-        var distribution: SpendDistribution {
-            switch self {
-            case .standard: .placeholderCanadianHousehold
-            case .student: .frugalStudent
-            case .traveler: .frequentTraveler
-            }
-        }
     }
 
-    @State private var selectedProfile: SpendProfileChoice = .standard
+    @State private var selectedProfile: SpendProfileChoice
+
+    init(deps: CheckoutFlowView.Dependencies, recentPurchases: [StoredPrediction] = [], onDone: @escaping () -> Void) {
+        self.deps = deps
+        self.recentPurchases = recentPurchases
+        self.onDone = onDone
+        _selectedProfile = State(initialValue: recentPurchases.isEmpty ? .standard : .personalized)
+    }
 
     private var activeDistribution: SpendDistribution {
-        selectedProfile.distribution
+        switch selectedProfile {
+        case .personalized:
+            if !recentPurchases.isEmpty {
+                return ObservedSpendProfileBuilder().build(from: recentPurchases, baseline: .placeholderCanadianHousehold)
+            } else {
+                return .placeholderCanadianHousehold
+            }
+        case .standard:
+            return .placeholderCanadianHousehold
+        case .student:
+            return .frugalStudent
+        case .traveler:
+            return .frequentTraveler
+        }
     }
 
     private var cardNames: [String: String] {
@@ -129,23 +144,33 @@ struct WalletHealthView: View {
 
     // MARK: - Assumption banner (decision #19: viewable, never editable)
 
+    private var isPersonalized: Bool {
+        selectedProfile == .personalized && !recentPurchases.isEmpty
+    }
+
+    private var themeColor: Color {
+        isPersonalized ? .teal : .orange
+    }
+
     private var assumptionBanner: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
-                Image(systemName: "slider.horizontal.2.square")
+                Image(systemName: isPersonalized ? "person.crop.circle.badge.checkmark" : "slider.horizontal.2.square")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(.orange)
-                Text("SPEND PROFILE: \(selectedProfile.rawValue.uppercased())")
+                    .foregroundStyle(themeColor)
+                Text(isPersonalized ? "SPEND PROFILE: YOUR REAL SPEND (PERSONALIZED)" : "SPEND PROFILE: \(selectedProfile.rawValue.uppercased())")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .tracking(1.0)
                     .foregroundStyle(.secondary)
             }
 
-            Text("Verdicts run against \(WalletHealthFormatting.cad(activeDistribution.totalAnnualCad))/yr Canadian spend profile. Switch profiles to test if verdicts hold under your spending style.")
+            Text(isPersonalized
+                 ? "Verdicts personalized to \(recentPurchases.count) recorded checkouts on this device, annualized to \(WalletHealthFormatting.cad(activeDistribution.totalAnnualCad))/yr. Unobserved categories blended from Canadian baseline."
+                 : "Verdicts run against \(WalletHealthFormatting.cad(activeDistribution.totalAnnualCad))/yr Canadian spend profile. Switch profiles to test if verdicts hold under your spending style.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
-            DisclosureGroup("View the \(activeDistribution.buckets.count) assumed categories") {
+            DisclosureGroup("View the \(activeDistribution.buckets.count) \(isPersonalized ? "annualized" : "assumed") categories") {
                 VStack(spacing: 6) {
                     ForEach(activeDistribution.buckets, id: \.label) { bucket in
                         HStack {
@@ -162,16 +187,16 @@ struct WalletHealthView: View {
                 .padding(.top, 6)
             }
             .font(.system(size: 13, weight: .semibold, design: .rounded))
-            .tint(.orange)
+            .tint(themeColor)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.orange.opacity(0.1))
+                .fill(themeColor.opacity(0.1))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(Color.orange.opacity(0.25), lineWidth: 1)
+                        .strokeBorder(themeColor.opacity(0.25), lineWidth: 1)
                 )
         )
     }

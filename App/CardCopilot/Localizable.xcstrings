@@ -7,6 +7,9 @@
     "·" : {
 
     },
+    "(%lld)" : {
+
+    },
     "/ %lld checkouts" : {
       "localizations" : {
         "fr-CA" : {
@@ -69,6 +72,16 @@
         }
       }
     },
+    "%@ %@ Cap" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@ Cap"
+          }
+        }
+      }
+    },
     "%@ adds %@ — compare" : {
       "localizations" : {
         "en" : {
@@ -116,6 +129,9 @@
           }
         }
       }
+    },
+    "%@ SPEND INTELLIGENCE" : {
+
     },
     "%@: %.2f¢ / point" : {
       "localizations" : {
@@ -197,6 +213,9 @@
         }
       }
     },
+    "%lld logged" : {
+
+    },
     "%lld m away" : {
       "localizations" : {
         "fr-CA" : {
@@ -229,6 +248,16 @@
     },
     "%lld to Finish" : {
 
+    },
+    "%lld total • %lld categories" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld total • %2$lld categories"
+          }
+        }
+      }
     },
     "%lld Waiting to Reconcile" : {
 
@@ -442,6 +471,12 @@
           }
         }
       }
+    },
+    "All" : {
+
+    },
+    "All (%lld)" : {
+
     },
     "All Caught Up!" : {
       "localizations" : {
@@ -742,6 +777,9 @@
         }
       }
     },
+    "Amount:" : {
+
+    },
     "Analysis" : {
       "localizations" : {
         "fr-CA" : {
@@ -825,6 +863,9 @@
           }
         }
       }
+    },
+    "back" : {
+
     },
     "Back" : {
       "localizations" : {
@@ -970,6 +1011,9 @@
         }
       }
     },
+    "Card Tapped" : {
+
+    },
     "Card Used" : {
       "localizations" : {
         "fr-CA" : {
@@ -1021,6 +1065,9 @@
           }
         }
       }
+    },
+    "Category" : {
+
     },
     "Category Accuracy" : {
 
@@ -1121,6 +1168,9 @@
     "Clear predictions, confirmations and cached locations" : {
 
     },
+    "Clear search" : {
+
+    },
     "Coded As" : {
       "localizations" : {
         "fr-CA" : {
@@ -1183,9 +1233,6 @@
 
     },
     "Connecting…" : {
-
-    },
-    "Connection tested — waiting for your first Wallet tap" : {
 
     },
     "Continue" : {
@@ -1301,6 +1348,9 @@
     "Currency" : {
 
     },
+    "Custom" : {
+
+    },
     "CUSTOM AMOUNT" : {
       "localizations" : {
         "fr-CA" : {
@@ -1320,6 +1370,9 @@
           }
         }
       }
+    },
+    "Date & Time" : {
+
     },
     "Decision Tools" : {
 
@@ -1832,6 +1885,12 @@
     "Finish setup" : {
 
     },
+    "Finish This Purchase" : {
+
+    },
+    "Finished" : {
+
+    },
     "Fitness and Sports Clubs" : {
 
     },
@@ -2176,6 +2235,9 @@
     "Loading this account's wallet" : {
 
     },
+    "Location allowed (%@)" : {
+
+    },
     "Location is used only for arrival detection at your saved merchants." : {
       "comment" : "human review before public launch",
       "localizations" : {
@@ -2193,6 +2255,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Position désactivée — touchez pour réessayer"
+          }
+        }
+      }
+    },
+    "Log $%lld on %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Log $%1$lld on %2$@"
           }
         }
       }
@@ -2320,6 +2392,12 @@
         }
       }
     },
+    "Needs info" : {
+
+    },
+    "Needs Info" : {
+
+    },
     "net / yr" : {
       "localizations" : {
         "fr-CA" : {
@@ -2373,6 +2451,9 @@
         }
       }
     },
+    "No cards found for \"%@\"" : {
+
+    },
     "No coverage" : {
       "localizations" : {
         "fr-CA" : {
@@ -2412,6 +2493,9 @@
           }
         }
       }
+    },
+    "No Purchases Logged Yet" : {
+
     },
     "No queued captures" : {
 
@@ -2529,6 +2613,9 @@
         }
       }
     },
+    "Notifications allowed" : {
+
+    },
     "Off" : {
       "localizations" : {
         "fr-CA" : {
@@ -2596,6 +2683,9 @@
 
     },
     "Open transactions in Inunity" : {
+
+    },
+    "OPTIMAL PICK RATE" : {
 
     },
     "Optional ($)" : {
@@ -2673,6 +2763,9 @@
           }
         }
       }
+    },
+    "Pick a card or log spend at checkout, and your past transactions with category breakdown will appear here." : {
+
     },
     "Pick a category, see the card" : {
       "localizations" : {
@@ -2824,6 +2917,12 @@
     "Purchase could not be saved. Open PickMe for capture status." : {
 
     },
+    "Purchase Details" : {
+
+    },
+    "Purchase History" : {
+
+    },
     "Purchase Protection & Warranty" : {
 
     },
@@ -2892,6 +2991,15 @@
         }
       }
     },
+    "Recent Purchases" : {
+
+    },
+    "Reclassify Category" : {
+
+    },
+    "Recommendation Advice" : {
+
+    },
     "Recommended" : {
       "localizations" : {
         "fr-CA" : {
@@ -2922,7 +3030,13 @@
         }
       }
     },
+    "Reconcile in Queue" : {
+
+    },
     "Reconcile Queue" : {
+
+    },
+    "Reconciled" : {
 
     },
     "Recurring Bill Payments" : {
@@ -3110,6 +3224,9 @@
     "Search all verified card certificates, lounge passes, and perks" : {
 
     },
+    "Search cards (e.g. Cobalt, Scotia, Visa)" : {
+
+    },
     "Search different merchant…" : {
       "localizations" : {
         "fr-CA" : {
@@ -3129,6 +3246,12 @@
           }
         }
       }
+    },
+    "Search merchants or categories" : {
+
+    },
+    "See All (%lld)" : {
+
     },
     "Select any category to see which card in your wallet earns highest" : {
 
@@ -3169,6 +3292,9 @@
 
     },
     "Sent securely; expires %@" : {
+
+    },
+    "Set" : {
 
     },
     "Set up" : {
@@ -3320,6 +3446,9 @@
         }
       }
     },
+    "SPEND PROFILE: YOUR REAL SPEND (PERSONALIZED)" : {
+
+    },
     "Start over" : {
       "localizations" : {
         "fr-CA" : {
@@ -3400,6 +3529,7 @@
       }
     },
     "Sync and Wallet Capture" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3675,6 +3805,12 @@
         }
       }
     },
+    "Transaction Details" : {
+
+    },
+    "TRANSACTIONS" : {
+
+    },
     "Trip / Vacation" : {
       "localizations" : {
         "fr-CA" : {
@@ -3754,13 +3890,37 @@
         }
       }
     },
+    "Verdicts personalized to %lld recorded checkouts on this device, annualized to %@/yr. Unobserved categories blended from Canadian baseline." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Verdicts personalized to %1$lld recorded checkouts on this device, annualized to %2$@/yr. Unobserved categories blended from Canadian baseline."
+          }
+        }
+      }
+    },
     "Verdicts run against %@/yr Canadian spend profile. Switch profiles to test if verdicts hold under your spending style." : {
 
     },
     "Verified certificate coverage per card" : {
 
     },
+    "View full card breakdown" : {
+
+    },
+    "View the %lld %@ categories" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "View the %1$lld %2$@ categories"
+          }
+        }
+      }
+    },
     "View the %lld assumed categories" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4020,6 +4180,9 @@
           }
         }
       }
+    },
+    "You can request to add this card using the form below." : {
+
     },
     "You're already signed in. PickMe is restoring your saved cards." : {
 

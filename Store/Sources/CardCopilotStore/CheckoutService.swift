@@ -17,11 +17,18 @@ public func canonicalEngineBrand(_ merchantName: String) -> String? {
     return nil
 }
 
-/// Acceptance constraints knowable from the brand alone. Kept deliberately tiny: Costco's
-/// Mastercard-only policy is Canada-wide and issuer-verified; everything else defaults to
-/// all networks until owner observations say otherwise.
-func knownAcceptedNetworks(for brand: String?) -> Set<Network> {
-    brand == "costco" ? [.mastercard] : [.amex, .visa, .mastercard]
+/// Acceptance constraints knowable from the brand or merchant name.
+public func knownAcceptedNetworks(for brand: String?, merchantName: String? = nil) -> Set<Network> {
+    if let merchantName {
+        let clean = merchantName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if let match = CanadianMerchantPreIndex.all.first(where: {
+            let pre = $0.name.lowercased()
+            return clean == pre || clean.contains(pre) || pre.contains(clean)
+        }) {
+            return match.acceptedNetworks
+        }
+    }
+    return brand == "costco" ? [.mastercard] : [.amex, .visa, .mastercard]
 }
 
 /// Default purchase amounts by category, used only when the owner skips amount capture.
@@ -41,7 +48,7 @@ public func ambientPurchaseContext(merchant: NearbyMerchant, category: String) -
     return PurchaseContext(amountCad: amount,
                            category: category,
                            merchantBrand: brand,
-                           acceptedNetworks: knownAcceptedNetworks(for: brand))
+                           acceptedNetworks: knownAcceptedNetworks(for: brand, merchantName: merchant.name))
 }
 
 /// One branch of a fork: what the engine says IF the merchant codes as this category.
@@ -107,11 +114,12 @@ public struct CheckoutService {
             ?? categoryAmountEstimates[prediction.category]
             ?? fallbackAmountEstimate
 
+        let acceptedNetworks = knownAcceptedNetworks(for: brand, merchantName: merchant.name)
         func recommend(for category: String) throws -> Recommendation {
             let outcome = engine.recommend(PurchaseContext(amountCad: effectiveAmount,
                                                            category: category,
                                                            merchantBrand: brand,
-                                                           acceptedNetworks: knownAcceptedNetworks(for: brand)),
+                                                           acceptedNetworks: acceptedNetworks),
                                            asOf: asOf)
             switch outcome {
             case .advised(let rec):
@@ -145,7 +153,7 @@ public struct CheckoutService {
         let purchase = PurchaseContext(amountCad: effectiveAmount,
                                        category: prediction.category,
                                        merchantBrand: brand,
-                                       acceptedNetworks: knownAcceptedNetworks(for: brand))
+                                       acceptedNetworks: acceptedNetworks)
         let headline = explainer.explain(primary, purchase: purchase).headline
         let stored = try log.record(StoredPrediction(
             merchantName: merchant.name,

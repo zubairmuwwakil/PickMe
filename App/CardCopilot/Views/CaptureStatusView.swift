@@ -69,10 +69,11 @@ struct CaptureStatusView: View {
             Text("Queued purchases are never discarded without your choice.")
         }
         .alert("Delete this local capture?", isPresented: .init(
-            get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } })) {
-            Button("Delete", role: .destructive) { Task { await deletePendingRecord() } }
+            get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
+            presenting: pendingDelete) { item in
+            Button("Delete", role: .destructive) { Task { await deleteRecord(item) } }
             Button("Cancel", role: .cancel) { pendingDelete = nil }
-        } message: { Text("This removes the unsent capture and its local diagnostic evidence.") }
+        } message: { _ in Text("This removes the unsent capture and its local diagnostic evidence.") }
     }
 
     private var header: some View {
@@ -106,26 +107,40 @@ struct CaptureStatusView: View {
         .font(.subheadline)
     }
 
+    private var isNotificationsAllowed: Bool {
+        notificationState == "Allowed"
+    }
+
+    private var isLocationAllowed: Bool {
+        locationState == "Always allowed" || locationState == "While using app"
+    }
+
     private var setup: some View {
         VStack(alignment: .leading, spacing: 10) {
             Divider()
             Text("Finish setup").font(.subheadline.weight(.semibold))
             Text("1. Allow notifications so a background Wallet tap can confirm it was saved.")
-            Button("Allow notifications") { Task { _ = await WalletCaptureNotificationCoordinator.requestPermission(); await refreshPermissions() } }
-                .buttonStyle(.bordered)
+            if isNotificationsAllowed {
+                Label("Notifications allowed", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            } else {
+                Button("Allow notifications") { Task { _ = await WalletCaptureNotificationCoordinator.requestPermission(); await refreshPermissions() } }
+                    .buttonStyle(.bordered)
+            }
             Text("2. Location is optional. When allowed, PickMe tries for a fresh fix for at most two seconds.")
-            Button("Allow optional location") { locationManager.requestAlwaysAuthorization(); Task { try? await Task.sleep(for: .milliseconds(500)); await refreshPermissions() } }
-                .buttonStyle(.bordered)
+            if isLocationAllowed {
+                Label("Location allowed (\(locationState.lowercased()))", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            } else {
+                Button("Allow optional location") { locationManager.requestAlwaysAuthorization(); Task { try? await Task.sleep(for: .milliseconds(500)); await refreshPermissions() } }
+                    .buttonStyle(.bordered)
+            }
             Text("3. In Shortcuts, create a Wallet Transaction automation that runs immediately. Add “Send Wallet Purchase to Inunity” and map Merchant, Amount, Name, Currency Code, and Card or Pass.")
             Link("Open Shortcuts", destination: URL(string: "shortcuts://")!).buttonStyle(.bordered)
             Text("Replace the old Dictionary + Run Wallet Capture V2 actions only after the first native capture succeeds.")
                 .font(.caption).foregroundStyle(.secondary)
             Button(isWorking ? "Testing…" : "Test secure connection") { Task { await testConnection() } }
                 .buttonStyle(.borderedProminent).disabled(isWorking)
-            if connection.connectionVerifiedAt != nil {
-                Label("Connection tested — waiting for your first Wallet tap", systemImage: "checkmark.circle.fill")
-                    .font(.caption).foregroundStyle(.green)
-            }
         }
         .font(.footnote)
     }
@@ -245,8 +260,8 @@ struct CaptureStatusView: View {
         report = try? await diagnostics.prepareReport(eventID: item.eventID, includeTransactionDetails: includeTransactionDetails)
         submitted = nil
     }
-    private func deletePendingRecord() async {
-        guard let item = pendingDelete else { return }; pendingDelete = nil
+    private func deleteRecord(_ item: WalletCaptureDiagnosticRecord) async {
+        pendingDelete = nil
         let root = captureRoot()
         if let outbox = try? WalletOutboxStore(root: root) {
             for bucket in [WalletOutboxBucket.pending, .inflight, .unassigned, .quarantined] {

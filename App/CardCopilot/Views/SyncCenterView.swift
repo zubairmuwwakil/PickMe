@@ -64,10 +64,11 @@ struct SyncCenterView: View {
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: onDone).font(.headline) } }
         .sheet(isPresented: $authIsPresented) { AuthView() }
         .alert("Revoke this old connection?", isPresented: .init(
-            get: { pendingRevocation != nil }, set: { if !$0 { pendingRevocation = nil } })) {
-            Button("Revoke", role: .destructive) { Task { await revokePendingInstallation() } }
+            get: { pendingRevocation != nil }, set: { if !$0 { pendingRevocation = nil } }),
+            presenting: pendingRevocation) { item in
+            Button("Revoke", role: .destructive) { Task { await revokeInstallation(item) } }
             Button("Cancel", role: .cancel) { pendingRevocation = nil }
-        } message: {
+        } message: { _ in
             Text("Only the selected server credential is revoked. Purchases already saved on this iPhone are not deleted.")
         }
     }
@@ -352,8 +353,7 @@ struct SyncCenterView: View {
         }
     }
 
-    private func revokePendingInstallation() async {
-        guard let item = pendingRevocation else { return }
+    private func revokeInstallation(_ item: WalletInstallation) async {
         pendingRevocation = nil
         do { try await onRevokeInstallation(item.id); tokenError = nil }
         catch { tokenError = error.localizedDescription }

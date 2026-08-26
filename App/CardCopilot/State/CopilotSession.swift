@@ -42,6 +42,7 @@ final class CopilotSession {
     /// Purchases missing a card or a charge: one field each, no statement needed.
     private(set) var completionQueue: [StoredPrediction] = []
     private(set) var reconcileQueue: [StoredPrediction] = []
+    private(set) var recentPurchases: [StoredPrediction] = []
     private(set) var metrics: ExperimentMetrics?
     private(set) var homeMerchants: [StoredMerchant] = []
     private(set) var cachedLocation: CachedLocation?
@@ -61,6 +62,7 @@ final class CopilotSession {
             pendingValueCad = snapshot.valueRecovered.pendingCad
             completionQueue = snapshot.awaitingCompletion
             reconcileQueue = snapshot.awaitingConfirmation
+            recentPurchases = snapshot.recentPurchases
             metrics = snapshot.metrics
             homeMerchants = sortedHomeMerchants(try graph.service.knownMerchants())
         } catch {

@@ -245,6 +245,9 @@ public final class SyncCoordinator {
             }
         }
         await drainWalletCaptures(forUserID: Clerk.shared.user?.id)
+        if WalletCaptureSettingsStore().load().connectionVerifiedAt == nil {
+            WalletCaptureSettingsStore().markConnectionVerified(boundUserID: signedInUserID)
+        }
     }
 
     public func deleteUnassignedCaptures() async throws {
@@ -264,26 +267,29 @@ public final class SyncCoordinator {
         let credential = WalletCaptureCredentialStore().load()
         if !deleteUnsent, let credential { await drainWalletCaptures(forUserID: credential.boundUserID) }
         var explicitlyDeletedIDs: [String] = []
-        var unsentCount = 0
         if let outbox = try? WalletOutboxStore(root: root) {
             let pending = (try? await outbox.captures(in: .pending)) ?? []
             let inflight = (try? await outbox.captures(in: .inflight)) ?? []
             let unassigned = (try? await outbox.captures(in: .unassigned)) ?? []
             let quarantined = (try? await outbox.captures(in: .quarantined)) ?? []
             let unsent = pending + inflight + unassigned + quarantined
-            unsentCount = unsent.count
             if !deleteUnsent && !unsent.isEmpty {
                 throw URLError(.cannotConnectToHost)
             }
             explicitlyDeletedIDs = unsent.map(\.event.eventId)
         }
-        if let credential {
-            guard let baseURL = MoneyTalksConfiguration.apiBaseURL,
-                  await WalletCaptureHTTPUploader(baseURL: baseURL, token: credential.token).revokeInstallation() else {
-                throw URLError(.userAuthenticationRequired)
+        if let credential, let baseURL = MoneyTalksConfiguration.apiBaseURL {
+            _ = await WalletCaptureHTTPUploader(baseURL: baseURL, token: credential.token).revokeInstallation()
+            if let userID = Clerk.shared.user?.id, readySyncUserID == userID,
+               accountOwnerStateStore.activeUserID == userID {
+                let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+                try? await client.revokeWalletInstallation(id: credential.installationID)
             }
-        } else if !deleteUnsent && unsentCount > 0 {
-            throw URLError(.userAuthenticationRequired)
+            let revokedAt = Date()
+            walletInstallations = walletInstallations.map { item in
+                item.id == credential.installationID ? .init(id: item.id, label: item.label, createdAt: item.createdAt,
+                                                            revokedAt: revokedAt) : item
+            }
         }
         if deleteUnsent, let outbox = try? WalletOutboxStore(root: root) {
             try await outbox.deleteAllUnsent()
@@ -291,7 +297,8 @@ public final class SyncCoordinator {
                 for eventID in explicitlyDeletedIDs { try? await diagnostics.delete(eventID: eventID) }
             }
         }
-        WalletCaptureCredentialStore().remove(); WalletCaptureSettingsStore().setEnabled(false)
+        WalletCaptureCredentialStore().remove()
+        WalletCaptureSettingsStore().setEnabled(false)
         WalletCaptureSettingsStore().clearConnection()
     }
 
