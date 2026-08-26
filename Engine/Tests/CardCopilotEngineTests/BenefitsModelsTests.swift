@@ -95,4 +95,14 @@ final class BenefitsModelsTests: XCTestCase {
         let catalogue = try decodeSample()
         XCTAssertNil(catalogue.card("no-such-card"))
     }
+
+    /// Destination.protectionLens carries a BenefitContext through a SwiftUI NavigationPath,
+    /// which requires Hashable. Pinned here so an Engine change cannot silently break App
+    /// navigation — the App target is a consumer the Engine's own tests cannot see.
+    func testBenefitContextIsHashable() {
+        let flight = BenefitContext(kind: .flight)
+        let flightAbroad = BenefitContext(kind: .flight, abroad: true)
+        XCTAssertEqual(Set([flight, flight]).count, 1)
+        XCTAssertEqual(Set([flight, flightAbroad]).count, 2)
+    }
 }

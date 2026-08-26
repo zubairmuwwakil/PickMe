@@ -114,7 +114,10 @@ public enum BenefitContextKind: String, CaseIterable, Sendable {
     case flight, trip, carRental, electronics, mobileDevice, applianceFurniture
 }
 
-public struct BenefitContext: Equatable, Sendable {
+/// `Hashable` because the App target routes to the protection lens through a SwiftUI
+/// NavigationPath, which stores type-erased Hashable values. Additive: it touches no JSON and
+/// no fixture, so it is not a catalogue contract change.
+public struct BenefitContext: Hashable, Sendable {
     public var kind: BenefitContextKind
     public var abroad: Bool
 
