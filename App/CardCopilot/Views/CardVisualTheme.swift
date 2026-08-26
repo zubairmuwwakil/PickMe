@@ -23,8 +23,14 @@ enum CardVisualTheme {
         case prepaid = "PREPAID"
     }
 
-    /// All card IDs that have explicit, dedicated branding themes defined.
-    /// All card IDs that have explicit, dedicated branding themes defined in the canonical catalogue.
+    /// All card IDs that have an explicit, dedicated style in `style(for:)`.
+    ///
+    /// This is a second copy of the switch's case labels, and nothing in the language keeps the
+    /// two in step — a Swift switch cannot be enumerated. That is not theoretical: five cards had
+    /// styles that were never registered here, and `simplii-cash-back-visa` had a style keyed to a
+    /// cardId the catalogue has never contained, so it rendered as a generic fallback while
+    /// looking correct in this file. `CardVisualThemeTests` is the only thing that catches either,
+    /// which is why it must stay strict.
     static let definedCardIds: Set<String> = [
         "amex-cobalt",
         "amex-platinum",
@@ -53,6 +59,24 @@ enum CardVisualTheme {
         "westjet-rbc-world-elite",
         "amazon-ca-rewards-mastercard",
         "cibc-aventura-visa",
+
+        // Previously styled but never registered here.
+        "amex-simplycash-preferred",
+        "bmo-cashback-world-elite",
+        "home-trust-preferred-visa",
+        "mbna-smart-cash-world",
+        "rbc-cashback-preferred-we",
+        "simplii-cashback-visa",
+
+        // Added when the catalogue reached 41 cards.
+        "amex-aeroplan-reserve",
+        "amex-gold-rewards",
+        "cibc-aeroplan-visa-infinite-privilege",
+        "desjardins-odyssey-world-elite",
+        "pc-financial-mastercard",
+        "pc-financial-world-elite",
+        "pc-financial-world-mastercard",
+        "td-aeroplan-visa-infinite-privilege",
     ]
 
     static func style(for cardId: String) -> CardStyle {
@@ -122,6 +146,31 @@ enum CardVisualTheme {
                 gradientColors: [Color(red: 0.72, green: 0.56, blue: 0.22), Color(red: 0.42, green: 0.30, blue: 0.10)],
                 textColor: .white,
                 accentColor: Color(red: 1.0, green: 0.90, blue: 0.55),
+                isDark: true
+            )
+        case "amex-gold-rewards":
+            return CardStyle(
+                cardId: cardId,
+                shortName: "Gold Rewards",
+                issuer: "American Express",
+                network: .amex,
+                // Light champagne, dark text — the same treatment as amex-platinum rather than
+                // scotia-gold-amex's dark gold. Two "gold" cards that read alike at a glance
+                // defeat the point of card art in a wallet chosen at a till.
+                gradientColors: [Color(red: 0.88, green: 0.76, blue: 0.48), Color(red: 0.70, green: 0.56, blue: 0.28)],
+                textColor: Color(red: 0.18, green: 0.13, blue: 0.04),
+                accentColor: Color(red: 0.34, green: 0.24, blue: 0.06),
+                isDark: false
+            )
+        case "amex-aeroplan-reserve":
+            return CardStyle(
+                cardId: cardId,
+                shortName: "Aeroplan Reserve",
+                issuer: "Air Canada / Amex",
+                network: .amex,
+                gradientColors: [Color(red: 0.10, green: 0.13, blue: 0.20), Color(red: 0.03, green: 0.04, blue: 0.08)],
+                textColor: .white,
+                accentColor: Color(red: 0.92, green: 0.24, blue: 0.26),
                 isDark: true
             )
 
@@ -269,7 +318,9 @@ enum CardVisualTheme {
                 accentColor: Color(red: 0.7, green: 0.65, blue: 0.95),
                 isDark: true
             )
-        case "simplii-cash-back-visa":
+        // Was keyed "simplii-cash-back-visa", which is not a cardId the catalogue has ever
+        // contained — so this style was unreachable and the card rendered as a generic fallback.
+        case "simplii-cashback-visa":
             return CardStyle(
                 cardId: cardId,
                 shortName: "Simplii Cash Back",
@@ -289,6 +340,32 @@ enum CardVisualTheme {
                 gradientColors: [Color(red: 0.08, green: 0.16, blue: 0.32), Color(red: 0.04, green: 0.08, blue: 0.18)],
                 textColor: .white,
                 accentColor: Color(red: 0.95, green: 0.78, blue: 0.35),
+                isDark: true
+            )
+        case "td-aeroplan-visa-infinite-privilege":
+            return CardStyle(
+                cardId: cardId,
+                shortName: "TD Aeroplan VIP",
+                issuer: "TD",
+                network: .visaInfinitePrivilege,
+                // Deliberately darker than td-aeroplan-visa-infinite's green, with a gold rather
+                // than green accent: an owner can hold both, and the pick is worthless if the two
+                // are indistinguishable in the half-second before the photo loads.
+                gradientColors: [Color(red: 0.05, green: 0.14, blue: 0.10), Color(red: 0.01, green: 0.04, blue: 0.03)],
+                textColor: .white,
+                accentColor: Color(red: 0.95, green: 0.82, blue: 0.50),
+                isDark: true
+            )
+        case "cibc-aeroplan-visa-infinite-privilege":
+            return CardStyle(
+                cardId: cardId,
+                shortName: "CIBC Aeroplan VIP",
+                issuer: "CIBC",
+                network: .visaInfinitePrivilege,
+                // Darker than cibc-dividend-visa-infinite's crimson, for the same reason.
+                gradientColors: [Color(red: 0.32, green: 0.04, blue: 0.10), Color(red: 0.10, green: 0.01, blue: 0.03)],
+                textColor: .white,
+                accentColor: Color(red: 1.0, green: 0.45, blue: 0.45),
                 isDark: true
             )
 
@@ -423,6 +500,55 @@ enum CardVisualTheme {
                 gradientColors: [Color(red: 0.14, green: 0.18, blue: 0.22), Color(red: 0.08, green: 0.10, blue: 0.14)],
                 textColor: .white,
                 accentColor: Color(red: 1.0, green: 0.60, blue: 0.0),
+                isDark: true
+            )
+        case "desjardins-odyssey-world-elite":
+            return CardStyle(
+                cardId: cardId,
+                shortName: "Desjardins Odyssey",
+                issuer: "Desjardins",
+                network: .mastercardWorldElite,
+                gradientColors: [Color(red: 0.00, green: 0.42, blue: 0.26), Color(red: 0.00, green: 0.17, blue: 0.11)],
+                textColor: .white,
+                accentColor: Color(red: 0.45, green: 0.95, blue: 0.65),
+                isDark: true
+            )
+
+        // The PC Financial family is four cards deep and the brand is a single near-black, so
+        // luminance alone cannot separate them. They step from mid-slate to warm charcoal and
+        // carry a different accent each — red, orange, gold — against pc-insiders-world-elite's
+        // neutral near-black with red. An owner can plausibly hold two of these at once.
+        case "pc-financial-mastercard":
+            return CardStyle(
+                cardId: cardId,
+                shortName: "PC Financial MC",
+                issuer: "PC Financial",
+                network: .mastercard,
+                gradientColors: [Color(red: 0.34, green: 0.35, blue: 0.38), Color(red: 0.18, green: 0.19, blue: 0.21)],
+                textColor: .white,
+                accentColor: Color(red: 0.95, green: 0.20, blue: 0.22),
+                isDark: true
+            )
+        case "pc-financial-world-mastercard":
+            return CardStyle(
+                cardId: cardId,
+                shortName: "PC Financial World",
+                issuer: "PC Financial",
+                network: .mastercard,
+                gradientColors: [Color(red: 0.22, green: 0.24, blue: 0.30), Color(red: 0.10, green: 0.11, blue: 0.15)],
+                textColor: .white,
+                accentColor: Color(red: 1.0, green: 0.55, blue: 0.15),
+                isDark: true
+            )
+        case "pc-financial-world-elite":
+            return CardStyle(
+                cardId: cardId,
+                shortName: "PC Financial WE",
+                issuer: "PC Financial",
+                network: .mastercardWorldElite,
+                gradientColors: [Color(red: 0.20, green: 0.15, blue: 0.13), Color(red: 0.09, green: 0.06, blue: 0.05)],
+                textColor: .white,
+                accentColor: Color(red: 0.95, green: 0.80, blue: 0.45),
                 isDark: true
             )
 

@@ -64,8 +64,19 @@ final class SyncCoordinatorTests: XCTestCase {
         coordinator.lastSyncedAt = Date() // Fresh sync right now
         coordinator.readySyncUserID = "user_123"
 
-        let owner = OwnerState()
-        let catalogue = Catalogue(cards: [], programs: [])
+        // Placeholders only: the recency guard returns before either is read. Built through the
+        // real initialisers rather than convenience stubs so this test keeps failing loudly if
+        // OwnerState's shape changes — which is how it silently stopped compiling in the first place.
+        let owner = OwnerState(ownerStateVersion: "1",
+                               ownedCardIds: [],
+                               defaultCardId: "",
+                               switchThreshold: SwitchThreshold(minAdvantagePercentagePoints: 0,
+                                                                minAdvantageCad: 0,
+                                                                semantics: "either"),
+                               carry: Carry(drawerCards: []),
+                               cardStates: [:],
+                               valuationsCad: Valuations())
+        let catalogue = Catalogue.empty
 
         let result = await coordinator.autoSyncIfStale(ownerState: owner, catalogue: catalogue, maxAge: 900)
         XCTAssertNil(result)

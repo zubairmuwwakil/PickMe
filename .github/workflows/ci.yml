@@ -73,3 +73,74 @@ jobs:
       - name: Test engine module
         working-directory: android
         run: ./gradlew --no-daemon :core:engine:test
+
+  # The App target is 61% of this repo's Swift (12,450 lines) and, until this job, nothing built
+  # it. Engine and Store are linked as *local* packages, so a public API change in either breaks
+  # the app while the three jobs above stay green. That is not hypothetical: this job's first run
+  # caught CardCopilotTests calling an `OwnerState()` initialiser that does not exist and passing
+  # a `programs:` argument `Catalogue` never had. The app itself compiled; only its tests did not,
+  # and nothing had run them.
+  #
+  # `xcodebuild test` is deliberate over `build`: the CardCopilot scheme already lists
+  # CardCopilotTests in its TestAction, so one invocation compiles every target and runs the
+  # App-layer tests. Splitting them would build the same graph twice.
+  #
+  # Do NOT add `-sdk iphonesimulator` here. It overrides SDKROOT for *every* target in the build,
+  # including the embedded watch app (SDKROOT = watchos, TARGETED_DEVICE_FAMILY = 4). The watch
+  # app then compiles its watchOS asset catalogue for iOS and actool fails the whole build with
+  # "The stickers icon set, app icon set, or icon stack named 'AppIcon' did not have any
+  # applicable content" — before a single Swift file compiles. The destination alone is enough:
+  # each target keeps its own SDK, and actool correctly runs --platform watchsimulator.
+  # The workaround for that error is to remove -sdk, never to blank ASSETCATALOG_COMPILER_APPICON_NAME,
+  # which would disable asset compilation in the very job meant to gate it.
+  app-build:
+    name: app (xcodebuild test)
+    # Not macos-15: the watch app targets watchOS 26.2 and the iOS app iOS 18, so this needs an
+    # image carrying Xcode 26.x. The Engine/Store jobs pin macos-15 because SPM needs no such SDK.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      # Printed unconditionally: when this job fails on a runner-image bump, the cause is almost
+      # always a missing SDK or a renamed simulator, and both are invisible without this.
+      - name: Toolchain and SDK inventory
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks | grep -Ei 'ios|watchos' || true
+
+      # Simulator device names differ between runner images, so resolve one at runtime rather
+      # than hardcoding a name that silently disappears on the next image update.
+      - name: Select an iOS simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          for runtime, devs in sorted(devices.items()):
+              if 'iOS' not in runtime:
+                  continue
+              for dev in devs:
+                  if dev.get('isAvailable') and 'iPhone' in dev['name']:
+                      print(dev['udid'])
+                      raise SystemExit
+          ")
+          if [ -z "$UDID" ]; then
+            echo "::error::No available iPhone simulator on this runner image."
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "Selected simulator $UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Build and test the App target
+        run: |
+          xcodebuild test \
+            -project App/CardCopilot.xcodeproj \
+            -scheme CardCopilot \
+            -configuration Debug \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            CODE_SIGNING_ALLOWED=NO
