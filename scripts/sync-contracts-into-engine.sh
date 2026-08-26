@@ -18,6 +18,8 @@ cp "$root/contracts/programs.json" \
    "$root/Engine/Sources/CardCopilotEngine/Resources/programs.json"
 cp "$root/contracts/owner-state.json" \
    "$root/Engine/Sources/CardCopilotEngine/Resources/owner-state.json"
+cp "$root/contracts/RELEASE.json" \
+   "$root/Engine/Sources/CardCopilotEngine/Resources/RELEASE.json"
 cp "$root/contracts/engine-fixtures.json" \
    "$root/Engine/Tests/CardCopilotEngineTests/Fixtures/engine-fixtures.json"
 

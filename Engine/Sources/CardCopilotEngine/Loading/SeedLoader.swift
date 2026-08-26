@@ -51,6 +51,16 @@ public enum SeedLoader {
         try load("programs")
     }
 
+    /// Which published contract release this build shipped.
+    ///
+    /// Deliberately does NOT verify that the bundled bytes hash to `digest`. That check belongs
+    /// to `scripts/release-catalogue.sh --check` in CI, and at this phase the stamp and the rules
+    /// ship in the same signed bundle — if one is corrupt, both are. It becomes worth paying for
+    /// at runtime when the catalogue starts arriving over the network.
+    public static func loadContractRelease() throws -> ContractRelease {
+        try load("RELEASE")
+    }
+
     /// The catalogue's default valuations, decoded once and reused.
     ///
     /// Traps rather than falling back to `[:]`. programs.json is a resource compiled into the
