@@ -274,6 +274,188 @@ extension CardCopilotSchemaV2 {
     }
 }
 
+// The persisted models of schema version 3 — the shapes the app writes today. `StoredPrediction`,
+// `StoredObservation`, and `StoredMerchant` are byte-identical to `CardCopilotSchemaV2`'s; only
+// `StoredPurchase` changes (see `Schema.swift`'s doc comment on `CardCopilotSchemaV3` for why: two
+// optional provenance fields for Path B captures logged with no live checkout behind them). Kept
+// as full, independent redeclarations rather than reusing V2's classes for the same reason V2 did
+// not reuse V1's — see `SchemaVersionTests.testV2AndV3DeclareDistinctModelTypes`.
+extension CardCopilotSchemaV3 {
+
+    /// Byte-identical to `CardCopilotSchemaV2.StoredPrediction`. See that type's doc comment.
+    @Model
+    public final class StoredPrediction {
+        public private(set) var id: UUID = UUID()
+        public private(set) var recordedAt: Date = Date()
+        public private(set) var merchantName: String = ""
+        public private(set) var merchantIdentifier: String?
+        public internal(set) var predictedCategory: String = ""
+        public internal(set) var categoryCorrectedAt: Date?
+        public private(set) var confidenceSourceRaw: String = ConfidenceSource.fallback.rawValue
+        public private(set) var winnerCardId: String = ""
+        public private(set) var winnerValueCad: Double = 0
+        public private(set) var predictedRewardUnits: Double?
+        public private(set) var predictedRewardUnitKind: String?
+        public private(set) var defaultCardValueCad: Double?
+        public private(set) var winnerRuleId: String?
+        public private(set) var runnerUpCardId: String?
+        public private(set) var runnerUpValueCad: Double?
+        public private(set) var scoredAmountCad: Double?
+        public private(set) var valuationCentsPerPoint: Double?
+        public private(set) var contractRelease: String?
+        public private(set) var contractDigest: String?
+        public private(set) var frozenInputs: Data?
+        public private(set) var headline: String = ""
+
+        @Relationship(deleteRule: .cascade, inverse: \StoredPurchase.prediction)
+        public var purchase: StoredPurchase?
+
+        public var confidenceSource: ConfidenceSource {
+            ConfidenceSource(rawValue: confidenceSourceRaw) ?? .fallback
+        }
+
+        public init(merchantName: String, merchantIdentifier: String? = nil,
+                    predictedCategory: String, confidenceSource: ConfidenceSource,
+                    winnerCardId: String, winnerValueCad: Double,
+                    predictedRewardUnits: Double? = nil, predictedRewardUnitKind: String? = nil,
+                    defaultCardValueCad: Double? = nil, winnerRuleId: String? = nil,
+                    runnerUpCardId: String? = nil, runnerUpValueCad: Double? = nil,
+                    scoredAmountCad: Double? = nil, valuationCentsPerPoint: Double? = nil,
+                    contractRelease: String? = nil, contractDigest: String? = nil,
+                    frozenInputs: Data? = nil,
+                    headline: String, recordedAt: Date = Date()) {
+            self.id = UUID()
+            self.recordedAt = recordedAt
+            self.merchantName = merchantName
+            self.merchantIdentifier = merchantIdentifier
+            self.predictedCategory = predictedCategory
+            self.confidenceSourceRaw = confidenceSource.rawValue
+            self.winnerCardId = winnerCardId
+            self.winnerValueCad = winnerValueCad
+            self.predictedRewardUnits = predictedRewardUnits
+            self.predictedRewardUnitKind = predictedRewardUnitKind
+            self.defaultCardValueCad = defaultCardValueCad
+            self.winnerRuleId = winnerRuleId
+            self.runnerUpCardId = runnerUpCardId
+            self.runnerUpValueCad = runnerUpValueCad
+            self.scoredAmountCad = scoredAmountCad
+            self.valuationCentsPerPoint = valuationCentsPerPoint
+            self.contractRelease = contractRelease
+            self.contractDigest = contractDigest
+            self.frozenInputs = frozenInputs
+            self.headline = headline
+        }
+    }
+
+    /// The till: what the owner tapped, and what it came to. See `CardCopilotSchemaV2.StoredPurchase`
+    /// for the original doc comment; `walletEventId` and `merchantLabel` are new in V3 — see
+    /// `Schema.swift`'s doc comment on `CardCopilotSchemaV3` for why.
+    @Model
+    public final class StoredPurchase {
+        public private(set) var id: UUID = UUID()
+        public private(set) var createdAt: Date = Date()
+
+        /// nil until stated. Never defaulted to the recommended card — that assumption is exactly
+        /// what made value-recovered credit advice the owner ignored.
+        public var cardUsedId: String?
+        public var cardSourceRaw: String?
+
+        /// What the charge actually came to.
+        public var amountCad: Double?
+        public var amountSourceRaw: String?
+
+        /// Set once both facts are known. Drives the "finish these" queue, and gates entry to the
+        /// reconcile queue — a purchase missing its card cannot be checked against a statement.
+        public var completedAt: Date?
+
+        public var prediction: StoredPrediction?
+
+        /// The server `WalletEvent.eventId` whose facts landed on this purchase — set by
+        /// `AutoCaptureLog` when it writes a purchase with no checkout behind it, and ALSO by
+        /// `PredictionLog.recordPurchase` when a checkout's owner accepts a `CaptureProposal`. Both
+        /// producers matter: `AutoCaptureLog.loggedEventIds()` reads this across every purchase to
+        /// stay idempotent, and a tap accepted into a checkout must be just as "already logged" as
+        /// one `AutoCaptureLog` wrote directly — otherwise, once that checkout completes and its
+        /// prediction drops out of the open set, a later sync would see the very same tap as
+        /// orphaned and log it a second time as a standalone purchase. `internal(set)`: any file in
+        /// this module may stamp it, but the app layer never mutates it directly.
+        public internal(set) var walletEventId: String?
+        /// The merchant name, for a purchase with no `prediction` to read it from. A purchase
+        /// created through `PredictionLog.recordPurchase` leaves this nil and reads
+        /// `prediction?.merchantName` instead — see `displayMerchant`.
+        public private(set) var merchantLabel: String?
+
+        @Relationship(deleteRule: .cascade, inverse: \StoredObservation.purchase)
+        public var observation: StoredObservation?
+
+        public var cardSource: CaptureSource? { cardSourceRaw.flatMap(CaptureSource.init(rawValue:)) }
+        public var amountSource: CaptureSource? { amountSourceRaw.flatMap(CaptureSource.init(rawValue:)) }
+        public var isComplete: Bool { completedAt != nil }
+
+        public init(createdAt: Date = Date(), merchantLabel: String? = nil, walletEventId: String? = nil) {
+            self.id = UUID()
+            self.createdAt = createdAt
+            self.merchantLabel = merchantLabel
+            self.walletEventId = walletEventId
+        }
+    }
+
+    /// Byte-identical to `CardCopilotSchemaV2.StoredObservation`. See that type's doc comment.
+    @Model
+    public final class StoredObservation {
+        public private(set) var id: UUID = UUID()
+        public private(set) var confirmedAt: Date = Date()
+        public var observedCategory: String = ""
+        public private(set) var observedRewardUnits: Double?
+        public private(set) var missClassRaw: String?
+        public private(set) var note: String?
+        public var purchase: StoredPurchase?
+
+        public var missClass: MissClass? { missClassRaw.flatMap(MissClass.init(rawValue:)) }
+        public var wasCorrect: Bool { missClassRaw == nil }
+
+        public init(observedCategory: String, observedRewardUnits: Double? = nil,
+                    missClass: MissClass? = nil,
+                    note: String? = nil, confirmedAt: Date = Date()) {
+            self.id = UUID()
+            self.confirmedAt = confirmedAt
+            self.observedCategory = observedCategory
+            self.observedRewardUnits = observedRewardUnits
+            self.missClassRaw = missClass?.rawValue
+            self.note = note
+        }
+    }
+
+    /// Byte-identical to `CardCopilotSchemaV2.StoredMerchant`. See that type's doc comment.
+    @Model
+    public final class StoredMerchant {
+        public private(set) var id: UUID = UUID()
+        public private(set) var name: String = ""
+        public private(set) var identifier: String?
+        public var poiCategoryRaw: String?
+        public private(set) var latitude: Double = 0
+        public private(set) var longitude: Double = 0
+        public var confirmedCategory: String?
+        public var confirmationCount: Int = 0
+        public var lastSeenAt: Date = Date()
+
+        public init(name: String, identifier: String? = nil, poiCategoryRaw: String? = nil,
+                    latitude: Double, longitude: Double,
+                    confirmedCategory: String? = nil, confirmationCount: Int = 0,
+                    lastSeenAt: Date = Date()) {
+            self.id = UUID()
+            self.name = name
+            self.identifier = identifier
+            self.poiCategoryRaw = poiCategoryRaw
+            self.latitude = latitude
+            self.longitude = longitude
+            self.confirmedCategory = confirmedCategory
+            self.confirmationCount = confirmationCount
+            self.lastSeenAt = lastSeenAt
+        }
+    }
+}
+
 /// A fact a purchase is still missing. Derived from the record rather than tracked alongside it,
 /// so the finish queue and the finish screen can never disagree about what is outstanding.
 public enum MissingPurchaseFact: String, Sendable, CaseIterable {
@@ -290,4 +472,21 @@ extension StoredPurchase {
         if amountCad == nil { missing.insert(.amount) }
         return missing
     }
+
+    /// The merchant name to show, whichever kind of purchase this is: one asked about at checkout
+    /// reads it from the `StoredPrediction`; one `AutoCaptureLog` wrote directly reads its own
+    /// `merchantLabel`, since it has no prediction to read from.
+    public var displayMerchant: String {
+        prediction?.merchantName ?? merchantLabel ?? "Unknown merchant"
+    }
+
+    /// True for a purchase with no `StoredPrediction` behind it — `AutoCaptureLog` wrote it
+    /// directly from a Wallet capture that matched no open checkout, so there is no predicted
+    /// category to grade it against.
+    ///
+    /// Deliberately `prediction == nil`, not `walletEventId != nil`: a checkout-originated
+    /// purchase can ALSO carry a `walletEventId` once its owner accepts a `CaptureProposal` (see
+    /// that property's doc comment), and such a purchase is emphatically not auto-logged — it was
+    /// asked about live, at a real checkout, with a real graded prediction behind it.
+    public var isAutoLogged: Bool { prediction == nil }
 }

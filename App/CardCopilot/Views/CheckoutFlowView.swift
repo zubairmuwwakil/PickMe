@@ -100,6 +100,7 @@ struct CheckoutFlowView: View {
             environment.load(session: session)
             _ = WalletCaptureNetworkMonitor.shared
             await sync.drainWalletCaptures()
+            ingestAutomaticCaptures()
             if WalletCaptureDeepLinkStore.consume() { router.show(.sync) }
         }
         .task(id: Clerk.shared.user?.id) {
@@ -109,11 +110,18 @@ struct CheckoutFlowView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 environment?.refreshAmbientDiagnostics()
-                Task { await sync.drainWalletCaptures(); await autoSyncIfStale() }
+                Task {
+                    await sync.drainWalletCaptures()
+                    ingestAutomaticCaptures()
+                    await autoSyncIfStale()
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .walletCaptureConnectivityRestored)) { _ in
-            Task { await sync.drainWalletCaptures() }
+            Task {
+                await sync.drainWalletCaptures()
+                ingestAutomaticCaptures()
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .openWalletCaptureStatus)) { _ in
             router.show(.sync)
@@ -329,6 +337,7 @@ struct CheckoutFlowView: View {
         guard let environment, let graph = environment.graph else { return }
         if let result = await sync.autoSyncIfStale(ownerState: graph.ownerState, catalogue: graph.catalogue) {
             environment.rebuild(ownerState: result.ownerState)
+            ingestAutomaticCaptures()
             if let refreshed = environment.graph { session.refresh(using: refreshed) }
         }
     }
@@ -337,7 +346,22 @@ struct CheckoutFlowView: View {
         guard let environment, let graph = environment.graph else { return }
         if let result = await sync.syncCapsSilently(ownerState: graph.ownerState, catalogue: graph.catalogue) {
             environment.rebuild(ownerState: result.ownerState)
+            ingestAutomaticCaptures()
             if let refreshed = environment.graph { session.refresh(using: refreshed) }
+        }
+    }
+
+    /// Best-effort by design: automatic logging must never turn an otherwise successful sync
+    /// into a blocking screen over something the owner cannot act on.
+    private func ingestAutomaticCaptures() {
+        guard let graph = environment?.graph else { return }
+        do {
+            try graph.service.ingestAutomaticCaptures(from: sync.walletFeedback)
+            session.refresh(using: graph)
+        } catch {
+            #if DEBUG
+            print("⚠️ Auto-capture ingest failed: \(error)")
+            #endif
         }
     }
 

@@ -249,6 +249,23 @@ public struct CheckoutService {
             sortBy: [SortDescriptor(\.lastSeenAt, order: .reverse)]))
     }
 
+    /// Logs every synced wallet-tap that was never asked about at a live checkout, with no
+    /// confirmation gate — see `AutoCaptureLog`'s doc comment for why that is safe here and is
+    /// deliberately NOT how `CaptureProposal` behaves. Call after every sync that refreshes
+    /// `WalletFeedback`, before re-reading `log.snapshot()`, so the newly logged purchases are
+    /// reflected in the same UI update as the sync that produced them.
+    @discardableResult
+    public func ingestAutomaticCaptures(from feedback: [WalletFeedback]) throws -> [StoredPurchase] {
+        try AutoCaptureLog(context: context).ingest(feedback: feedback, openPredictions: log.allPredictions())
+    }
+
+    /// Purchases logged automatically from a Wallet capture with no live checkout behind them —
+    /// the "Logged Automatically" section of Activity, distinct from `PredictionLog.recentPurchases`
+    /// because these carry no predicted category to grade.
+    public func autoLoggedPurchases(limit: Int = 20) throws -> [StoredPurchase] {
+        try AutoCaptureLog(context: context).recent(limit: limit)
+    }
+
     private func upsertMerchant(_ merchant: NearbyMerchant) throws {
         let id = merchant.id
         let existing = try context.fetch(FetchDescriptor<StoredMerchant>(

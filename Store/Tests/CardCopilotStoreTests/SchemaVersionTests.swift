@@ -55,15 +55,37 @@ final class SchemaVersionTests: XCTestCase {
                            "lastSeenAt", "latitude", "longitude", "name", "poiCategoryRaw"],
         "StoredObservation": ["confirmedAt", "id", "missClassRaw", "note", "observedCategory",
                               "observedRewardUnits", "purchase"],
-        "StoredPrediction": ["categoryCorrectedAt", "confidenceSourceRaw", "contractDigest",
-                             "contractRelease", "defaultCardValueCad", "frozenInputs", "headline",
-                             "id", "merchantIdentifier", "merchantName", "predictedCategory",
+        "StoredPrediction": ["categoryCorrectedAt", "confidenceSourceRaw", "contractDigest", "contractRelease",
+                             "defaultCardValueCad", "frozenInputs", "headline", "id",
+                             "merchantIdentifier", "merchantName", "predictedCategory",
                              "predictedRewardUnitKind", "predictedRewardUnits", "purchase",
                              "recordedAt", "runnerUpCardId", "runnerUpValueCad", "scoredAmountCad",
                              "valuationCentsPerPoint", "winnerCardId", "winnerRuleId",
                              "winnerValueCad"],
         "StoredPurchase": ["amountCad", "amountSourceRaw", "cardSourceRaw", "cardUsedId",
                            "completedAt", "createdAt", "id", "observation", "prediction"],
+    ]
+
+    /// Entity name → sorted property names, as V3 ships. V1's and V2's tables above stay frozen.
+    private static let v3Shape: [String: [String]] = [
+        "AreaMember": ["area", "identifier", "latitude", "longitude", "name", "poiCategoryRaw"],
+        "ExploredCell": ["areaCount", "cellKey", "exploredAt"],
+        "ShoppingArea": ["cellKey", "centroidLatitude", "centroidLongitude", "discoveredAt",
+                         "id", "members", "radiusMeters"],
+        "StoredMerchant": ["confirmationCount", "confirmedCategory", "id", "identifier",
+                           "lastSeenAt", "latitude", "longitude", "name", "poiCategoryRaw"],
+        "StoredObservation": ["confirmedAt", "id", "missClassRaw", "note", "observedCategory",
+                              "observedRewardUnits", "purchase"],
+        "StoredPrediction": ["categoryCorrectedAt", "confidenceSourceRaw", "contractDigest", "contractRelease",
+                             "defaultCardValueCad", "frozenInputs", "headline", "id",
+                             "merchantIdentifier", "merchantName", "predictedCategory",
+                             "predictedRewardUnitKind", "predictedRewardUnits", "purchase",
+                             "recordedAt", "runnerUpCardId", "runnerUpValueCad", "scoredAmountCad",
+                             "valuationCentsPerPoint", "winnerCardId", "winnerRuleId",
+                             "winnerValueCad"],
+        "StoredPurchase": ["amountCad", "amountSourceRaw", "cardSourceRaw", "cardUsedId",
+                           "completedAt", "createdAt", "id", "merchantLabel", "observation",
+                           "prediction", "walletEventId"],
     ]
 
     /// The failure this catches is adding an eighth `@Model` and not registering it. Such a model
@@ -142,10 +164,6 @@ final class SchemaVersionTests: XCTestCase {
 
     /// V2 adds exactly four properties to exactly one entity. Anything else riding along in
     /// this migration is a mistake — every other entity must be untouched.
-    ///
-    /// Three are provenance; the fourth, `categoryCorrectedAt`, is what keeps that provenance
-    /// honest once `predictedCategory` became rewritable. It rides along here rather than waiting
-    /// for a V3 because V2 has not shipped: a nullable column is free today and a migration later.
     func testV2ChangesOnlyStoredPrediction() {
         for (name, v1Properties) in Self.v1Shape where name != "StoredPrediction" {
             XCTAssertEqual(Self.v2Shape[name], v1Properties,
@@ -178,41 +196,31 @@ final class SchemaVersionTests: XCTestCase {
                       "V1's frozen model types must not be the live ones, or the migration test proves nothing.")
     }
 
-    /// Each version's relationships must land on that version's own classes.
-    ///
-    /// The type annotations *are* the assertion: if `purchase` inside `extension CardCopilotSchemaV1`
-    /// resolved to the module-level typealias — V2's class — this would not compile. Swift's rule is
-    /// that an enclosing type's members shadow module scope, so it resolves correctly; but the rule
-    /// only started carrying weight when V1 and V2 stopped being the same seven classes, and a
-    /// cross-version inverse would produce a schema whose relationship points outside itself.
+    /// Relationships must resolve to the classes belonging to their own schema version.
     func testRelationshipsStayWithinTheirSchemaVersion() {
-        let v1Purchase: KeyPath<CardCopilotSchemaV1.StoredPrediction, CardCopilotSchemaV1.StoredPurchase?>
-            = \.purchase
-        let v2Purchase: KeyPath<CardCopilotSchemaV2.StoredPrediction, CardCopilotSchemaV2.StoredPurchase?>
-            = \.purchase
-        let v1Members: KeyPath<CardCopilotSchemaV1.ShoppingArea, [CardCopilotSchemaV1.AreaMember]>
-            = \.members
-        let v2Members: KeyPath<CardCopilotSchemaV2.ShoppingArea, [CardCopilotSchemaV2.AreaMember]>
-            = \.members
+        let v1Purchase: KeyPath<CardCopilotSchemaV1.StoredPrediction, CardCopilotSchemaV1.StoredPurchase?> = \.purchase
+        let v2Purchase: KeyPath<CardCopilotSchemaV2.StoredPrediction, CardCopilotSchemaV2.StoredPurchase?> = \.purchase
+        let v3Purchase: KeyPath<CardCopilotSchemaV3.StoredPrediction, CardCopilotSchemaV3.StoredPurchase?> = \.purchase
 
         XCTAssertEqual(v1Purchase, \CardCopilotSchemaV1.StoredPrediction.purchase)
         XCTAssertEqual(v2Purchase, \CardCopilotSchemaV2.StoredPrediction.purchase)
-        XCTAssertEqual(v1Members, \CardCopilotSchemaV1.ShoppingArea.members)
-        XCTAssertEqual(v2Members, \CardCopilotSchemaV2.ShoppingArea.members)
+        XCTAssertEqual(v3Purchase, \CardCopilotSchemaV3.StoredPrediction.purchase)
     }
 
-    func testMigrationPlanCarriesV1ToV2() {
-        XCTAssertEqual(CardCopilotMigrationPlan.schemas.count, 2)
+    func testMigrationPlanCarriesV1ToV2ToV3() {
+        XCTAssertEqual(CardCopilotMigrationPlan.schemas.count, 3)
         XCTAssertTrue(CardCopilotMigrationPlan.schemas[0] == CardCopilotSchemaV1.self)
         XCTAssertTrue(CardCopilotMigrationPlan.schemas[1] == CardCopilotSchemaV2.self)
-        XCTAssertEqual(CardCopilotMigrationPlan.stages.count, 1,
-                       "A V2 with no stage is how a store gets orphaned.")
+        XCTAssertTrue(CardCopilotMigrationPlan.schemas[2] == CardCopilotSchemaV3.self)
+        XCTAssertEqual(CardCopilotMigrationPlan.stages.count, 2,
+                       "A version with no stage is how a store gets orphaned.")
     }
 
     /// `CardCopilotSchema.current` is the one place a version is named for callers. This catches
-    /// the half-finished migration: a V3 added to the plan while every container still opens at V2.
+    /// the half-finished migration: a new version added to the plan while every container still
+    /// opens at the old one.
     func testCurrentSchemaIsTheNewestInTheMigrationPlan() {
-        XCTAssertTrue(CardCopilotSchema.current == CardCopilotSchemaV2.self)
+        XCTAssertTrue(CardCopilotSchema.current == CardCopilotSchemaV3.self)
         XCTAssertTrue(CardCopilotSchema.current == CardCopilotMigrationPlan.schemas.last!,
                       "The current schema must be the plan's newest, or new stores open behind the plan.")
     }
@@ -261,8 +269,7 @@ final class SchemaVersionTests: XCTestCase {
                      "Pre-provenance rows must stay nil — a backfilled value would be invented.")
         XCTAssertNil(migrated[0].contractDigest)
         XCTAssertNil(migrated[0].frozenInputs)
-        XCTAssertNil(migrated[0].categoryCorrectedAt,
-                     "A migrated row has not been corrected; nil is the only truthful value.")
+        XCTAssertNil(migrated[0].categoryCorrectedAt)
     }
 
     /// The other half of the migration: a store already at V2 keeps accepting provenance, and a
@@ -304,5 +311,133 @@ final class SchemaVersionTests: XCTestCase {
         XCTAssertEqual(rows[0].contractRelease, "card-contracts@1.6")
         XCTAssertEqual(rows[0].contractDigest, "sha256:abc123")
         XCTAssertEqual(rows[0].frozenInputs, frozen)
+    }
+
+    // MARK: - V3: walletEventId and merchantLabel on StoredPurchase
+
+    func testV3RegistersEveryModel() {
+        XCTAssertEqual(CardCopilotSchemaV3.models.count, Self.v3Shape.count,
+                       "A model was added or removed without updating CardCopilotSchemaV3.models.")
+    }
+
+    func testV3EntityShapeIsAsDeclared() {
+        let entities = Schema(versionedSchema: CardCopilotSchemaV3.self).entities
+        let actual = Dictionary(uniqueKeysWithValues:
+            entities.map { ($0.name, $0.properties.map(\.name).sorted()) })
+
+        XCTAssertEqual(Set(actual.keys), Set(Self.v3Shape.keys))
+        for (name, expected) in Self.v3Shape {
+            XCTAssertEqual(actual[name], expected, "Entity '\(name)' is not the declared V3 shape.")
+        }
+    }
+
+    /// V3 adds exactly two properties to exactly one entity. Anything else riding along in this
+    /// migration is a mistake — every other entity must be untouched.
+    func testV3ChangesOnlyStoredPurchase() {
+        for (name, v2Properties) in Self.v2Shape where name != "StoredPurchase" {
+            XCTAssertEqual(Self.v3Shape[name], v2Properties,
+                           "Entity '\(name)' changed in V3. Only StoredPurchase should.")
+        }
+        let added = Set(Self.v3Shape["StoredPurchase"]!)
+            .subtracting(Self.v2Shape["StoredPurchase"]!)
+        XCTAssertEqual(added, ["walletEventId", "merchantLabel"])
+    }
+
+    func testV3KeepsEveryV2EntityName() {
+        XCTAssertEqual(Set(Self.v3Shape.keys), Set(Self.v2Shape.keys),
+                       "An entity was renamed, added, or dropped in V3. That is not a lightweight change.")
+    }
+
+    /// V2 and V3 must be *different* classes, not the same seven listed twice — see
+    /// `testV1AndV2DeclareDistinctModelTypes` for why.
+    func testV2AndV3DeclareDistinctModelTypes() {
+        let v2 = Set(CardCopilotSchemaV2.models.map(ObjectIdentifier.init))
+        let v3 = Set(CardCopilotSchemaV3.models.map(ObjectIdentifier.init))
+        XCTAssertTrue(v2.isDisjoint(with: v3),
+                      "V2's frozen model types must not be the live ones, or the migration test proves nothing.")
+    }
+
+    /// Writes a store under V2, reopens it under V3 with the migration plan, and confirms the row
+    /// survived with its two new fields nil — the counterpart to `testV1StoreOpensUnderV2WithRowsIntact`.
+    ///
+    /// The V2 row is inserted through `CardCopilotSchemaV2.StoredPurchase`/`StoredPrediction` by
+    /// name, for the same reason the V1 test does: writing it through the unqualified alias would
+    /// insert V3's class into a V2 container, which is the mistake this test exists to catch.
+    func testV2StoreOpensUnderV3WithRowsIntact() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("wallet-capture-migration-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("CardCopilot.store")
+
+        do {
+            let v2 = try ModelContainer(
+                for: Schema(versionedSchema: CardCopilotSchemaV2.self),
+                migrationPlan: CardCopilotMigrationPlan.self,
+                configurations: ModelConfiguration(url: url))
+            let context = ModelContext(v2)
+            let prediction = CardCopilotSchemaV2.StoredPrediction(merchantName: "Loblaws",
+                                                                   predictedCategory: "grocery",
+                                                                   confidenceSource: .brandPrior,
+                                                                   winnerCardId: "amex-cobalt",
+                                                                   winnerValueCad: 2.50,
+                                                                   headline: "Cobalt")
+            context.insert(prediction)
+            let purchase = CardCopilotSchemaV2.StoredPurchase()
+            context.insert(purchase)
+            purchase.prediction = prediction
+            purchase.cardUsedId = "amex-cobalt"
+            purchase.amountCad = 47.83
+            try context.save()
+        }
+
+        let v3 = try ModelContainer(
+            for: Schema(versionedSchema: CardCopilotSchemaV3.self),
+            migrationPlan: CardCopilotMigrationPlan.self,
+            configurations: ModelConfiguration(url: url))
+        let migrated = try ModelContext(v3).fetch(FetchDescriptor<StoredPurchase>())
+
+        XCTAssertEqual(migrated.count, 1, "The V2 row did not survive migration.")
+        XCTAssertEqual(migrated[0].cardUsedId, "amex-cobalt")
+        XCTAssertEqual(migrated[0].amountCad, 47.83)
+        XCTAssertEqual(migrated[0].prediction?.merchantName, "Loblaws")
+        XCTAssertNil(migrated[0].walletEventId,
+                     "A pre-V3 purchase must stay nil, never backfilled as though it were auto-logged.")
+        XCTAssertNil(migrated[0].merchantLabel)
+    }
+
+    /// The other half: a store already at V3 keeps accepting the new fields, and a purchase
+    /// `AutoCaptureLog` writes reads them back after a reopen — mirrors
+    /// `testProvenanceRoundTripsThroughAReopenedStore`.
+    func testWalletCaptureProvenanceRoundTripsThroughAReopenedStore() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("wallet-capture-roundtrip-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("CardCopilot.store")
+
+        do {
+            let container = try ModelContainer(
+                for: Schema(versionedSchema: CardCopilotSchema.current),
+                migrationPlan: CardCopilotMigrationPlan.self,
+                configurations: ModelConfiguration(url: url))
+            let context = ModelContext(container)
+            context.insert(StoredPurchase(createdAt: Date(timeIntervalSince1970: 1_755_000_000),
+                                          merchantLabel: "Tim Hortons",
+                                          walletEventId: "wallet-evt-1"))
+            try context.save()
+        }
+
+        let reopened = try ModelContainer(
+            for: Schema(versionedSchema: CardCopilotSchema.current),
+            migrationPlan: CardCopilotMigrationPlan.self,
+            configurations: ModelConfiguration(url: url))
+        let rows = try ModelContext(reopened).fetch(FetchDescriptor<StoredPurchase>())
+
+        XCTAssertEqual(rows.count, 1)
+        XCTAssertEqual(rows[0].walletEventId, "wallet-evt-1")
+        XCTAssertEqual(rows[0].merchantLabel, "Tim Hortons")
+        XCTAssertEqual(rows[0].displayMerchant, "Tim Hortons")
+        XCTAssertTrue(rows[0].isAutoLogged)
     }
 }

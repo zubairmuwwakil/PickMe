@@ -128,6 +128,27 @@ struct ActivityHubView: View {
                     }
                 }
 
+                // These purchases came from Wallet taps with no live checkout, so they stay
+                // separate from category filtering and the experiment scoreboard.
+                if !session.autoLoggedPurchases.isEmpty {
+                    VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Logged from Card Taps")
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundStyle(.primary)
+                            Text("Captured automatically — no checkout was asked about these")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        }
+
+                        VStack(spacing: 10) {
+                            ForEach(session.autoLoggedPurchases) { purchase in
+                                autoLoggedPurchaseRow(purchase)
+                            }
+                        }
+                    }
+                }
+
                 // Section: Experiment Validation & Scoreboard
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
@@ -597,6 +618,71 @@ struct ActivityHubView: View {
                 .padding(.vertical, 2)
                 .background(Color.orange.opacity(0.12), in: Capsule())
         }
+    }
+
+    /// An automatic capture has no prediction and therefore no category badge or edit action.
+    private func autoLoggedPurchaseRow(_ purchase: StoredPurchase) -> some View {
+        let timeLabel = CategoryVisuals.relativeTime(from: purchase.createdAt)
+
+        return HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color.secondary.opacity(0.14))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "wave.3.right")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(purchase.displayMerchant)
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                HStack(spacing: 4) {
+                    if let cardId = purchase.cardUsedId {
+                        Text(cardDisplayName(for: cardId))
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                        Text("•").font(.system(size: 10)).foregroundStyle(.tertiary)
+                    }
+                    Text(timeLabel)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 4) {
+                if let amount = purchase.amountCad {
+                    Text(String(format: "$%.2f", amount))
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                } else {
+                    Text("—")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                if !purchase.missingFacts.isEmpty {
+                    Text(purchase.missingFacts.contains(.card) ? "Card unknown" : "Amount unknown")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(.orange)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2)
+                        .background(Color.orange.opacity(0.12), in: Capsule())
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+        )
     }
 
     private func cardDisplayName(for cardId: String) -> String {

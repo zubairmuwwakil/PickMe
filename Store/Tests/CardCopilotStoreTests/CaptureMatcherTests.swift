@@ -199,6 +199,73 @@ final class CaptureMatcherTests: XCTestCase {
 
         XCTAssertTrue(proposals.isEmpty, "a proposal that offers nothing is not a proposal")
     }
+
+    // MARK: - unclaimedCaptures: logging taps with no checkout behind them
+
+    func testAnUnrelatedMerchantIsUnclaimed() throws {
+        let stored = try prediction(merchant: "Loblaws")
+        let tap = capture(merchantRaw: "TIM HORTONS #4021")
+
+        let unclaimed = CaptureMatcher.unclaimedCaptures(from: [tap], openPredictions: [stored])
+
+        XCTAssertEqual(unclaimed.map(\.eventId), [tap.eventId])
+    }
+
+    func testATapWithNoOpenCheckoutAtAllIsUnclaimed() {
+        let tap = capture()
+
+        let unclaimed = CaptureMatcher.unclaimedCaptures(from: [tap], openPredictions: [])
+
+        XCTAssertEqual(unclaimed.map(\.eventId), [tap.eventId])
+    }
+
+    func testATapThatPlausiblyMatchesAnOpenCheckoutIsNotUnclaimed() throws {
+        let stored = try prediction()
+
+        let unclaimed = CaptureMatcher.unclaimedCaptures(for: stored, tap: capture())
+        XCTAssertTrue(unclaimed.isEmpty,
+                     "this tap belongs to Finish Purchases, not a second standalone log entry")
+    }
+
+    /// The safety property `unclaimedCaptures`'s doc comment names: an AMBIGUOUS pairing (the one
+    /// case `proposals(for:from:)` itself refuses to resolve) must still be excluded here, not
+    /// treated as available for standalone logging. Otherwise the owner could see the same tap
+    /// twice — once as an auto-logged purchase, once later as the Finish Purchases answer for the
+    /// checkout it actually belonged to.
+    func testAnAmbiguousPairingIsNeitherProposedNorUnclaimed() throws {
+        let first = try prediction(at: noon)
+        let second = try prediction(at: noon.addingTimeInterval(5 * 60))
+        let tap = capture(at: noon.addingTimeInterval(10 * 60))
+
+        XCTAssertTrue(CaptureMatcher.proposals(for: [first, second], from: [tap]).isEmpty)
+        XCTAssertTrue(CaptureMatcher.unclaimedCaptures(from: [tap], openPredictions: [first, second]).isEmpty)
+    }
+
+    func testAnUnclaimedCaptureCarriesTheNormalisedMerchantAndConvertedAmount() {
+        let tap = capture(merchantRaw: "SQ *TIM HORTONS #4021", merchantNormalized: "Tim Hortons")
+
+        let unclaimed = CaptureMatcher.unclaimedCaptures(from: [tap], openPredictions: [])
+
+        XCTAssertEqual(unclaimed.first?.merchant, "Tim Hortons")
+        XCTAssertEqual(unclaimed.first?.amountCad, 6.42)
+        XCTAssertEqual(unclaimed.first?.cardUsedId, "amex-cobalt")
+    }
+
+    func testAnUnclaimedCaptureRefusesToConvertAForeignCurrency() {
+        let tap = capture(currency: "USD")
+
+        let unclaimed = CaptureMatcher.unclaimedCaptures(from: [tap], openPredictions: [])
+
+        XCTAssertNil(unclaimed.first?.amountCad, "converting USD here would invent an FX rate")
+        XCTAssertEqual(unclaimed.first?.cardUsedId, "amex-cobalt")
+    }
+}
+
+private extension CaptureMatcher {
+    /// Test-only convenience matching the fixtures' single-prediction, single-capture shape.
+    static func unclaimedCaptures(for prediction: StoredPrediction, tap: WalletFeedback) -> [UnclaimedCapture] {
+        unclaimedCaptures(from: [tap], openPredictions: [prediction])
+    }
 }
 
 /// Provenance of a saved fact (design §3: `CaptureSource`).

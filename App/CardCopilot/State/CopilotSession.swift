@@ -50,6 +50,8 @@ final class CopilotSession {
     private(set) var completionQueue: [StoredPrediction] = []
     private(set) var reconcileQueue: [StoredPrediction] = []
     private(set) var recentPurchases: [StoredPrediction] = []
+    /// Wallet taps logged without a live checkout. These have no prediction to score or edit.
+    private(set) var autoLoggedPurchases: [StoredPurchase] = []
     private(set) var metrics: ExperimentMetrics?
     private(set) var homeMerchants: [StoredMerchant] = []
     private(set) var cachedLocation: CachedLocation?
@@ -70,6 +72,7 @@ final class CopilotSession {
             completionQueue = snapshot.awaitingCompletion
             reconcileQueue = snapshot.awaitingConfirmation
             recentPurchases = snapshot.recentPurchases
+            autoLoggedPurchases = try graph.service.autoLoggedPurchases()
             metrics = snapshot.metrics
             homeMerchants = sortedHomeMerchants(try graph.service.knownMerchants())
         } catch {
@@ -82,7 +85,8 @@ final class CopilotSession {
         do {
             let purchase = try graph.service.log.recordPurchase(for: prediction,
                                                                 cardUsedId: entry.cardUsedId,
-                                                                cardSource: entry.cardSource)
+                                                                cardSource: entry.cardSource,
+                                                                walletEventId: entry.walletEventId)
             if let amount = entry.actualAmountCad {
                 try graph.service.log.recordAmount(amount,
                                                    source: entry.amountSource ?? .recalledLater,

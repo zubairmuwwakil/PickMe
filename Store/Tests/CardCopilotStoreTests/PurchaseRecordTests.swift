@@ -74,6 +74,40 @@ final class PurchaseRecordTests: XCTestCase {
         XCTAssertEqual(second.cardUsedId, "amex-cobalt", "and must not erase what it already held")
     }
 
+    // MARK: - walletEventId: the dedup key AutoCaptureLog relies on
+
+    /// A purchase this method creates or fills in HAS a `StoredPrediction` — it was asked about at
+    /// a live checkout — so it is never `isAutoLogged`, whatever `walletEventId` it carries.
+    func testAPurchaseWithAWalletEventIdIsStillNotAutoLogged() throws {
+        let prediction = try log.record(samplePrediction())
+        let purchase = try log.recordPurchase(for: prediction, cardUsedId: "amex-cobalt",
+                                              cardSource: .walletCapture, walletEventId: "evt-1")
+        XCTAssertEqual(purchase.walletEventId, "evt-1")
+        XCTAssertFalse(purchase.isAutoLogged,
+                       "this purchase has a real graded prediction behind it")
+    }
+
+    /// The property `AutoCaptureLogTests.testATapAcceptedIntoAnExistingCheckoutIsNeverAlsoAutoLoggedLater`
+    /// depends on: once stamped, a second call must not lose it, so a later fact (the amount,
+    /// filled in separately) can never accidentally erase the dedup key the first fact set.
+    func testAWalletEventIdIsNeverOverwrittenOnceSet() throws {
+        let prediction = try log.record(samplePrediction())
+        _ = try log.recordPurchase(for: prediction, cardUsedId: "amex-cobalt",
+                                   cardSource: .walletCapture, walletEventId: "evt-1")
+        let purchase = try log.recordPurchase(for: prediction, walletEventId: "evt-2")
+        XCTAssertEqual(purchase.walletEventId, "evt-1",
+                       "the founding event's id must survive a later, unrelated call")
+    }
+
+    /// A purchase built by hand, with no capture ever involved, carries no dedup key at all — and
+    /// must not be mistaken by `AutoCaptureLog` for one that already represents some Wallet event.
+    func testAHandEnteredPurchaseHasNoWalletEventId() throws {
+        let prediction = try log.record(samplePrediction())
+        let purchase = try log.recordPurchase(for: prediction, cardUsedId: "amex-cobalt",
+                                              cardSource: .atTill)
+        XCTAssertNil(purchase.walletEventId)
+    }
+
     // MARK: - Value recovered
 
     /// THE BUG THIS MODEL EXISTS TO FIX. Value recovered means "I earned more *because* I took

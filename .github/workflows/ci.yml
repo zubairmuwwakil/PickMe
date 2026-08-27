@@ -29,6 +29,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      # Merchant facts move independently from card-rate releases, so the pack has its own
+      # generator check instead of being folded into RELEASE.json.
+      - name: Verify merchant-pack.json matches its Swift source
+        run: node scripts/generate-merchant-pack.mjs --check
+
   engine-fixtures:
     name: engine-fixtures (swift test)
     runs-on: macos-15
