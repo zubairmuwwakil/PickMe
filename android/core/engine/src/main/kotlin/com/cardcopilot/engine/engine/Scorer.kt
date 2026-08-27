@@ -4,6 +4,7 @@ import com.cardcopilot.engine.models.CandidateScore
 import com.cardcopilot.engine.models.CapMeasure
 import com.cardcopilot.engine.models.CardProduct
 import com.cardcopilot.engine.models.CardState
+import com.cardcopilot.engine.models.Currency
 import com.cardcopilot.engine.models.Earn
 import com.cardcopilot.engine.models.EarnRule
 import com.cardcopilot.engine.models.CashBackValuation
@@ -11,7 +12,9 @@ import com.cardcopilot.engine.models.CroValuation
 import com.cardcopilot.engine.models.CtMoneyValuation
 import com.cardcopilot.engine.models.OwnerState
 import com.cardcopilot.engine.models.PointValuation
+import com.cardcopilot.engine.models.Money
 import com.cardcopilot.engine.models.PurchaseContext
+import com.cardcopilot.engine.models.ReportingCurrency
 import com.cardcopilot.engine.models.Valuations
 import com.cardcopilot.engine.models.Warning
 
@@ -42,6 +45,10 @@ object Scorer {
             )
         }
 
+        if (!card.isPublished) {
+            return excludedScore(Warning.DRAFT_PRODUCT, "draft catalogue record, not yet issuer-verified")
+        }
+
         if (!purchase.acceptedNetworks.contains(card.network)) {
             return excludedScore(Warning.NETWORK_NOT_ACCEPTED, "${card.network.rawValue} not accepted")
         }
@@ -68,8 +75,18 @@ object Scorer {
             )
         }
 
-        var inCapCad = purchase.amountCad
-        var overCapCad = 0.0
+        // The purchase amount expressed in THIS card's own billingCurrency — 'points per currency
+        // unit' means per unit of that currency, not per CAD unconditionally. For a CAD-billing
+        // card (every card in this catalogue until the multi-market import) this is exactly
+        // `purchase.amountCad`, unchanged.
+        val nativeAmount = if (card.billingCurrency == Currency.USD) {
+            purchase.usdEquivalent ?: (purchase.amountCad * FALLBACK_CAD_TO_USD)
+        } else {
+            purchase.amountCad
+        }
+
+        var inCapAmount = nativeAmount
+        var overCapAmount = 0.0
 
         if (rule.capId != null) {
             val cap = card.caps.firstOrNull { it.capId == rule.capId }
@@ -78,12 +95,12 @@ object Scorer {
                 val measureAmount = if (cap.measure == CapMeasure.SPEND_USD_EQUIVALENT) {
                     purchase.usdEquivalent ?: (purchase.amountCad * FALLBACK_CAD_TO_USD)
                 } else {
-                    purchase.amountCad
+                    nativeAmount
                 }
                 val split = CapMath.split(measureAmount, cap.limit, usage)
                 val inFraction = if (measureAmount > 0) split.inCap / measureAmount else 1.0
-                inCapCad = purchase.amountCad * inFraction
-                overCapCad = purchase.amountCad - inCapCad
+                inCapAmount = nativeAmount * inFraction
+                overCapAmount = nativeAmount - inCapAmount
                 if (usage >= cap.limit * 0.9) {
                     warnings.add(Warning.CAP_NEARLY_EXHAUSTED)
                 }
@@ -91,7 +108,7 @@ object Scorer {
         }
 
         val postCapEarn = rule.capId?.let { id -> card.caps.firstOrNull { it.capId == id }?.postCapEarn }
-        val units = earnUnits(rule.earn, inCapCad) + earnUnits(postCapEarn ?: rule.earn, overCapCad)
+        val units = earnUnits(rule.earn, inCapAmount) + earnUnits(postCapEarn ?: rule.earn, overCapAmount)
 
         // Non-null asserted, not `?: 0.0`: the check above proves a valuation exists, and a zero
         // fallback would quietly reinstate the zero-scoring bug if a refactor ever moved it.
@@ -100,13 +117,16 @@ object Scorer {
         val grossAspirational = valueCad(units, card.program.programId, ownerState.valuationsCad, state, ValuationBand.ASPIRATIONAL)!!
 
         var fxCost = 0.0
-        if (purchase.currency != "CAD") {
+        // Compares against THIS card's billing currency, not a hardcoded "CAD".
+        if (purchase.currency != card.billingCurrency.rawValue) {
             val fx = RuleMatcher.activeFxRule(card, asOf)
             if (fx != null) {
                 if (fx.freeAllowanceCadPerCalendarMonth != null) {
                     warnings.add(Warning.FX_ALLOWANCE_ASSUMED)
                 } else {
-                    fxCost = purchase.amountCad * fx.rate
+                    // The spread is charged in the card's own billing currency, then converted to
+                    // the CAD reporting figure. For a CAD-billing card this is the identity.
+                    fxCost = ReportingCurrency.toReporting(Money(nativeAmount * fx.rate, card.billingCurrency))
                 }
             }
         }
@@ -137,10 +157,11 @@ object Scorer {
         )
     }
 
-    fun earnUnits(earn: Earn, amountCad: Double): Double {
+    /** [amount] is already expressed in the card's own `billingCurrency` — the caller converts. */
+    fun earnUnits(earn: Earn, amount: Double): Double {
         return when (earn) {
-            is Earn.Points -> amountCad * earn.pointsPerCad
-            is Earn.Cashback -> amountCad * earn.rate
+            is Earn.Points -> amount * earn.pointsPerUnit
+            is Earn.Cashback -> amount * earn.rate
             is Earn.CentsPerLitre -> 0.0
         }
     }

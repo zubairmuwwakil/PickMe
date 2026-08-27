@@ -7,8 +7,10 @@ public enum SeedLoaderError: Error, Equatable {
 
 public enum SeedLoader {
     /// The only catalogueVersion MAJOR this build understands. Bump alongside a deliberate,
-    /// reviewed breaking-shape change — see contracts/CHANGELOG.md.
-    static let supportedCatalogueMajorVersion = 1
+    /// reviewed breaking-shape change — see contracts/CHANGELOG.md. Bumped 1 → 2 for the
+    /// 2026-08-26 multi-market shape change (Money-shaped fee/credit values, `market`/
+    /// `billingCurrency`, `spendNative` replacing `spendCad`, `calendarQuarter`).
+    static let supportedCatalogueMajorVersion = 2
 
     /// candidate-catalogue.json became a list of cardIds in 2.0 (was full card definitions).
     static let supportedCandidateCatalogueMajorVersion = 2

@@ -78,6 +78,10 @@ class RecommendationExplainer(catalogue: Catalogue) {
             // an excluded card is never the winner. Worded for the case the owner can actually see.
             Warning.UNSUPPORTED_CAPABILITY ->
                 "This card has a better rule here that this app can't check yet — it may be worth more than shown."
+            // Never reachable on a winner: a draft card is excluded before scoring, so this
+            // warning never travels with a Recommendation. Listed for exhaustiveness only.
+            Warning.DRAFT_PRODUCT ->
+                "This card is a research-grade catalogue entry and should not have been scorable."
         }
     }
 

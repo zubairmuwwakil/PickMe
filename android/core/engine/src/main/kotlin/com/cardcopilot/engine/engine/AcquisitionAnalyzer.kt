@@ -2,6 +2,7 @@ package com.cardcopilot.engine.engine
 
 import com.cardcopilot.engine.models.Catalogue
 import com.cardcopilot.engine.models.OwnerState
+import com.cardcopilot.engine.models.ReportingCurrency
 import com.cardcopilot.engine.models.SpendDistribution
 
 enum class AcquisitionVerdict {
@@ -30,7 +31,13 @@ data class AcquisitionCandidate(
     val requiredBenefitValueCad: Double,
     val feeWaiverUnresolved: Boolean,
     val neverScorable: Boolean,
-    val bucketGains: List<AcquisitionBucketGain>
+    val bucketGains: List<AcquisitionBucketGain>,
+    /**
+     * Whether a resident of `OwnerState.resolvedMarket` can hold this card at all —
+     * `card.eligibility?.residency ?: [card.market]`. Does not remove the candidate from
+     * [AcquisitionAnalysis.candidates]; it only gates [AcquisitionAnalysis.recommended].
+     */
+    val eligibleForResident: Boolean
 )
 
 data class AcquisitionAnalysis(
@@ -41,7 +48,7 @@ data class AcquisitionAnalysis(
     val candidates: List<AcquisitionCandidate>
 ) {
     val recommended: List<AcquisitionCandidate>
-        get() = candidates.filter { it.verdict == AcquisitionVerdict.WORTH_ADDING }
+        get() = candidates.filter { it.verdict == AcquisitionVerdict.WORTH_ADDING && it.eligibleForResident }
 
     fun candidate(cardId: String): AcquisitionCandidate? = candidates.firstOrNull { it.cardId == cardId }
 }
@@ -78,8 +85,14 @@ class AcquisitionAnalyzer(
             ).run(distribution, emptySet(), asOf)
 
             val marginal = combined.totalValueCad - baseline.totalValueCad
-            val fee = card.fee.annualCad ?: card.fee.monthlyCad?.let { it * 12.0 } ?: 0.0
+            val fee = when {
+                card.fee.annual != null -> ReportingCurrency.toReporting(card.fee.annual)
+                card.fee.monthly != null -> ReportingCurrency.toReporting(card.fee.monthly) * 12.0
+                else -> 0.0
+            }
             val net = marginal - fee
+            val eligibleMarkets = card.eligibility?.residency ?: listOf(card.market)
+            val eligibleForResident = eligibleMarkets.contains(ownerState.resolvedMarket)
 
             val gains = combined.winnersByBucket.keys.mapNotNull { label ->
                 if (combined.winnersByBucket[label]?.contains(card.cardId) != true) return@mapNotNull null
@@ -119,7 +132,8 @@ class AcquisitionAnalyzer(
                     requiredBenefitValueCad = maxOf(0.0, fee - marginal),
                     feeWaiverUnresolved = card.fee.waiver != null && ownerState.cardStates[card.cardId]?.feeWaiverActive == null,
                     neverScorable = !scorable,
-                    bucketGains = gains
+                    bucketGains = gains,
+                    eligibleForResident = eligibleForResident
                 )
             )
         }

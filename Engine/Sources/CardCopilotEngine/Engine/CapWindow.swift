@@ -31,6 +31,9 @@ public enum CapWindow {
         switch cap.period {
         case .calendarMonth:
             return Window(startMonth: month(asOfIndex), endMonth: month(asOfIndex))
+        case .calendarQuarter:
+            let quarterStart = (asOfIndex / 3) * 3
+            return Window(startMonth: month(quarterStart), endMonth: month(quarterStart + 2))
         case .calendarYear:
             let january = (asOfIndex / 12) * 12
             return Window(startMonth: month(january), endMonth: month(january + 11))

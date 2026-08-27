@@ -1,6 +1,7 @@
 package com.cardcopilot.engine.loading
 
 import com.cardcopilot.engine.models.BenefitsCatalogue
+import com.cardcopilot.engine.models.CandidateSet
 import com.cardcopilot.engine.models.Catalogue
 import com.cardcopilot.engine.models.OwnerState
 import com.cardcopilot.engine.models.ProgramCatalogue
@@ -13,7 +14,14 @@ sealed class SeedLoaderException(message: String) : Exception(message) {
 }
 
 object SeedLoader {
-    const val SUPPORTED_CATALOGUE_MAJOR_VERSION = 1
+    // Bumped 1 -> 2 for the 2026-08-26 multi-market shape change (Money-shaped fee/credit
+    // values, market/billingCurrency, spendNative replacing spendCad, calendarQuarter) — mirrors
+    // Swift's SeedLoader.supportedCatalogueMajorVersion.
+    const val SUPPORTED_CATALOGUE_MAJOR_VERSION = 2
+
+    // candidate-catalogue.json became a list of cardIds in 2.0 (was full card definitions) —
+    // mirrors Swift's SeedLoader.supportedCandidateCatalogueMajorVersion.
+    const val SUPPORTED_CANDIDATE_CATALOGUE_MAJOR_VERSION = 2
 
     val json = Json {
         ignoreUnknownKeys = true
@@ -31,10 +39,19 @@ object SeedLoader {
         return catalogue
     }
 
-    fun loadCandidateCatalogue(): Catalogue {
-        val catalogue: Catalogue = load("candidate-catalogue")
-        validate(catalogue.catalogueVersion)
-        return catalogue
+    /**
+     * Which catalogue products are researched acquisition candidates — IDs, not card
+     * definitions (see [CandidateSet]'s doc comment). Pre-2026-08-24 Kotlin mistakenly decoded
+     * this resource as a full [Catalogue]; it never carried that shape after the refactor, which
+     * this fixes to mirror the Swift twin.
+     */
+    fun loadCandidateCatalogue(): CandidateSet {
+        val candidates: CandidateSet = load("candidate-catalogue")
+        val major = candidates.candidateCatalogueVersion.split(".", limit = 2).firstOrNull()?.toIntOrNull()
+        if (major != SUPPORTED_CANDIDATE_CATALOGUE_MAJOR_VERSION) {
+            throw SeedLoaderException.UnsupportedCatalogueVersion(candidates.candidateCatalogueVersion)
+        }
+        return candidates
     }
 
     fun loadOwnerState(): OwnerState {

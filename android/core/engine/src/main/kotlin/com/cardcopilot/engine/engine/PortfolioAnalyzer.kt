@@ -8,6 +8,7 @@ import com.cardcopilot.engine.models.CardState
 import com.cardcopilot.engine.models.Catalogue
 import com.cardcopilot.engine.models.OwnerState
 import com.cardcopilot.engine.models.PurchaseContext
+import com.cardcopilot.engine.models.ReportingCurrency
 import com.cardcopilot.engine.models.SpendDistribution
 import java.util.Locale
 
@@ -100,7 +101,7 @@ class PortfolioAnalyzer(
         for (card in scopedCatalogue.cards) {
             val without = run(distribution, setOf(card.cardId), asOf)
             val marginal = full.totalValueCad - without.totalValueCad
-            val fee = card.fee.annualCad ?: 0.0
+            val fee = ReportingCurrency.toReporting(card.fee.annual)
             val wins = full.winnersByBucket
                 .filter { it.value.contains(card.cardId) }
                 .keys.sorted()
@@ -135,7 +136,7 @@ class PortfolioAnalyzer(
             asOf = asOf,
             totalAnnualSpendCad = distribution.totalAnnualCad,
             portfolioValueCad = full.totalValueCad,
-            totalAnnualFeesCad = scopedCatalogue.cards.sumOf { it.fee.annualCad ?: 0.0 },
+            totalAnnualFeesCad = scopedCatalogue.cards.sumOf { ReportingCurrency.toReporting(it.fee.annual) },
             contributions = contributions,
             redundantPairs = redundantPairs(distribution, asOf, full, contributions)
         )

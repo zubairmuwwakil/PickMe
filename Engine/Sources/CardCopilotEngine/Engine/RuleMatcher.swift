@@ -119,8 +119,12 @@ public enum RuleMatcher {
             switch category {
             case "recurring":
                 return purchase.recurringIndicator
-            case "ownerSelectedTangerineCategory":
-                return matchesTangerineSelection(purchase: purchase, state: state)
+            case "ownerSelectedTangerineCategory", "ownerSelectedCategory":
+                // Generalized 2026-08-26 for US selectable-category cards — the mechanism
+                // (CardState.selectedCategories) was never Tangerine-specific, only the string
+                // naming it was. Both names are accepted so no existing catalogue rule needs
+                // rewriting.
+                return matchesOwnerSelection(purchase: purchase, state: state)
             default:
                 let selfOrParents = [purchase.category] + (categoryParents[purchase.category] ?? [])
                 guard selfOrParents.contains(category) else { return false }
@@ -132,8 +136,8 @@ public enum RuleMatcher {
         }
     }
 
-    private static func matchesTangerineSelection(purchase: PurchaseContext,
-                                                   state: CardState) -> Bool {
+    private static func matchesOwnerSelection(purchase: PurchaseContext,
+                                               state: CardState) -> Bool {
         guard let selections = state.selectedCategories else { return false }
         let selected = Set(selections)
         let purchaseCategories = Set(

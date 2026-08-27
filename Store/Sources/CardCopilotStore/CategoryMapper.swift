@@ -148,9 +148,11 @@ private let unscoredPredictableCategories = [
 ]
 
 /// Rule-side markers that are not merchant categories. `ownerSelectedTangerineCategory` stands
-/// in for whichever categories the owner picked on Tangerine; no statement ever shows it, so
-/// offering it in the reconcile picker would invite a meaningless answer.
-private let ruleSideMarkers: Set<String> = ["ownerSelectedTangerineCategory"]
+/// in for whichever categories the owner picked on Tangerine (`ownerSelectedCategory` is the
+/// same marker, generalized 2026-08-26 for non-Tangerine selectable-category cards); no
+/// statement ever shows either, so offering them in the reconcile picker would invite a
+/// meaningless answer.
+private let ruleSideMarkers: Set<String> = ["ownerSelectedTangerineCategory", "ownerSelectedCategory"]
 
 /// Every category the reconcile picker may offer: what the catalogue can score, plus what the
 /// mapper can predict. Derived from the catalogue rather than hand-listed, because the failure

@@ -206,8 +206,19 @@ data class OwnerState(
     val switchThreshold: SwitchThreshold,
     val carry: Carry = Carry(),
     val cardStates: Map<String, CardState> = emptyMap(),
-    val valuationsCad: Valuations
-)
+    val valuationsCad: Valuations,
+    /**
+     * The owner's own residency, as a raw [Market.rawValue] string ("CA"/"US"). Mirrors the
+     * Swift twin's `OwnerState.market` — see its doc comment for why this is a raw string, why
+     * it defaults rather than refuses, and why it gates acquisition/browse surfaces but never
+     * `ownedCardIds` or checkout scoring itself.
+     */
+    val market: String? = null
+) {
+    /** The owner's residency for market-scoping purposes, defaulting to CA when unresolved. */
+    val resolvedMarket: Market
+        get() = market?.let { raw -> Market.entries.firstOrNull { it.rawValue == raw } } ?: Market.CA
+}
 
 /**
  * This state with catalogue defaults filled in beneath anything the owner has declared.

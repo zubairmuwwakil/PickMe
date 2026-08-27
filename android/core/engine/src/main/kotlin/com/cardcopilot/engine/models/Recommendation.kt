@@ -23,7 +23,13 @@ enum class Warning(val rawValue: String) {
      * An earn rule requires an engine capability this build does not have. The rule is
      * skipped; the card is still scored on its remaining rules.
      */
-    @SerialName("unsupportedCapability") UNSUPPORTED_CAPABILITY("unsupportedCapability");
+    @SerialName("unsupportedCapability") UNSUPPORTED_CAPABILITY("unsupportedCapability"),
+
+    /**
+     * `card.status == DRAFT` — a research-grade catalogue record that has not cleared D3's
+     * issuer-confirmed sourcing bar. Excluded outright, never merely scored with a caveat.
+     */
+    @SerialName("draftProduct") DRAFT_PRODUCT("draftProduct");
 
     companion object {
         fun fromRaw(raw: String): Warning? = entries.firstOrNull { it.rawValue == raw }

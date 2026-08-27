@@ -20,11 +20,17 @@ import kotlinx.serialization.Serializable
 enum class EngineCapability(val rawValue: String) {
     @SerialName("cap.calendarMonth") CAP_CALENDAR_MONTH("cap.calendarMonth"),
     @SerialName("cap.calendarYear") CAP_CALENDAR_YEAR("cap.calendarYear"),
+    @SerialName("cap.calendarQuarter") CAP_CALENDAR_QUARTER("cap.calendarQuarter"),
     @SerialName("cap.accountYear") CAP_ACCOUNT_YEAR("cap.accountYear"),
     @SerialName("cap.statementYear") CAP_STATEMENT_YEAR("cap.statementYear"),
     @SerialName("cap.globalGroup") CAP_GLOBAL_GROUP("cap.globalGroup"),
     @SerialName("predicate.merchantPartnerList") MERCHANT_PARTNER_LIST("predicate.merchantPartnerList"),
     @SerialName("predicate.mccStrict") MCC_STRICT("predicate.mccStrict"),
+    /**
+     * Generalized 2026-08-26 from the Tangerine-only mechanism so US selectable-category cards
+     * (Citi Custom Cash, US Bank Cash+) can declare it too.
+     */
+    @SerialName("predicate.ownerSelectedCategory") OWNER_SELECTED_CATEGORY("predicate.ownerSelectedCategory"),
     @SerialName("earn.perLitre") UNIT_PER_LITRE("earn.perLitre"),
     @SerialName("earn.marginal") MARGINAL_EARN("earn.marginal");
 
@@ -34,9 +40,13 @@ enum class EngineCapability(val rawValue: String) {
          * turn on automatically when they ship. `predicate.channelIdentity` is deliberately
          * absent from this enum entirely — online booking channels are permanently out of scope
          * for an at-the-register copilot, so rules needing them use `outOfScope`, not `requires`.
+         * `CAP_CALENDAR_QUARTER` and `OWNER_SELECTED_CATEGORY` added 2026-08-26 for US rotating/
+         * selectable-category cards, supported from day one (their mechanisms ship in the same
+         * commit).
          */
         val supported: Set<EngineCapability> = setOf(
-            CAP_CALENDAR_MONTH, CAP_CALENDAR_YEAR, CAP_ACCOUNT_YEAR
+            CAP_CALENDAR_MONTH, CAP_CALENDAR_YEAR, CAP_CALENDAR_QUARTER, CAP_ACCOUNT_YEAR,
+            OWNER_SELECTED_CATEGORY
         )
 
         fun fromRaw(raw: String): EngineCapability? = entries.firstOrNull { it.rawValue == raw }

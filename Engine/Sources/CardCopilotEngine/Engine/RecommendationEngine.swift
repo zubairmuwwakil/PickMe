@@ -57,8 +57,13 @@ public struct RecommendationEngine {
     }
 
     public func recommend(_ purchase: PurchaseContext, asOf: String) -> RecommendationOutcome {
+        // The empty-wallet fallback ("no cards recorded yet, show what a typical wallet could do")
+        // is scoped to the owner's own market — without this, a multi-market catalogue would
+        // recommend a Chase card to a new Canadian user who hasn't recorded a wallet yet. A
+        // non-empty wallet is NEVER market-filtered: an owned card is an owned card regardless of
+        // where it was issued (see OwnerState.market's doc comment).
         let candidateCards = ownerState.ownedCardIds.isEmpty
-            ? catalogue.cards
+            ? catalogue.cards.filter { $0.market == ownerState.resolvedMarket }
             : catalogue.cards.filter { ownerState.ownedCardIds.contains($0.cardId) }
         let scored = candidateCards
             .map { Scorer.score(card: $0, purchase: purchase, ownerState: ownerState, asOf: asOf) }

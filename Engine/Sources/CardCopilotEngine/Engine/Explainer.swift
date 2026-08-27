@@ -74,6 +74,9 @@ public struct RecommendationExplainer {
         // Reachable on a card that WON: the excluded case never reaches an explanation, because
         // an excluded card is never the winner. Worded for the case the owner can actually see.
         case .unsupportedCapability: return "This card has a better rule here that this app can't check yet — it may be worth more than shown."
+        // Never reachable on a winner: a draft card is excluded before scoring, so this warning
+        // never travels with a Recommendation. Listed for exhaustiveness only.
+        case .draftProduct: return "This card is a research-grade catalogue entry and should not have been scorable."
         }
     }
 

@@ -149,7 +149,9 @@ object RuleMatcher {
         return categories.any { category ->
             when (category) {
                 "recurring" -> purchase.recurringIndicator
-                "ownerSelectedTangerineCategory" -> matchesTangerineSelection(purchase, state)
+                // Generalized 2026-08-26 for US selectable-category cards — both names accepted
+                // so no existing catalogue rule needs rewriting.
+                "ownerSelectedTangerineCategory", "ownerSelectedCategory" -> matchesOwnerSelection(purchase, state)
                 else -> {
                     val selfOrParents = listOf(purchase.category) + (categoryParents[purchase.category] ?: emptyList())
                     if (!selfOrParents.contains(category)) return@any false
@@ -162,7 +164,7 @@ object RuleMatcher {
         }
     }
 
-    private fun matchesTangerineSelection(purchase: PurchaseContext, state: CardState): Boolean {
+    private fun matchesOwnerSelection(purchase: PurchaseContext, state: CardState): Boolean {
         val selections = state.selectedCategories ?: return false
         val selected = selections.toSet()
         val purchaseCategories = (listOf(purchase.category) + (categoryParents[purchase.category] ?: emptyList())).toSet()
@@ -181,7 +183,7 @@ object RuleMatcher {
 
     fun rawEarn(earn: Earn): Double {
         return when (earn) {
-            is Earn.Points -> earn.pointsPerCad
+            is Earn.Points -> earn.pointsPerUnit
             is Earn.Cashback -> earn.rate * 100
             is Earn.CentsPerLitre -> -1.0
         }

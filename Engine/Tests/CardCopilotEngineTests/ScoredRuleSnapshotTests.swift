@@ -8,7 +8,7 @@ final class ScoredRuleSnapshotTests: XCTestCase {
                  status: .current,
                  effectiveFrom: "2026-01-01",
                  sourceType: .issuerConfirmed,
-                 earn: .points(pointsPerCad: 5),
+                 earn: .points(pointsPerUnit: 5),
                  predicate: Predicate())
     }
 
@@ -18,7 +18,7 @@ final class ScoredRuleSnapshotTests: XCTestCase {
                     issuer: "American Express Canada",
                     network: .amex,
                     kind: .credit,
-                    fee: Fee(annualCad: 156),
+                    fee: Fee(annual: Money(amount: 156, currency: .cad)),
                     program: Program(programId: "amexMembershipRewards", unit: "point"),
                     fxRules: [],
                     earnRules: [rule],
@@ -58,7 +58,7 @@ final class ScoredRuleSnapshotTests: XCTestCase {
             unit: "point", centsPerPoint: 2.0)
 
         XCTAssertEqual(snapshot.appliedRule, rule)
-        XCTAssertEqual(snapshot.appliedRule?.earn, .points(pointsPerCad: 5))
+        XCTAssertEqual(snapshot.appliedRule?.earn, .points(pointsPerUnit: 5))
     }
 
     /// An excluded card has no applied rule. That is a real outcome, not a capture failure.

@@ -265,7 +265,9 @@ class ProgramValuationTest {
     @Test
     fun everyCatalogueProgramIdHasACatalogueDefault() {
         val defaults = SeedLoader.programValuationDefaults
-        val declared = (SeedLoader.loadCatalogue().cards + SeedLoader.loadCandidateCatalogue().cards)
+        // Every product, candidates included — they are the same corpus since 2026-08-24
+        // (SeedLoader.loadCandidateCatalogue returns id references, not a second set of cards).
+        val declared = SeedLoader.loadCatalogue().cards
             .map { it.program.programId }
             .toSortedSet()
         val unvalued = declared.filter { it !in defaults }

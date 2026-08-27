@@ -22,6 +22,10 @@ object CapWindow {
             CapPeriod.CALENDAR_MONTH -> {
                 Window(startMonth = month(asOfIndex), endMonth = month(asOfIndex))
             }
+            CapPeriod.CALENDAR_QUARTER -> {
+                val quarterStart = (asOfIndex / 3) * 3
+                Window(startMonth = month(quarterStart), endMonth = month(quarterStart + 2))
+            }
             CapPeriod.CALENDAR_YEAR -> {
                 val january = (asOfIndex / 12) * 12
                 Window(startMonth = month(january), endMonth = month(january + 11))

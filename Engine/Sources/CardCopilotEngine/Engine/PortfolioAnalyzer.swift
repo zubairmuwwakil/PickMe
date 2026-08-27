@@ -129,7 +129,7 @@ public struct PortfolioAnalyzer {
         for card in catalogue.cards {
             let without = run(distribution, excluding: [card.cardId], asOf: asOf)
             let marginal = full.totalValueCad - without.totalValueCad
-            let fee = card.fee.annualCad ?? 0
+            let fee = ReportingCurrency.toReporting(card.fee.annual)
             let wins = full.winnersByBucket
                 .filter { $0.value.contains(card.cardId) }
                 .keys.sorted()
@@ -158,7 +158,7 @@ public struct PortfolioAnalyzer {
             asOf: asOf,
             totalAnnualSpendCad: distribution.totalAnnualCad,
             portfolioValueCad: full.totalValueCad,
-            totalAnnualFeesCad: catalogue.cards.reduce(0) { $0 + ($1.fee.annualCad ?? 0) },
+            totalAnnualFeesCad: catalogue.cards.reduce(0) { $0 + ReportingCurrency.toReporting($1.fee.annual) },
             contributions: contributions,
             redundantPairs: redundantPairs(distribution, asOf: asOf,
                                            full: full, contributions: contributions))
