@@ -31,10 +31,10 @@ re-sourced.
 The repository state was checked rather than assuming that every file under the
 release tag becomes a release asset or app resource.
 
-- The raw files are committed in both `card-contracts@2.2` and
-  `card-contracts@2.3`. They therefore appear in GitHub's automatically generated
+- The raw files are committed in `card-contracts@2.2`, `card-contracts@2.3`, and
+  `card-contracts@2.4`. They therefore appear in GitHub's automatically generated
   **Source code** `.zip` and `.tar.gz` archives for those tags.
-- Those two tagged source archives predate this file. Their copies of the
+- Those three tagged source archives predate this file. Their copies of the
   cc-offers export therefore do **not** carry the full MIT copyright and
   permission notice required for a substantial copy. The snapshot's
   `_provenance.license: "MIT"` label alone is not the required notice.
@@ -51,9 +51,10 @@ release tag becomes a release asset or app resource.
 
 Deleting files in a later commit would stop them from appearing at the current
 tip, but would not remove them from `card-contracts@2.2`, `card-contracts@2.3`,
-their source archives, or earlier Git history. Do not delete/recreate a published
-contract release under the same release id: the repository's immutability rule
-still applies. Historical remediation is an explicit owner/legal decision.
+`card-contracts@2.4`, their source archives, or earlier Git history. Do not
+delete/recreate a published contract release under the same release id: the
+repository's immutability rule still applies. Historical remediation is an
+explicit owner/legal decision.
 
 ## Source-by-source findings
 
