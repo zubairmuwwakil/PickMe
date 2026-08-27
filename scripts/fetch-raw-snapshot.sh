@@ -43,7 +43,7 @@ const matches = manifest.snapshots.filter((snapshot) =>
   snapshot.snapshotId === query || snapshot.sha256 === normalized,
 );
 if (matches.length !== 1) {
-  process.stderr.write(`fetch-raw-snapshot: expected one manifest match for ${query}, found ${matches.length}\\n`);
+  process.stderr.write(`fetch-raw-snapshot: expected one manifest match for ${query}, found ${matches.length}\n`);
   process.exit(1);
 }
 const snapshot = matches[0];
@@ -55,7 +55,7 @@ process.stdout.write([
   snapshot.release.snapshotPath,
   snapshot.release.licencePath,
   snapshot.sha256,
-].join('\\t'));
+].join('\t'));
 NODE
 )"
 IFS=$'\t' read -r snapshot_id repository release asset snapshot_path licence_path expected_sha <<< "$record"
@@ -84,7 +84,7 @@ gh release download "$release" --repo "$repository" --pattern "$asset" --dir "$t
 [ -f "$archive" ] || { echo "fetch-raw-snapshot: release did not provide $asset" >&2; exit 1; }
 
 # Do not extract a release archive until its complete member list is the two expected files.
-expected_members="$(printf '%s\\n%s\\n' "$licence_path" "$snapshot_path" | LC_ALL=C sort)"
+expected_members="$(printf '%s\n%s\n' "$licence_path" "$snapshot_path" | LC_ALL=C sort)"
 actual_members="$(tar -tzf "$archive" | LC_ALL=C sort)"
 if [ "$actual_members" != "$expected_members" ]; then
   echo "fetch-raw-snapshot: release archive has unexpected members" >&2

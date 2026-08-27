@@ -25,7 +25,7 @@ const [manifestPath, snapshotId] = process.argv.slice(2);
 const manifest = require(manifestPath);
 const matches = manifest.snapshots.filter((snapshot) => snapshot.snapshotId === snapshotId);
 if (matches.length !== 1) {
-  process.stderr.write(`publish-raw-snapshot: expected one manifest match for ${snapshotId}, found ${matches.length}\\n`);
+  process.stderr.write(`publish-raw-snapshot: expected one manifest match for ${snapshotId}, found ${matches.length}\n`);
   process.exit(1);
 }
 const snapshot = matches[0];
@@ -40,7 +40,7 @@ process.stdout.write([
   snapshot.release.asset,
   snapshot.release.snapshotPath,
   snapshot.release.licencePath,
-].join('\\t'));
+].join('\t'));
 NODE
 )"
 IFS=$'\t' read -r source_url filename expected_sha licence notice_file repository release asset snapshot_path licence_path <<< "$record"
