@@ -74,7 +74,7 @@ jobs:
       - uses: actions/checkout@v6
 
       # Toolchain in core/engine/build.gradle.kts asks for 21; Gradle 8.11.1 does not run on 25.
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
