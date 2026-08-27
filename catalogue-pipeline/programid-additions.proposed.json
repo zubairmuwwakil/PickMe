@@ -1,0 +1,376 @@
+{
+  "_note": "Option 2 proposal: programId enum additions. Generated, NOT ratified. Each addition is a catalogue MAJOR bump mirrored across Swift/Kotlin/TypeScript, AND needs a programs.json valuation \u2014 Scorer excludes a card whose programId has no valuation, so adding the enum value alone changes nothing.",
+  "_notOneCurrency": "These are NOT single currencies and must not become single enum values. Each store or cruise co-brand earns its own issuer-specific reward, and collapsing them would value one brand's points as another's \u2014 the exact error Option 1 refused. They need a separate ruling: out of scope, or a generic store-credit model.",
+  "proposedAdditions": {
+    "aaAdvantage": {
+      "currency": "AAdvantage",
+      "cards": 6,
+      "landableIfAdded": 3,
+      "examples": [
+        "AAdvantage Aviator Silver",
+        "Citi / AAdvantage Business World Elite Mastercard",
+        "Citi\u00ae / AAdvantage\u00ae Executive World Elite Mastercard\u00ae"
+      ],
+      "cardIds": [
+        "barclays-aadvantage-aviator-silver",
+        "citi-aadvantage-business-world-elite",
+        "citi-aadvantage-executive-world-elite",
+        "citi-aadvantage-globe-mastercard",
+        "citi-aadvantage-platinum-select",
+        "citi-american-airlines-aadvantage-mileup-card"
+      ],
+      "proposedProgramId": "aaAdvantage"
+    },
+    "jetBlueTrueBlue": {
+      "currency": "JetBlue TrueBlue",
+      "cards": 4,
+      "landableIfAdded": 0,
+      "examples": [
+        "JetBlue Business Card",
+        "JetBlue Card",
+        "JetBlue Plus Card"
+      ],
+      "cardIds": [
+        "barclays-jetblue-business-card",
+        "barclays-jetblue-card",
+        "barclays-jetblue-plus-card",
+        "barclays-jetblue-premier-card"
+      ],
+      "proposedProgramId": "jetBlueTrueBlue"
+    },
+    "avios": {
+      "currency": "Avios",
+      "cards": 4,
+      "landableIfAdded": 4,
+      "examples": [
+        "Aer Lingus Visa Signature\u00ae Card",
+        "British Airways Visa Signature\u00ae Card",
+        "Iberia Visa Signature\u00ae Card"
+      ],
+      "cardIds": [
+        "chase-aer-lingus-visa-signature-card",
+        "chase-british-airways-visa-signature-card",
+        "chase-iberia-visa-signature-card",
+        "royal-bank-of-canada-rbc-british-airways-visa"
+      ],
+      "proposedProgramId": "avios"
+    },
+    "unitedMileagePlus": {
+      "currency": "United MileagePlus",
+      "cards": 4,
+      "landableIfAdded": 0,
+      "examples": [
+        "United Club\u2120 Business Card",
+        "United\u2120 Explorer Card",
+        "United\u2120 Gateway Card"
+      ],
+      "cardIds": [
+        "chase-united-club-business-card",
+        "chase-united-explorer-card",
+        "chase-united-gateway-card",
+        "chase-united-quest-card"
+      ],
+      "proposedProgramId": "unitedMileagePlus"
+    },
+    "deltaSkyMiles": {
+      "currency": "Delta SkyMiles",
+      "cards": 3,
+      "landableIfAdded": 3,
+      "examples": [
+        "Amex Delta Blue",
+        "Delta SkyMiles Gold Business",
+        "Delta SkyMiles\u00ae Platinum American Express Card"
+      ],
+      "cardIds": [
+        "american-express-delta-blue",
+        "american-express-delta-skymiles-gold-business",
+        "american-express-delta-skymiles-platinum"
+      ],
+      "proposedProgramId": "deltaSkyMiles"
+    },
+    "alaskaMileagePlan": {
+      "currency": "Alaska Mileage Plan / Atmos",
+      "cards": 3,
+      "landableIfAdded": 3,
+      "examples": [
+        "Alaska Airlines Atmos\u2122 Ascent Visa Signature\u00ae Card",
+        "Atmos Rewards Summit Visa Infinite Credit Card",
+        "Atmos\u2122 Rewards Visa Signature\u00ae Business Credit Card"
+      ],
+      "cardIds": [
+        "bank-of-america-alaska-airlines-atmos-ascent",
+        "bank-of-america-atmos-rewards-summit-visa",
+        "bank-of-america-atmos-rewards-visa-signature"
+      ],
+      "proposedProgramId": "alaskaMileagePlan"
+    },
+    "disneyRewards": {
+      "currency": "Disney Rewards",
+      "cards": 3,
+      "landableIfAdded": 3,
+      "examples": [
+        "Disney Inspire Visa Card",
+        "Disney Premier Visa",
+        "Chase Disney Visa Card"
+      ],
+      "cardIds": [
+        "chase-disney-inspire-visa-card",
+        "chase-disney-premier-visa",
+        "chase-disney-visa-card"
+      ],
+      "proposedProgramId": "disneyRewards"
+    },
+    "southwestRapidRewards": {
+      "currency": "Southwest Rapid Rewards",
+      "cards": 3,
+      "landableIfAdded": 0,
+      "examples": [
+        "Southwest Performance Business",
+        "Chase Southwest Priority",
+        "Southwest Rapid Rewards\u00ae Plus Credit Card"
+      ],
+      "cardIds": [
+        "chase-southwest-performance-business",
+        "chase-southwest-priority",
+        "chase-southwest-rapid-rewards-plus"
+      ],
+      "proposedProgramId": "southwestRapidRewards"
+    },
+    "wyndhamRewards": {
+      "currency": "Wyndham Rewards",
+      "cards": 2,
+      "landableIfAdded": 0,
+      "examples": [
+        "Wyndham Earner Business",
+        "Wyndham Rewards Earner Premier Card"
+      ],
+      "cardIds": [
+        "barclays-wyndham-earner-business",
+        "barclays-wyndham-rewards-earner-premier-card"
+      ],
+      "proposedProgramId": "wyndhamRewards"
+    },
+    "worldOfHyatt": {
+      "currency": "World of Hyatt",
+      "cards": 2,
+      "landableIfAdded": 0,
+      "examples": [
+        "Chase Hyatt",
+        "World of Hyatt Business Credit Card"
+      ],
+      "cardIds": [
+        "chase-hyatt",
+        "chase-world-of-hyatt-business-credit-card"
+      ],
+      "proposedProgramId": "worldOfHyatt"
+    },
+    "ihgOneRewards": {
+      "currency": "IHG One Rewards",
+      "cards": 2,
+      "landableIfAdded": 0,
+      "examples": [
+        "IHG One Rewards Premier Business Credit Card",
+        "Chase IHG Premier"
+      ],
+      "cardIds": [
+        "chase-ihg-one-rewards-premier-business",
+        "chase-ihg-premier"
+      ],
+      "proposedProgramId": "ihgOneRewards"
+    },
+    "costcoCashRewards": {
+      "currency": "Costco Cash Rewards",
+      "cards": 2,
+      "landableIfAdded": 1,
+      "examples": [
+        "Costco Anywhere Business",
+        "CIBC Costco Mastercard"
+      ],
+      "cardIds": [
+        "citi-costco-anywhere-business",
+        "cibc-costco-mastercard"
+      ],
+      "proposedProgramId": "costcoCashRewards"
+    },
+    "hiltonHonors": {
+      "currency": "Hilton Honors",
+      "cards": 1,
+      "landableIfAdded": 1,
+      "examples": [
+        "Hilton Honors American Express Aspire Card"
+      ],
+      "cardIds": [
+        "american-express-hilton-honors"
+      ],
+      "proposedProgramId": "hiltonHonors"
+    },
+    "spiritFreeSpirit": {
+      "currency": "Spirit Free Spirit",
+      "cards": 1,
+      "landableIfAdded": 1,
+      "examples": [
+        "Free Spirit\u00ae Travel More World Elite Mastercard\u00ae"
+      ],
+      "cardIds": [
+        "bank-of-america-free-spirit-travel-more-world"
+      ],
+      "proposedProgramId": "spiritFreeSpirit"
+    },
+    "emiratesSkywards": {
+      "currency": "Emirates Skywards",
+      "cards": 1,
+      "landableIfAdded": 1,
+      "examples": [
+        "Emirates Skywards Premium World Elite Mastercard\u00ae"
+      ],
+      "cardIds": [
+        "barclays-emirates-skywards-premium-world"
+      ],
+      "proposedProgramId": "emiratesSkywards"
+    },
+    "frontierMiles": {
+      "currency": "Frontier Miles",
+      "cards": 1,
+      "landableIfAdded": 1,
+      "examples": [
+        "Frontier Airlines World Mastercard\u00ae"
+      ],
+      "cardIds": [
+        "barclays-frontier-airlines-world-mastercard"
+      ],
+      "proposedProgramId": "frontierMiles"
+    },
+    "hawaiianMiles": {
+      "currency": "Hawaiian Miles",
+      "cards": 1,
+      "landableIfAdded": 1,
+      "examples": [
+        "Hawaiian Airlines World Elite Mastercard\u00ae"
+      ],
+      "cardIds": [
+        "barclays-hawaiian-airlines-world-elite"
+      ],
+      "proposedProgramId": "hawaiianMiles"
+    },
+    "cathayAsiaMiles": {
+      "currency": "Cathay Asia Miles",
+      "cards": 1,
+      "landableIfAdded": 1,
+      "examples": [
+        "Cathay World Elite Mastercard"
+      ],
+      "cardIds": [
+        "synchrony-cathay-world-elite-mastercard"
+      ],
+      "proposedProgramId": "cathayAsiaMiles"
+    },
+    "choicePrivileges": {
+      "currency": "Choice Privileges",
+      "cards": 1,
+      "landableIfAdded": 1,
+      "examples": [
+        "Choice Privileges Mastercard\u00ae"
+      ],
+      "cardIds": [
+        "wells-fargo-choice-privileges-mastercard"
+      ],
+      "proposedProgramId": "choicePrivileges"
+    }
+  },
+  "deferredNotOneCurrency": {
+    "Store-specific rewards": {
+      "currency": "Store-specific rewards",
+      "cards": 12,
+      "landableIfAdded": 10,
+      "examples": [
+        "Athleta Encore Mastercard\u00ae",
+        "Athleta Rewards Mastercard\u00ae",
+        "Banana Republic Rewards Mastercard\u00ae"
+      ],
+      "cardIds": [
+        "barclays-athleta-encore-mastercard",
+        "barclays-athleta-rewards-mastercard",
+        "barclays-banana-republic-rewards-mastercard",
+        "barclays-gap-encore-mastercard",
+        "barclays-gap-good-rewards-mastercard",
+        "capital-one-bj-s-one-mastercard",
+        "capital-one-kohl-s-charge-card",
+        "synchrony-mywalgreens-mastercard",
+        "synchrony-sam-s-club-mastercard",
+        "synchrony-sears-mastercard",
+        "td-bank-usa-nordstrom-credit-card",
+        "td-bank-usa-target-circle-credit-card-target"
+      ]
+    },
+    "Brand-specific rewards": {
+      "currency": "Brand-specific rewards",
+      "cards": 10,
+      "landableIfAdded": 5,
+      "examples": [
+        "Amex Morgan Stanley Blue",
+        "AARP\u00ae Essential Rewards Mastercard\u00ae from Barclays",
+        "Harley-Davidson Credit Card"
+      ],
+      "cardIds": [
+        "american-express-morgan-stanley-blue",
+        "barclays-aarp-essential-rewards-mastercard",
+        "barclays-harley-davidson-credit-card",
+        "discover-nhl-discover-it-credit-card",
+        "robinhood-gold-card",
+        "robinhood-platinum-card",
+        "sofi-credit-card-unlimited-2",
+        "synchrony-carecredit-credit-card",
+        "synchrony-carecredit-rewards-mastercard",
+        "synchrony-verizon-visa-card"
+      ]
+    },
+    "Amazon Rewards (US) \u2014 distinct from the CA amazonRewards entry": {
+      "currency": "Amazon Rewards (US) \u2014 distinct from the CA amazonRewards entry",
+      "cards": 5,
+      "landableIfAdded": 3,
+      "examples": [
+        "Amazon Business American Express Card",
+        "Amazon Visa",
+        "Prime Visa and Amazon Visa"
+      ],
+      "cardIds": [
+        "american-express-amazon-business",
+        "chase-amazon-visa",
+        "chase-prime-visa-and-amazon-visa",
+        "synchrony-amazon-prime-store-card",
+        "synchrony-amazon-secured-card-and-prime"
+      ]
+    },
+    "PayPal / Venmo cashback": {
+      "currency": "PayPal / Venmo cashback",
+      "cards": 4,
+      "landableIfAdded": 2,
+      "examples": [
+        "PayPal Cashback Mastercard\u00ae",
+        "PayPal Credit",
+        "Venmo Credit Card"
+      ],
+      "cardIds": [
+        "synchrony-paypal-cashback-mastercard",
+        "synchrony-paypal-credit",
+        "synchrony-venmo-credit-card",
+        "synchrony-venmo-visa-signature-credit-card"
+      ]
+    },
+    "Cruise-line loyalty": {
+      "currency": "Cruise-line loyalty",
+      "cards": 3,
+      "landableIfAdded": 3,
+      "examples": [
+        "Carnival\u00ae World Mastercard\u00ae",
+        "Celebrity Cruises Visa Signature\u00ae Card",
+        "Royal Caribbean Visa Signature\u00ae Card"
+      ],
+      "cardIds": [
+        "barclays-carnival-world-mastercard",
+        "barclays-celebrity-cruises-visa-signature",
+        "barclays-royal-caribbean-visa-signature-card"
+      ]
+    }
+  }
+}
