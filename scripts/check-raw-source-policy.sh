@@ -4,17 +4,15 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LICENCES="$ROOT/catalogue-pipeline/raw/LICENCES.md"
-SOURCES="$ROOT/catalogue-pipeline/raw/SOURCES.json"
+POLICY="$ROOT/catalogue-pipeline/RAW_SOURCE_POLICY.md"
+MANIFEST="$ROOT/catalogue-pipeline/raw/MANIFEST.json"
+MIT_NOTICE="$ROOT/catalogue-pipeline/licences/cc-offers-MIT.txt"
 SWIFT_NOTICES="$ROOT/Engine/Sources/CardCopilotEngine/Resources/THIRD_PARTY_NOTICES.md"
 ANDROID_NOTICES="$ROOT/android/core/engine/src/main/resources/com/cardcopilot/engine/THIRD_PARTY_NOTICES.md"
 
 allowed_raw_path() {
   case "$1" in
-    catalogue-pipeline/raw/LICENCES.md | \
-    catalogue-pipeline/raw/SOURCES.json | \
-    catalogue-pipeline/raw/us/cc-offers/cc-offers-export-2026-08-27.json | \
-    catalogue-pipeline/raw/ca/clearfin/clearfin_slugs.txt)
+    catalogue-pipeline/raw/MANIFEST.json)
       return 0
       ;;
     *)
@@ -35,17 +33,38 @@ done < <(git -C "$ROOT" ls-files 'catalogue-pipeline/raw/**')
 if [ "${#unexpected[@]}" -ne 0 ]; then
   echo "check-raw-source-policy: blocked or unreviewed raw material is tracked:" >&2
   printf '  %s\n' "${unexpected[@]}" >&2
-  echo "Review catalogue-pipeline/raw/LICENCES.md before changing the allowlist." >&2
+  echo "Review catalogue-pipeline/RAW_SOURCE_POLICY.md before changing the allowlist." >&2
   exit 1
 fi
 
-python3 -m json.tool "$SOURCES" >/dev/null
+node - "$MANIFEST" <<'NODE'
+const manifest = require(process.argv[2]);
+if (manifest.manifestVersion !== 1 || !Array.isArray(manifest.snapshots) || manifest.snapshots.length === 0) {
+  throw new Error('MANIFEST.json must be a non-empty v1 snapshot manifest');
+}
+const ids = new Set();
+const hashes = new Set();
+for (const snapshot of manifest.snapshots) {
+  const required = ['snapshotId', 'sourceId', 'sourceUrl', 'fetchedAt', 'filename', 'sha256', 'licence', 'release'];
+  if (required.some((key) => snapshot[key] == null) || !/^[a-f0-9]{64}$/.test(snapshot.sha256)) {
+    throw new Error(`Invalid snapshot manifest entry: ${JSON.stringify(snapshot.snapshotId)}`);
+  }
+  if (ids.has(snapshot.snapshotId) || hashes.has(snapshot.sha256)) {
+    throw new Error(`Duplicate snapshot id or sha256: ${snapshot.snapshotId}`);
+  }
+  if (!snapshot.release.tag.startsWith('raw-snapshots@') || !snapshot.release.asset.endsWith('.tar.gz')) {
+    throw new Error(`Snapshot ${snapshot.snapshotId} must use a raw-snapshots@ tar.gz release asset`);
+  }
+  ids.add(snapshot.snapshotId);
+  hashes.add(snapshot.sha256);
+}
+NODE
 
-grep -Fq 'Copyright (c) 2026 Sunny Golovine' "$LICENCES" || {
+grep -Fq 'Copyright (c) 2026 Sunny Golovine' "$POLICY" || {
   echo "check-raw-source-policy: cc-offers MIT copyright notice is missing" >&2
   exit 1
 }
-grep -Fq 'The above copyright notice and this permission notice shall be included' "$LICENCES" || {
+grep -Fq 'The above copyright notice and this permission notice shall be included' "$MIT_NOTICE" || {
   echo "check-raw-source-policy: cc-offers MIT permission notice is incomplete" >&2
   exit 1
 }

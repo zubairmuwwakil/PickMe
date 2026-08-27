@@ -1,0 +1,26 @@
+{
+  "manifestVersion": 1,
+  "policy": "Raw snapshots are release assets, never tracked repository content. Fetch an exact snapshot with scripts/fetch-raw-snapshot.sh and verify its SHA-256 before using it.",
+  "snapshots": [
+    {
+      "snapshotId": "cc-offers-us-2026-08-27",
+      "sourceId": "cc-offers",
+      "sourceUrl": "https://github.com/sgolovine/cc-offers/tree/c125704e93cc78bab9cbd012f2e5eff01a67b125",
+      "fetchedAt": "2026-08-27",
+      "filename": "cc-offers-export-2026-08-27.json",
+      "sha256": "d075e2296d0f70bccf061b01eee56811a246c3f460d2f63a7f522d8aed739d06",
+      "licence": {
+        "spdx": "MIT",
+        "noticeFile": "catalogue-pipeline/licences/cc-offers-MIT.txt"
+      },
+      "release": {
+        "repository": "zubairmuwwakil/PickMe",
+        "tag": "raw-snapshots@2026-08-27",
+        "asset": "cc-offers-us-2026-08-27.tar.gz",
+        "format": "tar.gz",
+        "snapshotPath": "cc-offers-export-2026-08-27.json",
+        "licencePath": "LICENSE"
+      }
+    }
+  ]
+}

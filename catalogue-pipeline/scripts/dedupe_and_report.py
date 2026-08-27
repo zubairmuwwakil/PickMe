@@ -8,12 +8,14 @@ next-agent artifacts (Phases 4/8/9 of the catalogue-expansion brief):
 
 Sources read (all RAW, never mutated):
   contracts/card-catalogue.json                                  (41 published CA cards)
-  catalogue-pipeline/raw/us/cc-offers/cc-offers-export-*.json     (242 US rows, prose rewards)
-  catalogue-pipeline/raw/ca/clearfin/clearfin_slugs.txt           (127 CA URLs, discovery-only)
+  catalogue-pipeline/.raw-cache/cc-offers-us-2026-08-27/cc-offers-export-2026-08-27.json
+                                                               (242 US rows, prose rewards)
+  catalogue-pipeline/locators/clearfin_slugs.txt                (127 CA URLs, discovery-only)
 
 OpenCard snapshots and ClearFin page/extraction copies are deliberately NOT inputs. Their
 2026-08-27 licence review found no redistribution permission, so they were removed from the
-public tree. See raw/LICENCES.md and raw/SOURCES.json. ClearFin slugs are locator metadata only;
+public tree. See RAW_SOURCE_POLICY.md and raw/MANIFEST.json. Fetch the cleared cc-offers
+snapshot by its manifest hash before running this script. ClearFin slugs are locator metadata only;
 agents must go from a slug/card name to the issuer's own site, never fetch ClearFin for facts.
 
 Matching is deliberately conservative: normalized (issuer, name-token-overlap) equality only.
@@ -22,8 +24,8 @@ merge later. A false match (two different cards silently merged) hides one of th
 failure — so ambiguous cases are reported as "possible duplicate, needs a human", never merged
 automatically.
 """
-import glob
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -122,7 +124,18 @@ def load_catalogue_cards():
 
 
 def load_cc_offers():
-    path = sorted(glob.glob(str(PIPELINE / "raw/us/cc-offers/cc-offers-export-*.json")))[-1]
+    manifest = json.loads((PIPELINE / "raw/MANIFEST.json").read_text())
+    snapshots = [s for s in manifest["snapshots"] if s["sourceId"] == "cc-offers"]
+    if len(snapshots) != 1:
+        raise RuntimeError(f"Expected one cc-offers snapshot in raw/MANIFEST.json, found {len(snapshots)}")
+    snapshot = snapshots[0]
+    cache = Path(os.environ.get("PICKME_RAW_CACHE", PIPELINE / ".raw-cache"))
+    path = cache / snapshot["snapshotId"] / snapshot["filename"]
+    if not path.is_file():
+        raise RuntimeError(
+            f"cc-offers snapshot is not materialized at {path}. Run "
+            f"scripts/fetch-raw-snapshot.sh {snapshot['sha256']} first."
+        )
     data = load_json(Path(path))
     out = []
     for r in data["rows"]:
@@ -144,7 +157,7 @@ def load_cc_offers():
 
 
 def load_clearfin_discovery_slugs():
-    path = PIPELINE / "raw/ca/clearfin/clearfin_slugs.txt"
+    path = PIPELINE / "locators/clearfin_slugs.txt"
     if not path.exists():
         return []
     return [line.strip() for line in path.read_text().splitlines() if line.strip()]

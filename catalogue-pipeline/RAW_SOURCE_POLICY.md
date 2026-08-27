@@ -22,7 +22,7 @@ re-sourced.
 
 | Source and local material | Licence / permission found | May the raw material be redistributed? | Must attribution travel with it? | Public-repository assessment | Required disposition |
 |---|---|---|---|---|---|
-| `us/cc-offers/cc-offers-export-2026-08-27.json` | MIT, copyright 2026 Sunny Golovine | **Yes, subject to the MIT notice.** This conclusion covers the upstream project's material; it cannot license third-party issuer expression embedded in a row. | **Yes.** The copyright and permission notice must accompany copies or substantial portions. | Permitted if the notice below travels with every substantial copy. | Keep; attach this notice to standalone exports, release assets, and any app distribution containing a substantial copy. Continue to treat issuer URLs as research leads, not issuer confirmation. |
+| `cc-offers-us-2026-08-27.tar.gz` release asset (the JSON is not tracked) | MIT, copyright 2026 Sunny Golovine | **Yes, subject to the MIT notice.** This conclusion covers the upstream project's material; it cannot license third-party issuer expression embedded in a row. | **Yes.** The copyright and permission notice must accompany copies or substantial portions. | Permitted as the separate `raw-snapshots@2026-08-27` release asset, which contains its `LICENSE`. | Retrieve only through `raw/MANIFEST.json` + `scripts/fetch-raw-snapshot.sh`; do not commit the extracted JSON. Continue to treat issuer URLs as research leads, not issuer confirmation. |
 | Historical `us/opencard/opencard-cards-2026-08-27.json` (removed from current tree) | **No copyright/data licence found.** API docs permit AI agents, personal tools, and research, say normal use is free, and say “Not for commercial scraping.” Site terms grant no redistribution right. The public GitHub repo has no `LICENSE` file or detected licence. | **Unclear; do not assume permission.** API access permission is not a grant to republish a frozen database snapshot. | No attribution condition was found, but attribution would not cure the missing permission. | **Not cleared.** A public raw snapshot, release source archive, or bundled app copy goes beyond the clearly stated research/personal-tool use. | Removed from the current tree. Ask OpenCard for a written data licence or re-source from issuer pages. Historical Git/tag remediation remains an owner/legal decision. |
 | Historical `ca/clearfin/pages/*.html` and `clearfin-extracted-sample-2026-08-27.json` (removed), plus retained `clearfin_slugs.txt` | **No reuse licence or Terms of Service found.** ClearFin publishes a privacy statement and disclosures, marks the site © 2026 ClearFin Digital Inc., and exposes `robots.txt` with `Allow: /`. | **No permission established.** `robots.txt` permits crawling by robots; it does not license copying or publication. | No attribution condition was found, but attribution would not cure the missing permission. | **Verbatim HTML: not supported by any located terms and not cleared for a public repo.** Extracted wording/selection is also unclear. A bare URL list is lower risk, but it is only locator metadata and grants no rights in page content. | Pages and extraction removed from the current tree; the 127 URL/slugs remain as locator-only leads. Do not fetch the pages. Re-source facts from issuers. Historical Git/tag remediation remains an owner/legal decision. |
 
@@ -70,12 +70,11 @@ and says others may inspect, reuse, and build on it. The repository-wide MIT
 licence permits use, copying, modification, publication, and distribution, but
 requires the notice below in copies or substantial portions.
 
-The local JSON is a 242-row export and therefore a substantial copy. Keeping
-this `LICENCES.md` beside it satisfies the notice path for the repository and
-tagged source archives. It does **not** automatically satisfy a standalone JSON
-download, a release asset containing only the JSON, or an app bundle. Those
-distributions must carry the same notice in a third-party-notices file or an
-equivalent bundled location.
+The 242-row JSON export is a substantial copy. Keeping
+the release archive pairs the JSON with `catalogue-pipeline/licences/cc-offers-MIT.txt`
+as `LICENSE`, so the required notice travels with the substantial copy. The
+snapshot's committed manifest records its exact SHA-256 and the release asset.
+Do not attach the JSON as a standalone asset or bundle it into an app.
 
 The export also contains per-row source URLs, evidence, and `raw_json`. MIT can
 license Sunny Golovine's selection, schema, and authored material; it cannot
@@ -174,7 +173,7 @@ until D3's per-rule issuer evidence exists.
 
 1. **Done for the current tree:** ClearFin HTML/extracted content and the OpenCard
    snapshot are removed; the ClearFin expansion remains blocked. A closed
-   allowlist in `SOURCES.json` and `scripts/check-raw-source-policy.sh` prevents
+   manifest in `raw/MANIFEST.json` and `scripts/check-raw-source-policy.sh` prevent
    them from being recommitted accidentally.
 2. **Owner/legal decision remains:** decide whether the existing tagged release
    source archives require takedown/history remediation, and how to cure the
