@@ -9,8 +9,6 @@ public final class LiveActivityManager: ObservableObject {
 
     @Published public private(set) var currentActivityId: String?
 
-    private var currentActivity: Activity<CardCopilotActivityAttributes>?
-
     private init() {}
 
     /// Starts a Live Activity for a merchant recommendation.
@@ -26,7 +24,7 @@ public final class LiveActivityManager: ObservableObject {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
 
         // End any existing activity first
-        if currentActivity != nil {
+        if currentActivityId != nil {
             endActivity()
         }
 
@@ -51,7 +49,6 @@ public final class LiveActivityManager: ObservableObject {
                 content: .init(state: initialContent, staleDate: Date().addingTimeInterval(15 * 60)),
                 pushType: nil
             )
-            currentActivity = activity
             currentActivityId = activity.id
         } catch {
             // Live activities request may fail if suppressed or rate-limited by OS
@@ -66,7 +63,7 @@ public final class LiveActivityManager: ObservableObject {
                                categoryDisplayName: String,
                                categoryIcon: String,
                                isFork: Bool = false) {
-        guard let currentActivity else { return }
+        guard let currentActivityId else { return }
         let updatedState = CardCopilotActivityAttributes.ContentState(
             recommendedCardName: cardName,
             recommendedCardId: cardId,
@@ -78,8 +75,14 @@ public final class LiveActivityManager: ObservableObject {
             timestamp: Date()
         )
 
-        Task {
-            await currentActivity.update(
+        // Activity is not Sendable. Looking it up inside the detached task keeps the instance in
+        // one isolation region instead of transferring a main-actor property into ActivityKit's
+        // nonisolated async API (an error under the Swift 6.2 compiler in Xcode 26.6).
+        Task.detached {
+            guard let activity = Activity<CardCopilotActivityAttributes>.activities.first(where: {
+                $0.id == currentActivityId
+            }) else { return }
+            await activity.update(
                 .init(state: updatedState, staleDate: Date().addingTimeInterval(15 * 60))
             )
         }
@@ -87,11 +90,14 @@ public final class LiveActivityManager: ObservableObject {
 
     /// Ends the current Live Activity.
     public func endActivity(dismissalPolicy: ActivityUIDismissalPolicy = .immediate) {
-        guard let activity = currentActivity else { return }
-        Task {
+        guard let currentActivityId else { return }
+        self.currentActivityId = nil
+
+        Task.detached {
+            guard let activity = Activity<CardCopilotActivityAttributes>.activities.first(where: {
+                $0.id == currentActivityId
+            }) else { return }
             await activity.end(nil, dismissalPolicy: dismissalPolicy)
         }
-        self.currentActivity = nil
-        self.currentActivityId = nil
     }
 }

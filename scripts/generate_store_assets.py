@@ -1,9 +1,12 @@
 import os
+from pathlib import Path
+
 from PIL import Image, ImageDraw, ImageFont
 
-ASSETS_DIR = "/Users/zub/Documents/Github_Projects/PickMe/android/play_store_assets"
-os.makedirs(ASSETS_DIR, exist_ok=True)
-ICON_PATH = "/Users/zub/Documents/Github_Projects/PickMe/App/CardCopilot/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+ASSETS_DIR = REPO_ROOT / "android" / "play_store_assets"
+ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+ICON_PATH = REPO_ROOT / "App" / "CardCopilot" / "Resources" / "Assets.xcassets" / "AppIcon.appiconset" / "icon-1024.png"
 
 # Color Palette
 BG_DARK = (14, 17, 22)         # #0E1116

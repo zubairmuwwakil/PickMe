@@ -163,4 +163,32 @@ final class CatalogueIntegrityTests: XCTestCase {
           + "they outrank every 2.5% card on foreign purchases. State the rate — a fee-free card "
           + "declares rate 0.0 rather than saying nothing.")
     }
+
+    /// RuleMatcher.matches does an exact, case-sensitive `include.contains(brand)` against
+    /// `PurchaseContext.merchantBrand`, and every producer of that value
+    /// (CheckoutService.canonicalEngineBrand, SpendDistribution, CanadianMerchantPreIndex) emits
+    /// lowercase kebab-case tokens ("costco", "canadian-tire"). A display-cased catalogue token
+    /// ("Loblaws") can therefore never match and silently drops its rule out of scoring forever —
+    /// the 2026-08-26 merchantInclude rules shipped this way and stayed invisible only because
+    /// scoredInV1/requires separately gated them out of live scoring. This is the general form of
+    /// that bug, pinned so no future rule can ship with a token RuleMatcher can never satisfy.
+    func testMerchantBrandTokensAreLowercaseKebabCase() throws {
+        let tokenPattern = try NSRegularExpression(pattern: "^[a-z0-9]+(-[a-z0-9]+)*$")
+        func isValidToken(_ token: String) -> Bool {
+            let range = NSRange(token.startIndex..., in: token)
+            return tokenPattern.firstMatch(in: token, range: range) != nil
+        }
+
+        var offenders: [String] = []
+        for card in try allCards() {
+            for rule in card.earnRules {
+                let tokens = (rule.predicate.merchantInclude ?? []) + (rule.predicate.merchantExclude ?? [])
+                offenders += tokens.filter { !isValidToken($0) }.map { "\(card.cardId)/\(rule.ruleId): \($0)" }
+            }
+        }
+        XCTAssertEqual(offenders, [],
+            "merchantInclude/merchantExclude token(s) not lowercase kebab-case, so RuleMatcher's "
+          + "exact-match predicate can never be satisfied by an app-produced brand (all lowercase "
+          + "kebab-case: \"costco\", \"canadian-tire\").")
+    }
 }

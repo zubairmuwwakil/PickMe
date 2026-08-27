@@ -202,11 +202,11 @@ final class CardVisualThemeTests: XCTestCase {
             hosting.view.drawHierarchy(in: hosting.view.bounds, afterScreenUpdates: true)
         }
 
-        if let data = darkImage.pngData() {
-            let artifactPath = "/Users/zub/.gemini/antigravity/brain/12e8edf2-025a-4b62-9134-ac17f8147e16/category_picker_grid.png"
-            try data.write(to: URL(fileURLWithPath: artifactPath))
-            try data.write(to: URL(fileURLWithPath: "/tmp/category_picker_grid.png"))
-        }
+        XCTAssertNotNil(darkImage.pngData(), "Dark category picker render must encode as PNG")
+        let darkAttachment = XCTAttachment(image: darkImage)
+        darkAttachment.name = "category-picker-grid-dark"
+        darkAttachment.lifetime = .keepAlways
+        add(darkAttachment)
 
         // Light mode screenshot
         hosting.overrideUserInterfaceStyle = .light
@@ -217,10 +217,10 @@ final class CardVisualThemeTests: XCTestCase {
             hosting.view.drawHierarchy(in: hosting.view.bounds, afterScreenUpdates: true)
         }
 
-        if let data = lightImage.pngData() {
-            let artifactPath = "/Users/zub/.gemini/antigravity/brain/12e8edf2-025a-4b62-9134-ac17f8147e16/category_picker_grid_light.png"
-            try data.write(to: URL(fileURLWithPath: artifactPath))
-            try data.write(to: URL(fileURLWithPath: "/tmp/category_picker_grid_light.png"))
-        }
+        XCTAssertNotNil(lightImage.pngData(), "Light category picker render must encode as PNG")
+        let lightAttachment = XCTAttachment(image: lightImage)
+        lightAttachment.name = "category-picker-grid-light"
+        lightAttachment.lifetime = .keepAlways
+        add(lightAttachment)
     }
 }
