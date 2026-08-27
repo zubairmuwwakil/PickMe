@@ -35,7 +35,7 @@ public struct SpendDistribution: Equatable, Sendable {
                     merchantBrand: String? = nil, currency: String = "CAD",
                     usdEquivalent: Double? = nil, country: String = "CA",
                     channel: String = "cardPresent", recurring: Bool = false,
-                    acceptedNetworks: Set<Network> = [.amex, .visa, .mastercard]) {
+                    acceptedNetworks: Set<Network> = [.amex, .visa, .mastercard, .discover]) {
             self.init(label: label, annualCad: annualCad,
                       context: PurchaseContext(amountCad: annualCad, currency: currency,
                                                usdEquivalent: usdEquivalent, category: category,

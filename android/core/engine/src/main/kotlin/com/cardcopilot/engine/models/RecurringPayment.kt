@@ -38,7 +38,7 @@ data class RecurringPayment(
     val annualCad: Double get() = amountCad * cadence.chargesPerYear
 
     val effectiveAcceptedNetworks: Set<Network>
-        get() = declaredAcceptedNetworks ?: setOf(Network.AMEX, Network.VISA, Network.MASTERCARD)
+        get() = declaredAcceptedNetworks ?: setOf(Network.AMEX, Network.VISA, Network.MASTERCARD, Network.DISCOVER)
 }
 
 data class RecurringPlan(

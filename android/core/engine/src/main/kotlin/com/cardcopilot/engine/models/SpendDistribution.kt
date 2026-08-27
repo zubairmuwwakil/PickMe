@@ -21,7 +21,7 @@ data class SpendDistribution(
             country: String = "CA",
             channel: String = "cardPresent",
             recurring: Boolean = false,
-            acceptedNetworks: Set<Network> = setOf(Network.AMEX, Network.VISA, Network.MASTERCARD)
+            acceptedNetworks: Set<Network> = setOf(Network.AMEX, Network.VISA, Network.MASTERCARD, Network.DISCOVER)
         ) : this(
             label = label,
             annualCad = annualCad,
