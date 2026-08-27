@@ -29,6 +29,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+
       # Merchant facts move independently from card-rate releases, so the pack has its own
       # generator check instead of being folded into RELEASE.json.
       - name: Verify merchant-pack.json matches its Swift source
