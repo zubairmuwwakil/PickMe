@@ -228,8 +228,10 @@ def main() -> int:
         print("\nnothing to promote", file=sys.stderr)
         return 1
 
-    catalogue["cards"].extend(drafts)
-    catalogue["cards"].sort(key=lambda c: c["cardId"])
+    # Append; do NOT re-sort the whole array. Four consumers vendor this file, and reordering
+    # 41 untouched published cards turns a 26-card addition into a whole-file diff — and moved
+    # cards[0], which broke a consumer test that indexes it. Drafts are sorted among themselves.
+    catalogue["cards"].extend(sorted(drafts, key=lambda c: c["cardId"]))
     CATALOGUE.write_text(json.dumps(catalogue, indent=2, ensure_ascii=False) + "\n")
     print(f"\nwrote {len(drafts)} drafts into {CATALOGUE}")
     print("NEXT (human): bump catalogueVersion, then release-catalogue.sh, publish-catalogue.sh,")
