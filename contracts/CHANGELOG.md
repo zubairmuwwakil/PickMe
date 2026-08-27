@@ -2,6 +2,36 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-27 — card-catalogue 2.2: first draft records, and the integrity gates that did not know about them
+
+- **26 US cards added with `status: draft`** under the Option 1 ruling (issuer-flagship reward
+  currencies only). Each carries identity and annual fee — the facts an aggregator gets right —
+  and `earnRules: []`, `fxRules: []`, `caps: []`,
+  `perTransactionRewardVisibility: "unknown"`. Nothing about their earn structure is claimed,
+  because nothing about it has been verified. The 41 published CA cards are unchanged and keep
+  their existing order in the file.
+- **`lastVerifiedAt` on a draft is the SNAPSHOT date**, not a verification date. Promotion to
+  `published` overwrites it with the date a human read the issuer's terms. Blurring the two would
+  forge the provenance the catalogue exists to carry.
+- **Five Swift gates and one Kotlin gate went red on this release, and all six were right to.**
+  `testEveryCardCanEarnSomething`, `testEveryCardDeclaresAnFxRule`,
+  `testEveryProgramIdIsValuedOrKnownUnvalued`, `testProductsWithoutBenefitsAreExactlyTheKnownGap`,
+  `SeedLoaderTests.testCatalogueLoadsAllCards`, and Kotlin's
+  `everyCatalogueProgramIdHasACatalogueDefault` were all written before `status` existed, when
+  "in the catalogue" and "issuer-confirmed" were the same thing. Each is an assertion about a
+  VERIFIED PRODUCT FACT, and a draft has none by design. They are now scoped to published cards
+  (`isPublished`, which already existed on both models); the count gate asserts 41 *published*
+  plus the presence of drafts, so it keeps asserting something as the corpus grows.
+- **Not relaxed anywhere: `Scorer` still refuses a draft on the status guard**, ahead of the
+  network, program and valuation guards. `testNoCatalogueCardIsExcludedForAnUnvaluedProgram`
+  passed throughout without modification, which independently proves that ordering — the US
+  programIds have no valuation, and the drafts on them never reach the valuation check.
+- **The consumer side needed the same lesson.** MoneyTalks' `catalogueChoices` and five other
+  surfaces read the raw corpus and offered drafts to users the day 2.2 landed; they now go through
+  a `publishedCards()` chokepoint. `status` was introduced as a Scorer concept, and no other layer
+  — presentation, integrity gates, or valuation ratchet — was taught about it. That is the whole
+  shape of this entry.
+
 ## 2026-08-26 — card-catalogue 2.1: merchantInclude tokens normalized to lowercase kebab-case
 
 - **25 of 26 `merchantInclude` rules used display-cased brand names** ("Loblaws", "Shoppers Drug Mart",

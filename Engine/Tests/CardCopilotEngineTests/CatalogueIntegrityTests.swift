@@ -46,7 +46,7 @@ final class CatalogueIntegrityTests: XCTestCase {
     /// and never re-enabled. This is the general form of that bug.
     func testEveryCardCanEarnSomething() throws {
         let asOf = "2026-08-20"
-        let dead = try allCards()
+        let dead = try publishedCards()
             .filter { card in !card.earnRules.contains { RuleMatcher.isLive($0, asOf: asOf) } }
             .map(\.cardId)
         XCTAssertEqual(dead, [], "cards with no live earn rule — they can never earn anything")
@@ -56,12 +56,27 @@ final class CatalogueIntegrityTests: XCTestCase {
         try SeedLoader.loadCatalogue().cards
     }
 
+    /// The invariants below are about VERIFIED PRODUCT FACTS, and a `draft` record has none by
+    /// design: it carries `earnRules: []` and `fxRules: []` because it has not cleared D3's
+    /// issuer-confirmed sourcing bar, and `Scorer` refuses to score it on the status guard before
+    /// it reads a single rule. Asserting those invariants over drafts asks the catalogue to state
+    /// facts nobody has verified, which is the one thing the draft lane exists to avoid.
+    ///
+    /// Catalogue 2.2 was the first release with drafts in it, and it turned five of these gates
+    /// red at once — every one of them written before `status` existed, when "in the catalogue"
+    /// and "issuer-confirmed" were the same thing. Same shape as the consumer-side leak that
+    /// needed `publishedCards()` in MoneyTalks: `status` arrived as a Scorer concept and no other
+    /// layer was taught about it.
+    private func publishedCards() throws -> [CardProduct] {
+        try allCards().filter(\.isPublished)
+    }
+
     /// The valued set is read from programs.json, not mirrored here. A hand-copied list would be
     /// one more place for the catalogue to outrun the code — inside the very gate meant to catch
     /// that. Adding a sourced valuation to programs.json now tightens this test on its own.
     func testEveryProgramIdIsValuedOrKnownUnvalued() throws {
         let valued = Set(try SeedLoader.loadPrograms().defaults.keys)
-        let unhandled = Set(try allCards().map(\.program.programId))
+        let unhandled = Set(try publishedCards().map(\.program.programId))
             .subtracting(valued)
             .subtracting(Self.knownUnvaluedPrograms)
         XCTAssertTrue(unhandled.isEmpty,
@@ -157,7 +172,7 @@ final class CatalogueIntegrityTests: XCTestCase {
     /// so requiring at least one rule costs nothing and closes the hole. No allowlist: there is
     /// no honest reason for a card to decline to state its FX terms.
     func testEveryCardDeclaresAnFxRule() throws {
-        let silent = try allCards().filter { $0.fxRules.isEmpty }.map(\.cardId)
+        let silent = try publishedCards().filter { $0.fxRules.isEmpty }.map(\.cardId)
         XCTAssertTrue(silent.isEmpty,
             "card(s) declaring no fxRule: \(silent.sorted()). Scorer charges them $0.00 FX, so "
           + "they outrank every 2.5% card on foreign purchases. State the rate — a fee-free card "

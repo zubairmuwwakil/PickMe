@@ -267,7 +267,14 @@ class ProgramValuationTest {
         val defaults = SeedLoader.programValuationDefaults
         // Every product, candidates included — they are the same corpus since 2026-08-24
         // (SeedLoader.loadCandidateCatalogue returns id references, not a second set of cards).
+        // PUBLISHED only. A draft has not cleared D3's sourcing bar, and Scorer refuses it on the
+        // status guard before it ever reaches the valuation guard — so an unvalued draft programId
+        // excludes nothing that was not already excluded. Catalogue 2.2 was the first release with
+        // drafts, and it turned this gate red along with four Swift ones, every one written before
+        // `status` existed. Requiring a valuation here would force a number to be invented for a
+        // programme nobody has verified the card earns.
         val declared = SeedLoader.loadCatalogue().cards
+            .filter { it.isPublished }
             .map { it.program.programId }
             .toSortedSet()
         val unvalued = declared.filter { it !in defaults }

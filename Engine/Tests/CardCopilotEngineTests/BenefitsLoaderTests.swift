@@ -31,7 +31,9 @@ final class BenefitsLoaderTests: XCTestCase {
             "pc-financial-world-mastercard", "rbc-cashback-preferred-we",
             "simplii-cashback-visa", "td-aeroplan-visa-infinite-privilege",
         ]
-        let catalogue = Set(try SeedLoader.loadCatalogue().cards.map(\.cardId))
+        // Published only: a draft has no benefits entry because nobody has read its issuer's
+        // terms yet, which is the definition of a draft rather than a gap to track.
+        let catalogue = Set(try SeedLoader.loadCatalogue().cards.filter(\.isPublished).map(\.cardId))
         let benefits = Set(try SeedLoader.loadBenefitsCatalogue().cards.map(\.cardId))
         XCTAssertEqual(catalogue.subtracting(benefits), knownGap)
     }
