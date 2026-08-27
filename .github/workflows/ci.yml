@@ -24,6 +24,11 @@ jobs:
       - name: Verify RELEASE.json describes the contracts in this commit
         run: ./scripts/release-catalogue.sh --check
 
+      - name: Card ids are permanent
+        run: scripts/check-id-permanence.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   engine-fixtures:
     name: engine-fixtures (swift test)
     runs-on: macos-15
