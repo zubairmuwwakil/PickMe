@@ -51,16 +51,35 @@ public enum CaptureSource: String, Codable, Sendable, CaseIterable {
 // that version once two of them exist.
 extension CardCopilotSchemaV2 {
 
-    /// What the app said at the moment of payment. Never edited after it is written:
-    /// corrections arrive as a separate `StoredObservation`. Accuracy measured against a
-    /// log that could be rewritten would measure nothing.
+    /// What the app said at the moment of payment.
+    ///
+    /// Very nearly append-only, and the one exception is deliberate: `predictedCategory` is
+    /// rewritten by `PredictionLog.updateCategory` when the owner corrects a misread merchant.
+    /// Accuracy measured against a log that can be rewritten would measure nothing, so that path
+    /// stamps `categoryCorrectedAt` and every other field here is settable only from its
+    /// initialiser. Corrections otherwise arrive as a separate `StoredObservation`.
     @Model
     public final class StoredPrediction {
         public private(set) var id: UUID = UUID()
         public private(set) var recordedAt: Date = Date()
         public private(set) var merchantName: String = ""
         public private(set) var merchantIdentifier: String?
-        public var predictedCategory: String = ""
+        /// Mutable, but only from inside this module: `PredictionLog.updateCategory` is the single
+        /// path, and it stamps `categoryCorrectedAt`. A public setter would let any caller rewrite
+        /// the category without leaving the trace the accuracy math depends on — which is the whole
+        /// reason the stamp exists rather than being advisory.
+        public internal(set) var predictedCategory: String = ""
+        /// When the owner reclassified this prediction's category, if they ever did.
+        ///
+        /// Once `predictedCategory` has been rewritten it matches the observation, and a miss
+        /// becomes indistinguishable from a hit — the accuracy number degrades silently, exactly
+        /// the failure provenance exists to prevent. `categoryCorrectedAt != nil` is the queryable
+        /// predicate that keeps a rewritten row out of a hit-rate figure, the same way
+        /// `contractRelease == nil` keeps a pre-provenance row out of a per-release one.
+        ///
+        /// It does not recover what was originally predicted; that value is gone once overwritten.
+        /// Excluding corrected rows is the honest floor here, not a repair.
+        public internal(set) var categoryCorrectedAt: Date?
         public private(set) var confidenceSourceRaw: String = ConfidenceSource.fallback.rawValue
         public private(set) var winnerCardId: String = ""
         public private(set) var winnerValueCad: Double = 0
@@ -194,7 +213,10 @@ extension CardCopilotSchemaV2 {
     public final class StoredObservation {
         public private(set) var id: UUID = UUID()
         public private(set) var confirmedAt: Date = Date()
-        public var observedCategory: String = ""
+        /// Module-internal setter for the same reason as `StoredPrediction.predictedCategory`:
+        /// `PredictionLog.updateCategory` keeps the observation in step with the correction, and
+        /// nothing outside this package should be able to restate what a statement said.
+        public internal(set) var observedCategory: String = ""
         /// Reward units the statement actually posted for this transaction — points for a points
         /// card, dollars for cash back. Optional and never inferred: a statement that shows no
         /// per-transaction reward line leaves this unknown, which excludes the row from the

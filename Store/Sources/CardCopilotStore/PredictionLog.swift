@@ -192,13 +192,19 @@ public struct PredictionLog {
     }
 
     /// Reclassifies a transaction's category and updates the Merchant Truth Graph.
-    public func updateCategory(for prediction: StoredPrediction, to newCategory: String) throws {
+    ///
+    /// Stamps `categoryCorrectedAt`. Rewriting the category makes the prediction agree with the
+    /// observation, which would otherwise turn a recorded miss into an indistinguishable hit; the
+    /// stamp is what lets the accuracy math exclude the row instead of silently counting it.
+    public func updateCategory(for prediction: StoredPrediction, to newCategory: String,
+                               correctedAt: Date = Date()) throws {
         prediction.predictedCategory = newCategory
+        prediction.categoryCorrectedAt = correctedAt
         if let purchase = prediction.purchase {
             if let observation = purchase.observation {
                 observation.observedCategory = newCategory
             } else {
-                let observation = StoredObservation(observedCategory: newCategory, confirmedAt: Date())
+                let observation = StoredObservation(observedCategory: newCategory, confirmedAt: correctedAt)
                 context.insert(observation)
                 observation.purchase = purchase
             }

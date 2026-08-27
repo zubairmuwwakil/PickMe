@@ -55,9 +55,9 @@ final class SchemaVersionTests: XCTestCase {
                            "lastSeenAt", "latitude", "longitude", "name", "poiCategoryRaw"],
         "StoredObservation": ["confirmedAt", "id", "missClassRaw", "note", "observedCategory",
                               "observedRewardUnits", "purchase"],
-        "StoredPrediction": ["confidenceSourceRaw", "contractDigest", "contractRelease",
-                             "defaultCardValueCad", "frozenInputs", "headline", "id",
-                             "merchantIdentifier", "merchantName", "predictedCategory",
+        "StoredPrediction": ["categoryCorrectedAt", "confidenceSourceRaw", "contractDigest",
+                             "contractRelease", "defaultCardValueCad", "frozenInputs", "headline",
+                             "id", "merchantIdentifier", "merchantName", "predictedCategory",
                              "predictedRewardUnitKind", "predictedRewardUnits", "purchase",
                              "recordedAt", "runnerUpCardId", "runnerUpValueCad", "scoredAmountCad",
                              "valuationCentsPerPoint", "winnerCardId", "winnerRuleId",
@@ -140,8 +140,12 @@ final class SchemaVersionTests: XCTestCase {
         }
     }
 
-    /// V2 adds exactly three properties to exactly one entity. Anything else riding along in
+    /// V2 adds exactly four properties to exactly one entity. Anything else riding along in
     /// this migration is a mistake — every other entity must be untouched.
+    ///
+    /// Three are provenance; the fourth, `categoryCorrectedAt`, is what keeps that provenance
+    /// honest once `predictedCategory` became rewritable. It rides along here rather than waiting
+    /// for a V3 because V2 has not shipped: a nullable column is free today and a migration later.
     func testV2ChangesOnlyStoredPrediction() {
         for (name, v1Properties) in Self.v1Shape where name != "StoredPrediction" {
             XCTAssertEqual(Self.v2Shape[name], v1Properties,
@@ -149,7 +153,8 @@ final class SchemaVersionTests: XCTestCase {
         }
         let added = Set(Self.v2Shape["StoredPrediction"]!)
             .subtracting(Self.v1Shape["StoredPrediction"]!)
-        XCTAssertEqual(added, ["contractRelease", "contractDigest", "frozenInputs"])
+        XCTAssertEqual(added, ["contractRelease", "contractDigest", "frozenInputs",
+                               "categoryCorrectedAt"])
     }
 
     /// V1's entity names are unchanged in V2 on purpose: SwiftData keys a persisted store on them,
@@ -171,6 +176,29 @@ final class SchemaVersionTests: XCTestCase {
         let v2 = Set(CardCopilotSchemaV2.models.map(ObjectIdentifier.init))
         XCTAssertTrue(v1.isDisjoint(with: v2),
                       "V1's frozen model types must not be the live ones, or the migration test proves nothing.")
+    }
+
+    /// Each version's relationships must land on that version's own classes.
+    ///
+    /// The type annotations *are* the assertion: if `purchase` inside `extension CardCopilotSchemaV1`
+    /// resolved to the module-level typealias — V2's class — this would not compile. Swift's rule is
+    /// that an enclosing type's members shadow module scope, so it resolves correctly; but the rule
+    /// only started carrying weight when V1 and V2 stopped being the same seven classes, and a
+    /// cross-version inverse would produce a schema whose relationship points outside itself.
+    func testRelationshipsStayWithinTheirSchemaVersion() {
+        let v1Purchase: KeyPath<CardCopilotSchemaV1.StoredPrediction, CardCopilotSchemaV1.StoredPurchase?>
+            = \.purchase
+        let v2Purchase: KeyPath<CardCopilotSchemaV2.StoredPrediction, CardCopilotSchemaV2.StoredPurchase?>
+            = \.purchase
+        let v1Members: KeyPath<CardCopilotSchemaV1.ShoppingArea, [CardCopilotSchemaV1.AreaMember]>
+            = \.members
+        let v2Members: KeyPath<CardCopilotSchemaV2.ShoppingArea, [CardCopilotSchemaV2.AreaMember]>
+            = \.members
+
+        XCTAssertEqual(v1Purchase, \CardCopilotSchemaV1.StoredPrediction.purchase)
+        XCTAssertEqual(v2Purchase, \CardCopilotSchemaV2.StoredPrediction.purchase)
+        XCTAssertEqual(v1Members, \CardCopilotSchemaV1.ShoppingArea.members)
+        XCTAssertEqual(v2Members, \CardCopilotSchemaV2.ShoppingArea.members)
     }
 
     func testMigrationPlanCarriesV1ToV2() {
@@ -233,6 +261,8 @@ final class SchemaVersionTests: XCTestCase {
                      "Pre-provenance rows must stay nil — a backfilled value would be invented.")
         XCTAssertNil(migrated[0].contractDigest)
         XCTAssertNil(migrated[0].frozenInputs)
+        XCTAssertNil(migrated[0].categoryCorrectedAt,
+                     "A migrated row has not been corrected; nil is the only truthful value.")
     }
 
     /// The other half of the migration: a store already at V2 keeps accepting provenance, and a

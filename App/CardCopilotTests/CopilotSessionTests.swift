@@ -8,7 +8,7 @@ import CardCopilotStore
 final class CopilotSessionTests: XCTestCase {
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(versionedSchema: CardCopilotSchemaV2.self)
+        let schema = Schema(versionedSchema: CardCopilotSchema.current)
         let container = try ModelContainer(
             for: schema,
             migrationPlan: CardCopilotMigrationPlan.self,

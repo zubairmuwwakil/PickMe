@@ -323,10 +323,50 @@ final class MissingFactsTests: XCTestCase {
         context.insert(merchant)
         try context.save()
 
-        try log.updateCategory(for: p, to: "dining")
+        XCTAssertNil(p.categoryCorrectedAt, "Nothing has been corrected yet.")
+
+        let correctedAt = Date(timeIntervalSince1970: 1_800_000_000)
+        try log.updateCategory(for: p, to: "dining", correctedAt: correctedAt)
 
         XCTAssertEqual(p.predictedCategory, "dining")
         XCTAssertEqual(p.purchase?.observation?.observedCategory, "dining")
         XCTAssertEqual(merchant.confirmedCategory, "dining")
+        XCTAssertEqual(p.categoryCorrectedAt, correctedAt,
+                       "A rewritten category must leave a trace, or a miss reads as a hit.")
+    }
+
+    /// The reason `categoryCorrectedAt` exists, stated as a test.
+    ///
+    /// After a correction the prediction agrees with the observation, so every field the accuracy
+    /// math reads says "we got it right" — including `wasCorrect`. The stamp is the only thing
+    /// separating a row that was right from one that was made right, and accuracy reporting has to
+    /// exclude the latter rather than count it.
+    func testACorrectedRowIsIndistinguishableFromAHitExceptForTheStamp() throws {
+        let corrected = try log.record(StoredPrediction(
+            merchantName: "Loblaws", predictedCategory: "grocery", confidenceSource: .brandPrior,
+            winnerCardId: "amex-cobalt", winnerValueCad: 7.00, headline: "Cobalt"))
+        let purchase = try log.recordPurchase(for: corrected, cardUsedId: "amex-cobalt",
+                                              cardSource: .atTill)
+        try log.recordAmount(50.0, source: .atTill, on: purchase)
+        try log.updateCategory(for: corrected, to: "dining")
+
+        let genuineHit = try log.record(StoredPrediction(
+            merchantName: "Metro", predictedCategory: "dining", confidenceSource: .brandPrior,
+            winnerCardId: "amex-cobalt", winnerValueCad: 7.00, headline: "Cobalt"))
+        let hitPurchase = try log.recordPurchase(for: genuineHit, cardUsedId: "amex-cobalt",
+                                                 cardSource: .atTill)
+        try log.recordAmount(50.0, source: .atTill, on: hitPurchase)
+        try log.confirm(hitPurchase, observedCategory: "dining", missClass: nil, note: nil)
+
+        // Indistinguishable on every field the hit-rate figure would look at...
+        XCTAssertEqual(corrected.predictedCategory, genuineHit.predictedCategory)
+        XCTAssertEqual(corrected.purchase?.observation?.observedCategory,
+                       genuineHit.purchase?.observation?.observedCategory)
+        XCTAssertEqual(corrected.purchase?.observation?.wasCorrect,
+                       genuineHit.purchase?.observation?.wasCorrect)
+
+        // ...and separable only by the stamp.
+        XCTAssertNotNil(corrected.categoryCorrectedAt)
+        XCTAssertNil(genuineHit.categoryCorrectedAt)
     }
 }

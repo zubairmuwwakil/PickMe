@@ -25,11 +25,19 @@ struct CardCopilotApp: App {
         .modelContainer(Self.sharedModelContainer)
     }
 
-    /// Built from `CardCopilotSchemaV1` rather than from a literal list of model types.
+    /// Built from `CardCopilotSchema.current` rather than from a literal list of model types, and
+    /// rather than from a version named literally.
     ///
-    /// The literal list was a second copy of `CardCopilotSchemaV1.models` that nothing kept in
-    /// step: adding an eighth model and forgetting this line would compile, pass every test that
+    /// The literal list was a second copy of the schema's `models` that nothing kept in step:
+    /// adding an eighth model and forgetting this line would compile, pass every test that
     /// builds its own container, and then have no table for the new type on a real device.
+    ///
+    /// Naming a version here would fail the same way. A container is keyed by the model *types* in
+    /// its schema, so once the typealiased `StoredPrediction` moved to V2, a container still opened
+    /// at V1 would hold V1's frozen classes and have no table for the type the app actually
+    /// inserts — and, being a valid V1 container, would never run the V1→V2 stage at all. That
+    /// mistake compiles, passes every test that builds its own container, and surfaces only on a
+    /// device with a real store. `CardCopilotSchema.current` is the single name that moves.
     ///
     /// Naming a migration plan is the substantive change. Without one, SwiftData attempts an
     /// implicit lightweight migration and refuses to open the store when the shape has moved
@@ -43,10 +51,10 @@ struct CardCopilotApp: App {
     private static let sharedModelContainer: ModelContainer = {
         do {
             return try ModelContainer(
-                for: Schema(versionedSchema: CardCopilotSchemaV1.self),
+                for: Schema(versionedSchema: CardCopilotSchema.current),
                 migrationPlan: CardCopilotMigrationPlan.self)
         } catch {
-            fatalError("Could not open the CardCopilot store at schema V1: \(error)")
+            fatalError("Could not open the CardCopilot store at the current schema: \(error)")
         }
     }()
 }
