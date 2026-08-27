@@ -178,7 +178,7 @@ final class CardVisualThemeTests: XCTestCase {
         let context = ModelContext(container)
         let service = CheckoutService(catalogue: catalogue, ownerState: ownerState, context: context)
         let provider = LiveMerchantProvider()
-        let deps = CheckoutFlowView.Dependencies(
+        let deps = DependencyGraph(
             catalogue: catalogue,
             candidateCardIds: candidateCardIds,
             ownerState: ownerState,

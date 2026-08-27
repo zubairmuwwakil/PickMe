@@ -6,7 +6,7 @@ import CardCopilotStore
 /// Allows the user to experiment with different cents-per-point valuations (Amex MR, Aeroplan,
 /// Scene+, Avion) and visually observe where credit card recommendations flip against cash back.
 struct ValuationSandboxView: View {
-    let deps: CheckoutFlowView.Dependencies
+    let deps: DependencyGraph
     let onDone: () -> Void
 
     @State private var amexMrCents: Double = 1.8

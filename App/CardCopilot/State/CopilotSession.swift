@@ -2,6 +2,7 @@ import Foundation
 import Observation
 import CoreLocation
 import CardCopilotStore
+import CardCopilotCapture
 
 /// An operational failure the owner should be told about without losing their place.
 ///
@@ -190,6 +191,92 @@ final class CopilotSession {
             report(FlowError(error))
             return .idle
         }
+    }
+
+    /// What the Apple Wallet Shortcut already answered for the checkouts still in the finish
+    /// queue. Recomputed from the two published facts rather than stored, so it can never
+    /// disagree with the queue it annotates — a stale proposal would offer to fill a field that
+    /// was filled a moment ago.
+    func captureProposals(sync: SyncCoordinator) -> [UUID: CaptureProposal] {
+        Dictionary(CaptureMatcher.proposals(for: completionQueue, from: sync.walletFeedback)
+                    .map { ($0.predictionId, $0) },
+                   uniquingKeysWith: { first, _ in first })
+    }
+
+    /// This is the point of instant repeats: local row -> amount capture, with no location
+    /// request and no MapKit lookup.
+    func startInstantRepeat(_ merchant: StoredMerchant) -> CheckoutStep {
+        .amount(NearbyMerchant(id: merchant.identifier ?? merchant.id.uuidString,
+                               name: merchant.name,
+                               poiCategoryRaw: merchant.poiCategoryRaw,
+                               latitude: merchant.latitude,
+                               longitude: merchant.longitude,
+                               distanceMeters: nil))
+    }
+
+    func startInstantRepeatWithAmount(_ merchant: StoredMerchant, amount: Double,
+                                      using graph: DependencyGraph) -> CheckoutStep {
+        let nearby = NearbyMerchant(id: merchant.identifier ?? merchant.id.uuidString,
+                                    name: merchant.name,
+                                    poiCategoryRaw: merchant.poiCategoryRaw,
+                                    latitude: merchant.latitude,
+                                    longitude: merchant.longitude,
+                                    distanceMeters: nil)
+        return recommend(merchant: nearby, amount: amount, using: graph)
+    }
+
+    /// The 1-tap path: score and record in the same call, with no intermediate recommendation
+    /// screen. A write failure here is an alert, not a full-screen error (Design Decision 3) —
+    /// the owner is mid-checkout, not on a dedicated reconcile screen, but losing their place to
+    /// report a write failure is still the wrong trade.
+    func logInstantPurchase(_ merchant: StoredMerchant, amount: Double, using graph: DependencyGraph) {
+        let nearby = NearbyMerchant(id: merchant.identifier ?? merchant.id.uuidString,
+                                    name: merchant.name,
+                                    poiCategoryRaw: merchant.poiCategoryRaw,
+                                    latitude: merchant.latitude,
+                                    longitude: merchant.longitude,
+                                    distanceMeters: nil)
+        do {
+            let today = Date().formatted(.iso8601.year().month().day())
+            let result = try graph.service.recommend(merchant: nearby, amountCad: amount, asOf: today)
+            let winnerCardId: String = {
+                switch result.outcome {
+                case .single(let rec): return rec.winner.cardId
+                case .fork(let branches): return branches.first?.recommendation.winner.cardId ?? ""
+                }
+            }()
+            let allPredictions = try graph.service.log.allPredictions()
+            if let stored = allPredictions.first(where: { $0.id == result.storedPredictionId }) {
+                let purchase = try graph.service.log.recordPurchase(for: stored, cardUsedId: winnerCardId,
+                                                                    cardSource: .atTill)
+                try graph.service.log.recordAmount(amount, source: .atTill, on: purchase)
+            }
+            refresh(using: graph)
+
+            let cardName = graph.catalogue.cards.first { $0.cardId == winnerCardId }?.officialName ?? winnerCardId
+            let meta = CategoryVisuals.meta(for: result.prediction.category)
+            LiveActivityManager.shared.startRecommendationActivity(
+                merchantName: merchant.name,
+                cardName: cardName,
+                cardId: winnerCardId,
+                multiplierHeadline: String(format: "$%.2f logged", amount),
+                advantageDescription: "1-Tap Checkout",
+                categoryDisplayName: meta.displayName,
+                categoryIcon: meta.icon,
+                isFork: false
+            )
+        } catch {
+            report(FlowError(error))
+        }
+    }
+
+    /// The prediction is never touched — the store offers no way to touch it — this corrects the
+    /// statement-derived category on the purchase's observation. Silent on failure, matching the
+    /// original `try?`: a mis-tapped category correction is low-stakes and the owner has no
+    /// screen dedicated to it to keep them on.
+    func updateCategory(for prediction: StoredPrediction, to newCategory: String, using graph: DependencyGraph) {
+        try? graph.service.log.updateCategory(for: prediction, to: newCategory)
+        refresh(using: graph)
     }
 
     private func sortedHomeMerchants(_ merchants: [StoredMerchant]) -> [StoredMerchant] {

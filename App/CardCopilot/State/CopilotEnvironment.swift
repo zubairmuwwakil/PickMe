@@ -3,6 +3,8 @@ import Observation
 import SwiftData
 import CardCopilotEngine
 import CardCopilotStore
+import CardCopilotCapture
+import ClerkKit
 
 /// The loaded dependency graph. Lifted verbatim from `CheckoutFlowView.Dependencies` — the
 /// members and both computed properties are unchanged, so every consumer keeps working.
@@ -44,6 +46,8 @@ final class CopilotEnvironment {
     /// Set when seed data cannot be read at all. Distinct from an operational error: the app
     /// has nothing to show, so this is a full-screen state, not an alert.
     private(set) var loadFailure: String?
+    private(set) var ambientDiagnostics = SuppressionLog()
+    private(set) var walletIsFirstRun = false
 
     private let modelContext: ModelContext
     private let sync: SyncCoordinator
@@ -69,6 +73,7 @@ final class CopilotEnvironment {
 
             seedOwnerState = seedOwner
             isFirstRun = localOwner == nil
+            walletIsFirstRun = localOwner == nil
             graph = makeGraph(catalogue: catalogue, candidates: candidates,
                               owner: owner, benefits: benefits)
             configureAmbient(catalogue: catalogue, owner: owner)
@@ -111,5 +116,242 @@ final class CopilotEnvironment {
 
     private func configureAmbient(catalogue: Catalogue, owner: OwnerState) {
         ambient.configure(modelContainer: modelContext.container, catalogue: catalogue, ownerState: owner)
+        ambientDiagnostics = ambient.diagnostics
+    }
+
+    /// Re-reads ambient's own diagnostics. `AmbientLocationService` is not `@Observable`, so a
+    /// scene-active tick or an explainer's "enable" tap must pull a fresh copy rather than rely
+    /// on SwiftUI noticing the change on its own.
+    func refreshAmbientDiagnostics() {
+        ambientDiagnostics = ambient.diagnostics
+    }
+}
+
+// MARK: - Account lifecycle
+//
+// Every operation here ends by rebuilding `graph` (Design Decision 5), which is why these live
+// on `CopilotEnvironment` rather than on a separate object. `session` and `router` are taken as
+// parameters rather than stored: this object outlives any one screen and must not hold a
+// reference back into objects that can be recreated, which would leave it observing a stale one.
+extension CopilotEnvironment {
+    /// Binds the active device wallet to the signed-in account. A cached profile is restored when
+    /// possible; a different, previously unseen account is seeded from its server wallet instead
+    /// of inheriting the prior account's cards. A server miss opens a genuinely empty setup flow.
+    func prepareAccount(forUserID userID: String?, session: CopilotSession, router: CheckoutRouter) async {
+        sync.restoreSyncMetadata(forUserID: userID)
+        sync.walletFeedback = []
+        sync.walletInstallations = []
+        sync.readySyncUserID = nil
+        sync.accountSetupUserID = nil
+        guard let userID else { return }
+
+        load()
+        guard let graph else { return }
+        sync.isPreparingAccount = true
+        defer { sync.isPreparingAccount = false }
+
+        do {
+            if sync.accountOwnerStateStore.activeUserID == userID,
+               let cached = sync.accountOwnerStateStore.state(forUserID: userID) {
+                try sync.accountOwnerStateStore.activate(cached, forUserID: userID)
+                rebuild(ownerState: cached)
+                session.refresh(using: self.graph!)
+                walletIsFirstRun = false
+                if router.path.last == .walletSetup { router.pop() }
+                sync.readySyncUserID = userID
+                return
+            }
+
+            if let cached = sync.accountOwnerStateStore.state(forUserID: userID) {
+                try sync.accountOwnerStateStore.activate(cached, forUserID: userID)
+                rebuild(ownerState: cached)
+                session.refresh(using: self.graph!)
+                walletIsFirstRun = false
+                if router.path.last == .walletSetup { router.pop() }
+                sync.readySyncUserID = userID
+                return
+            }
+
+            // Migration and first account attachment: an existing unbound device wallet belongs to
+            // the first account the owner signs into. A first-run bundled seed is never adopted.
+            if sync.accountOwnerStateStore.activeUserID == nil, !walletIsFirstRun {
+                try sync.accountOwnerStateStore.activate(graph.ownerState, forUserID: userID)
+                try sync.ownerStateUploadQueue.enqueue(graph.ownerState, forUserID: userID)
+                sync.cardRequestQueue.claimUnscopedRequests(forUserID: userID)
+                sync.readySyncUserID = userID
+                return
+            }
+
+            guard MoneyTalksConfiguration.isConfigured,
+                  let baseURL = MoneyTalksConfiguration.apiBaseURL else {
+                throw MoneyTalksAPIError.unavailableConfiguration
+            }
+            let shouldClaimUnscopedRequests = sync.accountOwnerStateStore.activeUserID == nil
+            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+            if let remote = try await OwnerStateSyncService(client: client).seedFromRemote(),
+               !remote.ownedCardIds.isEmpty {
+                try sync.accountOwnerStateStore.activate(remote, forUserID: userID)
+                if shouldClaimUnscopedRequests {
+                    sync.cardRequestQueue.claimUnscopedRequests(forUserID: userID)
+                }
+                rebuild(ownerState: remote)
+                session.refresh(using: self.graph!)
+                walletIsFirstRun = false
+                if router.path.last == .walletSetup { router.pop() }
+            } else {
+                let emptySetup = WalletSetup(ownedCardIds: [], defaultCardId: "",
+                                             switchThreshold: OwnerStateBuilder.defaultSwitchThreshold,
+                                             valuationsCad: graph.ownerState.valuationsCad)
+                let empty = OwnerStateBuilder.make(setup: emptySetup, catalogue: graph.catalogue)
+                rebuild(ownerState: empty)
+                session.refresh(using: self.graph!)
+                walletIsFirstRun = true
+                sync.accountSetupUserID = userID
+                router.push(.walletSetup)
+            }
+            sync.readySyncUserID = userID
+        } catch {
+            sync.saveSyncFailure(error, forUserID: userID)
+        }
+    }
+
+    /// Applies a wallet the owner just built. Failures here are alerts, not navigation — the
+    /// owner stays on the setup screen (Design Decision 3) rather than losing their edits to a
+    /// full-screen error.
+    func saveWalletSetup(_ setup: WalletSetup, session: CopilotSession, router: CheckoutRouter) async {
+        guard let graph else { return }
+        let owner = OwnerStateBuilder.make(setup: setup, catalogue: graph.catalogue)
+        do {
+            let signedInUserID = Clerk.shared.user?.id
+            let outcome = try WalletSetupPersistence(
+                accountStore: sync.accountOwnerStateStore,
+                uploadQueue: sync.ownerStateUploadQueue,
+                cardRequestQueue: sync.cardRequestQueue
+            ).save(owner, signedInUserID: signedInUserID,
+                   preparedSetupUserID: sync.accountSetupUserID)
+
+            switch outcome {
+            case .savedLocally:
+                break
+            case .savedLocallyAwaitingAccountBinding(let userID):
+                sync.saveSyncIssue(
+                    kind: .warning,
+                    message: "Wallet saved on this iPhone. Account sync will retry when the connection is ready.",
+                    forUserID: userID
+                )
+            case .savedAndQueued(let userID):
+                if signedInUserID == userID { sync.readySyncUserID = userID }
+                sync.accountSetupUserID = nil
+            case .accountMismatch:
+                session.report(FlowError(message:
+                    "This wallet is linked to another account. Open Sync and Wallet Capture to choose the correct account before saving."))
+                return
+            }
+        } catch {
+            session.report(FlowError(error))
+            return
+        }
+        rebuild(ownerState: owner)
+        session.refresh(using: self.graph!)
+        walletIsFirstRun = false
+        if router.path.last == .walletSetup { router.pop() }
+
+        // Setup remains usable offline. The durable outbox retries on every sync until the server
+        // has the exact wallet needed to evaluate Wallet Capture feedback.
+        guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
+              let userID = Clerk.shared.user?.id, sync.readySyncUserID == userID,
+              sync.accountOwnerStateStore.activeUserID == userID else { return }
+        do {
+            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+            try await sync.flushQueuedOwnerState(forUserID: userID, using: client)
+        } catch {
+            sync.saveSyncFailure(error, forUserID: userID)
+        }
+    }
+
+    func requestCard(_ request: PendingCardRequest) async -> Bool {
+        guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
+              let userID = Clerk.shared.user?.id, sync.readySyncUserID == userID,
+              sync.accountOwnerStateStore.activeUserID == userID else {
+            enqueueCardRequestForCurrentProfile(request)
+            return false
+        }
+        do {
+            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+            try await client.createCardRequest(request)
+            return true
+        } catch {
+            enqueueCardRequestForCurrentProfile(request)
+            return false
+        }
+    }
+
+    func enqueueCardRequestForCurrentProfile(_ request: PendingCardRequest) {
+        if let userID = sync.accountOwnerStateStore.activeUserID {
+            sync.cardRequestQueue.enqueue(request, forUserID: userID)
+        } else {
+            sync.cardRequestQueue.enqueue(request)
+        }
+    }
+
+    /// Erasing the device history on its own — no account required, and nothing on the server is
+    /// touched. Account deletion reuses this rather than repeating it.
+    func eraseLocalHistory(session: CopilotSession) {
+        try? LocalDataEraser(context: modelContext).eraseLocalHistory()
+        ambient.forgetLocalHistory()
+        refreshAmbientDiagnostics()
+        if let graph { session.refresh(using: graph) }
+    }
+
+    /// Order matters and is not cosmetic. The server call comes first and everything after it is
+    /// local cleanup: if the deletion fails, the account and this iPhone are untouched. Once the
+    /// server has confirmed, the local steps must not be able to fail the operation — the account
+    /// is already gone.
+    func deleteAccount(eraseLocalHistory shouldErase: Bool, session: CopilotSession,
+                       router: CheckoutRouter) async throws {
+        guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL else {
+            throw MoneyTalksAPIError.unavailableConfiguration
+        }
+        let deletedUserID = Clerk.shared.user?.id
+        let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+        try await client.deleteAccount()
+
+        // Geofences are refreshed from the store on the next significant location change, which
+        // could be hours away. Arrival monitoring for merchants the owner just erased stops now.
+        if shouldErase { eraseLocalHistory(session: session) }
+        if let deletedUserID {
+            sync.syncMetadataStore.remove(forUserID: deletedUserID)
+            sync.ownerStateUploadQueue.remove(forUserID: deletedUserID)
+            sync.cardRequestQueue.removeAll(forUserID: deletedUserID)
+            sync.accountOwnerStateStore.removeProfile(forUserID: deletedUserID)
+        }
+        WalletCaptureCredentialStore().remove()
+        WalletCaptureSettingsStore().setEnabled(false)
+        WalletCaptureSettingsStore().clearConnection()
+        let captureRoot = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
+            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        if let outbox = try? WalletOutboxStore(root: captureRoot) { try? await outbox.deleteAll() }
+        try? await Clerk.shared.auth.signOut()
+        resetSyncedState()
+        router.popToRoot()
+        router.resetToIdle()
+    }
+
+    func signOut(router: CheckoutRouter) async {
+        try? await Clerk.shared.auth.signOut()
+        resetSyncedState()
+        router.popToRoot()
+        router.resetToIdle()
+    }
+
+    /// Clears account-only presentation state. The synced wallet remains in the offline owner-state
+    /// store, while the per-account timestamp can be restored if this account signs in again.
+    func resetSyncedState() {
+        sync.resetSyncedState()
+        reload()
+    }
+
+    func createInstallation(label: String) async throws -> String {
+        try await sync.createInstallation(label: label)
     }
 }

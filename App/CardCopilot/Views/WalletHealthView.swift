@@ -7,7 +7,7 @@ import CardCopilotStore
 /// the spend profile is a placeholder (decision #19), and every dollar figure that drives a
 /// verdict is marginal, never gross (decision #17).
 struct WalletHealthView: View {
-    let deps: CheckoutFlowView.Dependencies
+    let deps: DependencyGraph
     var recentPurchases: [StoredPrediction] = []
     let onDone: () -> Void
 
@@ -31,7 +31,7 @@ struct WalletHealthView: View {
 
     @State private var selectedProfile: SpendProfileChoice
 
-    init(deps: CheckoutFlowView.Dependencies, recentPurchases: [StoredPrediction] = [], onDone: @escaping () -> Void) {
+    init(deps: DependencyGraph, recentPurchases: [StoredPrediction] = [], onDone: @escaping () -> Void) {
         self.deps = deps
         self.recentPurchases = recentPurchases
         self.onDone = onDone

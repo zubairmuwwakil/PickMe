@@ -6,7 +6,7 @@ import CardCopilotStore
 /// Displays the winning card, calculation, network constraints, and an interactive amount simulator.
 struct InstantRepeatCardView: View {
     let merchant: StoredMerchant
-    let deps: CheckoutFlowView.Dependencies
+    let deps: DependencyGraph
     let onLogPurchase: (StoredMerchant, Double) -> Void
     let onOpenDetails: (StoredMerchant, Double) -> Void
 

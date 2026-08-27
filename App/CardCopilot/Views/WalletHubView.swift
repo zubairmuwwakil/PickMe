@@ -4,7 +4,7 @@ import CardCopilotStore
 
 /// The Wallet hub: Visual cards in wallet, Wallet Health, Which Card matrix, and Valuation Sandbox.
 struct WalletHubView: View {
-    let deps: CheckoutFlowView.Dependencies?
+    let deps: DependencyGraph?
     let onCategoryPicker: () -> Void
     let onWalletHealth: () -> Void
     let onValuationSandbox: () -> Void

@@ -7,7 +7,7 @@ import CardCopilotStore
 /// Facts only — this section never re-ranks and never says "covered".
 struct BenefitsDisclosureSection: View {
     let result: CheckoutResult
-    let deps: CheckoutFlowView.Dependencies
+    let deps: DependencyGraph
     let winnerCardId: String
     let onCompare: (BenefitContextKind) -> Void
 

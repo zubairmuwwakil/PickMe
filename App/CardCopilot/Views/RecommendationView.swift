@@ -6,7 +6,7 @@ import CardCopilotStore
 /// structured reward breakdown, and honest split-branch scenarios for ambiguous merchants.
 struct RecommendationView: View {
     let result: CheckoutResult
-    let deps: CheckoutFlowView.Dependencies?
+    let deps: DependencyGraph?
     let onCompare: ((BenefitContextKind) -> Void)?
     let onDone: () -> Void
 

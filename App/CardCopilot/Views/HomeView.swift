@@ -16,7 +16,7 @@ struct HomeView: View {
     let confirmedCount: Int
     let ambientDiagnostics: SuppressionLog
     let ambientEnabled: Bool
-    let deps: CheckoutFlowView.Dependencies?
+    let deps: DependencyGraph?
     let onSelectPreIndexedMerchant: ((PreIndexedMerchant) -> Void)?
     let onInstantRepeat: (StoredMerchant) -> Void
     let onLogPurchase: ((StoredMerchant, Double) -> Void)?

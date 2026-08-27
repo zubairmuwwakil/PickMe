@@ -4,7 +4,7 @@ import CardCopilotEngine
 /// The "two runs" screen: declare a planned purchase, see which card earns best
 /// and — separately — what each card's certificate says about protecting it.
 struct ProtectionLensView: View {
-    let deps: CheckoutFlowView.Dependencies
+    let deps: DependencyGraph
     let initialContext: BenefitContext
     let onDone: () -> Void
 
@@ -13,7 +13,7 @@ struct ProtectionLensView: View {
     @State private var amountText = ""
     @State private var selectedDisclosure: BenefitDisclosure?
 
-    init(deps: CheckoutFlowView.Dependencies,
+    init(deps: DependencyGraph,
          initialContext: BenefitContext = BenefitContext(kind: .flight),
          onDone: @escaping () -> Void) {
         self.deps = deps

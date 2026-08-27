@@ -7,7 +7,7 @@ import CardCopilotEngine
 /// render time (see `CategoryPickerAdvisor`) — nothing here is a fixed list of categories or
 /// cards.
 struct CategoryPickerView: View {
-    let deps: CheckoutFlowView.Dependencies
+    let deps: DependencyGraph
     let onDone: () -> Void
 
     private let distribution = SpendDistribution.placeholderCanadianHousehold
@@ -86,7 +86,7 @@ struct CategoryPickerView: View {
 /// assumed, so this reads whatever `CategoryPickerAdvisor.bands` actually returns.
 struct CategoryBandListView: View {
     let category: String
-    let deps: CheckoutFlowView.Dependencies
+    let deps: DependencyGraph
     let distribution: SpendDistribution
 
     private var label: String {

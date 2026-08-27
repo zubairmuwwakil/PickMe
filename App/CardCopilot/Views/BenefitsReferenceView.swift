@@ -3,7 +3,7 @@ import CardCopilotEngine
 
 /// Per-card benefits browser: shows all certificate verified coverage and terms per card.
 struct BenefitsReferenceView: View {
-    let deps: CheckoutFlowView.Dependencies
+    let deps: DependencyGraph
     let onDone: () -> Void
 
     var body: some View {

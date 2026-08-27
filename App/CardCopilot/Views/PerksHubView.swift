@@ -3,7 +3,7 @@ import CardCopilotEngine
 
 /// The Perks & Insurance hub: Big Purchase & Trip Protection Lens and Card Benefits Library.
 struct PerksHubView: View {
-    let deps: CheckoutFlowView.Dependencies?
+    let deps: DependencyGraph?
     let onProtectionLens: (BenefitContextKind) -> Void
     let onBenefitsReference: () -> Void
 

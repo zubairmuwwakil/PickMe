@@ -6,6 +6,10 @@ import ClerkKit
 @main
 struct CardCopilotApp: App {
     @UIApplicationDelegateAdaptor(CardCopilotAppDelegate.self) private var appDelegate
+    @State private var sync = SyncCoordinator()
+    @State private var session = CopilotSession()
+    @State private var router = CheckoutRouter()
+
     init() {
         if let publishableKey = MoneyTalksConfiguration.clerkPublishableKey,
            publishableKey.hasPrefix("pk_") {
@@ -15,12 +19,17 @@ struct CardCopilotApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if MoneyTalksConfiguration.isConfigured {
-                CheckoutFlowView()
-                    .environment(Clerk.shared)
-            } else {
-                CheckoutFlowView()
+            Group {
+                if MoneyTalksConfiguration.isConfigured {
+                    CheckoutFlowView()
+                        .environment(Clerk.shared)
+                } else {
+                    CheckoutFlowView()
+                }
             }
+            .environment(sync)
+            .environment(session)
+            .environment(router)
         }
         .modelContainer(Self.sharedModelContainer)
     }
