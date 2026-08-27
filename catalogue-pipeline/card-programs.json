@@ -1,35 +1,17 @@
 {
-  "_note": "ACCEPTED cardId -> program. Reviewed from card-programs.proposed.<market>.json under the 2026-08-27 Option 1 ruling: issuer-flagship currencies only, no co-brands whose currency has no programId enum value. `basis` records how the mapping was derived and is NOT copied into the card \u2014 promote_drafts.py builds program from programId/unit only.",
+  "_note": "ACCEPTED cardId -> program. Reviewed from card-programs.proposed.<market>.json under the 2026-08-27 Option 1 ruling: issuer-flagship currencies only, no co-brand whose currency has no programId enum value. `basis` records how the mapping was derived and is NOT copied into the card \u2014 promote_drafts.py builds program from programId/unit only.",
   "programs": {
-    "alliant-credit-union-alliant-cashback-visa-signature-credit-": {
+    "alliant-credit-union-alliant-cashback-visa": {
       "basis": "name says cash back",
       "officialName": "Alliant Cashback Visa\u00ae Signature Credit Card",
       "programId": "cashback",
       "unit": "usd"
     },
-    "american-express-amex-blue-business-plus": {
+    "american-express-blue-business-plus": {
       "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
       "officialName": "Amex Blue Business Plus",
       "programId": "amexMembershipRewardsUs",
       "unit": "point"
-    },
-    "american-express-amex-cash-magnet": {
-      "basis": "American Express family: blue cash|cash magnet|business cash|simplycash|graphite",
-      "officialName": "Amex Cash Magnet",
-      "programId": "cashback",
-      "unit": "usd"
-    },
-    "american-express-amex-everyday-preferred-credit-card": {
-      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
-      "officialName": "Amex EveryDay Preferred Credit Card",
-      "programId": "amexMembershipRewardsUs",
-      "unit": "point"
-    },
-    "american-express-amex-graphite-business-cash": {
-      "basis": "American Express family: blue cash|cash magnet|business cash|simplycash|graphite",
-      "officialName": "Amex Graphite Business Cash",
-      "programId": "cashback",
-      "unit": "usd"
     },
     "american-express-blue-from-american-express": {
       "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
@@ -43,9 +25,27 @@
       "programId": "amexMembershipRewardsUs",
       "unit": "point"
     },
+    "american-express-business-green-rewards-card": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "officialName": "Business Green Rewards Card from American Express",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-cash-magnet": {
+      "basis": "American Express family: blue cash|cash magnet|business cash|simplycash|graphite",
+      "officialName": "Amex Cash Magnet",
+      "programId": "cashback",
+      "unit": "usd"
+    },
     "american-express-everyday-card": {
       "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
       "officialName": "American Express EveryDay\u00ae Card",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-everyday-preferred": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "officialName": "Amex EveryDay Preferred Credit Card",
       "programId": "amexMembershipRewardsUs",
       "unit": "point"
     },
@@ -55,70 +55,22 @@
       "programId": "amexMembershipRewardsUs",
       "unit": "point"
     },
+    "american-express-graphite-business-cash": {
+      "basis": "American Express family: blue cash|cash magnet|business cash|simplycash|graphite",
+      "officialName": "Amex Graphite Business Cash",
+      "programId": "cashback",
+      "unit": "usd"
+    },
     "american-express-green-card": {
       "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
       "officialName": "American Express\u00ae Green Card",
       "programId": "amexMembershipRewardsUs",
       "unit": "point"
     },
-    "american-express-marriott-bonvoy-bevy-american-express-card": {
+    "american-express-marriott-bonvoy-bevy": {
       "basis": "co-brand: marriott|ritz-?carlton|bonvoy",
       "officialName": "Marriott Bonvoy Bevy\u00ae American Express\u00ae Card",
       "programId": "marriottBonvoy",
-      "unit": "point"
-    },
-    "american-express-national-bank-american-express-business-gol": {
-      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
-      "officialName": "American Express\u00ae Business Gold Card",
-      "programId": "amexMembershipRewardsUs",
-      "unit": "point"
-    },
-    "american-express-national-bank-american-express-gold-card": {
-      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
-      "officialName": "American Express\u00ae Gold Card",
-      "programId": "amexMembershipRewardsUs",
-      "unit": "point"
-    },
-    "american-express-national-bank-american-express-green-card": {
-      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
-      "officialName": "American Express\u00ae Green Card",
-      "programId": "amexMembershipRewardsUs",
-      "unit": "point"
-    },
-    "american-express-national-bank-blue-business-plus-credit-car": {
-      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
-      "officialName": "Blue Business\u00ae Plus Credit Card from American Express",
-      "programId": "amexMembershipRewardsUs",
-      "unit": "point"
-    },
-    "american-express-national-bank-blue-cash-preferred-card-from": {
-      "basis": "American Express family: blue cash|cash magnet|business cash|simplycash|graphite",
-      "officialName": "Blue Cash Preferred\u00ae Card from American Express",
-      "programId": "cashback",
-      "unit": "usd"
-    },
-    "american-express-national-bank-business-green-rewards-card-f": {
-      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
-      "officialName": "Business Green Rewards Card from American Express",
-      "programId": "amexMembershipRewardsUs",
-      "unit": "point"
-    },
-    "american-express-national-bank-graphite-business-cash-unlimi": {
-      "basis": "American Express family: blue cash|cash magnet|business cash|simplycash|graphite",
-      "officialName": "Graphite\u00ae Business Cash Unlimited Card from American Express",
-      "programId": "cashback",
-      "unit": "usd"
-    },
-    "american-express-national-bank-the-business-platinum-card-fr": {
-      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
-      "officialName": "The Business Platinum Card\u00ae from American Express",
-      "programId": "amexMembershipRewardsUs",
-      "unit": "point"
-    },
-    "american-express-national-bank-the-platinum-card-from-americ": {
-      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
-      "officialName": "The Platinum Card\u00ae from American Express",
-      "programId": "amexMembershipRewardsUs",
       "unit": "point"
     },
     "american-express-old-blue-cash-card": {
@@ -127,65 +79,41 @@
       "programId": "cashback",
       "unit": "usd"
     },
-    "american-express-the-business-platinum-card-from-american-ex": {
+    "american-express-the-business-platinum-card": {
       "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
       "officialName": "The Business Platinum Card\u00ae from American Express",
       "programId": "amexMembershipRewardsUs",
       "unit": "point"
     },
-    "american-express-the-platinum-card-from-american-express": {
+    "american-express-the-platinum-card": {
       "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
       "officialName": "The Platinum Card\u00ae from American Express",
       "programId": "amexMembershipRewardsUs",
       "unit": "point"
     },
-    "bank-of-america-business-advantage-customized-cash-rewards-m": {
-      "basis": "Bank of America family: customized cash|unlimited cash|cash rewards",
-      "officialName": "Bank of America\u00ae Business Advantage Customized Cash Rewards Mastercard\u00ae",
-      "programId": "bofaPreferredRewards",
-      "unit": "usd"
-    },
-    "bank-of-america-n-a-bank-of-america-customized-cash-rewards-": {
-      "basis": "Bank of America family: customized cash|unlimited cash|cash rewards",
-      "officialName": "Bank of America\u00ae Customized Cash Rewards Credit Card",
-      "programId": "bofaPreferredRewards",
-      "unit": "usd"
-    },
-    "bank-of-america-n-a-bank-of-america-premium-rewards-credit-c": {
-      "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
-      "officialName": "Bank of America\u00ae Premium Rewards\u00ae Credit Card",
-      "programId": "bofaPreferredRewards",
-      "unit": "point"
-    },
-    "bank-of-america-n-a-bank-of-america-travel-rewards-credit-ca": {
-      "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
-      "officialName": "Bank of America\u00ae Travel Rewards Credit Card",
-      "programId": "bofaPreferredRewards",
-      "unit": "point"
-    },
-    "bank-of-america-n-a-bank-of-america-unlimited-cash-rewards-c": {
-      "basis": "Bank of America family: customized cash|unlimited cash|cash rewards",
-      "officialName": "Bank of America\u00ae Unlimited Cash Rewards Credit Card for Students",
-      "programId": "bofaPreferredRewards",
-      "unit": "usd"
-    },
-    "bank-of-america-n-a-bankamericard-credit-card": {
+    "bank-of-america-bankamericard-credit-card": {
       "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
       "officialName": "BankAmericard\u00ae Credit Card",
       "programId": "bofaPreferredRewards",
       "unit": "point"
     },
-    "bank-of-america-n-a-bankamericard-credit-card-for-students": {
+    "bank-of-america-bankamericard-credit-card-2": {
       "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
       "officialName": "BankAmericard\u00ae Credit Card for Students",
       "programId": "bofaPreferredRewards",
       "unit": "point"
     },
-    "bank-of-america-n-a-bankamericard-secured-credit-card": {
+    "bank-of-america-bankamericard-secured": {
       "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
       "officialName": "BankAmericard\u00ae Secured Credit Card",
       "programId": "bofaPreferredRewards",
       "unit": "point"
+    },
+    "bank-of-america-business-advantage-customized": {
+      "basis": "Bank of America family: customized cash|unlimited cash|cash rewards",
+      "officialName": "Bank of America\u00ae Business Advantage Customized Cash Rewards Mastercard\u00ae",
+      "programId": "bofaPreferredRewards",
+      "unit": "usd"
     },
     "bank-of-america-premium-rewards-credit-card": {
       "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
@@ -193,7 +121,7 @@
       "programId": "bofaPreferredRewards",
       "unit": "point"
     },
-    "bank-of-america-susan-g-komen-customized-cash-rewards-credit": {
+    "bank-of-america-susan-g-komen-customized-cash": {
       "basis": "Bank of America family: customized cash|unlimited cash|cash rewards",
       "officialName": "Susan G. Komen\u00ae Customized Cash Rewards Credit Card",
       "programId": "bofaPreferredRewards",
@@ -205,13 +133,13 @@
       "programId": "bofaPreferredRewards",
       "unit": "point"
     },
-    "bank-of-america-travel-rewards-credit-card-for-students": {
+    "bank-of-america-travel-rewards-credit-card-2": {
       "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
       "officialName": "Bank of America\u00ae Travel Rewards Credit Card for Students",
       "programId": "bofaPreferredRewards",
       "unit": "point"
     },
-    "bank-of-america-unlimited-cash-rewards-credit-card": {
+    "bank-of-america-unlimited-cash-rewards": {
       "basis": "Bank of America family: customized cash|unlimited cash|cash rewards",
       "officialName": "Bank of America\u00ae Unlimited Cash Rewards Credit Card",
       "programId": "bofaPreferredRewards",
@@ -229,69 +157,33 @@
       "programId": "cashback",
       "unit": "usd"
     },
-    "capital-one-n-a-platinum-from-capital-one": {
+    "capital-one-platinum-from-capital-one": {
       "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
       "officialName": "Platinum from Capital One",
       "programId": "cashback",
       "unit": "usd"
     },
-    "capital-one-n-a-platinum-secured-credit-card-from-capital-on": {
+    "capital-one-platinum-secured-credit-card": {
       "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
       "officialName": "Platinum Secured Credit Card from Capital One",
       "programId": "cashback",
       "unit": "usd"
     },
-    "capital-one-n-a-quicksilver-cash-rewards-credit-card": {
+    "capital-one-quicksilver-cash-rewards": {
       "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
-      "officialName": "Quicksilver Cash Rewards Credit Card",
+      "officialName": "Capital One Quicksilver Cash Rewards Credit Card",
       "programId": "cashback",
       "unit": "usd"
     },
-    "capital-one-n-a-savor-rewards-for-students": {
+    "capital-one-savor-rewards-for-students": {
       "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
       "officialName": "Savor Rewards for Students",
       "programId": "cashback",
       "unit": "usd"
     },
-    "capital-one-n-a-savorone-rewards-from-capital-one": {
+    "capital-one-savorone-rewards-from-capital-one": {
       "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
       "officialName": "SavorOne Rewards from Capital One",
-      "programId": "cashback",
-      "unit": "usd"
-    },
-    "capital-one-n-a-venture-business-credit-card": {
-      "basis": "Capital One family: venture|spark miles",
-      "officialName": "Venture Business Credit Card",
-      "programId": "capitalOneMiles",
-      "unit": "point"
-    },
-    "capital-one-n-a-venture-x-rewards-credit-card": {
-      "basis": "Capital One family: venture|spark miles",
-      "officialName": "Venture X Rewards Credit Card",
-      "programId": "capitalOneMiles",
-      "unit": "point"
-    },
-    "capital-one-n-a-ventureone-business-credit-card": {
-      "basis": "Capital One family: venture|spark miles",
-      "officialName": "VentureOne Business Credit Card",
-      "programId": "capitalOneMiles",
-      "unit": "point"
-    },
-    "capital-one-n-a-ventureone-rewards-credit-card": {
-      "basis": "Capital One family: venture|spark miles",
-      "officialName": "VentureOne Rewards Credit Card",
-      "programId": "capitalOneMiles",
-      "unit": "point"
-    },
-    "capital-one-n-a-ventureone-rewards-for-good-credit": {
-      "basis": "Capital One family: venture|spark miles",
-      "officialName": "VentureOne Rewards for Good Credit",
-      "programId": "capitalOneMiles",
-      "unit": "point"
-    },
-    "capital-one-quicksilver-cash-rewards-credit-card": {
-      "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
-      "officialName": "Capital One Quicksilver Cash Rewards Credit Card",
       "programId": "cashback",
       "unit": "usd"
     },
@@ -301,7 +193,7 @@
       "programId": "cashback",
       "unit": "usd"
     },
-    "capital-one-spark-cash-select-for-excellent-credit": {
+    "capital-one-spark-cash-select-for-excellent": {
       "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
       "officialName": "Capital One Spark Cash Select for Excellent Credit",
       "programId": "cashback",
@@ -328,6 +220,12 @@
     "capital-one-ventureone-rewards-credit-card": {
       "basis": "Capital One family: venture|spark miles",
       "officialName": "Capital One VentureOne Rewards Credit Card",
+      "programId": "capitalOneMiles",
+      "unit": "point"
+    },
+    "capital-one-ventureone-rewards-for-good": {
+      "basis": "Capital One family: venture|spark miles",
+      "officialName": "VentureOne Rewards for Good Credit",
       "programId": "capitalOneMiles",
       "unit": "point"
     },
@@ -439,34 +337,10 @@
       "programId": "citiThankYou",
       "unit": "point"
     },
-    "citibank-n-a-citi-double-cash-card": {
-      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
-      "officialName": "Citi Double Cash\u00ae Card",
-      "programId": "citiThankYou",
-      "unit": "point"
-    },
-    "citibank-n-a-citi-secured-mastercard": {
-      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
-      "officialName": "Citi\u00ae Secured Mastercard\u00ae",
-      "programId": "citiThankYou",
-      "unit": "point"
-    },
-    "citibank-n-a-citi-strata-elite-card": {
-      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
-      "officialName": "Citi Strata Elite\u2120 Card",
-      "programId": "citiThankYou",
-      "unit": "point"
-    },
-    "comenity-capital-bank-bread-cashback-american-express-credit": {
+    "comenity-bread-cashback-american-express": {
       "basis": "name says cash back",
       "officialName": "Bread Cashback\u00ae American Express\u00ae Credit Card",
       "programId": "cashback",
-      "unit": "usd"
-    },
-    "discover-bank-discover-it-chrome-gas-restaurant-credit-card": {
-      "basis": "Discover family: .",
-      "officialName": "Discover it Chrome Gas & Restaurant Credit Card",
-      "programId": "discoverCashback",
       "unit": "usd"
     },
     "discover-it-cash-back": {
@@ -478,6 +352,12 @@
     "discover-it-chrome": {
       "basis": "Discover family: .",
       "officialName": "Discover it\u00ae Chrome",
+      "programId": "discoverCashback",
+      "unit": "usd"
+    },
+    "discover-it-chrome-gas-restaurant-credit-card": {
+      "basis": "Discover family: .",
+      "officialName": "Discover it Chrome Gas & Restaurant Credit Card",
       "programId": "discoverCashback",
       "unit": "usd"
     },
@@ -493,61 +373,7 @@
       "programId": "discoverCashback",
       "unit": "usd"
     },
-    "jpmorgan-chase-aeroplan-card": {
-      "basis": "co-brand: \\baeroplan\\b",
-      "officialName": "Aeroplan Card",
-      "programId": "aeroplan",
-      "unit": "point"
-    },
-    "jpmorgan-chase-bank-n-a-chase-freedom-flex-credit-card": {
-      "basis": "Chase family: freedom|ink business cash",
-      "officialName": "Chase Freedom Flex\u00ae Credit Card",
-      "programId": "chaseUltimateRewards",
-      "unit": "point"
-    },
-    "jpmorgan-chase-bank-n-a-chase-freedom-rise-credit-card": {
-      "basis": "Chase family: freedom|ink business cash",
-      "officialName": "Chase Freedom Rise\u00ae Credit Card",
-      "programId": "chaseUltimateRewards",
-      "unit": "point"
-    },
-    "jpmorgan-chase-bank-n-a-chase-freedom-unlimited-credit-card": {
-      "basis": "Chase family: freedom|ink business cash",
-      "officialName": "Chase Freedom Unlimited\u00ae Credit Card",
-      "programId": "chaseUltimateRewards",
-      "unit": "point"
-    },
-    "jpmorgan-chase-bank-n-a-chase-sapphire-preferred-credit-card": {
-      "basis": "Chase family: sapphire|\\bink\\b",
-      "officialName": "Chase Sapphire Preferred\u00ae Credit Card",
-      "programId": "chaseUltimateRewards",
-      "unit": "point"
-    },
-    "jpmorgan-chase-bank-n-a-chase-sapphire-reserve-credit-card": {
-      "basis": "Chase family: sapphire|\\bink\\b",
-      "officialName": "Chase Sapphire Reserve\u00ae Credit Card",
-      "programId": "chaseUltimateRewards",
-      "unit": "point"
-    },
-    "jpmorgan-chase-bank-n-a-ink-business-unlimited-credit-card": {
-      "basis": "Chase family: sapphire|\\bink\\b",
-      "officialName": "Ink Business Unlimited\u00ae Credit Card",
-      "programId": "chaseUltimateRewards",
-      "unit": "point"
-    },
-    "jpmorgan-chase-bank-n-a-sapphire-reserve-for-business-credit": {
-      "basis": "Chase family: sapphire|\\bink\\b",
-      "officialName": "Sapphire Reserve for Business\u2120 Credit Card",
-      "programId": "chaseUltimateRewards",
-      "unit": "point"
-    },
-    "jpmorgan-chase-marriott-bonvoy-boundless-credit-card": {
-      "basis": "co-brand: marriott|ritz-?carlton|bonvoy",
-      "officialName": "Marriott Bonvoy Boundless Credit Card",
-      "programId": "marriottBonvoy",
-      "unit": "point"
-    },
-    "penfed-credit-union-penfed-power-cash-rewards-visa-signature": {
+    "penfed-credit-union-penfed-power-cash-rewards": {
       "basis": "name says cash back",
       "officialName": "PenFed Power Cash Rewards\u00ae Visa Signature\u00ae Card",
       "programId": "cashback",
@@ -559,31 +385,19 @@
       "programId": "cashback",
       "unit": "usd"
     },
-    "u-s-bank-national-association-u-s-bank-shopper-cash-rewards-": {
+    "u-s-bank-shopper-cash-rewards-visa-signature": {
       "basis": "name says cash back",
       "officialName": "U.S. Bank Shopper Cash Rewards\u00ae Visa Signature\u00ae Card",
       "programId": "cashback",
       "unit": "usd"
     },
-    "u-s-bank-national-association-u-s-bank-triple-cash-rewards-v": {
+    "u-s-bank-triple-cash-rewards-visa-business": {
       "basis": "name says cash back",
       "officialName": "U.S. Bank Triple Cash Rewards Visa\u00ae Business Card",
       "programId": "cashback",
       "unit": "usd"
     },
-    "u-s-bank-shopper-cash-rewards-visa-signature-card": {
-      "basis": "name says cash back",
-      "officialName": "U.S. Bank Shopper Cash Rewards\u00ae Visa Signature\u00ae Card",
-      "programId": "cashback",
-      "unit": "usd"
-    },
-    "u-s-bank-triple-cash-rewards-visa-business-card": {
-      "basis": "name says cash back",
-      "officialName": "U.S. Bank Triple Cash Rewards Visa\u00ae Business Card",
-      "programId": "cashback",
-      "unit": "usd"
-    },
-    "upgrade-cross-river-bank-upgrade-triple-cash-rewards-visa": {
+    "upgrade-triple-cash-rewards-visa": {
       "basis": "name says cash back",
       "officialName": "Upgrade Triple Cash Rewards Visa",
       "programId": "cashback",

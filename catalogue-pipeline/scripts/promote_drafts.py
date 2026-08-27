@@ -92,6 +92,7 @@ def build_drafts(market: str, limit: int | None):
     existing = {c["cardId"]: c for c in catalogue["cards"]}
 
     drafts, refusals = [], []
+    emitted: set[str] = set()
 
     def refuse(entry, reason, detail=""):
         refusals.append(
@@ -111,6 +112,12 @@ def build_drafts(market: str, limit: int | None):
         card_id = entry.get("cardId")
         if not card_id:
             refuse(entry, "no-canonical-id", "queue entry carries no cardId")
+            continue
+
+        # The research queue holds one entry per (card, missing field), so a card appears
+        # several times. Without this guard the same cardId was emitted twice in one run and
+        # the catalogue ended up with two cards sharing an id — 27 drafts, 26 unique ids.
+        if card_id in emitted:
             continue
 
         # A published card is issuer-verified. Never touch one from an aggregator feed.
@@ -188,6 +195,7 @@ def build_drafts(market: str, limit: int | None):
                 "lastVerifiedAt": SNAPSHOT_DATE,
             }
         )
+        emitted.add(card_id)
         if limit and len(drafts) >= limit:
             break
 

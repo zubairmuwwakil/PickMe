@@ -36,13 +36,54 @@ STOPWORDS = {
 NAME_NORMALIZE_RE = re.compile(r"[^a-z0-9 ]+")
 
 
-def norm_issuer(issuer: str) -> str:
-    issuer = issuer.lower()
+def _load_aliases() -> dict:
+    path = PIPELINE / "issuer-aliases.json"
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8")).get("aliases", {})
+
+
+ISSUER_ALIASES = _load_aliases()
+
+
+def canonical_issuer(issuer: str, market: str | None) -> str:
+    """The reviewed canonical issuer name, or the raw string when this one is not mapped.
+
+    Market-keyed on purpose: the vendor string "Capital One" appears in both markets and
+    Capital One Canada issues Canadian-only products. Falls back to any market only when the
+    caller has no market to offer (the published catalogue's own issuer strings), because a
+    cross-market fallback is exactly the conflation the keying exists to prevent.
+    """
+    if market and issuer in ISSUER_ALIASES.get(market, {}):
+        return ISSUER_ALIASES[market][issuer]
+    if market is None:
+        for table in ISSUER_ALIASES.values():
+            if issuer in table:
+                return table[issuer]
+    return issuer
+
+
+def norm_issuer(issuer: str, market: str | None = None) -> str:
+    """Comparison key for issuer equality.
+
+    Resolves through issuer-aliases.json FIRST. Before that existed this was an ad-hoc replace
+    list, and it is what let one product reach two canonical ids: "American Express National
+    Bank" normalized to "amex national" while "American Express" normalized to "amex", so the
+    cross-source merge gated on issuer equality and never fired. Eight duplicate pairs reached
+    the draft set that way (Amex Gold, Green, Platinum, Business Gold, Business Platinum; Citi
+    Secured; two U.S. Bank cards) and ~10% of the US canonical count was duplicate rows.
+
+    The heuristic below is KEPT as a fallback, because the published catalogue's own issuer
+    strings ("TD Canada Trust", "American Express Canada") are not in the alias map — that map
+    covers vendor strings.
+    """
+    issuer = canonical_issuer(issuer, market).lower()
     issuer = issuer.replace("bank of montreal", "bmo").replace("royal bank of canada", "rbc")
     issuer = issuer.replace("canadian imperial bank of commerce", "cibc")
     issuer = issuer.replace("scotiabank", "scotia").replace("td canada trust", "td")
-    issuer = issuer.replace("td bank", "td").replace("american express", "amex")
-    for suffix in [" canada", " financial services", " financial", " n.a.", ", n.a.", " bank"]:
+    issuer = issuer.replace("american express", "amex")
+    for suffix in [" canada", " financial services", " financial", " n.a.", ", n.a.", " bank",
+                   " national association", " national", " usa"]:
         issuer = issuer.replace(suffix, "")
     return issuer.strip()
 
@@ -164,13 +205,13 @@ def best_match(record, candidates):
     letting it also inflate the name-similarity score double-counts one signal as two.
     """
     record_tokens = name_tokens(record["officialName"])
-    record_issuer = norm_issuer(record["issuer"])
+    record_issuer = norm_issuer(record["issuer"], record.get("market"))
     record_tokens -= name_tokens(record["issuer"])
     best, best_score = None, 0.0
     for cand in candidates:
         if cand["market"] != record["market"]:
             continue
-        cand_issuer = norm_issuer(cand["issuer"])
+        cand_issuer = norm_issuer(cand["issuer"], cand.get("market"))
         issuer_match = cand_issuer == record_issuer or cand_issuer in record_issuer or record_issuer in cand_issuer
         if not issuer_match:
             continue
@@ -250,7 +291,12 @@ def main():
     for cand in new_candidates:
         placed = False
         for group in canonical_groups:
-            if norm_issuer(group["issuer"]) != norm_issuer(cand["issuer"]):
+            # Market must match before issuer: with issuers now resolved through the alias
+            # map, a US "TD Bank" and a CA "TD Canada Trust" both reduce to "td", and only the
+            # market keeps them apart. best_match already gates this way; this loop did not.
+            if group["market"] != cand["market"]:
+                continue
+            if norm_issuer(group["issuer"], group["market"]) != norm_issuer(cand["issuer"], cand["market"]):
                 continue
             group_tokens = name_tokens(group["officialName"]) - name_tokens(group["issuer"])
             cand_tokens = name_tokens(cand["officialName"]) - name_tokens(cand["issuer"])
@@ -276,13 +322,97 @@ def main():
     build_gaps_and_queue(canonical_groups, clearfin, clearfin_slugs, dedup_report)
 
 
-def _slug(issuer: str, name: str) -> str:
-    # Many source names already carry the issuer's name (e.g. "American Express Gold Card"), so
-    # only prefix it when the card name doesn't already start with it — otherwise every American
-    # Express candidate id doubles it.
-    base = name.lower() if name.lower().startswith(issuer.lower()) else f"{issuer}-{name}".lower()
-    base = re.sub(r"[^a-z0-9]+", "-", base).strip("-")
-    return base[:60]
+MAX_ID_LEN = 45   # published cardIds run 11-37 chars; stay inside that range
+TRAILING_FILLER = {"from", "the", "for", "and", "a", "of", "with", "american", "credit"}
+IDMAP_PATH = PIPELINE / "idmap.json"
+
+
+def _load_idmap() -> dict:
+    if not IDMAP_PATH.exists():
+        return {}
+    return json.loads(IDMAP_PATH.read_text(encoding="utf-8")).get("map", {})
+
+
+ID_MAP = _load_idmap()          # "source|sourceRecordId" -> cardId, append-only
+_MINTED: dict[str, str] = {}    # ids minted this run, for collision detection
+
+
+def _slug(issuer: str, name: str, market: str | None = None) -> str:
+    """A stable, readable cardId.
+
+    Two rules learned the hard way, both from ids that would have been PERMANENT:
+
+    1. The issuer is resolved through the alias map first. Slugging the raw vendor string gave
+       one product two ids — `american-express-gold-card` from one source and
+       `american-express-national-bank-american-express-gold-card` from another.
+    2. Trim on a word boundary, never mid-word. The old 60-character hard cut produced
+       `american-express-national-bank-the-platinum-card-from-americ` and
+       `alliant-credit-union-alliant-cashback-visa-signature-credit-`.
+    """
+    issuer = canonical_issuer(issuer, market)
+    # Sources write the same issuer long or short ("Amex Cash Magnet" vs "American Express
+    # Gold Card"); expanding first keeps the prefix test from doubling the issuer into the id.
+    name_cmp = re.sub(r"^amex\b", "american express", name.strip(), flags=re.I)
+    base = name_cmp if name_cmp.lower().startswith(issuer.lower()) else f"{issuer} {name_cmp}"
+    base = re.sub(r"[^a-z0-9]+", "-", base.lower()).strip("-")
+
+    if len(base) > MAX_ID_LEN:
+        kept: list[str] = []
+        for word in base.split("-"):
+            if kept and len("-".join(kept + [word])) > MAX_ID_LEN:
+                break
+            kept.append(word)
+        # Trimming mid-phrase leaves a dangling connective ("...-the-platinum-card-from").
+        # These ids are permanent, so drop trailing filler rather than live with it.
+        while len(kept) > 1 and kept[-1] in TRAILING_FILLER:
+            kept.pop()
+        base = "-".join(kept) or base[:MAX_ID_LEN].rstrip("-")
+    return base
+
+
+def mint_id(issuer: str, name: str, market: str | None, source_keys: list[str]) -> str:
+    """Resolve a group's cardId, reusing any id its source records already carry.
+
+    cardIds are permanent — prediction rows, owner state, MoneyTalks and Android all key on
+    them. So a record that has been seen before keeps its id even if the vendor renames the
+    product, and only genuinely new records mint. Collisions get a numeric suffix rather than
+    silently merging two products onto one id.
+    """
+    for key in source_keys:
+        if key in ID_MAP:
+            found = ID_MAP[key]
+            for k in source_keys:
+                ID_MAP.setdefault(k, found)
+            return found
+
+    base = _slug(issuer, name, market)
+    candidate, n = base, 1
+    while _MINTED.get(candidate, name) != name:
+        n += 1
+        candidate = f"{base}-{n}"
+    _MINTED[candidate] = name
+    for key in source_keys:
+        ID_MAP[key] = candidate
+    return candidate
+
+
+def write_idmap() -> None:
+    IDMAP_PATH.write_text(
+        json.dumps(
+            {
+                "_note": "APPEND-ONLY. 'source|sourceRecordId' -> cardId. cardIds are permanent: "
+                         "prediction rows, owner state, MoneyTalks and the Android consumer key on "
+                         "them, and check-id-permanence.sh fails when a published id vanishes. Never "
+                         "edit or delete an entry — a vendor renaming a product must resolve to the "
+                         "id it already has, not mint a new one.",
+                "map": dict(sorted(ID_MAP.items())),
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 def build_gaps_and_queue(canonical_groups, clearfin_sample, clearfin_slugs, dedup_report):
@@ -292,7 +422,10 @@ def build_gaps_and_queue(canonical_groups, clearfin_sample, clearfin_slugs, dedu
     # 1. Every canonical new-candidate group (US, from openCard/ccOffers) — CRITICAL/HIGH gaps,
     #    since nothing about their earn structure is known at all yet.
     for group in canonical_groups:
-        candidate_id = _slug(group["issuer"], group["officialName"])
+        candidate_id = mint_id(
+            group["issuer"], group["officialName"], group["market"],
+            [f"{s['source']}|{s['sourceRecordId']}" for s in group["sources"]],
+        )
         cc_source = next((s for s in group["sources"] if s["source"] == "ccOffers"), None)
         oc_source = next((s for s in group["sources"] if s["source"] == "openCard"), None)
         sources_checked = [s.get("sourceUrl") for s in group["sources"] if s.get("sourceUrl")]
@@ -350,7 +483,10 @@ def build_gaps_and_queue(canonical_groups, clearfin_sample, clearfin_slugs, dedu
     for c in clearfin_sample:
         if c["recordId"] in matched_clearfin_ids:
             continue
-        candidate_id = _slug(c["issuer"], c["officialName"])
+        candidate_id = mint_id(
+            c["issuer"], c["officialName"], c["market"],
+            [f"{c['sourceProvider']}|{c['recordId']}"],
+        )
         facts = c["facts"]
         gaps.append({
             "cardId": candidate_id,
@@ -440,7 +576,9 @@ def build_gaps_and_queue(canonical_groups, clearfin_sample, clearfin_slugs, dedu
         json.dumps({"generatedAt": "2026-08-27", "queueLength": len(queue), "queue": queue}, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-    print(f"wrote {len(gaps)} gaps, {len(queue)} research-queue entries", file=sys.stderr)
+    write_idmap()
+    print(f"wrote {len(gaps)} gaps, {len(queue)} research-queue entries, "
+          f"{len(ID_MAP)} idmap entries", file=sys.stderr)
 
 
 def _fees_conflict(sources) -> bool:

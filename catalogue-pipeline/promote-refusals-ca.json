@@ -14,14 +14,14 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "capital-one-aspire-travel-platinum-mastercard",
+    "cardId": "capital-one-canada-capital-one-aspire-travel",
     "officialName": "Capital One Aspire Travel Platinum Mastercard",
     "issuer": "Capital One",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "capital-one-guaranteed-secured-mastercard",
+    "cardId": "capital-one-canada-capital-one-guaranteed",
     "officialName": "Capital One Guaranteed Secured Mastercard",
     "issuer": "Capital One",
     "reason": "unknown-program",
@@ -49,14 +49,14 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "rbc-british-airways-visa-infinite",
+    "cardId": "royal-bank-of-canada-rbc-british-airways-visa",
     "officialName": "RBC British Airways Visa Infinite",
     "issuer": "RBC",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "rbc-more-rewards-rbc-visa",
+    "cardId": "royal-bank-of-canada-more-rewards-rbc-visa",
     "officialName": "More Rewards RBC Visa",
     "issuer": "RBC",
     "reason": "unknown-program",
@@ -77,14 +77,14 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "capital-one-aspire-travel-platinum-mastercard",
+    "cardId": "capital-one-canada-capital-one-aspire-travel",
     "officialName": "Capital One Aspire Travel Platinum Mastercard",
     "issuer": "Capital One",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "capital-one-guaranteed-secured-mastercard",
+    "cardId": "capital-one-canada-capital-one-guaranteed",
     "officialName": "Capital One Guaranteed Secured Mastercard",
     "issuer": "Capital One",
     "reason": "unknown-program",
@@ -112,14 +112,14 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "rbc-british-airways-visa-infinite",
+    "cardId": "royal-bank-of-canada-rbc-british-airways-visa",
     "officialName": "RBC British Airways Visa Infinite",
     "issuer": "RBC",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "rbc-more-rewards-rbc-visa",
+    "cardId": "royal-bank-of-canada-more-rewards-rbc-visa",
     "officialName": "More Rewards RBC Visa",
     "issuer": "RBC",
     "reason": "unknown-program",

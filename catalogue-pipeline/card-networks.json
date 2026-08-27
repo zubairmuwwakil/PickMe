@@ -1,37 +1,17 @@
 {
-  "alliant-credit-union-alliant-cashback-visa-signature-credit-": {
+  "alliant-credit-union-alliant-cashback-visa": {
     "basis": "name-token",
     "network": "visa"
   },
-  "alliant-credit-union-alliant-visa-platinum-credit-card": {
+  "alliant-credit-union-alliant-visa-platinum": {
     "basis": "name-token",
     "network": "visa"
   },
-  "american-express-amazon-business-american-express-card": {
+  "american-express-amazon-business": {
     "basis": "name-token",
     "network": "amex"
   },
-  "american-express-amex-blue-business-plus": {
-    "basis": "name-token",
-    "network": "amex"
-  },
-  "american-express-amex-cash-magnet": {
-    "basis": "name-token",
-    "network": "amex"
-  },
-  "american-express-amex-delta-blue": {
-    "basis": "name-token",
-    "network": "amex"
-  },
-  "american-express-amex-everyday-preferred-credit-card": {
-    "basis": "name-token",
-    "network": "amex"
-  },
-  "american-express-amex-graphite-business-cash": {
-    "basis": "name-token",
-    "network": "amex"
-  },
-  "american-express-amex-morgan-stanley-blue": {
+  "american-express-blue-business-plus": {
     "basis": "name-token",
     "network": "amex"
   },
@@ -43,11 +23,23 @@
     "basis": "name-token",
     "network": "amex"
   },
+  "american-express-business-green-rewards-card": {
+    "basis": "name-token",
+    "network": "amex"
+  },
+  "american-express-cash-magnet": {
+    "basis": "name-token",
+    "network": "amex"
+  },
+  "american-express-delta-blue": {
+    "basis": "name-token",
+    "network": "amex"
+  },
   "american-express-delta-skymiles-gold-business": {
     "basis": "issuer-only-network",
     "network": "amex"
   },
-  "american-express-delta-skymiles-platinum-american-express-ca": {
+  "american-express-delta-skymiles-platinum": {
     "basis": "name-token",
     "network": "amex"
   },
@@ -55,7 +47,15 @@
     "basis": "name-token",
     "network": "amex"
   },
+  "american-express-everyday-preferred": {
+    "basis": "name-token",
+    "network": "amex"
+  },
   "american-express-gold-card": {
+    "basis": "name-token",
+    "network": "amex"
+  },
+  "american-express-graphite-business-cash": {
     "basis": "name-token",
     "network": "amex"
   },
@@ -63,47 +63,15 @@
     "basis": "name-token",
     "network": "amex"
   },
-  "american-express-hilton-honors-american-express-aspire-card": {
+  "american-express-hilton-honors": {
     "basis": "name-token",
     "network": "amex"
   },
-  "american-express-marriott-bonvoy-bevy-american-express-card": {
+  "american-express-marriott-bonvoy-bevy": {
     "basis": "name-token",
     "network": "amex"
   },
-  "american-express-national-bank-american-express-business-gol": {
-    "basis": "name-token",
-    "network": "amex"
-  },
-  "american-express-national-bank-american-express-gold-card": {
-    "basis": "name-token",
-    "network": "amex"
-  },
-  "american-express-national-bank-american-express-green-card": {
-    "basis": "name-token",
-    "network": "amex"
-  },
-  "american-express-national-bank-blue-business-plus-credit-car": {
-    "basis": "name-token",
-    "network": "amex"
-  },
-  "american-express-national-bank-blue-cash-preferred-card-from": {
-    "basis": "name-token",
-    "network": "amex"
-  },
-  "american-express-national-bank-business-green-rewards-card-f": {
-    "basis": "name-token",
-    "network": "amex"
-  },
-  "american-express-national-bank-graphite-business-cash-unlimi": {
-    "basis": "name-token",
-    "network": "amex"
-  },
-  "american-express-national-bank-the-business-platinum-card-fr": {
-    "basis": "name-token",
-    "network": "amex"
-  },
-  "american-express-national-bank-the-platinum-card-from-americ": {
+  "american-express-morgan-stanley-blue": {
     "basis": "name-token",
     "network": "amex"
   },
@@ -111,19 +79,19 @@
     "basis": "name-token",
     "network": "amex"
   },
-  "american-express-the-business-platinum-card-from-american-ex": {
+  "american-express-the-business-platinum-card": {
     "basis": "name-token",
     "network": "amex"
   },
-  "american-express-the-platinum-card-from-american-express": {
+  "american-express-the-platinum-card": {
     "basis": "name-token",
     "network": "amex"
   },
-  "bank-of-america-air-france-klm-visa-signature-credit-card": {
+  "bank-of-america-air-france-klm-visa-signature": {
     "basis": "name-token",
     "network": "visa"
   },
-  "bank-of-america-alaska-airlines-atmos-ascent-visa-signature-": {
+  "bank-of-america-alaska-airlines-atmos-ascent": {
     "basis": "name-token",
     "network": "visa"
   },
@@ -131,31 +99,35 @@
     "basis": "name-token",
     "network": "visa"
   },
-  "bank-of-america-atmos-rewards-summit-visa-infinite-credit-ca": {
+  "bank-of-america-atmos-rewards-summit-visa": {
     "basis": "name-token",
     "network": "visa"
   },
-  "bank-of-america-atmos-rewards-visa-signature-business-credit": {
+  "bank-of-america-atmos-rewards-visa-signature": {
     "basis": "name-token",
     "network": "visa"
   },
-  "bank-of-america-business-advantage-customized-cash-rewards-m": {
+  "bank-of-america-business-advantage-customized": {
     "basis": "name-token",
     "network": "mastercard"
   },
-  "bank-of-america-free-spirit-travel-more-world-elite-masterca": {
+  "bank-of-america-free-spirit-travel-more-world": {
     "basis": "name-token",
     "network": "mastercard"
   },
-  "bank-of-america-norwegian-cruise-line-world-mastercard": {
+  "bank-of-america-norwegian-cruise-line-world": {
     "basis": "name-token",
     "network": "mastercard"
   },
-  "bank-of-america-royal-one-plus-visa-signature-credit-card": {
+  "bank-of-america-royal-one-plus-visa-signature": {
     "basis": "name-token",
     "network": "visa"
   },
-  "barclays-aarp-essential-rewards-mastercard-from-barclays": {
+  "barclays-aarp-essential-rewards-mastercard": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
+  "barclays-athleta-encore-mastercard": {
     "basis": "name-token",
     "network": "mastercard"
   },
@@ -167,71 +139,15 @@
     "basis": "name-token",
     "network": "mastercard"
   },
-  "barclays-bank-delaware-aarp-essential-rewards-mastercard-fro": {
+  "barclays-barnes-noble-mastercard": {
     "basis": "name-token",
     "network": "mastercard"
   },
-  "barclays-bank-delaware-athleta-encore-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "barclays-bank-delaware-banana-republic-encore-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "barclays-bank-delaware-barnes-noble-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "barclays-bank-delaware-breeze-easy-visa-credit-card": {
+  "barclays-breeze-easy-visa-credit-card": {
     "basis": "name-token",
     "network": "visa"
   },
-  "barclays-bank-delaware-capital-vacations-world-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "barclays-bank-delaware-carnival-world-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "barclays-bank-delaware-emirates-skywards-rewards-world-elite": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "barclays-bank-delaware-frontier-airlines-world-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "barclays-bank-delaware-gap-encore-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "barclays-bank-delaware-gm-business-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "barclays-bank-delaware-gm-rewards-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "barclays-bank-delaware-miles-more-world-elite-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "barclays-bank-delaware-old-navy-encore-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "barclays-bank-delaware-rci-elite-rewards-world-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "barclays-bank-delaware-upromise-world-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "barclays-bank-delaware-xbox-mastercard": {
+  "barclays-capital-vacations-world-mastercard": {
     "basis": "name-token",
     "network": "mastercard"
   },
@@ -239,11 +155,11 @@
     "basis": "name-token",
     "network": "mastercard"
   },
-  "barclays-celebrity-cruises-visa-signature-card": {
+  "barclays-celebrity-cruises-visa-signature": {
     "basis": "name-token",
     "network": "visa"
   },
-  "barclays-emirates-skywards-premium-world-elite-mastercard": {
+  "barclays-emirates-skywards-premium-world": {
     "basis": "name-token",
     "network": "mastercard"
   },
@@ -251,11 +167,23 @@
     "basis": "name-token",
     "network": "mastercard"
   },
+  "barclays-gap-encore-mastercard": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
   "barclays-gap-good-rewards-mastercard": {
     "basis": "name-token",
     "network": "mastercard"
   },
-  "barclays-hawaiian-airlines-world-elite-mastercard": {
+  "barclays-gm-business-mastercard": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
+  "barclays-gm-rewards-mastercard": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
+  "barclays-hawaiian-airlines-world-elite": {
     "basis": "name-token",
     "network": "mastercard"
   },
@@ -271,7 +199,19 @@
     "basis": "name-token",
     "network": "mastercard"
   },
+  "barclays-miles-more-world-elite-mastercard": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
+  "barclays-old-navy-encore-mastercard": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
   "barclays-old-navy-navyist-rewards-mastercard": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
+  "barclays-rci-elite-rewards-world-mastercard": {
     "basis": "name-token",
     "network": "mastercard"
   },
@@ -287,11 +227,19 @@
     "basis": "name-token",
     "network": "visa"
   },
+  "barclays-upromise-world-mastercard": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
+  "barclays-xbox-mastercard": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
   "bread-financial-bed-bath-beyond-mastercard": {
     "basis": "name-token",
     "network": "mastercard"
   },
-  "bread-financial-bread-rewards-american-express-credit-card": {
+  "bread-financial-bread-rewards": {
     "basis": "name-token",
     "network": "amex"
   },
@@ -307,19 +255,19 @@
     "basis": "name-token",
     "network": "mastercard"
   },
-  "capital-one-aspire-travel-platinum-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
   "capital-one-bj-s-one-mastercard": {
     "basis": "name-token",
     "network": "mastercard"
   },
-  "capital-one-guaranteed-secured-mastercard": {
+  "capital-one-canada-capital-one-aspire-travel": {
     "basis": "name-token",
     "network": "mastercard"
   },
-  "capital-one-n-a-t-mobile-visa": {
+  "capital-one-canada-capital-one-guaranteed": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
+  "capital-one-t-mobile-visa": {
     "basis": "name-token",
     "network": "visa"
   },
@@ -355,7 +303,15 @@
     "basis": "name-token",
     "network": "visa"
   },
+  "chase-instacart-mastercard": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
   "chase-prime-visa": {
+    "basis": "name-token",
+    "network": "visa"
+  },
+  "chase-prime-visa-and-amazon-visa": {
     "basis": "name-token",
     "network": "visa"
   },
@@ -363,11 +319,11 @@
     "basis": "name-token",
     "network": "mastercard"
   },
-  "citi-aadvantage-business-world-elite-mastercard": {
+  "citi-aadvantage-business-world-elite": {
     "basis": "name-token",
     "network": "mastercard"
   },
-  "citi-aadvantage-executive-world-elite-mastercard": {
+  "citi-aadvantage-executive-world-elite": {
     "basis": "name-token",
     "network": "mastercard"
   },
@@ -379,35 +335,27 @@
     "basis": "name-token",
     "network": "mastercard"
   },
-  "citibank-n-a-citi-secured-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "comenity-bank-bread-rewards-american-express-credit-card": {
-    "basis": "name-token",
-    "network": "amex"
-  },
-  "comenity-capital-bank-aaa-daily-advantage-visa-signature-cre": {
+  "comenity-aaa-daily-advantage-visa-signature": {
     "basis": "name-token",
     "network": "visa"
   },
-  "comenity-capital-bank-bread-cashback-american-express-credit": {
+  "comenity-bread-cashback-american-express": {
     "basis": "name-token",
     "network": "amex"
   },
-  "discover-bank-discover-it-chrome-gas-restaurant-credit-card": {
+  "comenity-bread-rewards-american-express": {
     "basis": "name-token",
-    "network": "discover"
-  },
-  "discover-bank-nhl-discover-it-credit-card": {
-    "basis": "name-token",
-    "network": "discover"
+    "network": "amex"
   },
   "discover-it-cash-back": {
     "basis": "name-token",
     "network": "discover"
   },
   "discover-it-chrome": {
+    "basis": "name-token",
+    "network": "discover"
+  },
+  "discover-it-chrome-gas-restaurant-credit-card": {
     "basis": "name-token",
     "network": "discover"
   },
@@ -419,23 +367,27 @@
     "basis": "name-token",
     "network": "discover"
   },
-  "fidelity-investments-elan-financial-services-fidelity-reward": {
+  "discover-nhl-discover-it-credit-card": {
+    "basis": "name-token",
+    "network": "discover"
+  },
+  "elan-financial-services-fidelity-rewards-visa": {
     "basis": "name-token",
     "network": "visa"
   },
-  "first-electronic-bank-avianca-lifemiles-american-express-car": {
+  "first-electronic-bank-avianca-lifemiles": {
     "basis": "name-token",
     "network": "amex"
   },
-  "first-electronic-bank-latam-airlines-world-elite-mastercard": {
+  "first-electronic-bank-latam-airlines-world": {
     "basis": "name-token",
     "network": "mastercard"
   },
-  "first-electronic-bank-tap-miles-go-american-express-credit-c": {
+  "first-electronic-bank-tap-miles-go": {
     "basis": "name-token",
     "network": "amex"
   },
-  "fnbo-amtrak-guest-rewards-preferred-mastercard": {
+  "fnbo-amtrak-guest-rewards-preferred": {
     "basis": "name-token",
     "network": "mastercard"
   },
@@ -443,23 +395,11 @@
     "basis": "name-token",
     "network": "mastercard"
   },
-  "jpmorgan-chase-aer-lingus-visa-signature-credit-card": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "jpmorgan-chase-instacart-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "jpmorgan-chase-prime-visa-and-amazon-visa": {
-    "basis": "name-token",
-    "network": "visa"
-  },
   "mbna-true-line-mastercard": {
     "basis": "name-token",
     "network": "mastercard"
   },
-  "navy-federal-credit-union-navy-federal-more-rewards-american": {
+  "navy-federal-credit-union-navy-federal-more": {
     "basis": "name-token",
     "network": "amex"
   },
@@ -471,11 +411,11 @@
     "basis": "name-token",
     "network": "visa"
   },
-  "penfed-credit-union-penfed-pathfinder-rewards-visa-signature": {
+  "penfed-credit-union-penfed-pathfinder-rewards": {
     "basis": "name-token",
     "network": "visa"
   },
-  "penfed-credit-union-penfed-power-cash-rewards-visa-signature": {
+  "penfed-credit-union-penfed-power-cash-rewards": {
     "basis": "name-token",
     "network": "visa"
   },
@@ -499,25 +439,13 @@
     "basis": "name-token",
     "network": "visa"
   },
-  "rbc-british-airways-visa-infinite": {
+  "royal-bank-of-canada-more-rewards-rbc-visa": {
     "basis": "name-token",
     "network": "visa"
   },
-  "rbc-more-rewards-rbc-visa": {
+  "royal-bank-of-canada-rbc-british-airways-visa": {
     "basis": "name-token",
     "network": "visa"
-  },
-  "synchrony-bank-synchrony-plus-world-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "synchrony-bank-synchrony-preferred-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "synchrony-bank-synchrony-premier-world-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
   },
   "synchrony-carecredit-rewards-mastercard": {
     "basis": "name-token",
@@ -532,6 +460,18 @@
     "network": "mastercard"
   },
   "synchrony-paypal-cashback-mastercard": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
+  "synchrony-plus-world-mastercard": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
+  "synchrony-preferred-mastercard": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
+  "synchrony-premier-world-mastercard": {
     "basis": "name-token",
     "network": "mastercard"
   },
@@ -551,13 +491,13 @@
     "basis": "name-token",
     "network": "visa"
   },
-  "td-bank-td-first-class-visa-signature-credit-card": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "td-bank-usa-n-a-target-circle-credit-card-target-mastercard": {
+  "td-bank-usa-target-circle-credit-card-target": {
     "basis": "name-token",
     "network": "mastercard"
+  },
+  "td-bank-usa-td-first-class-visa-signature": {
+    "basis": "name-token",
+    "network": "visa"
   },
   "u-s-bank-altitude-go-visa-signature-card": {
     "basis": "name-token",
@@ -567,7 +507,19 @@
     "basis": "name-token",
     "network": "visa"
   },
-  "u-s-bank-business-leverage-visa-signature-card": {
+  "u-s-bank-business-altitude-power-visa": {
+    "basis": "name-token",
+    "network": "visa"
+  },
+  "u-s-bank-business-leverage-visa-signature": {
+    "basis": "name-token",
+    "network": "visa"
+  },
+  "u-s-bank-business-shield-visa-card": {
+    "basis": "name-token",
+    "network": "visa"
+  },
+  "u-s-bank-cash-secured-visa-card": {
     "basis": "name-token",
     "network": "visa"
   },
@@ -579,59 +531,19 @@
     "basis": "name-token",
     "network": "visa"
   },
-  "u-s-bank-kroger-rewards-world-elite-mastercard": {
+  "u-s-bank-kroger-rewards-world-elite": {
     "basis": "name-token",
     "network": "mastercard"
   },
-  "u-s-bank-national-association-split-world-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "u-s-bank-national-association-u-s-bank-altitude-go-visa-sign": {
+  "u-s-bank-secured-visa-card": {
     "basis": "name-token",
     "network": "visa"
   },
-  "u-s-bank-national-association-u-s-bank-business-altitude-pow": {
+  "u-s-bank-shield-visa-card": {
     "basis": "name-token",
     "network": "visa"
   },
-  "u-s-bank-national-association-u-s-bank-business-leverage-vis": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "u-s-bank-national-association-u-s-bank-business-shield-visa-": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "u-s-bank-national-association-u-s-bank-cash-secured-visa-car": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "u-s-bank-national-association-u-s-bank-cash-visa-signature-c": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "u-s-bank-national-association-u-s-bank-secured-visa-card": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "u-s-bank-national-association-u-s-bank-shield-visa-card": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "u-s-bank-national-association-u-s-bank-shopper-cash-rewards-": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "u-s-bank-national-association-u-s-bank-smartly-visa-signatur": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "u-s-bank-national-association-u-s-bank-triple-cash-rewards-v": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "u-s-bank-shopper-cash-rewards-visa-signature-card": {
+  "u-s-bank-shopper-cash-rewards-visa-signature": {
     "basis": "name-token",
     "network": "visa"
   },
@@ -639,7 +551,11 @@
     "basis": "name-token",
     "network": "visa"
   },
-  "u-s-bank-triple-cash-rewards-visa-business-card": {
+  "u-s-bank-split-world-mastercard": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
+  "u-s-bank-triple-cash-rewards-visa-business": {
     "basis": "name-token",
     "network": "visa"
   },
@@ -647,7 +563,7 @@
     "basis": "name-token",
     "network": "visa"
   },
-  "upgrade-cross-river-bank-upgrade-triple-cash-rewards-visa": {
+  "upgrade-triple-cash-rewards-visa": {
     "basis": "name-token",
     "network": "visa"
   },
@@ -655,41 +571,13 @@
     "basis": "name-token",
     "network": "mastercard"
   },
+  "wells-fargo-autograph-visa-card": {
+    "basis": "name-token",
+    "network": "visa"
+  },
   "wells-fargo-autograph-visa-signature-card": {
     "basis": "name-token",
     "network": "visa"
-  },
-  "wells-fargo-bank-n-a-choice-privileges-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "wells-fargo-bank-n-a-one-key-mastercard": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "wells-fargo-bank-n-a-wells-fargo-active-cash-visa-card": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "wells-fargo-bank-n-a-wells-fargo-attune-world-elite-masterca": {
-    "basis": "name-token",
-    "network": "mastercard"
-  },
-  "wells-fargo-bank-n-a-wells-fargo-autograph-journey-visa-sign": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "wells-fargo-bank-n-a-wells-fargo-autograph-visa-card": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "wells-fargo-bank-n-a-wells-fargo-reflect-visa-card": {
-    "basis": "name-token",
-    "network": "visa"
-  },
-  "wells-fargo-bank-n-a-wells-fargo-signify-business-cash-maste": {
-    "basis": "name-token",
-    "network": "mastercard"
   },
   "wells-fargo-choice-privileges-mastercard": {
     "basis": "name-token",

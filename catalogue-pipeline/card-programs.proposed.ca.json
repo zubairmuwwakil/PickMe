@@ -6,7 +6,7 @@
       "issuer": "CIBC",
       "officialName": "CIBC Costco Mastercard"
     },
-    "rbc-british-airways-visa-infinite": {
+    "royal-bank-of-canada-rbc-british-airways-visa": {
       "basis": "co-brand: aer lingus|british airways|iberia|avios",
       "currency": "Avios",
       "issuer": "Royal Bank of Canada",
@@ -25,12 +25,12 @@
       "issuer": "Brim Financial",
       "officialName": "Brim World Elite Mastercard"
     },
-    "capital-one-aspire-travel-platinum-mastercard": {
+    "capital-one-canada-capital-one-aspire-travel": {
       "basis": "no signal in issuer or name",
       "issuer": "Capital One Canada",
       "officialName": "Capital One Aspire Travel Platinum Mastercard"
     },
-    "capital-one-guaranteed-secured-mastercard": {
+    "capital-one-canada-capital-one-guaranteed": {
       "basis": "no signal in issuer or name",
       "issuer": "Capital One Canada",
       "officialName": "Capital One Guaranteed Secured Mastercard"
@@ -45,7 +45,7 @@
       "issuer": "Neo Financial",
       "officialName": "Neo World Mastercard"
     },
-    "rbc-more-rewards-rbc-visa": {
+    "royal-bank-of-canada-more-rewards-rbc-visa": {
       "basis": "no signal in issuer or name",
       "issuer": "Royal Bank of Canada",
       "officialName": "More Rewards RBC Visa"
