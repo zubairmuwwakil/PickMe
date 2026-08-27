@@ -73,7 +73,8 @@ practices described here.
 Everything in this section is stored in the app's own storage on your device in both modes. If you
 sign in, the wallet configuration in 2(a) through 2(c) is also copied to your account so the server
 can evaluate Wallet Shortcut captures. The merchant history, recommendations, purchase entries,
-statement checks, and location/discovery history in 2(d) through 2(h) are never uploaded.
+statement checks, and location/discovery/patronage history in 2(d) through 2(i) are never
+uploaded.
 
 **a. Your cards.** Which *card products* you selected from the catalogue built into the app — for
 example "American Express Cobalt Card."
@@ -112,12 +113,21 @@ there. **This is a coarse record of areas you have passed through, not only plac
 It exists purely to save battery and network use. Squares you have not returned to are deleted
 automatically after about 90 days, and the whole record is erased by "delete all data."
 
+**i. Which shops you keep going back to.** For every merchant the app recognises, it keeps the
+calendar days you paid there, captured from the Apple Wallet automation if you use it. **Not the
+amount, not the card, not the time of day — just the date, and only for shops the app already
+knows by name.** A shop you visit three separate days within a rolling 90-day window is treated as
+one you frequent, which lets an arrival notification there use your own switch threshold instead of
+the higher bar applied to a place you rarely visit. Days age out of the 90-day window on their own,
+so a shop you stop going to stops counting without you doing anything. You can see this list, and
+remove or block any merchant from it, from within the app; "delete all data" clears it entirely.
+
 ### 3. What this adds up to — stated plainly
 
-Sections 2(d) through 2(h) together build a partial record of **where you go, where you shop, when,
-what you spent, and which cards you carry.** Section 2(b) includes approximate figures for your
-annual spending in certain categories. That is genuinely personal information and we treat it as
-such.
+Sections 2(d) through 2(i) together build a partial record of **where you go, where you shop, how
+often, when, what you spent, and which cards you carry.** Section 2(b) includes approximate figures
+for your annual spending in certain categories. That is genuinely personal information and we treat
+it as such.
 
 **In the default mode, that record never leaves your device.** The design decision is upstream of
 this policy, not a promise layered on top of it.
@@ -207,11 +217,13 @@ by this one.
 ### 8. How long data is kept
 
 **On your iPhone:** until you delete it. Exceptions: the record of areas the app has looked in
-(section 2(h)) deletes itself after about 90 days without a return visit.
+(section 2(h)) deletes itself after about 90 days without a return visit, and each day in the
+merchant-visit record (section 2(i)) ages out 90 days after that day, per merchant.
 
-- **Delete individual records** — from within the app.
+- **Delete individual records** — from within the app, including forgetting or blocking a single
+  merchant's visit history (2(i)).
 - **Delete everything local** — the app provides a control that erases the entire local database,
-  including saved shop locations and the record of areas searched.
+  including saved shop locations, the record of areas searched, and the merchant-visit record.
 - **Delete the app** — removing PickMe deletes its local database with it.
 
 **On our server, if you have an account:** until you delete your account. Settings → Delete Account

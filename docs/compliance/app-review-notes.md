@@ -88,6 +88,14 @@ shopping areas so it can suggest a card as the user walks in, and ask what they 
 as they leave. This requires "Always" authorization and the location background mode,
 because region monitoring must fire while the app is not running.
 
+To reduce how often that background wake becomes a notification, the app keeps a local,
+on-device record of which recognised merchants the user has paid at on at least three
+separate days in the last 90 - never uploaded, never containing an amount, card, or
+coordinate, just merchant and date. A merchant that clears that bar is treated as one the
+user actually frequents, which raises a notification there to the user's own alert
+threshold instead of the more conservative default used elsewhere. This record is visible
+and editable in-app ("Learned merchants") and is cleared by "erase local history."
+
 - Location is off until the user turns it on; nothing is requested at first launch.
 - Arrival alerts are separately optional, behind their own explainer screen shown
   before either system prompt appears.
@@ -209,6 +217,14 @@ an app requesting Always location while collecting purchase history and precise 
 exactly the pattern a reviewer probes. Answering it before it is asked costs a few lines; answering
 it in a rejection appeal costs a week. §5 of the labels document has a longer reply ready for the
 "why does a card calculator need Always?" question specifically.
+
+**Added 2026-08-27: the merchant-patronage paragraph in the LOCATION section.** A reviewer who
+reads "Always location" next to "Apple Wallet automation" will reasonably ask what the combination
+is *for*, beyond the arrival suggestion already explained. The honest answer is now that a local
+visit-frequency record tunes when that suggestion fires. Leaving it out would not have been false,
+but it would have left the most probable follow-up question unanswered in a document whose whole
+purpose is pre-empting follow-up questions. See [`app-privacy-labels.md`](app-privacy-labels.md)
+§2.3 for the full data-handling description this paragraph summarises.
 
 ## B5. The reviewer walkthrough
 

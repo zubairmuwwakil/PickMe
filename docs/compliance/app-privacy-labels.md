@@ -125,10 +125,26 @@ mitigation is cheap and the label would soften accordingly.
 | **Contacts, Photos, Health, Browsing, Messages, Audio** | Not touched. |
 | **Sensitive Info** | Not collected. |
 
-The local prediction log, purchases, observations, saved merchant coordinates, and the discovery
-cache are **not declared**, because they are processed only on device and Apple's definition
-excludes them. The privacy policy still describes them in full — see §7 on why the two documents
-answer different questions.
+The local prediction log, purchases, observations, saved merchant coordinates, the discovery
+cache, and the merchant-patronage record (§2.3) are **not declared**, because they are processed
+only on device and Apple's definition excludes them. The privacy policy still describes them in
+full — see §7 on why the two documents answer different questions.
+
+### 2.3 Merchant patronage — a new local-only category, added 2026-08-27
+
+`MerchantPatronageStore` now keeps, per merchant the app recognises, the set of calendar days the
+owner paid there — no amount, no card, no coordinate, no time-of-day. It lives in the shared App
+Group `UserDefaults` suite, is written from the Wallet capture path, is pruned to a rolling 90-day
+window on every write, and is read to decide whether an arrival earns a notification at the
+owner's own threshold instead of a doubled one (see [`privacy-policy.md`](privacy-policy.md) §2(i)
+for the full description).
+
+It never leaves the device — it is not part of the account sync payload and the server never
+receives it — so under Apple's on-device definition (§1 above) it is correctly excluded from the
+label, exactly like the discovery cache. It is called out by name here, rather than silently
+folded into the existing "local records" language, because a category this specific (a
+per-merchant visit history, however coarse) is the kind of thing a reviewer or a future audit
+should be able to find in this document without cross-referencing the code.
 
 ---
 

@@ -86,6 +86,13 @@ Location is used for two specific user-facing purposes:
    posted suggesting the best card before checkout, and computes visit dwell time upon
    exit.
 
+To decide how readily that background wake becomes a notification, the app keeps a local,
+on-device record of which recognised merchants the user paid at on at least 3 separate
+days in a rolling 90-day window - merchant and date only, never amount, card, or
+coordinate, and never uploaded. A merchant clearing that bar is treated as one the user
+frequents, which lets a notification there use the user's own alert threshold. The record
+is visible and editable in-app ("Learned merchants") and clears with local-history erasure.
+
 - Location tracking is NEVER continuous; no GPS trail or route history is recorded.
 - If location permission is denied, the app presents a complete manual merchant search.
   No feature is gated or inaccessible without location.
@@ -176,7 +183,12 @@ flagged.
 2. **Location background mode justification:** Guideline 2.5.4 strictly evaluates apps declaring
    `UIBackgroundModes = ["location"]`. The notes explicitly explain the `CLMonitor` / region
    monitoring mechanism and confirm continuous GPS is not used.
-3. **Guideline 2.1(a) Backend & Demo Account:** Corrected per commit `bc6c19f`. The backend must
+3. **Merchant-patronage paragraph (added 2026-08-27):** Always location plus a Wallet-transaction
+   automation is a combination a beta reviewer is likely to question. The notes now say plainly
+   that a local, on-device visit-frequency record (never uploaded) tunes the notification
+   threshold, matching the fuller description in
+   [`app-privacy-labels.md`](app-privacy-labels.md) §2.3.
+4. **Guideline 2.1(a) Backend & Demo Account:** Corrected per commit `bc6c19f`. The backend must
    stay online. The demo credentials prevent unnecessary "need login" rejections.
 
 ## C3. Pre-Submission Checklist
