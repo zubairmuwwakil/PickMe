@@ -8,10 +8,13 @@ next-agent artifacts (Phases 4/8/9 of the catalogue-expansion brief):
 
 Sources read (all RAW, never mutated):
   contracts/card-catalogue.json                                  (41 published CA cards)
-  catalogue-pipeline/raw/us/opencard/opencard-cards-*.json        (224 US cards, 4 fields each)
   catalogue-pipeline/raw/us/cc-offers/cc-offers-export-*.json     (242 US rows, prose rewards)
-  catalogue-pipeline/raw/ca/clearfin/clearfin-extracted-sample-*.json (10 CA sample pages)
   catalogue-pipeline/raw/ca/clearfin/clearfin_slugs.txt           (127 CA URLs, discovery-only)
+
+OpenCard snapshots and ClearFin page/extraction copies are deliberately NOT inputs. Their
+2026-08-27 licence review found no redistribution permission, so they were removed from the
+public tree. See raw/LICENCES.md and raw/SOURCES.json. ClearFin slugs are locator metadata only;
+agents must go from a slug/card name to the issuer's own site, never fetch ClearFin for facts.
 
 Matching is deliberately conservative: normalized (issuer, name-token-overlap) equality only.
 A false NON-match (two records treated as different cards) costs a duplicate row a human can
@@ -118,25 +121,6 @@ def load_catalogue_cards():
     ]
 
 
-def load_opencard():
-    path = sorted(glob.glob(str(PIPELINE / "raw/us/opencard/opencard-cards-*.json")))[-1]
-    data = load_json(Path(path))
-    out = []
-    for group in data:
-        for c in group["cards"]:
-            out.append(
-                {
-                    "recordId": c["card_id"],
-                    "officialName": c["name"],
-                    "issuer": c["issuer"],
-                    "market": "US",
-                    "annualFee": c.get("annual_fee"),
-                    "sourceProvider": "openCard",
-                }
-            )
-    return out
-
-
 def load_cc_offers():
     path = sorted(glob.glob(str(PIPELINE / "raw/us/cc-offers/cc-offers-export-*.json")))[-1]
     data = load_json(Path(path))
@@ -157,35 +141,6 @@ def load_cc_offers():
             }
         )
     return out
-
-
-def load_clearfin_sample():
-    files = sorted(glob.glob(str(PIPELINE / "raw/ca/clearfin/clearfin-extracted-sample-*.json")))
-    if not files:
-        return []
-    data = load_json(Path(files[-1]))
-    out = []
-    for c in data:
-        out.append(
-            {
-                "recordId": c["sourceRecordId"],
-                "officialName": c["officialName"],
-                "issuer": c["issuer"],
-                "market": "CA",
-                "annualFee": _parse_clearfin_fee(c["facts"].get("Annual fee")),
-                "sourceProvider": "clearFin",
-                "sourceUrl": c["sourceUrl"],
-                "facts": c["facts"],
-            }
-        )
-    return out
-
-
-def _parse_clearfin_fee(raw):
-    if not raw:
-        return None
-    digits = re.sub(r"[^0-9.]", "", raw)
-    return float(digits) if digits else None
 
 
 def load_clearfin_discovery_slugs():
@@ -227,19 +182,17 @@ MATCH_THRESHOLD = 0.6  # majority of the smaller (issuer-stripped) token set mus
 
 def main():
     catalogue = load_catalogue_cards()
-    opencard = load_opencard()
     cc_offers = load_cc_offers()
-    clearfin = load_clearfin_sample()
     clearfin_slugs = load_clearfin_discovery_slugs()
 
-    print(f"catalogue: {len(catalogue)}  openCard: {len(opencard)}  ccOffers: {len(cc_offers)}  "
-          f"clearFin sample: {len(clearfin)}  clearFin discovery-only slugs: {len(clearfin_slugs)}",
+    print(f"catalogue: {len(catalogue)}  ccOffers: {len(cc_offers)}  "
+          f"clearFin discovery-only slugs: {len(clearfin_slugs)}",
           file=sys.stderr)
 
     # --- Dedup: match every non-catalogue record against the existing 41 catalogue cards ---
     dedup_report = {"matchedToExisting": [], "possibleDuplicates": [], "newCandidates": []}
 
-    for record in opencard + cc_offers + clearfin:
+    for record in cc_offers:
         match, score = best_match(record, catalogue)
         if score >= MATCH_THRESHOLD:
             dedup_report["matchedToExisting"].append(
@@ -284,8 +237,8 @@ def main():
                 }
             )
 
-    # Cross-source dedup among the new candidates themselves (openCard vs ccOffers, both US) —
-    # so the research queue doesn't ask two different agents to source the same new card twice.
+    # Dedup among new candidates themselves so repeated source rows do not ask two different
+    # agents to source the same card twice.
     new_candidates = dedup_report["newCandidates"]
     canonical_groups: list[dict] = []
     for cand in new_candidates:
@@ -319,7 +272,7 @@ def main():
 
     (PIPELINE / "dedup-report.json").write_text(json.dumps(dedup_report, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    build_gaps_and_queue(canonical_groups, clearfin, clearfin_slugs, dedup_report)
+    build_gaps_and_queue(canonical_groups, clearfin_slugs, dedup_report)
 
 
 MAX_ID_LEN = 45   # published cardIds run 11-37 chars; stay inside that range
@@ -415,11 +368,11 @@ def write_idmap() -> None:
     )
 
 
-def build_gaps_and_queue(canonical_groups, clearfin_sample, clearfin_slugs, dedup_report):
+def build_gaps_and_queue(canonical_groups, clearfin_slugs, dedup_report):
     gaps = []
     queue = []
 
-    # 1. Every canonical new-candidate group (US, from openCard/ccOffers) — CRITICAL/HIGH gaps,
+    # 1. Every canonical new-candidate group (US, from cc-offers) — CRITICAL/HIGH gaps,
     #    since nothing about their earn structure is known at all yet.
     for group in canonical_groups:
         candidate_id = mint_id(
@@ -427,9 +380,8 @@ def build_gaps_and_queue(canonical_groups, clearfin_sample, clearfin_slugs, dedu
             [f"{s['source']}|{s['sourceRecordId']}" for s in group["sources"]],
         )
         cc_source = next((s for s in group["sources"] if s["source"] == "ccOffers"), None)
-        oc_source = next((s for s in group["sources"] if s["source"] == "openCard"), None)
         sources_checked = [s.get("sourceUrl") for s in group["sources"] if s.get("sourceUrl")]
-        sources_checked = sources_checked or ["openCard aggregator (no per-card URL)"]
+        sources_checked = sources_checked or ["cc-offers aggregator (no per-card URL)"]
 
         gaps.append({
             "cardId": candidate_id,
@@ -475,83 +427,46 @@ def build_gaps_and_queue(canonical_groups, clearfin_sample, clearfin_slugs, dedu
             "affectsBenefitsDisplay": True,
         })
 
-    # 2. ClearFin sample records not matched to the existing catalogue (issuers we have zero
-    #    coverage for at all: Capital One, Neo Financial, Brim).
-    matched_clearfin_ids = {
-        m["sourceRecordId"] for m in dedup_report["matchedToExisting"] if m["source"] == "clearFin"
-    }
-    for c in clearfin_sample:
-        if c["recordId"] in matched_clearfin_ids:
-            continue
-        candidate_id = mint_id(
-            c["issuer"], c["officialName"], c["market"],
-            [f"{c['sourceProvider']}|{c['recordId']}"],
-        )
-        facts = c["facts"]
-        gaps.append({
-            "cardId": candidate_id,
-            "field": "earnRules",
-            "status": "missing",
-            "importance": "CRITICAL",
-            "reason": f"Card is not in the catalogue. ClearFin lists reward type \"{facts.get('Reward type', facts.get('Card type', 'unknown'))}\" but no per-category rates or MCCs.",
-            "sourcesChecked": [c["sourceUrl"]],
-            "recommendedNextAction": f"Read {c['issuer']}'s own rewards terms and author earnRules with issuerConfirmed sourcing.",
-        })
-        queue.append({
-            "cardId": candidate_id,
-            "officialName": c["officialName"],
-            "issuer": c["issuer"],
-            "country": "CA",
-            "missingField": "earnRules, caps, fxRules, credits — entire card",
-            "currentValue": {
-                "annualFee": c.get("annualFee"),
-                "clearFinFacts": facts,
-            },
-            "sourceOfCurrentValue": "clearFin (comparisonSite, unverified)",
-            "reasonItNeedsResearch": f"{c['issuer']} has zero cards in the catalogue today; this is the first.",
-            "likelyAuthoritativeSource": c["sourceUrl"].replace("clearfin.ca/credit-cards/", "<issuer-domain>/") + " (find the issuer's own page)",
-            "suggestedSearch": f"\"{c['officialName']}\" official rewards terms",
-            "priority": "CRITICAL",
-            "affectsCheckoutScoring": True,
-            "affectsAcquisitionScoring": True,
-            "affectsBenefitsDisplay": True,
-        })
-
-    # 3. Every ClearFin URL we have NOT yet fetched/extracted at all — pure discovery gap, LOW/
-    #    MEDIUM severity (we don't even know what these cards charge yet).
-    fetched_slugs = {c["recordId"] for c in clearfin_sample}
-    unfetched = [s for s in clearfin_slugs if s not in fetched_slugs]
-    if unfetched:
+    # 2. ClearFin URL locators are retained as discovery leads only. The site's pages and
+    #    extracted copies are licence-blocked, so agents go directly from a slug/card name to
+    #    issuer material. No ClearFin content is fetched or treated as a fact source.
+    if clearfin_slugs:
         gaps.append({
             "cardId": "<multiple — see recommendedNextAction>",
             "field": "entire record",
             "status": "missing",
             "importance": "MEDIUM",
-            "reason": f"{len(unfetched)} ClearFin card pages were discovered (sitemap) but not yet fetched/extracted in this pass.",
+            "reason": (
+                f"{len(clearfin_slugs)} card URL slugs were discovered in ClearFin's sitemap. "
+                "ClearFin page content is licence-blocked and was not fetched or extracted."
+            ),
             "sourcesChecked": ["https://www.clearfin.ca/sitemap.xml"],
             "recommendedNextAction": (
-                "Run scripts/extract_clearfin.py against each remaining URL in "
-                "raw/ca/clearfin/clearfin_slugs.txt, then re-run dedupe_and_report.py."
+                "Use each slug only as a candidate-name lead; locate the issuer's own product "
+                "page and terms, and do not fetch or copy the ClearFin page."
             ),
         })
         queue.append({
             "cardId": "<batch>",
-            "officialName": f"{len(unfetched)} undiscovered ClearFin cards",
+            "officialName": f"{len(clearfin_slugs)} ClearFin sitemap locator leads",
             "issuer": "various",
             "country": "CA",
-            "missingField": "everything — not yet fetched",
-            "currentValue": {"unfetchedSlugs": unfetched},
-            "sourceOfCurrentValue": "clearFin sitemap (URL only, no content fetched)",
-            "reasonItNeedsResearch": "Discovery-only; this session fetched a 10-card representative sample of 127 known URLs.",
-            "likelyAuthoritativeSource": "https://www.clearfin.ca/credit-cards/<slug>, then the issuer's own page",
-            "suggestedSearch": "n/a — URLs already known, just needs fetching",
+            "missingField": "everything — locator metadata only",
+            "currentValue": {"locatorSlugs": clearfin_slugs},
+            "sourceOfCurrentValue": "ClearFin sitemap URL locator only; no page content retained",
+            "reasonItNeedsResearch": (
+                "Discovery-only. ClearFin has no located redistribution licence, so its pages "
+                "must not be fetched into or copied within this public pipeline."
+            ),
+            "likelyAuthoritativeSource": "Each issuer's own product page and terms",
+            "suggestedSearch": "<slug/card name> Canada official issuer credit card terms",
             "priority": "MEDIUM",
             "affectsCheckoutScoring": False,
             "affectsAcquisitionScoring": False,
             "affectsBenefitsDisplay": False,
         })
 
-    # 4. Possible duplicates — needs a human, not a script, to resolve.
+    # 3. Possible duplicates — needs a human, not a script, to resolve.
     for pd in dedup_report["possibleDuplicates"]:
         gaps.append({
             "cardId": pd["closestCardId"] or "<unresolved>",

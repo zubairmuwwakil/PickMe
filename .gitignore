@@ -18,3 +18,9 @@ local.properties
 *.dex
 *.class
 *.log
+
+# Third-party source material not cleared for public redistribution.
+# The pipeline retains only reviewed sources and URL-only ClearFin locators.
+/catalogue-pipeline/raw/us/opencard/
+/catalogue-pipeline/raw/ca/clearfin/pages/
+/catalogue-pipeline/raw/ca/clearfin/clearfin-extracted-*.json

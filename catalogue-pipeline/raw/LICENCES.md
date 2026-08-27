@@ -9,21 +9,22 @@ licence.
 
 **Do not fetch the remaining 117 ClearFin pages.** No ClearFin terms or licence
 authorizing reproduction or redistribution were found. The ten verbatim HTML
-pages already here need the owner's decision: remove them from public
-distribution and re-source the needed facts from issuers, or obtain written
-permission from ClearFin first.
+pages and their extracted sample were removed from the current tree after this
+review. Re-source needed facts from issuers; do not restore the copies unless
+ClearFin first grants written permission.
 
-The OpenCard snapshot also has no located redistribution licence. Keep it out of
-new public distributions and app bundles unless OpenCard grants permission or the
-needed facts are independently re-sourced.
+The OpenCard snapshot also had no located redistribution licence and was removed
+from the current tree. Keep it out of new public distributions and app bundles
+unless OpenCard grants permission or the needed facts are independently
+re-sourced.
 
 ## Summary
 
 | Source and local material | Licence / permission found | May the raw material be redistributed? | Must attribution travel with it? | Public-repository assessment | Required disposition |
 |---|---|---|---|---|---|
 | `us/cc-offers/cc-offers-export-2026-08-27.json` | MIT, copyright 2026 Sunny Golovine | **Yes, subject to the MIT notice.** This conclusion covers the upstream project's material; it cannot license third-party issuer expression embedded in a row. | **Yes.** The copyright and permission notice must accompany copies or substantial portions. | Permitted if the notice below travels with every substantial copy. | Keep; attach this notice to standalone exports, release assets, and any app distribution containing a substantial copy. Continue to treat issuer URLs as research leads, not issuer confirmation. |
-| `us/opencard/opencard-cards-2026-08-27.json` | **No copyright/data licence found.** API docs permit AI agents, personal tools, and research, say normal use is free, and say “Not for commercial scraping.” Site terms grant no redistribution right. The public GitHub repo has no `LICENSE` file or detected licence. | **Unclear; do not assume permission.** API access permission is not a grant to republish a frozen database snapshot. | No attribution condition was found, but attribution would not cure the missing permission. | **Unclear, needs the owner's decision.** A public raw snapshot, release source archive, or bundled app copy goes beyond the clearly stated research/personal-tool use. | Stop redistribution; ask OpenCard for a written data licence covering copying, modification, public redistribution, and app use, or remove/re-source from issuer pages. |
-| `ca/clearfin/pages/*.html` (10 verbatim pages), `clearfin-extracted-sample-2026-08-27.json`, and `clearfin_slugs.txt` | **No reuse licence or Terms of Service found.** ClearFin publishes a privacy statement and disclosures, marks the site © 2026 ClearFin Digital Inc., and exposes `robots.txt` with `Allow: /`. | **No permission established.** `robots.txt` permits crawling by robots; it does not license copying or publication. | No attribution condition was found, but attribution would not cure the missing permission. | **Verbatim HTML: not supported by any located terms and should be treated as not cleared for a public repo.** Extracted wording/selection is also unclear. A bare URL list is lower risk, but it is only locator metadata and grants no rights in page content. | Do not fetch 117 more pages. Remove the ten HTML copies from future public history/releases and re-source facts from issuers. Rebuild or remove the extracted sample after issuer re-sourcing. Owner/legal decision required for already-published Git history and tagged source archives. |
+| Historical `us/opencard/opencard-cards-2026-08-27.json` (removed from current tree) | **No copyright/data licence found.** API docs permit AI agents, personal tools, and research, say normal use is free, and say “Not for commercial scraping.” Site terms grant no redistribution right. The public GitHub repo has no `LICENSE` file or detected licence. | **Unclear; do not assume permission.** API access permission is not a grant to republish a frozen database snapshot. | No attribution condition was found, but attribution would not cure the missing permission. | **Not cleared.** A public raw snapshot, release source archive, or bundled app copy goes beyond the clearly stated research/personal-tool use. | Removed from the current tree. Ask OpenCard for a written data licence or re-source from issuer pages. Historical Git/tag remediation remains an owner/legal decision. |
+| Historical `ca/clearfin/pages/*.html` and `clearfin-extracted-sample-2026-08-27.json` (removed), plus retained `clearfin_slugs.txt` | **No reuse licence or Terms of Service found.** ClearFin publishes a privacy statement and disclosures, marks the site © 2026 ClearFin Digital Inc., and exposes `robots.txt` with `Allow: /`. | **No permission established.** `robots.txt` permits crawling by robots; it does not license copying or publication. | No attribution condition was found, but attribution would not cure the missing permission. | **Verbatim HTML: not supported by any located terms and not cleared for a public repo.** Extracted wording/selection is also unclear. A bare URL list is lower risk, but it is only locator metadata and grants no rights in page content. | Pages and extraction removed from the current tree; the 127 URL/slugs remain as locator-only leads. Do not fetch the pages. Re-source facts from issuers. Historical Git/tag remediation remains an owner/legal decision. |
 
 ## Distribution exposure actually verified
 
@@ -100,7 +101,8 @@ database or a snapshot of it. Calling the site or repository “open” is not a
 substitute for licence terms.
 
 Accordingly, internal discovery use may fit the stated research use, but the
-current public raw snapshot is not cleared. The conservative paths are:
+historical public raw snapshot was not cleared and has been removed from the
+current tree. The conservative paths are:
 
 1. Obtain written permission from `support@opencardai.com` or the API contact,
    specifically covering a public Git repository, GitHub source archives,
@@ -128,12 +130,13 @@ that ClearFin presents the information for educational comparison. That is a
 disclaimer about ClearFin's use; it is not a downstream licence to PickMe.
 ClearFin's footer claims © 2026 ClearFin Digital Inc.
 
-The ten files in `ca/clearfin/pages/` reproduce whole HTML responses, including
-site copy, page structure, styling hooks, and other expressive material. No
-located term authorizes publishing those copies. The `robots.txt` file allows
-crawlers across the site, but crawler access controls do not address copyright
-or downstream redistribution. On the evidence available, committing the raw
-HTML to a public repository is **not cleared**.
+The ten files formerly in `ca/clearfin/pages/` reproduced whole HTML responses,
+including site copy, page structure, styling hooks, and other expressive
+material. No located term authorizes publishing those copies. The `robots.txt`
+file allows crawlers across the site, but crawler access controls do not address
+copyright or downstream redistribution. On the evidence available, committing
+the raw HTML to a public repository was **not cleared**; the copies have now been
+removed from the current tree.
 
 The extracted sample is less extensive than the HTML but retains ClearFin's
 selection, labels, and some wording. Treat it as uncleared too. The slug/URL list
@@ -168,13 +171,14 @@ until D3's per-rule issuer evidence exists.
 
 ## Required follow-up order
 
-1. **Now:** keep the ClearFin expansion blocked.
-2. **Owner decision:** quarantine/remove ClearFin HTML and the OpenCard snapshot
-   from the current tree so future commits and source archives do not carry
-   them, or obtain written licences. Decide separately whether the existing
-   tagged release source archives require takedown/history remediation, and how
-   to cure the missing cc-offers MIT notice without reusing a published contract
-   release id for a different byte-set.
+1. **Done for the current tree:** ClearFin HTML/extracted content and the OpenCard
+   snapshot are removed; the ClearFin expansion remains blocked. A closed
+   allowlist in `SOURCES.json` and `scripts/check-raw-source-policy.sh` prevents
+   them from being recommitted accidentally.
+2. **Owner/legal decision remains:** decide whether the existing tagged release
+   source archives require takedown/history remediation, and how to cure the
+   missing cc-offers MIT notice without reusing a published contract release id
+   for a different byte-set.
 3. **Before any new standalone data/release/app distribution:** make the
    cc-offers MIT notice travel with the substantial data copy. Do not rely on a
    notice that exists only elsewhere in the repository.
