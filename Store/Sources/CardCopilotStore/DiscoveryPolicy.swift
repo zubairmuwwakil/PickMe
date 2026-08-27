@@ -202,3 +202,135 @@ public func clusterIntoAreas(_ merchants: [NearbyMerchant]) -> [ShoppingAreaCand
     }
     return areas
 }
+
+// MARK: - The region budget
+
+/// CoreLocation monitors 20 regions app-wide, not per app-feature. Named here rather than in the
+/// adapter because the allocation rule below is what has to know it, and the rule is what gets
+/// tested.
+public let maximumMonitoredRegions: Int = 20
+
+/// What a candidate region would resolve to on arrival, ordered by what a slot spent on it buys.
+///
+/// The ordering is about PRESENCE, not about coding — which is why patronage outranks
+/// reconciliation here and does not in `AmbientMerchantConfidence`. A confirmed terminal proves
+/// how a charge codes, and proves nothing about whether the owner will be there this week.
+/// Repeated payment proves exactly the latter, and a geofence slot is a bet on the latter.
+///
+/// This priority is a TIEBREAK today, not a ranking: `allocateRegionBudget` still lets distance
+/// decide, because that is what the app ships and an instrument that measures a policy the app
+/// does not run answers no question. The tiers earn their keep in the eviction report.
+public enum AmbientRegionTier: String, Codable, CaseIterable, Sendable {
+    /// A merchant the owner has paid at on `patronageVisitDaysRequired` separate days.
+    case frequentedMerchant
+    /// A merchant with an owner-reconciled category. Resolves `.verified` on arrival.
+    case confirmedMerchant
+    /// Stored, but never reconciled and never paid at often enough to stand out.
+    case savedMerchant
+    /// A cached MapKit cluster. The tier a new install is made entirely of, which is why D3
+    /// forbids starving it.
+    case discoveredArea
+
+    /// Higher wins a tie. Written out rather than derived from `allCases` order so that
+    /// reordering the cases for readability cannot silently re-rank the budget.
+    public var slotPriority: Int {
+        switch self {
+        case .frequentedMerchant: return 3
+        case .confirmedMerchant: return 2
+        case .savedMerchant: return 1
+        case .discoveredArea: return 0
+        }
+    }
+
+    /// Whether losing this slot cost the app evidence the owner actually shops there. The
+    /// distinction the coverage read-out exists to make: a cap that only ever drops plazas the
+    /// owner has never entered is a cap that costs nothing.
+    public var carriesStanding: Bool {
+        self == .frequentedMerchant || self == .confirmedMerchant
+    }
+}
+
+/// One region competing for a slot. Carries only what the ordering rule reads — the adapter keeps
+/// the coordinates and radii it needs to actually register the region.
+public struct RegionCandidate: Equatable, Sendable {
+    public let id: String
+    public let tier: AmbientRegionTier
+    public let distanceMeters: Double
+
+    public init(id: String, tier: AmbientRegionTier, distanceMeters: Double) {
+        self.id = id
+        self.tier = tier
+        self.distanceMeters = distanceMeters
+    }
+}
+
+/// Who got a slot, and — the part nothing recorded before — who did not.
+public struct RegionAllocation: Equatable, Sendable {
+    public let granted: [RegionCandidate]
+    public let evicted: [RegionCandidate]
+    /// The budget this allocation was made against. Carried so `isAtCapacity` can mean "we used
+    /// every slot" rather than being inferred from whether anything was dropped.
+    public let limit: Int
+
+    public init(granted: [RegionCandidate], evicted: [RegionCandidate], limit: Int) {
+        self.granted = granted
+        self.evicted = evicted
+        self.limit = limit
+    }
+
+    /// True when the rotation used every slot it had. Kept separate from `evicted.isEmpty`
+    /// because "used all 20 and wanted no more" is a healthy steady state and "used all 20 and
+    /// dropped 9" is a finding, and a single Bool cannot tell them apart.
+    public var isAtCapacity: Bool { granted.count == limit }
+}
+
+/// Spends the region budget, and reports what the budget cost.
+///
+/// Distance decides, exactly as `rotateRegions` has always decided, so the counters describe the
+/// shipping policy rather than an aspirational one. What changes is that the ordering is now
+/// TOTAL — distance, then tier, then id. `Array.sorted` is introsort and is not stable, so the
+/// previous "confirmed merchants were appended first" tiebreak was never a guarantee: two
+/// rotations over an unchanged world could disagree about the last slot and tear down a region
+/// that had not moved.
+public func allocateRegionBudget(_ candidates: [RegionCandidate],
+                                 limit: Int = maximumMonitoredRegions) -> RegionAllocation {
+    guard limit > 0 else {
+        return RegionAllocation(granted: [], evicted: candidates, limit: max(limit, 0))
+    }
+    let ordered = candidates.sorted { left, right in
+        if left.distanceMeters != right.distanceMeters {
+            return left.distanceMeters < right.distanceMeters
+        }
+        if left.tier.slotPriority != right.tier.slotPriority {
+            return left.tier.slotPriority > right.tier.slotPriority
+        }
+        return left.id < right.id
+    }
+    return RegionAllocation(granted: Array(ordered.prefix(limit)),
+                            evicted: Array(ordered.dropFirst(limit)),
+                            limit: limit)
+}
+
+/// Labels a stored merchant so the adapter never has to decide a tier itself.
+///
+/// Patronage wins over reconciliation for the reason given on `AmbientRegionTier`: a slot is a bet
+/// on the owner being there, and repeated payment is the only evidence that speaks to that.
+public func storedMerchantRegionTier(confirmedCategory: String?,
+                                     isFrequented: Bool) -> AmbientRegionTier {
+    if isFrequented { return .frequentedMerchant }
+    return confirmedCategory == nil ? .savedMerchant : .confirmedMerchant
+}
+
+/// The standing a shopping AREA inherits from the merchants standing inside it.
+///
+/// Without this the coverage counters understate their own finding. `rotateRegions` gives a
+/// merchant its own region only when no discovered area already covers it, so the owner's weekly
+/// grocery run usually competes as part of the plaza it sits in. Tiering that plaza as a bare
+/// `.discoveredArea` would report "we dropped somewhere you have never shopped" about ground the
+/// owner shops every week — and a zero in `evictedWithStanding` would then mean nothing.
+///
+/// Takes the highest standing present rather than a count: one frequented shop is enough to make
+/// the slot worth keeping, and averaging would let a plaza's empty units dilute it.
+public func areaRegionTier(coveringStandings: [AmbientRegionTier]) -> AmbientRegionTier {
+    coveringStandings.max { $0.slotPriority < $1.slotPriority } ?? .discoveredArea
+}

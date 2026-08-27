@@ -26,8 +26,16 @@ on-disk store that survives relaunch:
 | `StoredPrediction` | merchant, predicted category, winning card, **amount spent**, valuation in force, headline, timestamp |
 | `StoredObservation` | card actually used, observed category, reward units posted, miss class, **free-text note** |
 
-Plus two `UserDefaults` keys (`ambientDiagnostics.v1`, `ambientMutedMerchantIDs.v1`) and, when
-ambient alerts are enabled, CoreLocation geofences around up to 20 of those coordinates.
+Plus three `UserDefaults` keys — `ambientDiagnostics.v1`, `ambientMutedMerchantIDs.v2`, and
+`ambientCoverage.v1` — and, when ambient alerts are enabled, CoreLocation geofences around up to
+20 of those coordinates.
+
+`ambientCoverage.v1` (added 2026-08-27) holds **integers only**, partitioned by calendar day: how
+often the 20-region budget was re-aimed, how often it was full, how many regions were dropped in
+each of four tiers, and how many geofence wakes ended without advice. No coordinate, no merchant
+name, no identifier — nothing that names a place. It is the diagnostic that says whether the
+region cap is costing the owner coverage, and it is deliberately incapable of saying *where*.
+Erased by `AmbientLocationService.forgetLocalHistory()` alongside the other two.
 
 Taken together this is a running record of **where the owner shopped, when, how much they spent,
 and which card they used** — including precise coordinates at rest.

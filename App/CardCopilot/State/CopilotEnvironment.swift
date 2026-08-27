@@ -47,6 +47,9 @@ final class CopilotEnvironment {
     /// has nothing to show, so this is a full-screen state, not an alert.
     private(set) var loadFailure: String?
     private(set) var ambientDiagnostics = SuppressionLog()
+    /// The silences `ambientDiagnostics` cannot see: regions that lost their slot, and wakes that
+    /// never reached the gate.
+    private(set) var ambientCoverage = AmbientCoverageLog()
     private(set) var ambientEnabled = false
     private(set) var walletIsFirstRun = false
 
@@ -132,6 +135,7 @@ final class CopilotEnvironment {
     /// on SwiftUI noticing the change on its own.
     func refreshAmbientDiagnostics() {
         ambientDiagnostics = ambient.diagnostics
+        ambientCoverage = ambient.coverage
         ambientEnabled = ambient.isEnabled
     }
 }

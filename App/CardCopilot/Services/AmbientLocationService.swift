@@ -5,30 +5,55 @@ import Foundation
 import SwiftData
 @preconcurrency import UserNotifications
 
-/// Persists the field-test counters locally. The engine owns the counter model; this tiny store
-/// merely partitions it by day so the UI can report the last seven days without any network.
+/// A counter model that can start empty and be summed across days. Both ambient logs already had
+/// exactly these two members before this protocol existed — it names the shape rather than
+/// imposing one.
+protocol DailyMergeable: Codable, Sendable {
+    static var empty: Self { get }
+    mutating func merge(_ other: Self)
+}
+
+extension SuppressionLog: DailyMergeable {
+    static var empty: SuppressionLog { SuppressionLog() }
+}
+
+extension AmbientCoverageLog: DailyMergeable {
+    static var empty: AmbientCoverageLog { AmbientCoverageLog() }
+}
+
+/// Persists the field-test counters locally, partitioned by day so the UI can report the last
+/// seven days without any network.
+///
+/// Generic over the counter model because there are now two of them — `SuppressionLog` (what the
+/// gate decided) and `AmbientCoverageLog` (what never reached the gate). They answer different
+/// questions and are deliberately separate models, but the storage mechanics — a day key, a JSON
+/// dictionary, a rolling seven-day sum, a wipe — are identical, and a second hand-rolled copy of
+/// them is a second place for the day-key format to drift.
 @MainActor
-final class AmbientDiagnosticsStore {
+final class DailyLogStore<Log: DailyMergeable> {
     private let defaults: UserDefaults
-    private let key = "ambientDiagnostics.v1"
+    private let key: String
     private let calendar = Calendar(identifier: .gregorian)
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults = .standard, key: String) {
         self.defaults = defaults
+        self.key = key
     }
 
-    func record(_ decision: AmbientGateDecision, at date: Date = .now) {
+    /// Read-modify-write against today's bucket. Takes a mutation rather than a value so callers
+    /// never have to load, merge, and store correctly themselves.
+    func update(at date: Date = .now, _ mutate: (inout Log) -> Void) {
         var daily = loadDaily()
-        let key = dayKey(for: date)
-        var log = daily[key] ?? SuppressionLog()
-        log.record(decision)
-        daily[key] = log
+        let dayKey = dayKey(for: date)
+        var log = daily[dayKey] ?? .empty
+        mutate(&log)
+        daily[dayKey] = log
         save(daily)
     }
 
-    func lastSevenDays(ending date: Date = .now) -> SuppressionLog {
+    func lastSevenDays(ending date: Date = .now) -> Log {
         let daily = loadDaily()
-        var total = SuppressionLog()
+        var total = Log.empty
         for offset in 0..<7 {
             guard let day = calendar.date(byAdding: .day, value: -offset, to: date) else { continue }
             if let log = daily[dayKey(for: day)] { total.merge(log) }
@@ -36,15 +61,15 @@ final class AmbientDiagnosticsStore {
         return total
     }
 
-    private func loadDaily() -> [String: SuppressionLog] {
+    private func loadDaily() -> [String: Log] {
         guard let data = defaults.data(forKey: key),
-              let decoded = try? JSONDecoder().decode([String: SuppressionLog].self, from: data) else {
+              let decoded = try? JSONDecoder().decode([String: Log].self, from: data) else {
             return [:]
         }
         return decoded
     }
 
-    private func save(_ daily: [String: SuppressionLog]) {
+    private func save(_ daily: [String: Log]) {
         guard let data = try? JSONEncoder().encode(daily) else { return }
         defaults.set(data, forKey: key)
     }
@@ -58,6 +83,52 @@ final class AmbientDiagnosticsStore {
         return String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 0,
                       components.day ?? 0)
     }
+}
+
+/// The gate's own counters: of the arrivals that reached `AmbientGate`, what it decided.
+@MainActor
+final class AmbientDiagnosticsStore {
+    private let store: DailyLogStore<SuppressionLog>
+
+    init(defaults: UserDefaults = .standard) {
+        store = DailyLogStore(defaults: defaults, key: "ambientDiagnostics.v1")
+    }
+
+    func record(_ decision: AmbientGateDecision, at date: Date = .now) {
+        store.update(at: date) { $0.record(decision) }
+    }
+
+    func lastSevenDays(ending date: Date = .now) -> SuppressionLog {
+        store.lastSevenDays(ending: date)
+    }
+
+    func forgetAll() { store.forgetAll() }
+}
+
+/// The counters `AmbientDiagnosticsStore` structurally cannot hold: what never got a geofence
+/// slot, and what got one but never reached the gate. See `AmbientCoverageLog` for why these
+/// cannot be derived from the suppression counters.
+@MainActor
+final class AmbientCoverageStore {
+    private let store: DailyLogStore<AmbientCoverageLog>
+
+    init(defaults: UserDefaults = .standard) {
+        store = DailyLogStore(defaults: defaults, key: "ambientCoverage.v1")
+    }
+
+    func record(_ allocation: RegionAllocation, at date: Date = .now) {
+        store.update(at: date) { $0.record(allocation) }
+    }
+
+    func recordArrival(_ outcome: AmbientArrivalOutcome, at date: Date = .now) {
+        store.update(at: date) { $0.recordArrival(outcome) }
+    }
+
+    func lastSevenDays(ending date: Date = .now) -> AmbientCoverageLog {
+        store.lastSevenDays(ending: date)
+    }
+
+    func forgetAll() { store.forgetAll() }
 }
 
 /// Muted merchants, keyed by the same string identity the rest of the ambient path uses.
@@ -119,7 +190,6 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     static let notificationCategoryIdentifier = "ambient.recommendation"
     static let amountCategoryIdentifier = "ambient.amountPrompt"
 
-    private static let maximumMonitoredRegions = 20
     /// How close a stored, owner-reconciled merchant must be to the arrival fix to claim the
     /// visit. Tight on purpose: `.verified` is the tier that fires at the owner's own threshold.
     private static let verifiedMerchantRadiusMeters: Double = 60
@@ -127,6 +197,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private let manager = CLLocationManager()
     private let notificationCenter = UNUserNotificationCenter.current()
     private let diagnosticsStore = AmbientDiagnosticsStore()
+    private let coverageStore = AmbientCoverageStore()
     private let muteStore = AmbientMerchantMuteStore()
     private let visitStore = AmbientVisitStore()
     private let queryLog = DiscoveryQueryLog()
@@ -188,6 +259,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
     var isEnabled: Bool { authorizationStatus == .authorizedAlways }
     var diagnostics: SuppressionLog { diagnosticsStore.lastSevenDays() }
+    var coverage: AmbientCoverageLog { coverageStore.lastSevenDays() }
 
     /// Called when the owner erases this iPhone's history.
     ///
@@ -204,6 +276,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         }
         muteStore.forgetAll()
         diagnosticsStore.forgetAll()
+        coverageStore.forgetAll()
         visitStore.forgetAll()
         queryLog.forgetAll()
         patronageStore.forgetAll()
@@ -284,17 +357,29 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
         let areas = (try? cache.areasNear(latitude: coordinate.latitude,
                                           longitude: coordinate.longitude,
-                                          limit: Self.maximumMonitoredRegions)) ?? []
+                                          limit: maximumMonitoredRegions)) ?? []
 
         let merchants = ((try? context.fetch(FetchDescriptor<StoredMerchant>())) ?? [])
             .filter { CLLocationCoordinate2DIsValid(CLLocationCoordinate2D(latitude: $0.latitude,
                                                                           longitude: $0.longitude))
                       && ($0.latitude != 0 || $0.longitude != 0) }
 
-        // A confirmed merchant already inside a discovered area needs no region of its own — the
-        // area wake resolves to it anyway, and a duplicate would burn a slot for nothing.
-        let uncovered = merchants.filter { merchant in
-            !areas.contains { area in
+        // Read once for the whole rotation, exactly as the arrival path does: this is a background
+        // wake and `merchants` can hold every merchant the owner has ever saved.
+        let frequentedKeys = patronageStore.frequentedKeys()
+        let standings = merchants.map {
+            storedMerchantRegionTier(
+                confirmedCategory: $0.confirmedCategory,
+                isFrequented: MerchantRecognizer.recognise($0.name)
+                    .map { frequentedKeys.contains($0.id) } ?? false)
+        }
+
+        // Which area, if any, already covers each merchant. Computed once and used twice: a
+        // covered merchant needs no region of its own (the area wake resolves to it anyway, and a
+        // duplicate would burn a slot for nothing), and the area inherits its standing so the
+        // coverage counters do not report a weekly grocery run as anonymous ground.
+        let coveringAreaIndex = merchants.map { merchant in
+            areas.firstIndex { area in
                 greatCircleDistanceMeters(fromLatitude: area.centroidLatitude,
                                           fromLongitude: area.centroidLongitude,
                                           toLatitude: merchant.latitude,
@@ -302,28 +387,39 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             }
         }
 
-        var specs: [(id: String, latitude: Double, longitude: Double, radius: Double, distance: Double)] = []
-        for merchant in uncovered {
-            specs.append((id: "merchant:\(merchant.id.uuidString)",
-                          latitude: merchant.latitude, longitude: merchant.longitude,
-                          radius: minimumAreaRadiusMeters,
-                          distance: greatCircleDistanceMeters(fromLatitude: coordinate.latitude,
-                                                              fromLongitude: coordinate.longitude,
-                                                              toLatitude: merchant.latitude,
-                                                              toLongitude: merchant.longitude)))
+        var specs: [String: (latitude: Double, longitude: Double, radius: Double)] = [:]
+        var candidates: [RegionCandidate] = []
+        for (offset, merchant) in merchants.enumerated() where coveringAreaIndex[offset] == nil {
+            let id = "merchant:\(merchant.id.uuidString)"
+            specs[id] = (merchant.latitude, merchant.longitude, minimumAreaRadiusMeters)
+            candidates.append(RegionCandidate(
+                id: id,
+                tier: standings[offset],
+                distanceMeters: greatCircleDistanceMeters(fromLatitude: coordinate.latitude,
+                                                          fromLongitude: coordinate.longitude,
+                                                          toLatitude: merchant.latitude,
+                                                          toLongitude: merchant.longitude)))
         }
-        for area in areas {
-            specs.append((id: "area:\(area.id.uuidString)",
-                          latitude: area.centroidLatitude, longitude: area.centroidLongitude,
-                          radius: area.radiusMeters,
-                          distance: greatCircleDistanceMeters(fromLatitude: coordinate.latitude,
-                                                              fromLongitude: coordinate.longitude,
-                                                              toLatitude: area.centroidLatitude,
-                                                              toLongitude: area.centroidLongitude)))
+        for (areaOffset, area) in areas.enumerated() {
+            let id = "area:\(area.id.uuidString)"
+            specs[id] = (area.centroidLatitude, area.centroidLongitude, area.radiusMeters)
+            let covered = coveringAreaIndex.enumerated()
+                .filter { $0.element == areaOffset }
+                .map { standings[$0.offset] }
+            candidates.append(RegionCandidate(
+                id: id,
+                tier: areaRegionTier(coveringStandings: covered),
+                distanceMeters: greatCircleDistanceMeters(fromLatitude: coordinate.latitude,
+                                                          fromLongitude: coordinate.longitude,
+                                                          toLatitude: area.centroidLatitude,
+                                                          toLongitude: area.centroidLongitude)))
         }
-        // Stable sort: distance decides, and confirmed merchants were appended first so they take
-        // the slot at equal distance.
-        let chosen = specs.sorted { $0.distance < $1.distance }.prefix(Self.maximumMonitoredRegions)
+
+        // Distance still decides — this is the shipping policy, not a new one. What is new is
+        // that the ordering is total (so an unchanged world produces an unchanged region set) and
+        // that what fell off the end is now counted instead of silently discarded.
+        let allocation = allocateRegionBudget(candidates, limit: maximumMonitoredRegions)
+        coverageStore.record(allocation)
 
         for region in manager.monitoredRegions
         where region.identifier.hasPrefix(Self.regionPrefix)
@@ -332,13 +428,14 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         }
 
         let ceiling = manager.maximumRegionMonitoringDistance
-        for spec in chosen {
+        for candidate in allocation.granted {
+            guard let spec = specs[candidate.id] else { continue }
             let radius = min(max(spec.radius, minimumAreaRadiusMeters), ceiling)
             guard radius >= minimumAreaRadiusMeters else { continue }
             let region = CLCircularRegion(
                 center: CLLocationCoordinate2D(latitude: spec.latitude, longitude: spec.longitude),
                 radius: radius,
-                identifier: Self.regionPrefix + spec.id)
+                identifier: Self.regionPrefix + candidate.id)
             region.notifyOnEntry = true
             // Exit is what makes dwell measurable, and dwell is what separates a purchase from
             // walking past — and what decides which of several overlapping regions was real.
@@ -382,7 +479,12 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private func evaluateArrival(at target: ArrivalTarget, regionId: String) async {
         guard let modelContainer, let catalogue, let ownerState else { return }
         let context = ModelContext(modelContainer)
-        guard let arrival = resolve(target, context: context) else { return }
+        // Both of the dropouts below used to `return` in silence, which made a background wake
+        // that produced nothing indistinguishable from a wake that never happened.
+        guard let arrival = resolve(target, context: context) else {
+            coverageStore.recordArrival(.unresolved)
+            return
+        }
 
         // Dwell starts now regardless of whether anything fires. An exit still has to be able to
         // tell a twenty-minute shop from a forty-second walk-by.
@@ -394,7 +496,11 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                               category: arrival.prediction.category,
                                               mcc: arrival.mcc)
         guard case .advised(let recommendation) = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
-            .recommend(purchase, asOf: Date().formatted(.iso8601.year().month().day())) else { return }
+            .recommend(purchase, asOf: Date().formatted(.iso8601.year().month().day())) else {
+            coverageStore.recordArrival(.notAdvised)
+            return
+        }
+        coverageStore.recordArrival(.resolved)
         let advantageCad = recommendation.advantageOverDefaultCad ?? 0
         let advantagePP = purchase.amountCad > 0 ? advantageCad / purchase.amountCad * 100 : 0
 

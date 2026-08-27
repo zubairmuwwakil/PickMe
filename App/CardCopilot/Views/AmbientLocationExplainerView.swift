@@ -1,5 +1,6 @@
 import SwiftUI
 import CardCopilotEngine
+import CardCopilotStore
 
 /// A deliberate pre-permission surface: the system prompt never has to explain the purpose on
 /// its own, and the owner can decline without losing manual checkout.
@@ -7,6 +8,10 @@ import CardCopilotEngine
 struct AmbientLocationExplainerView: View {
     var isEnabled: Bool = false
     var diagnostics: SuppressionLog? = nil
+    /// Deliberately a second parameter rather than fields folded into `diagnostics`. The two logs
+    /// answer different questions — "what did the gate decide" versus "what never reached it" —
+    /// and merging them would let a healthy gate hide an unhealthy budget.
+    var coverage: AmbientCoverageLog? = nil
     let onEnable: () -> Void
     let onDone: () -> Void
 
@@ -143,6 +148,10 @@ struct AmbientLocationExplainerView: View {
                 .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
             }
 
+            if let coverage, coverage.rotations > 0 || coverage.arrivals > 0 {
+                coverageCard(coverage)
+            }
+
             VStack(spacing: 12) {
                 Button("Done", action: onDone)
                     .buttonStyle(.borderedProminent)
@@ -165,6 +174,86 @@ struct AmbientLocationExplainerView: View {
                         .frame(maxWidth: .infinity)
                 }
             }
+        }
+    }
+}
+
+extension AmbientLocationExplainerView {
+    /// The other half of the diagnostics, and the half that was missing.
+    ///
+    /// The suppression counters above describe arrivals that reached the gate. iOS monitors 20
+    /// regions app-wide, and nothing recorded what fell off the end of that list — so a merchant
+    /// that quietly lost its slot looked identical to one that never had a purchase worth
+    /// mentioning. This card is what makes the difference visible.
+    @ViewBuilder
+    func coverageCard(_ coverage: AmbientCoverageLog) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: "mappin.slash")
+                .font(.title2)
+                .foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Coverage (Last 7 Days)")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+
+                if coverage.rotations > 0 {
+                    Text("\(coverage.rotationsAtCapacity) of \(coverage.rotations) checks used all 20 places")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                }
+
+                // The eviction breakdown is the point. "20 places were dropped" says nothing on
+                // its own — dropping plazas the owner has never entered costs nothing, and
+                // dropping the shop they visit weekly costs the whole feature.
+                ForEach(coverage.evictedByTier.sorted { $0.value > $1.value }, id: \.key) { tier, count in
+                    Text("\(count) · \(tier.ownerFacingEvictionDescription)")
+                        .font(.caption)
+                        .foregroundStyle(tier.carriesStanding ? .orange : .secondary)
+                }
+
+                if coverage.arrivals > 0 {
+                    Text("\(coverage.arrivals) arrivals · \(coverage.arrivalsReachingTheGate) evaluated")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 4)
+                    if coverage.arrivalsUnresolved > 0 {
+                        Text("\(coverage.arrivalsUnresolved) · could not tell which store it was")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    if coverage.arrivalsNotAdvised > 0 {
+                        Text("\(coverage.arrivalsNotAdvised) · no card advice was available")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            Spacer()
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+extension AmbientRegionTier {
+    /// What losing a slot cost, in the owner's terms. Names the evidence that was dropped rather
+    /// than the tier, for the same reason `AmbientSuppressionReason` names the cause rather than
+    /// the rule.
+    var ownerFacingEvictionDescription: String {
+        switch self {
+        case .frequentedMerchant:
+            return String(localized: "ambient.coverage.dropped-frequented",
+                          defaultValue: "dropped a store you shop at often")
+        case .confirmedMerchant:
+            return String(localized: "ambient.coverage.dropped-confirmed",
+                          defaultValue: "dropped a store you confirmed")
+        case .savedMerchant:
+            return String(localized: "ambient.coverage.dropped-saved",
+                          defaultValue: "dropped a store you saved")
+        case .discoveredArea:
+            return String(localized: "ambient.coverage.dropped-area",
+                          defaultValue: "dropped a nearby shopping area")
         }
     }
 }

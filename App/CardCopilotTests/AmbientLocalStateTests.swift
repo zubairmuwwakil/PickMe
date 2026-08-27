@@ -1,11 +1,12 @@
 import XCTest
 import CardCopilotEngine
+import CardCopilotStore
 @testable import CardCopilot
 
-/// The two UserDefaults-backed stores behind ambient arrival alerts. They were the only
-/// app-target state with no coverage at all, and they are exactly what the "erase this iPhone's
-/// history" choice has to clear: the mute list is keyed to merchant place identities, and the
-/// counters are a per-day record of when the app decided to speak up.
+/// The three UserDefaults-backed stores behind ambient arrival alerts, and exactly what the
+/// "erase this iPhone's history" choice has to clear: the mute list is keyed to merchant place
+/// identities, the suppression counters are a per-day record of when the app decided to speak up,
+/// and the coverage counters are a per-day record of what it never got the chance to decide.
 @MainActor
 final class AmbientLocalStateTests: XCTestCase {
     private var suiteName: String!
@@ -114,27 +115,119 @@ final class AmbientLocalStateTests: XCTestCase {
         XCTAssertEqual(store.lastSevenDays(ending: day), SuppressionLog())
     }
 
+    // MARK: - Coverage counters
+
+    private func rotation(granted: Int, evicted: [AmbientRegionTier]) -> RegionAllocation {
+        RegionAllocation(
+            granted: (0..<granted).map {
+                RegionCandidate(id: "granted\($0)", tier: .discoveredArea, distanceMeters: 0)
+            },
+            evicted: evicted.enumerated().map {
+                RegionCandidate(id: "evicted\($0.offset)", tier: $0.element, distanceMeters: 999)
+            },
+            limit: granted)
+    }
+
+    func testCoverageSurvivesTheStore() {
+        let day = Date(timeIntervalSince1970: 1_786_000_000)
+        AmbientCoverageStore(defaults: defaults)
+            .record(rotation(granted: 20, evicted: [.frequentedMerchant, .discoveredArea]), at: day)
+
+        // A fresh instance, as the geofence wake creates.
+        let reread = AmbientCoverageStore(defaults: defaults).lastSevenDays(ending: day)
+        XCTAssertEqual(reread.rotations, 1)
+        XCTAssertEqual(reread.rotationsAtCapacity, 1)
+        XCTAssertEqual(reread.evictedWithStanding, 1)
+        XCTAssertEqual(reread.evicted, 2)
+    }
+
+    func testCoverageOlderThanTheWindowIsNotReported() {
+        let store = AmbientCoverageStore(defaults: defaults)
+        let today = Date(timeIntervalSince1970: 1_786_000_000)
+        store.record(rotation(granted: 20, evicted: [.frequentedMerchant]),
+                     at: today.addingTimeInterval(-8 * 24 * 60 * 60))
+        store.record(rotation(granted: 20, evicted: []), at: today)
+
+        XCTAssertEqual(store.lastSevenDays(ending: today).rotations, 1)
+        XCTAssertEqual(store.lastSevenDays(ending: today).evicted, 0)
+    }
+
+    func testTheArrivalFunnelPersistsItsDropouts() {
+        let store = AmbientCoverageStore(defaults: defaults)
+        let day = Date(timeIntervalSince1970: 1_786_000_000)
+        store.recordArrival(.resolved, at: day)
+        store.recordArrival(.unresolved, at: day)
+        store.recordArrival(.notAdvised, at: day)
+
+        let log = store.lastSevenDays(ending: day)
+        XCTAssertEqual(log.arrivals, 3)
+        XCTAssertEqual(log.arrivalsReachingTheGate, 1)
+        XCTAssertEqual(log.arrivalsUnresolved, 1)
+        XCTAssertEqual(log.arrivalsNotAdvised, 1)
+    }
+
+    func testForgettingEverythingClearsTheCoverageCounters() {
+        let store = AmbientCoverageStore(defaults: defaults)
+        let day = Date(timeIntervalSince1970: 1_786_000_000)
+        store.record(rotation(granted: 20, evicted: [.confirmedMerchant]), at: day)
+        store.recordArrival(.unresolved, at: day)
+
+        store.forgetAll()
+
+        XCTAssertEqual(store.lastSevenDays(ending: day), AmbientCoverageLog())
+    }
+
+    /// The hazard introduced by generalising both stores onto one `DailyLogStore`: they now share
+    /// a class, a day-key format, and a defaults suite, and only their key string keeps them
+    /// apart. A copy-pasted key would silently fold the coverage counters into the suppression
+    /// counters — where they would decode as garbage or, worse, as plausible numbers.
+    func testTheTwoLogsDoNotShareAKeyspace() {
+        let day = Date(timeIntervalSince1970: 1_786_000_000)
+        AmbientDiagnosticsStore(defaults: defaults).record(fired, at: day)
+        AmbientCoverageStore(defaults: defaults)
+            .record(rotation(granted: 20, evicted: [.frequentedMerchant]), at: day)
+
+        XCTAssertEqual(AmbientDiagnosticsStore(defaults: defaults).lastSevenDays(ending: day).fired, 1)
+        XCTAssertEqual(AmbientCoverageStore(defaults: defaults).lastSevenDays(ending: day).rotations, 1)
+    }
+
+    /// Wiping one log must not wipe the other: "erase local history" clears both, but each store
+    /// is also reachable on its own.
+    func testForgettingCoverageLeavesTheSuppressionCountersAlone() {
+        let day = Date(timeIntervalSince1970: 1_786_000_000)
+        AmbientDiagnosticsStore(defaults: defaults).record(fired, at: day)
+
+        AmbientCoverageStore(defaults: defaults).forgetAll()
+
+        XCTAssertEqual(AmbientDiagnosticsStore(defaults: defaults).lastSevenDays(ending: day).fired, 1)
+    }
+
     // MARK: - Explainer View
 
     func testExplainerViewInitializesInEnabledAndUnenabledStates() {
         let unenabledView = AmbientLocationExplainerView(
             isEnabled: false,
             diagnostics: nil,
+            coverage: nil,
             onEnable: {},
             onDone: {}
         )
         XCTAssertFalse(unenabledView.isEnabled)
         XCTAssertNil(unenabledView.diagnostics)
+        XCTAssertNil(unenabledView.coverage)
 
         let diagnostics = SuppressionLog(fired: 3, suppressed: 1)
         let enabledView = AmbientLocationExplainerView(
             isEnabled: true,
             diagnostics: diagnostics,
+            coverage: AmbientCoverageLog(rotations: 5, rotationsAtCapacity: 4,
+                                         evictedByTier: [.frequentedMerchant: 2]),
             onEnable: {},
             onDone: {}
         )
         XCTAssertTrue(enabledView.isEnabled)
         XCTAssertEqual(enabledView.diagnostics?.fired, 3)
         XCTAssertEqual(enabledView.diagnostics?.suppressed, 1)
+        XCTAssertEqual(enabledView.coverage?.evictedWithStanding, 2)
     }
 }

@@ -307,6 +307,7 @@ struct CheckoutFlowView: View {
             AmbientLocationExplainerView(
                 isEnabled: environment.ambientEnabled,
                 diagnostics: environment.ambientDiagnostics,
+                coverage: environment.ambientCoverage,
                 onEnable: {
                     ambient.requestAlwaysAuthorization()
                     environment.refreshAmbientDiagnostics()
