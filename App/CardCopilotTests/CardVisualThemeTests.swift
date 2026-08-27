@@ -163,12 +163,6 @@ final class CardVisualThemeTests: XCTestCase {
 
     @MainActor
     func testRenderCategoryPickerGridScreenshot() throws {
-        let catalogue = try SeedLoader.loadCatalogue()
-        let candidateCardIds = try SeedLoader.loadCandidateCatalogue().cardIds
-        let ownerState = try SeedLoader.loadOwnerState()
-        let benefits = try SeedLoader.loadBenefitsCatalogue()
-        let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
-        let explainer = RecommendationExplainer(catalogue: catalogue)
         let schema = Schema([
             StoredPrediction.self, StoredPurchase.self, StoredObservation.self, StoredMerchant.self,
             ExploredCell.self, ShoppingArea.self, AreaMember.self
@@ -176,22 +170,18 @@ final class CardVisualThemeTests: XCTestCase {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: [config])
         let context = ModelContext(container)
-        let service = CheckoutService(catalogue: catalogue, ownerState: ownerState, context: context)
-        let provider = LiveMerchantProvider()
-        let deps = DependencyGraph(
-            catalogue: catalogue,
-            candidateCardIds: candidateCardIds,
-            ownerState: ownerState,
-            benefits: benefits,
-            service: service,
-            explainer: explainer,
-            engine: engine,
-            provider: provider
-        )
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "CardVisualThemeTests.\(UUID().uuidString)"))
+        let sync = SyncCoordinator(
+            ownerStateLocalStore: OwnerStateLocalStore(defaults: defaults),
+            accountOwnerStateStore: AccountOwnerStateStore(defaults: defaults))
+        let environment = CopilotEnvironment(modelContext: context, sync: sync,
+                                             ambient: AmbientLocationService())
+        environment.load(session: CopilotSession())
 
         let view = NavigationStack {
-            CategoryPickerView(deps: deps, onDone: {})
+            CategoryPickerView()
         }
+        .environment(environment)
         .frame(width: 430, height: 1650)
 
         let hosting = UIHostingController(rootView: view)

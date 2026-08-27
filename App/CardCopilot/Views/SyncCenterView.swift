@@ -1,31 +1,18 @@
 import SwiftUI
 import ClerkKitUI
+import ClerkKit
 import CardCopilotStore
 import CardCopilotCapture
 
 /// Optional account and capture setup; checkout itself remains entirely offline-capable.
 struct SyncCenterView: View {
+    @Environment(SyncCoordinator.self) private var sync
+    @Environment(\.dismiss) private var dismiss
+
     let isSignedIn: Bool
-    let lastSyncedAt: Date?
-    let feedback: [WalletFeedback]
-    let installations: [WalletInstallation]
-    let syncIssue: SyncStatusIssue?
-    let isSyncing: Bool
-    let isPreparingAccount: Bool
-    let isAccountReady: Bool
     let onSync: () -> Void
-    let onCreateInstallation: (String) async throws -> String
-    let onRevokeInstallation: (String) async throws -> Void
     let boundAccountLabel: String?
     let isCaptureBoundToCurrentAccount: Bool
-    let onTestCaptureConnection: () async -> Bool
-    let onAssignUnassigned: () async throws -> Void
-    let onDeleteUnassigned: () async throws -> Void
-    let onDisableCapture: (Bool) async throws -> Void
-    let onSubmitDiagnostic: (WalletCaptureDiagnosticReport) async throws -> WalletSubmittedDiagnostic
-    let onDeleteSubmittedDiagnostic: (String) async throws -> Void
-    let onListSubmittedDiagnostics: () async throws -> [WalletSubmittedDiagnostic]
-    let onDone: () -> Void
 
     @State private var authIsPresented = false
     @State private var installationName = "My iPhone"
@@ -36,7 +23,7 @@ struct SyncCenterView: View {
     @State private var pendingRevocation: WalletInstallation?
 
     private var activeInstallations: [WalletInstallation] {
-        installations.filter { $0.revokedAt == nil }
+        sync.walletInstallations.filter { $0.revokedAt == nil }
     }
 
     private var hasLocalCredential: Bool {
@@ -53,15 +40,15 @@ struct SyncCenterView: View {
             VStack(alignment: .leading, spacing: 20) {
                 if !MoneyTalksConfiguration.isConfigured { configurationRequired }
                 else if !isSignedIn { signInRequired }
-                else if isPreparingAccount { preparingAccount }
-                else if !isAccountReady { accountUnavailable }
+                else if sync.isPreparingAccount { preparingAccount }
+                else if sync.readySyncUserID != Clerk.shared.user?.id { accountUnavailable }
                 else { connectedContent }
             }.padding(16)
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Sync & Capture")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: onDone).font(.headline) } }
+        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: { dismiss() }).font(.headline) } }
         .sheet(isPresented: $authIsPresented) { AuthView() }
         .alert("Revoke this old connection?", isPresented: .init(
             get: { pendingRevocation != nil }, set: { if !$0 { pendingRevocation = nil } }),
@@ -107,7 +94,7 @@ struct SyncCenterView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Wallet not loaded", systemImage: "person.crop.circle.badge.exclamationmark")
                 .font(.headline)
-            Text(syncIssue?.message ?? "PickMe could not safely load this account's wallet.")
+            Text(sync.syncIssue?.message ?? "PickMe could not safely load this account's wallet.")
                 .font(.subheadline).foregroundStyle(.secondary)
             Button("Retry", action: onSync).buttonStyle(.borderedProminent)
         }
@@ -119,9 +106,9 @@ struct SyncCenterView: View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 8) {
                 Label("Sync", systemImage: "checkmark.icloud").font(.title3.weight(.bold))
-                Text(lastSyncedAt.map { "Last synced \($0.formatted(date: .abbreviated, time: .shortened))" } ?? "Not synced yet — stored cap data remains in use until a sync succeeds.")
+                Text(sync.lastSyncedAt.map { "Last synced \($0.formatted(date: .abbreviated, time: .shortened))" } ?? "Not synced yet — stored cap data remains in use until a sync succeeds.")
                     .font(.subheadline).foregroundStyle(.secondary)
-                if let syncIssue {
+                if let syncIssue = sync.syncIssue {
                     Label {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(syncIssue.message)
@@ -134,11 +121,11 @@ struct SyncCenterView: View {
                     .font(.subheadline)
                     .foregroundStyle(syncIssue.kind == .warning ? .orange : .red)
                 }
-                Button(isSyncing ? "Syncing…" : "Sync now", action: onSync).buttonStyle(.borderedProminent).disabled(isSyncing)
+                Button(sync.isSyncing ? "Syncing…" : "Sync now", action: onSync).buttonStyle(.borderedProminent).disabled(sync.isSyncing)
             }.padding(18).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
             installationSection
             nativeCaptureStatusSection
-            if !feedback.isEmpty {
+            if !sync.walletFeedback.isEmpty {
                 feedbackSection
             }
         }.task { onSync() }
@@ -147,19 +134,21 @@ struct SyncCenterView: View {
     private var nativeCaptureStatusSection: some View {
         CaptureStatusView(boundAccountLabel: boundAccountLabel,
             canAssignUnassigned: isCaptureBoundToCurrentAccount,
-            onRetry: { onSync() }, onTestConnection: onTestCaptureConnection,
-            onAssignUnassigned: onAssignUnassigned, onDeleteUnassigned: onDeleteUnassigned,
-            onDisable: onDisableCapture, onSubmitDiagnostic: onSubmitDiagnostic,
-            onDeleteSubmittedDiagnostic: onDeleteSubmittedDiagnostic,
-            onListSubmittedDiagnostics: onListSubmittedDiagnostics)
+            onRetry: { onSync() }, onTestConnection: { await sync.testWalletCaptureConnection() },
+            onAssignUnassigned: { try await sync.assignUnassignedCaptures() },
+            onDeleteUnassigned: { try await sync.deleteUnassignedCaptures() },
+            onDisable: { delete in try await sync.disableWalletCapture(deleteUnsent: delete) },
+            onSubmitDiagnostic: { report in try await sync.submitDiagnostic(report) },
+            onDeleteSubmittedDiagnostic: { id in try await sync.deleteSubmittedDiagnostic(id: id) },
+            onListSubmittedDiagnostics: { try await sync.listSubmittedDiagnostics() })
     }
 
     private var feedbackSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recent capture feedback").font(.headline)
-            ForEach(feedback.prefix(5)) { item in
+            ForEach(sync.walletFeedback.prefix(5)) { item in
                 feedbackRow(for: item)
-                if item.id != feedback.prefix(5).last?.id {
+                if item.id != sync.walletFeedback.prefix(5).last?.id {
                     Divider()
                 }
             }
@@ -259,11 +248,11 @@ struct SyncCenterView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Native Wallet Capture", systemImage: "wallet.pass").font(.headline)
             Text("Create one secure connection for this iPhone, then add “Send Wallet Purchase to Inunity” directly to your Wallet Transaction automation and map Merchant, Amount, Name, Currency Code, and Card or Pass. PickMe saves each tap locally before syncing it.").font(.footnote).foregroundStyle(.secondary)
-            if isSyncing && activeInstallations.isEmpty && !hasLocalCredential {
+            if sync.isSyncing && activeInstallations.isEmpty && !hasLocalCredential {
                 ProgressView("Checking connected tokens…")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 8)
-            } else if syncIssue != nil && activeInstallations.isEmpty && !hasLocalCredential {
+            } else if sync.syncIssue != nil && activeInstallations.isEmpty && !hasLocalCredential {
                 Text("PickMe could not verify whether this account already has a token. Retry sync before creating another one.")
                     .font(.footnote).foregroundStyle(.secondary)
                 Button("Retry token check", action: onSync).buttonStyle(.bordered)
@@ -303,7 +292,7 @@ struct SyncCenterView: View {
                 TextField("Installation name", text: $installationName).textFieldStyle(.roundedBorder)
                 HStack {
                     Button(isCreatingToken ? "Connecting…" : "Connect native Wallet Capture") { Task { await createInstallationToken() } }
-                        .buttonStyle(.bordered).disabled(isCreatingToken || isSyncing || installationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .buttonStyle(.bordered).disabled(isCreatingToken || sync.isSyncing || installationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     if !activeInstallations.isEmpty {
                         Button("Cancel") {
                             withAnimation { isShowingCreateForm = false }
@@ -321,7 +310,7 @@ struct SyncCenterView: View {
         isCreatingToken = true; tokenError = nil
         defer { isCreatingToken = false }
         do {
-            _ = try await onCreateInstallation(installationName)
+            _ = try await sync.createInstallation(label: installationName)
             installationWasCreated = true
             isShowingCreateForm = false
             installationName = "My iPhone"
@@ -355,7 +344,7 @@ struct SyncCenterView: View {
 
     private func revokeInstallation(_ item: WalletInstallation) async {
         pendingRevocation = nil
-        do { try await onRevokeInstallation(item.id); tokenError = nil }
+        do { try await sync.revokeWalletInstallation(id: item.id); tokenError = nil }
         catch { tokenError = error.localizedDescription }
     }
 }

@@ -4,11 +4,8 @@ import CardCopilotStore
 
 /// The Wallet hub: Visual cards in wallet, Wallet Health, Which Card matrix, and Valuation Sandbox.
 struct WalletHubView: View {
-    let deps: DependencyGraph?
-    let onCategoryPicker: () -> Void
-    let onWalletHealth: () -> Void
-    let onValuationSandbox: () -> Void
-    let onEditWallet: () -> Void
+    @Environment(CopilotEnvironment.self) private var environment
+    @Environment(CheckoutRouter.self) private var router
 
     @State private var selectedCardIndex: Int = 0
 
@@ -16,7 +13,7 @@ struct WalletHubView: View {
         ScrollView {
             VStack(spacing: 22) {
                 // Section: Visual Wallet Cards
-                if let cards = deps?.walletCards, !cards.isEmpty {
+                if let cards = environment.graph?.walletCards, !cards.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Text("Your Cards")
@@ -32,7 +29,7 @@ struct WalletHubView: View {
                                 .padding(.vertical, 3)
                                 .background(Color(.tertiarySystemFill), in: Capsule())
 
-                            Button(action: onEditWallet) {
+                            Button { router.push(.walletSetup) } label: {
                                 Text("Edit")
                                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                                     .foregroundStyle(.blue)
@@ -79,7 +76,7 @@ struct WalletHubView: View {
 
                     VStack(spacing: 10) {
                         // Which Card?
-                        Button(action: onCategoryPicker) {
+                        Button { router.push(.categoryPicker) } label: {
                             toolCard(
                                 icon: "square.grid.2x2.fill",
                                 iconColor: .teal,
@@ -92,7 +89,7 @@ struct WalletHubView: View {
                         .buttonStyle(.plain)
 
                         // Wallet Health
-                        Button(action: onWalletHealth) {
+                        Button { router.push(.walletHealth) } label: {
                             toolCard(
                                 icon: "heart.text.square.fill",
                                 iconColor: .mint,
@@ -105,7 +102,7 @@ struct WalletHubView: View {
                         .buttonStyle(.plain)
 
                         // Valuation Sandbox
-                        Button(action: onValuationSandbox) {
+                        Button { router.push(.valuationSandbox) } label: {
                             toolCard(
                                 icon: "slider.horizontal.3",
                                 iconColor: .purple,
@@ -118,7 +115,7 @@ struct WalletHubView: View {
                         .buttonStyle(.plain)
 
                         // Edit Wallet Setup
-                        Button(action: onEditWallet) {
+                        Button { router.push(.walletSetup) } label: {
                             toolCard(
                                 icon: "creditcard.and.123",
                                 iconColor: .blue,

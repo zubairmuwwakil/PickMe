@@ -22,6 +22,15 @@ final class CheckoutRouter {
         path.append(destination)
     }
 
+    /// Push, unless it is already on top. The predecessor's `stage = .sync` was a replace and so
+    /// idempotent by construction; a notification that fires twice — connectivity restored, then
+    /// a capture deep link — must not leave `[.sync, .sync]`, where dismissing once appears to
+    /// do nothing.
+    func show(_ destination: Destination) {
+        guard path.last != destination else { return }
+        path.append(destination)
+    }
+
     /// Safe on an empty path: a double-tapped back button must not crash.
     func pop() {
         guard !path.isEmpty else { return }

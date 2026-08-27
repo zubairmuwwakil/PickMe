@@ -3,35 +3,11 @@ import CardCopilotEngine
 import CardCopilotStore
 
 struct HomeView: View {
-    let valueRecoveredCad: Double
-    /// Complete purchases not yet checked against a statement. Shown beside the confirmed
-    /// figure, never folded into it — until the statement lands, "it coded as predicted" is an
-    /// assumption, and an assumption must not be added to a number labelled as recovered.
-    let pendingValueCad: Double
-    let merchants: [StoredMerchant]
-    let isSortedByRecentLocation: Bool
-    let locationDenied: Bool
-    let finishCount: Int
-    let reconcileCount: Int
-    let confirmedCount: Int
-    let ambientDiagnostics: SuppressionLog
-    let ambientEnabled: Bool
-    let deps: DependencyGraph?
-    let onSelectPreIndexedMerchant: ((PreIndexedMerchant) -> Void)?
-    let onInstantRepeat: (StoredMerchant) -> Void
-    let onLogPurchase: ((StoredMerchant, Double) -> Void)?
-    let onOpenDetails: ((StoredMerchant, Double) -> Void)?
+    @Environment(CopilotSession.self) private var session
+    @Environment(CheckoutRouter.self) private var router
+    @Environment(CopilotEnvironment.self) private var environment
     let onFindNearby: () -> Void
     let onSearch: (String) -> Void
-    let onFinish: () -> Void
-    let onReconcile: () -> Void
-    let onDashboard: () -> Void
-    let onProtectionLens: () -> Void
-    let onBenefits: () -> Void
-    let onCategoryPicker: () -> Void
-    let onWalletHealth: () -> Void
-    let onValuationSandbox: () -> Void
-    let onConfigureAmbient: () -> Void
 
     @State private var searchText = ""
     @FocusState private var isSearchFocused: Bool
@@ -52,23 +28,23 @@ struct HomeView: View {
     }
 
     private var ambientDiagnosticsRow: some View {
-        Button(action: onConfigureAmbient) {
+        Button { router.push(.ambientSetup) } label: {
             HStack(spacing: 12) {
-                Image(systemName: ambientEnabled ? "location.circle.fill" : "location.circle")
+                Image(systemName: environment.ambientEnabled ? "location.circle.fill" : "location.circle")
                     .font(.title3)
-                    .foregroundStyle(ambientEnabled ? .blue : .secondary)
+                    .foregroundStyle(environment.ambientEnabled ? .blue : .secondary)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Arrival alerts")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.primary)
-                    Text(ambientEnabled
-                         ? "Last 7 days: \(ambientDiagnostics.fired) fired · \(ambientDiagnostics.suppressed) suppressed"
+                    Text(environment.ambientEnabled
+                         ? "Last 7 days: \(environment.ambientDiagnostics.fired) fired · \(environment.ambientDiagnostics.suppressed) suppressed"
                          : "Set up on-device arrival detection")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                if !ambientEnabled {
+                if !environment.ambientEnabled {
                     Text("Set up")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.blue)
@@ -100,13 +76,13 @@ struct HomeView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    Text(String(format: "$%.2f", valueRecoveredCad))
+                    Text(String(format: "$%.2f", session.valueRecoveredCad))
                         .font(.system(size: 34, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
                         .contentTransition(.numericText())
 
-                    if pendingValueCad > 0 {
-                        Text(String(format: "+$%.2f awaiting your statement", pendingValueCad))
+                    if session.pendingValueCad > 0 {
+                        Text(String(format: "+$%.2f awaiting your statement", session.pendingValueCad))
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.secondary)
                     }
@@ -115,12 +91,12 @@ struct HomeView: View {
                 Spacer()
 
                 // Experiment status badge
-                Button(action: onDashboard) {
+                Button { router.push(.dashboard) } label: {
                     HStack(spacing: 5) {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.caption2.weight(.bold))
                             .foregroundStyle(.green)
-                        Text("\(confirmedCount)/30 confirmed")
+                        Text("\(session.metrics?.confirmedCount ?? 0)/30 confirmed")
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(.primary)
                     }
@@ -138,12 +114,12 @@ struct HomeView: View {
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text("\(Int((Double(min(confirmedCount, 30)) / 30.0) * 100))%")
+                    Text("\(Int((Double(min(session.metrics?.confirmedCount ?? 0, 30)) / 30.0) * 100))%")
                         .font(.caption.weight(.bold).monospacedDigit())
                         .foregroundStyle(.secondary)
                 }
 
-                ProgressView(value: Double(min(confirmedCount, 30)), total: 30.0)
+                ProgressView(value: Double(min(session.metrics?.confirmedCount ?? 0, 30)), total: 30.0)
                     .tint(.blue)
             }
         }
@@ -176,7 +152,7 @@ struct HomeView: View {
                         Text("Find Nearby Merchant")
                             .font(.system(size: 17, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
-                        Text(locationDenied ? "Location off — tap to retry" : "One-tap GPS check at checkout")
+                        Text(session.locationDenied ? "Location off — tap to retry" : "One-tap GPS check at checkout")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.white.opacity(0.85))
                     }
@@ -192,7 +168,7 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        colors: locationDenied
+                        colors: session.locationDenied
                             ? [Color.gray, Color.gray.opacity(0.8)]
                             : [Color.blue, Color(red: 0.1, green: 0.45, blue: 0.95)],
                         startPoint: .leading,
@@ -200,9 +176,9 @@ struct HomeView: View {
                     )
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .shadow(color: locationDenied ? Color.clear : Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                .shadow(color: session.locationDenied ? Color.clear : Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
             }
-            .disabled(locationDenied)
+            .disabled(session.locationDenied)
 
             // Modern Integrated Search Bar
             VStack(spacing: 6) {
@@ -254,11 +230,12 @@ struct HomeView: View {
                             ForEach(preIndexMatches) { match in
                                 Button {
                                     searchText = ""
-                                    if let onSelectPreIndexedMerchant {
-                                        onSelectPreIndexedMerchant(match)
-                                    } else {
-                                        onSearch(match.name)
-                                    }
+                                    router.step = .amount(NearbyMerchant(id: "preindex:\(match.id)",
+                                                                         name: match.name,
+                                                                         poiCategoryRaw: match.category,
+                                                                         latitude: 0,
+                                                                         longitude: 0,
+                                                                         distanceMeters: nil))
                                 } label: {
                                     HStack(spacing: 8) {
                                         Image(systemName: "bolt.fill")
@@ -308,9 +285,9 @@ struct HomeView: View {
 
                 Spacer()
 
-                if !merchants.isEmpty {
-                    Label(isSortedByRecentLocation ? "Nearby" : "Recent",
-                          systemImage: isSortedByRecentLocation ? "location.fill" : "clock.fill")
+                if !session.homeMerchants.isEmpty {
+                    Label(session.cachedLocation?.isRecent == true ? "Nearby" : "Recent",
+                          systemImage: session.cachedLocation?.isRecent == true ? "location.fill" : "clock.fill")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 8)
@@ -319,7 +296,7 @@ struct HomeView: View {
                 }
             }
 
-            if merchants.isEmpty {
+            if session.homeMerchants.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "clock.arrow.circlepath")
                         .font(.system(size: 32))
@@ -340,24 +317,17 @@ struct HomeView: View {
                 )
             } else {
                 LazyVStack(spacing: 12) {
-                    ForEach(merchants) { merchant in
-                        if let deps {
+                    ForEach(session.homeMerchants) { merchant in
+                        if let graph = environment.graph {
                             InstantRepeatCardView(
                                 merchant: merchant,
-                                deps: deps,
-                                onLogPurchase: { m, amt in
-                                    if let onLogPurchase {
-                                        onLogPurchase(m, amt)
-                                    } else {
-                                        onInstantRepeat(m)
-                                    }
+                                deps: graph,
+                                onLogPurchase: { merchant, amount in
+                                    session.logInstantPurchase(merchant, amount: amount, using: graph)
                                 },
-                                onOpenDetails: { m, amt in
-                                    if let onOpenDetails {
-                                        onOpenDetails(m, amt)
-                                    } else {
-                                        onInstantRepeat(m)
-                                    }
+                                onOpenDetails: { merchant, amount in
+                                    router.step = session.startInstantRepeatWithAmount(merchant, amount: amount,
+                                                                                         using: graph)
                                 }
                             )
                         } else {
@@ -375,7 +345,7 @@ struct HomeView: View {
         let relativeTime = CategoryVisuals.relativeTime(from: merchant.lastSeenAt)
 
         return Button {
-            onInstantRepeat(merchant)
+            router.step = session.startInstantRepeat(merchant)
         } label: {
             HStack(spacing: 12) {
                 ZStack {
@@ -437,7 +407,7 @@ struct HomeView: View {
             VStack(spacing: 10) {
                 // Which Card? — a no-amount category lookup, so it belongs before anything that
                 // needs a purchase already in progress.
-                Button(action: onCategoryPicker) {
+                Button { router.push(.categoryPicker) } label: {
                     toolRow(
                         icon: "square.grid.2x2.fill",
                         iconColor: .teal,
@@ -450,7 +420,7 @@ struct HomeView: View {
                 .buttonStyle(.plain)
 
                 // Wallet Health (keep/cancel)
-                Button(action: onWalletHealth) {
+                Button { router.push(.walletHealth) } label: {
                     toolRow(
                         icon: "heart.text.square.fill",
                         iconColor: .mint,
@@ -463,7 +433,7 @@ struct HomeView: View {
                 .buttonStyle(.plain)
 
                 // Point Valuation Sandbox
-                Button(action: onValuationSandbox) {
+                Button { router.push(.valuationSandbox) } label: {
                     toolRow(
                         icon: "slider.horizontal.3",
                         iconColor: .purple,
@@ -477,33 +447,33 @@ struct HomeView: View {
 
                 // Finish Purchases Row. Placed above Reconcile because it gates it: a purchase
                 // missing its card or its charge cannot be checked against a statement yet.
-                Button(action: onFinish) {
+                Button { router.push(.finish) } label: {
                     toolRow(
                         icon: "square.and.pencil",
-                        iconColor: finishCount > 0 ? .blue : .green,
-                        title: finishCount == 0 ? "Finish Purchases" : "\(finishCount) to Finish",
-                        subtitle: finishCount == 0 ? "Every purchase has its card and amount" : "Add the card you tapped and what it cost",
-                        badge: finishCount > 0 ? "\(finishCount)" : nil,
+                        iconColor: session.completionQueue.isEmpty ? .green : .blue,
+                        title: session.completionQueue.isEmpty ? "Finish Purchases" : "\(session.completionQueue.count) to Finish",
+                        subtitle: session.completionQueue.isEmpty ? "Every purchase has its card and amount" : "Add the card you tapped and what it cost",
+                        badge: session.completionQueue.isEmpty ? nil : "\(session.completionQueue.count)",
                         badgeColor: .blue
                     )
                 }
                 .buttonStyle(.plain)
 
                 // Reconcile Queue Row
-                Button(action: onReconcile) {
+                Button { router.push(.reconcile) } label: {
                     toolRow(
                         icon: "tray.full.fill",
-                        iconColor: reconcileCount > 0 ? .orange : .green,
-                        title: reconcileCount == 0 ? "Reconcile Queue" : "\(reconcileCount) Waiting to Reconcile",
-                        subtitle: reconcileCount == 0 ? "All predictions matched to statements" : "Match posted rewards against predictions",
-                        badge: reconcileCount > 0 ? "\(reconcileCount)" : nil,
+                        iconColor: session.reconcileQueue.isEmpty ? .green : .orange,
+                        title: session.reconcileQueue.isEmpty ? "Reconcile Queue" : "\(session.reconcileQueue.count) Waiting to Reconcile",
+                        subtitle: session.reconcileQueue.isEmpty ? "All predictions matched to statements" : "Match posted rewards against predictions",
+                        badge: session.reconcileQueue.isEmpty ? nil : "\(session.reconcileQueue.count)",
                         badgeColor: .orange
                     )
                 }
                 .buttonStyle(.plain)
 
                 // Experiment Dashboard
-                Button(action: onDashboard) {
+                Button { router.push(.dashboard) } label: {
                     toolRow(
                         icon: "chart.bar.fill",
                         iconColor: .blue,
@@ -516,7 +486,7 @@ struct HomeView: View {
                 .buttonStyle(.plain)
 
                 // Protection Lens
-                Button(action: onProtectionLens) {
+                Button { router.push(.protectionLens(BenefitContext(kind: .flight))) } label: {
                     toolRow(
                         icon: "shield.lefthalf.filled",
                         iconColor: .indigo,
@@ -529,7 +499,7 @@ struct HomeView: View {
                 .buttonStyle(.plain)
 
                 // Card Benefits
-                Button(action: onBenefits) {
+                Button { router.push(.benefitsReference) } label: {
                     toolRow(
                         icon: "creditcard.and.123",
                         iconColor: .purple,

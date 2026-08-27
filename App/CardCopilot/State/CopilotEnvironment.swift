@@ -47,6 +47,7 @@ final class CopilotEnvironment {
     /// has nothing to show, so this is a full-screen state, not an alert.
     private(set) var loadFailure: String?
     private(set) var ambientDiagnostics = SuppressionLog()
+    private(set) var ambientEnabled = false
     private(set) var walletIsFirstRun = false
 
     private let modelContext: ModelContext
@@ -59,9 +60,15 @@ final class CopilotEnvironment {
         self.ambient = ambient
     }
 
+    /// Refreshing `session` is part of loading, not a step a caller can forget. The 846-line
+    /// predecessor kept `refreshHome()` inside `loadDependencies()`, so a loaded graph always
+    /// implied refreshed derived state; every path that lost the refresh — a signed-out cold
+    /// launch, sign-out, account deletion — showed $0.00 and an empty Activity badge over a
+    /// store full of purchases. `CopilotEnvironmentTests` pins both.
+    ///
     /// Idempotent: repeated calls after a successful load are no-ops, matching the old
     /// `guard deps == nil else { return }`.
-    func load() {
+    func load(session: CopilotSession) {
         guard graph == nil else { return }
         do {
             let catalogue = try SeedLoader.loadCatalogue()
@@ -77,6 +84,7 @@ final class CopilotEnvironment {
             graph = makeGraph(catalogue: catalogue, candidates: candidates,
                               owner: owner, benefits: benefits)
             configureAmbient(catalogue: catalogue, owner: owner)
+            session.refresh(using: graph!)
             loadFailure = nil
         } catch {
             loadFailure = "Seed data failed to load: \(error.localizedDescription)"
@@ -96,9 +104,9 @@ final class CopilotEnvironment {
 
     /// Drops the graph and reloads from disk. Used after sign-out and account deletion, where
     /// the local owner-state store has changed underneath us.
-    func reload() {
+    func reload(session: CopilotSession) {
         graph = nil
-        load()
+        load(session: session)
     }
 
     private func makeGraph(catalogue: Catalogue, candidates: [String], owner: OwnerState,
@@ -116,7 +124,7 @@ final class CopilotEnvironment {
 
     private func configureAmbient(catalogue: Catalogue, owner: OwnerState) {
         ambient.configure(modelContainer: modelContext.container, catalogue: catalogue, ownerState: owner)
-        ambientDiagnostics = ambient.diagnostics
+        refreshAmbientDiagnostics()
     }
 
     /// Re-reads ambient's own diagnostics. `AmbientLocationService` is not `@Observable`, so a
@@ -124,6 +132,7 @@ final class CopilotEnvironment {
     /// on SwiftUI noticing the change on its own.
     func refreshAmbientDiagnostics() {
         ambientDiagnostics = ambient.diagnostics
+        ambientEnabled = ambient.isEnabled
     }
 }
 
@@ -145,7 +154,7 @@ extension CopilotEnvironment {
         sync.accountSetupUserID = nil
         guard let userID else { return }
 
-        load()
+        load(session: session)
         guard let graph else { return }
         sync.isPreparingAccount = true
         defer { sync.isPreparingAccount = false }
@@ -207,7 +216,7 @@ extension CopilotEnvironment {
                 session.refresh(using: self.graph!)
                 walletIsFirstRun = true
                 sync.accountSetupUserID = userID
-                router.push(.walletSetup)
+                router.show(.walletSetup)
             }
             sync.readySyncUserID = userID
         } catch {
@@ -332,23 +341,23 @@ extension CopilotEnvironment {
             ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         if let outbox = try? WalletOutboxStore(root: captureRoot) { try? await outbox.deleteAll() }
         try? await Clerk.shared.auth.signOut()
-        resetSyncedState()
+        resetSyncedState(session: session)
         router.popToRoot()
         router.resetToIdle()
     }
 
-    func signOut(router: CheckoutRouter) async {
+    func signOut(session: CopilotSession, router: CheckoutRouter) async {
         try? await Clerk.shared.auth.signOut()
-        resetSyncedState()
+        resetSyncedState(session: session)
         router.popToRoot()
         router.resetToIdle()
     }
 
     /// Clears account-only presentation state. The synced wallet remains in the offline owner-state
     /// store, while the per-account timestamp can be restored if this account signs in again.
-    func resetSyncedState() {
+    func resetSyncedState(session: CopilotSession) {
         sync.resetSyncedState()
-        reload()
+        reload(session: session)
     }
 
     func createInstallation(label: String) async throws -> String {

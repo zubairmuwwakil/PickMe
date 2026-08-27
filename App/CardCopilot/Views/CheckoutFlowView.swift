@@ -57,37 +57,29 @@ struct CheckoutFlowView: View {
                                            description: Text(loadFailure))
                 } else if environment.graph == nil {
                     ProgressView()
-                } else if environment.isFirstRun {
-                    WelcomeGatewayView(
-                        isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
-                        isPreparingAccount: sync.isPreparingAccount,
-                        syncIssueMessage: sync.syncIssue?.message,
-                        onRetryAccountRestore: {
-                            Task { await environment.prepareAccount(forUserID: Clerk.shared.user?.id,
-                                                                    session: session, router: router) }
-                        },
-                        onContinuePrivately: { router.push(.walletSetup) }
-                    )
                 } else {
                     NavigationStack(path: $router.path) {
-                        checkoutStepContent(environment: environment)
+                        rootContent(environment: environment)
                             .navigationTitle(isAtRoot ? rootTitle : "PickMe")
                             .navigationDestination(for: Destination.self) { destination in
                                 destinationView(destination, environment: environment)
                             }
                             .toolbar {
-                                if isAtRoot {
+                                if isAtRoot, !environment.isFirstRun {
                                     ToolbarItem(placement: .topBarTrailing) {
                                         SyncStatusToolbarButton(
                                             isSyncing: sync.isSyncing || sync.isPreparingAccount,
                                             lastSyncedAt: sync.lastSyncedAt,
                                             syncIssue: sync.syncIssue,
-                                            action: { router.push(.sync) }
+                                            action: { router.show(.sync) }
                                         )
                                     }
                                 }
                             }
                     }
+                    // Injected here rather than in `CardCopilotApp` because the graph owner needs
+                    // `\.modelContext`, which only exists once this view is in the hierarchy.
+                    .environment(environment)
                 }
             } else {
                 ProgressView()
@@ -105,10 +97,10 @@ struct CheckoutFlowView: View {
         }
         .task {
             let environment = ensureEnvironment()
-            environment.load()
+            environment.load(session: session)
             _ = WalletCaptureNetworkMonitor.shared
             await sync.drainWalletCaptures()
-            if WalletCaptureDeepLinkStore.consume() { router.push(.sync) }
+            if WalletCaptureDeepLinkStore.consume() { router.show(.sync) }
         }
         .task(id: Clerk.shared.user?.id) {
             await ensureEnvironment().prepareAccount(forUserID: Clerk.shared.user?.id,
@@ -124,7 +116,7 @@ struct CheckoutFlowView: View {
             Task { await sync.drainWalletCaptures() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .openWalletCaptureStatus)) { _ in
-            router.push(.sync)
+            router.show(.sync)
         }
     }
 
@@ -139,6 +131,29 @@ struct CheckoutFlowView: View {
         let created = CopilotEnvironment(modelContext: modelContext, sync: sync, ambient: ambient)
         environment = created
         return created
+    }
+
+    /// The first-run gate replaces the tab root *inside* the stack, never the stack itself
+    /// (Design Decision 4). Rendered as a sibling of the `NavigationStack`, nothing observed
+    /// `router.path`, so "Continue privately" pushed `.walletSetup` onto a path no stack was
+    /// rendering: the gate stayed on screen and a fresh install could not reach setup at all
+    /// without signing in.
+    @ViewBuilder
+    private func rootContent(environment: CopilotEnvironment) -> some View {
+        if environment.isFirstRun {
+            WelcomeGatewayView(
+                isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
+                isPreparingAccount: sync.isPreparingAccount,
+                syncIssueMessage: sync.syncIssue?.message,
+                onRetryAccountRestore: {
+                    Task { await environment.prepareAccount(forUserID: Clerk.shared.user?.id,
+                                                            session: session, router: router) }
+                },
+                onContinuePrivately: { router.show(.walletSetup) }
+            )
+        } else {
+            checkoutStepContent(environment: environment)
+        }
     }
 
     @ViewBuilder
@@ -165,13 +180,7 @@ struct CheckoutFlowView: View {
                               onCancel: { router.resetToIdle() })
         case .recommendation(let result):
             RecommendationView(result: result,
-                               deps: environment.graph,
-                               onCompare: { kind in router.push(.protectionLens(BenefitContext(kind: kind))) },
-                               onDone: {
-                                   LiveActivityManager.shared.endActivity()
-                                   if let graph = environment.graph { session.refresh(using: graph) }
-                                   router.resetToIdle()
-                               })
+                               onCompare: { kind in router.push(.protectionLens(BenefitContext(kind: kind))) })
         case .failed(let message):
             ContentUnavailableView("Something went wrong", systemImage: "exclamationmark.triangle",
                                    description: Text(message))
@@ -185,104 +194,16 @@ struct CheckoutFlowView: View {
             Group {
                 switch router.selectedTab {
                 case .copilot:
-                    HomeView(valueRecoveredCad: session.valueRecoveredCad,
-                             pendingValueCad: session.pendingValueCad,
-                             merchants: session.homeMerchants,
-                             isSortedByRecentLocation: session.cachedLocation?.isRecent == true,
-                             locationDenied: session.locationDenied,
-                             finishCount: session.completionQueue.count,
-                             reconcileCount: session.reconcileQueue.count,
-                             confirmedCount: session.metrics?.confirmedCount ?? 0,
-                             ambientDiagnostics: environment.ambientDiagnostics,
-                             ambientEnabled: ambient.isEnabled,
-                             deps: environment.graph,
-                             onSelectPreIndexedMerchant: { match in
-                                 router.step = .amount(NearbyMerchant(id: "preindex:\(match.id)",
-                                                                      name: match.name,
-                                                                      poiCategoryRaw: match.category,
-                                                                      latitude: 0,
-                                                                      longitude: 0,
-                                                                      distanceMeters: nil))
-                             },
-                             onInstantRepeat: { merchant in router.step = session.startInstantRepeat(merchant) },
-                             onLogPurchase: { merchant, amount in
-                                 if let graph = environment.graph {
-                                     session.logInstantPurchase(merchant, amount: amount, using: graph)
-                                 }
-                             },
-                             onOpenDetails: { merchant, amount in
-                                 if let graph = environment.graph {
-                                     router.step = session.startInstantRepeatWithAmount(merchant, amount: amount,
-                                                                                        using: graph)
-                                 }
-                             },
-                             onFindNearby: { Task { await findNearby() } },
-                             onSearch: { text in Task { await search(text) } },
-                             onFinish: { router.push(.finish) },
-                             onReconcile: { router.push(.reconcile) },
-                             onDashboard: { router.push(.dashboard) },
-                             onProtectionLens: { router.push(.protectionLens(BenefitContext(kind: .flight))) },
-                             onBenefits: { router.push(.benefitsReference) },
-                             onCategoryPicker: { router.push(.categoryPicker) },
-                             onWalletHealth: { router.push(.walletHealth) },
-                             onValuationSandbox: { router.push(.valuationSandbox) },
-                             onConfigureAmbient: { router.push(.ambientSetup) })
+                    HomeView(onFindNearby: { Task { await findNearby() } },
+                             onSearch: { text in Task { await search(text) } })
                 case .activity:
-                    ActivityHubView(
-                        finishCount: session.completionQueue.count,
-                        reconcileCount: session.reconcileQueue.count,
-                        metrics: session.metrics,
-                        valueRecoveredCad: session.valueRecoveredCad,
-                        pendingValueCad: session.pendingValueCad,
-                        recentPurchases: session.recentPurchases,
-                        cards: environment.graph?.walletCards ?? [],
-                        onFinish: { router.push(.finish) },
-                        onReconcile: { router.push(.reconcile) },
-                        onOpenDashboard: { router.push(.dashboard) },
-                        onSelectPurchase: { prediction in
-                            if prediction.purchase?.isComplete == false {
-                                router.push(.finish)
-                            }
-                        },
-                        onUpdateCategory: { prediction, newCategory in
-                            if let graph = environment.graph {
-                                session.updateCategory(for: prediction, to: newCategory, using: graph)
-                            }
-                        }
-                    )
+                    ActivityHubView()
                 case .wallet:
-                    WalletHubView(
-                        deps: environment.graph,
-                        onCategoryPicker: { router.push(.categoryPicker) },
-                        onWalletHealth: { router.push(.walletHealth) },
-                        onValuationSandbox: { router.push(.valuationSandbox) },
-                        onEditWallet: { router.push(.walletSetup) }
-                    )
+                    WalletHubView()
                 case .perks:
-                    PerksHubView(
-                        deps: environment.graph,
-                        onProtectionLens: { kind in router.push(.protectionLens(BenefitContext(kind: kind))) },
-                        onBenefitsReference: { router.push(.benefitsReference) }
-                    )
+                    PerksHubView()
                 case .you:
-                    YouHubView(
-                        isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
-                        accountEmail: Clerk.shared.user?.primaryEmailAddress?.emailAddress,
-                        lastSyncedAt: sync.lastSyncedAt,
-                        syncIssue: sync.syncIssue,
-                        ambientEnabled: ambient.isEnabled,
-                        ambientDiagnostics: environment.ambientDiagnostics,
-                        onOpenSync: { router.push(.sync) },
-                        onOpenAmbient: { router.push(.ambientSetup) },
-                        onEditWallet: { router.push(.walletSetup) },
-                        onSignIn: { router.push(.sync) },
-                        onSignOut: { Task { await environment.signOut(router: router) } },
-                        onEraseLocalHistory: { environment.eraseLocalHistory(session: session) },
-                        onDeleteAccount: { erase in
-                            try await environment.deleteAccount(eraseLocalHistory: erase, session: session,
-                                                                router: router)
-                        }
-                    )
+                    YouHubView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -330,48 +251,21 @@ struct CheckoutFlowView: View {
                           pendingValueCad: session.pendingValueCad,
                           onDone: { router.pop() })
         case .protectionLens(let context):
-            if let graph = environment.graph {
-                ProtectionLensView(deps: graph, initialContext: context, onDone: { router.pop() })
-            }
+            ProtectionLensView(initialContext: context)
         case .benefitsReference:
-            if let graph = environment.graph {
-                BenefitsReferenceView(deps: graph, onDone: { router.pop() })
-            }
+            BenefitsReferenceView()
         case .categoryPicker:
-            if let graph = environment.graph {
-                CategoryPickerView(deps: graph, onDone: { router.pop() })
-            }
+            CategoryPickerView()
         case .walletHealth:
-            if let graph = environment.graph {
-                WalletHealthView(deps: graph, recentPurchases: session.recentPurchases, onDone: { router.pop() })
-            }
+            WalletHealthView(recentPurchases: session.recentPurchases)
         case .valuationSandbox:
-            if let graph = environment.graph {
-                ValuationSandboxView(deps: graph, onDone: { router.pop() })
-            }
+            ValuationSandboxView()
         case .sync:
             SyncCenterView(isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
-                           lastSyncedAt: sync.lastSyncedAt,
-                           feedback: sync.walletFeedback,
-                           installations: sync.walletInstallations,
-                           syncIssue: sync.syncIssue,
-                           isSyncing: sync.isSyncing,
-                           isPreparingAccount: sync.isPreparingAccount,
-                           isAccountReady: sync.readySyncUserID == Clerk.shared.user?.id,
                            onSync: { Task { await syncFromUI() } },
-                           onCreateInstallation: { label in try await environment.createInstallation(label: label) },
-                           onRevokeInstallation: { id in try await sync.revokeWalletInstallation(id: id) },
                            boundAccountLabel: captureBoundAccountLabel,
                            isCaptureBoundToCurrentAccount:
-                               WalletCaptureCredentialStore().load()?.boundUserID == Clerk.shared.user?.id,
-                           onTestCaptureConnection: { await sync.testWalletCaptureConnection() },
-                           onAssignUnassigned: { try await sync.assignUnassignedCaptures() },
-                           onDeleteUnassigned: { try await sync.deleteUnassignedCaptures() },
-                           onDisableCapture: { delete in try await sync.disableWalletCapture(deleteUnsent: delete) },
-                           onSubmitDiagnostic: { report in try await sync.submitDiagnostic(report) },
-                           onDeleteSubmittedDiagnostic: { id in try await sync.deleteSubmittedDiagnostic(id: id) },
-                           onListSubmittedDiagnostics: { try await sync.listSubmittedDiagnostics() },
-                           onDone: { router.pop() })
+                               WalletCaptureCredentialStore().load()?.boundUserID == Clerk.shared.user?.id)
         case .settings:
             SettingsView(isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
                          accountEmail: Clerk.shared.user?.primaryEmailAddress?.emailAddress,
@@ -382,7 +276,7 @@ struct CheckoutFlowView: View {
                          onOpenAmbient: { router.push(.ambientSetup) },
                          onEditWallet: { router.push(.walletSetup) },
                          onSignIn: { router.push(.sync) },
-                         onSignOut: { Task { await environment.signOut(router: router) } },
+                         onSignOut: { Task { await environment.signOut(session: session, router: router) } },
                          onEraseLocalHistory: { environment.eraseLocalHistory(session: session) },
                          onDeleteAccount: { erase in
                              try await environment.deleteAccount(eraseLocalHistory: erase, session: session,
@@ -402,14 +296,17 @@ struct CheckoutFlowView: View {
             }
         case .ambientSetup:
             AmbientLocationExplainerView(
-                isEnabled: ambient.isEnabled,
+                isEnabled: environment.ambientEnabled,
                 diagnostics: environment.ambientDiagnostics,
                 onEnable: {
                     ambient.requestAlwaysAuthorization()
                     environment.refreshAmbientDiagnostics()
                     router.pop()
                 },
-                onDone: { router.pop() }
+                onDone: {
+                    environment.refreshAmbientDiagnostics()
+                    router.pop()
+                }
             )
         }
     }

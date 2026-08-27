@@ -3,9 +3,7 @@ import CardCopilotEngine
 
 /// The Perks & Insurance hub: Big Purchase & Trip Protection Lens and Card Benefits Library.
 struct PerksHubView: View {
-    let deps: DependencyGraph?
-    let onProtectionLens: (BenefitContextKind) -> Void
-    let onBenefitsReference: () -> Void
+    @Environment(CheckoutRouter.self) private var router
 
     var body: some View {
         ScrollView {
@@ -78,7 +76,7 @@ struct PerksHubView: View {
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
 
-                    Button(action: onBenefitsReference) {
+                    Button { router.push(.benefitsReference) } label: {
                         HStack(spacing: 14) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -132,7 +130,7 @@ struct PerksHubView: View {
         subtitle: LocalizedStringKey
     ) -> some View {
         Button {
-            onProtectionLens(kind)
+            router.push(.protectionLens(BenefitContext(kind: kind)))
         } label: {
             HStack(spacing: 14) {
                 ZStack {

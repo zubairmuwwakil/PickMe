@@ -57,4 +57,25 @@ final class CheckoutRouterTests: XCTestCase {
         XCTAssertTrue(router.path.isEmpty)
         XCTAssertEqual(router.selectedTab, .you)
     }
+
+    /// `.sync` is reached from three places — the toolbar, a capture deep link, and a
+    /// connectivity notification — and two of them can fire in the same launch. The predecessor's
+    /// `stage = .sync` was a replace, so it could not stack; `push` can, and a doubled entry
+    /// makes the back button appear dead.
+    func testShowingTheSameDestinationTwiceDoesNotStackIt() {
+        let router = CheckoutRouter()
+        router.show(.sync)
+        router.show(.sync)
+        XCTAssertEqual(router.path, [.sync])
+    }
+
+    /// Only the top is deduplicated. Returning to a screen the owner has already been through
+    /// is a legitimate push, not a repeat.
+    func testShowingADestinationAgainBelowTheTopStillPushes() {
+        let router = CheckoutRouter()
+        router.show(.sync)
+        router.show(.finish)
+        router.show(.sync)
+        XCTAssertEqual(router.path, [.sync, .finish, .sync])
+    }
 }

@@ -4,25 +4,16 @@ import CardCopilotStore
 
 /// The Activity hub: Pending queues (Finish Purchases, Reconcile Statements), Recent Purchases with Category Intelligence & Experiment Scoreboard.
 struct ActivityHubView: View {
-    let finishCount: Int
-    let reconcileCount: Int
-    let metrics: ExperimentMetrics?
-    let valueRecoveredCad: Double
-    let pendingValueCad: Double
-    let recentPurchases: [StoredPrediction]
-    let cards: [CardProduct]
-    let onFinish: () -> Void
-    let onReconcile: () -> Void
-    let onOpenDashboard: () -> Void
-    var onSelectPurchase: ((StoredPrediction) -> Void)? = nil
-    var onUpdateCategory: ((StoredPrediction, String) -> Void)? = nil
+    @Environment(CopilotSession.self) private var session
+    @Environment(CheckoutRouter.self) private var router
+    @Environment(CopilotEnvironment.self) private var environment
 
     @State private var selectedCategory: String? = nil
     @State private var isShowingAllPurchases = false
     @State private var inspectingPurchase: StoredPrediction? = nil
 
     private var availableCategories: [String] {
-        let cats = recentPurchases.map {
+        let cats = session.recentPurchases.map {
             $0.purchase?.observation?.observedCategory ?? $0.predictedCategory
         }.filter { !$0.isEmpty }
         var unique: [String] = []
@@ -34,18 +25,18 @@ struct ActivityHubView: View {
 
     private var filteredPurchases: [StoredPrediction] {
         if let selectedCategory {
-            return recentPurchases.filter {
+            return session.recentPurchases.filter {
                 ($0.purchase?.observation?.observedCategory ?? $0.predictedCategory) == selectedCategory
             }
         }
-        return recentPurchases
+        return session.recentPurchases
     }
 
     private var displayedPurchases: [StoredPrediction] {
         if selectedCategory != nil {
             return filteredPurchases
         }
-        return Array(recentPurchases.prefix(5))
+        return Array(session.recentPurchases.prefix(5))
     }
 
     var body: some View {
@@ -59,26 +50,26 @@ struct ActivityHubView: View {
 
                     VStack(spacing: 10) {
                         // Finish Purchases
-                        Button(action: onFinish) {
+                        Button { router.push(.finish) } label: {
                             queueActionRow(
                                 icon: "square.and.pencil",
-                                iconColor: finishCount > 0 ? .blue : .green,
-                                title: finishCount == 0 ? "Finish Purchases" : "\(finishCount) to Finish",
-                                subtitle: finishCount == 0 ? "All purchases have card & cost recorded" : "Add the card tapped and charge amount",
-                                count: finishCount,
+                                iconColor: session.completionQueue.isEmpty ? .green : .blue,
+                                title: session.completionQueue.isEmpty ? "Finish Purchases" : "\(session.completionQueue.count) to Finish",
+                                subtitle: session.completionQueue.isEmpty ? "All purchases have card & cost recorded" : "Add the card tapped and charge amount",
+                                count: session.completionQueue.count,
                                 badgeColor: Color.blue
                             )
                         }
                         .buttonStyle(.plain)
 
                         // Reconcile Statements
-                        Button(action: onReconcile) {
+                        Button { router.push(.reconcile) } label: {
                             queueActionRow(
                                 icon: "tray.full.fill",
-                                iconColor: reconcileCount > 0 ? .orange : .green,
-                                title: reconcileCount == 0 ? "Reconcile Queue" : "\(reconcileCount) Waiting to Reconcile",
-                                subtitle: reconcileCount == 0 ? "All predictions confirmed against statements" : "Match posted issuer rewards to predictions",
-                                count: reconcileCount,
+                                iconColor: session.reconcileQueue.isEmpty ? .green : .orange,
+                                title: session.reconcileQueue.isEmpty ? "Reconcile Queue" : "\(session.reconcileQueue.count) Waiting to Reconcile",
+                                subtitle: session.reconcileQueue.isEmpty ? "All predictions confirmed against statements" : "Match posted issuer rewards to predictions",
+                                count: session.reconcileQueue.count,
                                 badgeColor: Color(red: 0.13, green: 0.77, blue: 0.37)
                             )
                         }
@@ -93,25 +84,25 @@ struct ActivityHubView: View {
                             Text("Recent Purchases")
                                 .font(.system(size: 18, weight: .bold, design: .rounded))
                                 .foregroundStyle(.primary)
-                            if !recentPurchases.isEmpty {
-                                Text("\(recentPurchases.count) total • \(availableCategories.count) categories")
+                            if !session.recentPurchases.isEmpty {
+                                Text("\(session.recentPurchases.count) total • \(availableCategories.count) categories")
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundStyle(.secondary)
                             }
                         }
                         Spacer()
-                        if recentPurchases.count > 5 {
+                        if session.recentPurchases.count > 5 {
                             Button {
                                 isShowingAllPurchases = true
                             } label: {
-                                Text("See All (\(recentPurchases.count))")
+                                Text("See All (\(session.recentPurchases.count))")
                                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                                     .foregroundStyle(.blue)
                             }
                         }
                     }
 
-                    if recentPurchases.isEmpty {
+                    if session.recentPurchases.isEmpty {
                         emptyPurchasesCard
                     } else {
                         // Horizontal Category Filter Pills
@@ -127,7 +118,7 @@ struct ActivityHubView: View {
                             ForEach(displayedPurchases) { prediction in
                                 Button {
                                     inspectingPurchase = prediction
-                                    onSelectPurchase?(prediction)
+                                    openPurchase(prediction)
                                 } label: {
                                     purchaseRow(prediction: prediction)
                                 }
@@ -144,14 +135,14 @@ struct ActivityHubView: View {
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundStyle(.primary)
                         Spacer()
-                        Button(action: onOpenDashboard) {
+                        Button { router.push(.dashboard) } label: {
                             Text("Full Breakdown")
                                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                                 .foregroundStyle(.blue)
                         }
                     }
 
-                    if let metrics {
+                    if let metrics = session.metrics {
                         experimentOverviewCard(metrics: metrics)
                     }
                 }
@@ -163,31 +154,43 @@ struct ActivityHubView: View {
         .background(Color(.systemGroupedBackground))
         .sheet(isPresented: $isShowingAllPurchases) {
             AllPurchasesSheetView(
-                purchases: recentPurchases,
-                cards: cards,
+                purchases: session.recentPurchases,
+                cards: environment.graph?.walletCards ?? [],
                 onSelectPurchase: { prediction in
                     inspectingPurchase = prediction
-                    onSelectPurchase?(prediction)
+                    openPurchase(prediction)
                 },
-                onUpdateCategory: onUpdateCategory
+                onUpdateCategory: updateCategory
             )
         }
         .sheet(item: $inspectingPurchase) { prediction in
             PurchaseDetailSheetView(
                 prediction: prediction,
-                cards: cards,
+                cards: environment.graph?.walletCards ?? [],
                 onFinish: {
                     inspectingPurchase = nil
-                    onFinish()
+                    router.push(.finish)
                 },
                 onReconcile: {
                     inspectingPurchase = nil
-                    onReconcile()
+                    router.push(.reconcile)
                 },
                 onUpdateCategory: { updatedPrediction, newCategory in
-                    onUpdateCategory?(updatedPrediction, newCategory)
+                    updateCategory(updatedPrediction, newCategory)
                 }
             )
+        }
+    }
+
+    private func openPurchase(_ prediction: StoredPrediction) {
+        if prediction.purchase?.isComplete == false {
+            router.push(.finish)
+        }
+    }
+
+    private func updateCategory(_ prediction: StoredPrediction, _ category: String) {
+        if let graph = environment.graph {
+            session.updateCategory(for: prediction, to: category, using: graph)
         }
     }
 
@@ -207,7 +210,7 @@ struct ActivityHubView: View {
                             .font(.system(size: 12, weight: .semibold))
                         Text("All")
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        Text("(\(recentPurchases.count))")
+                        Text("(\(session.recentPurchases.count))")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(selectedCategory == nil ? .white.opacity(0.8) : .secondary)
                     }
@@ -230,7 +233,7 @@ struct ActivityHubView: View {
                 // Individual Category Pills
                 ForEach(availableCategories, id: \.self) { category in
                     let meta = CategoryVisuals.meta(for: category)
-                    let count = recentPurchases.filter {
+                    let count = session.recentPurchases.filter {
                         ($0.purchase?.observation?.observedCategory ?? $0.predictedCategory) == category
                     }.count
                     let isSelected = selectedCategory == category
@@ -384,7 +387,7 @@ struct ActivityHubView: View {
     }
 
     private func findCap(for category: String) -> (cardName: String, limit: Double, period: String)? {
-        for card in cards {
+        for card in environment.graph?.walletCards ?? [] {
             for cap in card.caps {
                 for rule in card.earnRules where rule.capId == cap.capId {
                     if let categories = rule.predicate.categories, categories.contains(category) {
@@ -600,7 +603,7 @@ struct ActivityHubView: View {
         if let style = CardVisualTheme.styles[cardId] {
             return style.shortName
         }
-        if let product = cards.first(where: { $0.cardId == cardId }) {
+        if let product = environment.graph?.walletCards.first(where: { $0.cardId == cardId }) {
             return product.officialName
         }
         return cardId

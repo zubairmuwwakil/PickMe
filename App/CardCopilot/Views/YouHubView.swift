@@ -6,19 +6,10 @@ import CardCopilotStore
 
 /// The You / Account hub: Profile, Cloud Sync Center, Ambient Alerts, Privacy & App Settings.
 struct YouHubView: View {
-    let isSignedIn: Bool
-    let accountEmail: String?
-    let lastSyncedAt: Date?
-    let syncIssue: SyncStatusIssue?
-    let ambientEnabled: Bool
-    let ambientDiagnostics: SuppressionLog
-    let onOpenSync: () -> Void
-    let onOpenAmbient: () -> Void
-    let onEditWallet: () -> Void
-    let onSignIn: () -> Void
-    let onSignOut: () -> Void
-    let onEraseLocalHistory: () -> Void
-    let onDeleteAccount: (_ eraseLocalHistory: Bool) async throws -> Void
+    @Environment(CopilotSession.self) private var session
+    @Environment(CheckoutRouter.self) private var router
+    @Environment(SyncCoordinator.self) private var sync
+    @Environment(CopilotEnvironment.self) private var environment
 
     @State private var deleteIsPresented = false
     @State private var eraseIsPresented = false
@@ -26,6 +17,14 @@ struct YouHubView: View {
     @State private var didErase = false
 
     private static let privacyPolicyURL = URL(string: "https://moneytalks.zubairmuwwakil.com/privacy")!
+
+    private var isSignedIn: Bool {
+        MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil
+    }
+
+    private var accountEmail: String? {
+        Clerk.shared.user?.primaryEmailAddress?.emailAddress
+    }
 
     var body: some View {
         ScrollView {
@@ -48,14 +47,16 @@ struct YouHubView: View {
         }
         .background(Color(.systemGroupedBackground))
         .confirmationDialog("Sign out of Inunity?", isPresented: $signOutIsPresented, titleVisibility: .visible) {
-            Button("Sign Out", role: .destructive) { onSignOut() }
+            Button("Sign Out", role: .destructive) {
+                Task { await environment.signOut(session: session, router: router) }
+            }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Signing out stops cap and feedback sync. Checkout continues to work offline with your on-device history.")
         }
         .confirmationDialog("Erase this iPhone's history?", isPresented: $eraseIsPresented, titleVisibility: .visible) {
             Button("Erase History", role: .destructive) {
-                onEraseLocalHistory()
+                environment.eraseLocalHistory(session: session)
                 didErase = true
             }
             Button("Cancel", role: .cancel) {}
@@ -117,7 +118,7 @@ struct YouHubView: View {
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundStyle(.red)
             } else {
-                Button(action: onSignIn) {
+                Button { router.push(.sync) } label: {
                     Text("Sign In")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
@@ -138,15 +139,15 @@ struct YouHubView: View {
     }
 
     private var syncCard: some View {
-        Button(action: onOpenSync) {
+        Button { router.push(.sync) } label: {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(Color.blue.opacity(0.14))
                         .frame(width: 44, height: 44)
-                    Image(systemName: syncIssue == nil ? "checkmark.icloud.fill" : "exclamationmark.icloud.fill")
+                    Image(systemName: sync.syncIssue == nil ? "checkmark.icloud.fill" : "exclamationmark.icloud.fill")
                         .font(.system(size: 19, weight: .semibold))
-                        .foregroundStyle(syncIssue == nil ? .blue : .orange)
+                        .foregroundStyle(sync.syncIssue == nil ? .blue : .orange)
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
@@ -154,12 +155,12 @@ struct YouHubView: View {
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundStyle(.primary)
 
-                    if let syncIssue {
+                    if let syncIssue = sync.syncIssue {
                         Text(syncIssue.message)
                             .font(.system(size: 12))
                             .foregroundStyle(.orange)
                             .lineLimit(1)
-                    } else if let lastSyncedAt {
+                    } else if let lastSyncedAt = sync.lastSyncedAt {
                         Text("Last synced: \(lastSyncedAt.formatted(date: .abbreviated, time: .shortened))")
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
@@ -188,15 +189,15 @@ struct YouHubView: View {
     }
 
     private var ambientCard: some View {
-        Button(action: onOpenAmbient) {
+        Button { router.push(.ambientSetup) } label: {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(ambientEnabled ? Color.green.opacity(0.14) : Color.gray.opacity(0.14))
+                        .fill(environment.ambientEnabled ? Color.green.opacity(0.14) : Color.gray.opacity(0.14))
                         .frame(width: 44, height: 44)
-                    Image(systemName: ambientEnabled ? "location.circle.fill" : "location.circle")
+                    Image(systemName: environment.ambientEnabled ? "location.circle.fill" : "location.circle")
                         .font(.system(size: 19, weight: .semibold))
-                        .foregroundStyle(ambientEnabled ? .green : .secondary)
+                        .foregroundStyle(environment.ambientEnabled ? .green : .secondary)
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
@@ -205,16 +206,16 @@ struct YouHubView: View {
                             .font(.system(size: 16, weight: .semibold, design: .rounded))
                             .foregroundStyle(.primary)
 
-                        Text(ambientEnabled ? "Active" : "Off")
+                        Text(environment.ambientEnabled ? "Active" : "Off")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 7)
                             .padding(.vertical, 2)
-                            .background(ambientEnabled ? Color(red: 0.13, green: 0.77, blue: 0.37) : Color.gray, in: Capsule())
+                            .background(environment.ambientEnabled ? Color(red: 0.13, green: 0.77, blue: 0.37) : Color.gray, in: Capsule())
                     }
 
-                    Text(ambientEnabled
-                         ? "\(ambientDiagnostics.fired) fired · \(ambientDiagnostics.suppressed) suppressed (last 7d)"
+                    Text(environment.ambientEnabled
+                         ? "\(environment.ambientDiagnostics.fired) fired · \(environment.ambientDiagnostics.suppressed) suppressed (last 7d)"
                          : "Set up automatic on-device store arrival alerts")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
@@ -246,7 +247,7 @@ struct YouHubView: View {
 
             VStack(spacing: 10) {
                 // Edit Wallet Cards
-                Button(action: onEditWallet) {
+                Button { router.push(.walletSetup) } label: {
                     preferenceRow(
                         icon: "creditcard",
                         iconColor: .blue,
