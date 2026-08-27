@@ -274,8 +274,8 @@ final class PortfolioAnalyzerTests: XCTestCase {
             basis: "synthetic: $600 USD/mo of grocery spend against a $1,500 USD/quarter cap, "
                  + "quoted at a CAD amount ($822/mo) chosen to diverge sharply from $600 so a "
                  + "currency mix-up in cap accrual cannot cancel out unnoticed",
-            buckets: [.init(label: "Groceries", annualCad: 822 * 12, category: "grocery",
-                            usdEquivalent: 600 * 12)])
+            buckets: [.init(label: "Groceries", annualCad: 822.0 * 12, category: "grocery",
+                            usdEquivalent: 600.0 * 12)])
 
         let analyzer = PortfolioAnalyzer(catalogue: catalogue, ownerState: ownerState)
         let run = analyzer.run(distribution, excluding: [], asOf: "2026-01-01")
@@ -283,9 +283,12 @@ final class PortfolioAnalyzerTests: XCTestCase {
         // Every quarter: $600 in-cap at 5% for two months, then a 3rd month split $300 in-cap /
         // $300 over-cap (300×0.05 + 300×0.01) — 78 USD cashback units/quarter, ×4 quarters, minus
         // the 2.5% FX spread charged every month on the full $600 USD (never gated by the cap),
-        // all converted to CAD at the pinned USD→CAD rate.
-        let quarterlyUnitsUsd = 600 * 0.05 + 600 * 0.05 + (300 * 0.05 + 300 * 0.01)
-        let quarterlyFxUsd = 600 * 0.025 * 3
+        // all converted to CAD at the pinned USD→CAD rate. Broken into named sub-expressions
+        // (rather than one long sum) so the type checker isn't asked to solve it all at once.
+        let inCapMonthsUsd: Double = 600.0 * 0.05 + 600.0 * 0.05
+        let straddleMonthUsd: Double = 300.0 * 0.05 + 300.0 * 0.01
+        let quarterlyUnitsUsd = inCapMonthsUsd + straddleMonthUsd
+        let quarterlyFxUsd: Double = 600.0 * 0.025 * 3
         let expected = (quarterlyUnitsUsd * 4 - quarterlyFxUsd * 4) * ReportingCurrency.pinnedUsdToCad
         XCTAssertEqual(run.totalValueCad, expected, accuracy: 0.01)
     }

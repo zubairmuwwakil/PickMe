@@ -79,6 +79,80 @@ extension CardCopilotSchemaV2 {
     }
 }
 
+// V3's copy of the spatial cache — byte-identical to V2's above, unchanged by the V3 migration
+// (only StoredPurchase gained fields). Still its own physically distinct declaration, not a
+// re-export: `SchemaMigrationPlan` needs each `VersionedSchema` to fully own the model types it
+// registers, exactly as `SchemaV1Models.swift`'s header comment explains for V1 — an inverse
+// relationship (`ShoppingArea.members` <-> `AreaMember.area`) cannot point at a class outside the
+// schema declaring it. `SchemaVersionTests.testV3ChangesOnlyStoredPurchase` is what keeps this
+// copy from drifting from V2's.
+extension CardCopilotSchemaV3 {
+
+    /// One ~1 km grid cell that discovery has looked at. `areaCount == 0` is a recorded answer, not
+    /// an absence: it is what stops the owner's own street being re-queried forever.
+    @Model
+    public final class ExploredCell {
+        public private(set) var cellKey: String = ""
+        public var exploredAt: Date = Date()
+        public var areaCount: Int = 0
+
+        public init(cellKey: String, exploredAt: Date, areaCount: Int) {
+            self.cellKey = cellKey
+            self.exploredAt = exploredAt
+            self.areaCount = areaCount
+        }
+    }
+
+    /// A cluster of POIs monitored as one region. The unit of geofencing is the plaza, not the
+    /// storefront — twenty shops fit inside one 150 m circle and CoreLocation allows twenty regions
+    /// in total, so storefront-level monitoring spends the entire budget on a single parking lot.
+    @Model
+    public final class ShoppingArea {
+        public private(set) var id: UUID = UUID()
+        /// The cell that discovered it, so pruning a cell can take its areas with it.
+        public private(set) var cellKey: String = ""
+        public private(set) var centroidLatitude: Double = 0
+        public private(set) var centroidLongitude: Double = 0
+        public private(set) var radiusMeters: Double = 0
+        public var discoveredAt: Date = Date()
+
+        @Relationship(deleteRule: .cascade, inverse: \AreaMember.area)
+        public var members: [AreaMember] = []
+
+        public init(cellKey: String, centroidLatitude: Double, centroidLongitude: Double,
+                    radiusMeters: Double, discoveredAt: Date) {
+            self.id = UUID()
+            self.cellKey = cellKey
+            self.centroidLatitude = centroidLatitude
+            self.centroidLongitude = centroidLongitude
+            self.radiusMeters = radiusMeters
+            self.discoveredAt = discoveredAt
+        }
+    }
+
+    /// A POI inside an area. Its own `@Model` rather than an encoded blob so members can be queried
+    /// and pruned directly, and so one can later be promoted to a confirmed `StoredMerchant` without
+    /// a decode round-trip.
+    @Model
+    public final class AreaMember {
+        public private(set) var name: String = ""
+        public private(set) var identifier: String?
+        public private(set) var poiCategoryRaw: String?
+        public private(set) var latitude: Double = 0
+        public private(set) var longitude: Double = 0
+        public var area: ShoppingArea?
+
+        public init(name: String, identifier: String?, poiCategoryRaw: String?,
+                    latitude: Double, longitude: Double) {
+            self.name = name
+            self.identifier = identifier
+            self.poiCategoryRaw = poiCategoryRaw
+            self.latitude = latitude
+            self.longitude = longitude
+        }
+    }
+}
+
 /// Persistence behind the spatial cache. Holds no policy — `shouldQueryDiscovery` decides whether
 /// a query happens; this only remembers what came back.
 public struct DiscoveryCache {
