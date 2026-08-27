@@ -2,6 +2,35 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-26 — card-catalogue 2.1: merchantInclude tokens normalized to lowercase kebab-case
+
+- **25 of 26 `merchantInclude` rules used display-cased brand names** ("Loblaws", "Shoppers Drug Mart",
+  "Air Canada") while `RuleMatcher.matches` does an exact, case-sensitive
+  `include.contains(brand)` against `PurchaseContext.merchantBrand` — and every producer of that
+  value (`CheckoutService.canonicalEngineBrand`, `SpendDistribution`, `CanadianMerchantPreIndex`)
+  emits lowercase kebab-case ("costco", "canadian-tire"), the same convention the catalogue's own
+  `merchantExclude` already used. No display-cased token could ever match. This was invisible
+  because the affected rules were separately gated off live scoring by `scoredInV1: false` or
+  `requires: ["predicate.merchantPartnerList"]` — the bug shipped inert and stayed that way.
+- **Fixed by lowercasing and hyphenating every affected `merchantInclude` value**
+  (`scotia-gold-featured-grocery-6x`, the two `td-aeroplan`/`amex-aeroplan-reserve`/
+  `cibc-aeroplan` Air Canada rules, `cibc-dividend-expedia-2pct`,
+  `scotia-passport-featured-grocery-3x`, the three `pc-insiders-*` rules, both
+  `amazon-ca-rewards-mastercard` rules, and the twelve `pc-financial-*` grocery/shoppers/fuel/
+  travel rules across `pc-financial-world-elite`, `pc-financial-mastercard`, and
+  `pc-financial-world-mastercard`). `"Amazon.ca"` → `"amazon-ca"`, `"T&T"` → `"t-and-t"`; every
+  other token is a straight lowercase-and-hyphenate. No rule's matching *behavior* changes today —
+  every affected rule is still gated off live scoring — this only makes the token correct for the
+  day the gate lifts.
+- **New regression gate:** `CatalogueIntegrityTests.testMerchantBrandTokensAreLowercaseKebabCase`
+  fails if any future `merchantInclude`/`merchantExclude` token is not lowercase kebab-case.
+  `RuleMatcherTests` gained direct coverage of the `merchantInclude` predicate path
+  (`testMerchantIncludeMatchesListedBrand`, `testMerchantIncludeRejectsBrandNotOnTheList`,
+  `testMerchantIncludeIsCaseSensitive`, `testMerchantIncludeRejectsMissingMerchantBrand`) — it had
+  none before, which is why this went unnoticed.
+- **No schema change.** `merchantInclude`/`merchantExclude` were always untyped strings; the
+  convention is enforced by the new test, not the schema.
+
 ## 2026-08-26 — card-catalogue 2.0: multi-market shape (Money, market/billingCurrency, spendNative, calendarQuarter, draft status)
 
 **Why:** preparing to import US cards surfaced that the catalogue baked CAD into its shape —

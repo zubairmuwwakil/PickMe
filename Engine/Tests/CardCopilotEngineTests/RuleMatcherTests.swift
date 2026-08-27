@@ -137,6 +137,42 @@ final class RuleMatcherTests: XCTestCase {
         XCTAssertEqual(appliedRuleId("amex-bonvoy", p), "bonvoy-marriott-5x")
     }
 
+    /// merchantInclude had zero coverage before this — the display-cased catalogue tokens that
+    /// could never match (see CatalogueIntegrityTests.testMerchantBrandTokensAreLowercaseKebabCase)
+    /// went unnoticed for exactly that reason. Exercises RuleMatcher.matches directly, since every
+    /// merchantInclude rule presently in the catalogue is gated off live scoring by scoredInV1 or
+    /// requires and so unreachable via RuleMatcher.resolve.
+    func testMerchantIncludeMatchesListedBrand() {
+        var predicate = Predicate()
+        predicate.merchantInclude = ["sobeys", "safeway"]
+        let purchase = PurchaseContext(amountCad: 30, category: "grocery", merchantBrand: "sobeys")
+        XCTAssertTrue(RuleMatcher.matches(predicate, purchase: purchase, state: CardState()))
+    }
+
+    func testMerchantIncludeRejectsBrandNotOnTheList() {
+        var predicate = Predicate()
+        predicate.merchantInclude = ["sobeys", "safeway"]
+        let purchase = PurchaseContext(amountCad: 30, category: "grocery", merchantBrand: "costco")
+        XCTAssertFalse(RuleMatcher.matches(predicate, purchase: purchase, state: CardState()))
+    }
+
+    /// The match is exact and case-sensitive (`include.contains(brand)`), so a catalogue token
+    /// that disagrees in case with every brand producer can never fire. This is the behavior the
+    /// display-cased tokens silently violated.
+    func testMerchantIncludeIsCaseSensitive() {
+        var predicate = Predicate()
+        predicate.merchantInclude = ["sobeys"]
+        let purchase = PurchaseContext(amountCad: 30, category: "grocery", merchantBrand: "Sobeys")
+        XCTAssertFalse(RuleMatcher.matches(predicate, purchase: purchase, state: CardState()))
+    }
+
+    func testMerchantIncludeRejectsMissingMerchantBrand() {
+        var predicate = Predicate()
+        predicate.merchantInclude = ["sobeys"]
+        let purchase = PurchaseContext(amountCad: 30, category: "grocery")
+        XCTAssertFalse(RuleMatcher.matches(predicate, purchase: purchase, state: CardState()))
+    }
+
     func testAnnouncedFutureFxRecordIgnoredBeforeEffectiveFrom() {
         let crypto = card("cryptocom-royal-indigo")
         let active = RuleMatcher.activeFxRule(for: crypto, asOf: "2026-08-20")
