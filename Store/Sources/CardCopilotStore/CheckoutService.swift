@@ -93,6 +93,16 @@ public struct CheckoutService {
     private let defaultCardId: String
     /// cardId -> the unit its program pays in, snapshotted onto every prediction.
     private let rewardUnitKinds: [String: String]
+    /// The contract release this build ships. Loaded once: it cannot change while the process
+    /// runs, and re-reading it per checkout would be a bundle read on the critical path.
+    private let contractRelease: ContractRelease?
+    /// The winning card has to be resolvable to freeze the rule it won on. Indexed here for the
+    /// same reason `rewardUnitKinds` is: the catalogue is an init parameter, not a stored one.
+    private let cardsById: [String: CardProduct]
+    /// programId -> the owner's valuation for that program. Keyed by program rather than reusing
+    /// `mrCentsPerPoint`, which is Membership Rewards only: freezing an MR rate against a
+    /// cashback winner would record a valuation that never applied to it.
+    private let programCentsPerPoint: [String: Double]
 
     public init(catalogue: Catalogue, ownerState: OwnerState, context: ModelContext) {
         self.engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
@@ -103,6 +113,16 @@ public struct CheckoutService {
         self.defaultCardId = ownerState.defaultCardId
         self.rewardUnitKinds = Dictionary(uniqueKeysWithValues:
             catalogue.cards.map { ($0.cardId, $0.program.unit) })
+        // A missing stamp must not block a checkout. Provenance is a property of the record,
+        // not a precondition for giving advice — an unstamped row is honest about being unstamped.
+        self.contractRelease = try? SeedLoader.loadContractRelease()
+        self.cardsById = Dictionary(uniqueKeysWithValues: catalogue.cards.map { ($0.cardId, $0) })
+        self.programCentsPerPoint = Dictionary(
+            catalogue.cards.compactMap { card -> (String, Double)? in
+                guard let cpp = ownerState.valuationsCad[points: card.program.programId]?.centsPerPoint
+                else { return nil }
+                return (card.program.programId, cpp)
+            }, uniquingKeysWith: { first, _ in first })
     }
 
     public func recommend(merchant: NearbyMerchant, amountCad: Double?,
@@ -155,6 +175,12 @@ public struct CheckoutService {
                                        merchantBrand: brand,
                                        acceptedNetworks: acceptedNetworks)
         let headline = explainer.explain(primary, purchase: purchase).headline
+        let frozen = cardsById[primary.winner.cardId].map { card in
+            ScoredRuleSnapshot.capture(score: primary.winner, card: card, asOf: asOf,
+                                       programId: card.program.programId,
+                                       unit: card.program.unit,
+                                       centsPerPoint: programCentsPerPoint[card.program.programId])
+        }
         let stored = try log.record(StoredPrediction(
             merchantName: merchant.name,
             merchantIdentifier: merchant.id,
@@ -170,6 +196,9 @@ public struct CheckoutService {
             runnerUpValueCad: primary.runnerUp?.netValueCad,
             scoredAmountCad: amountCad,
             valuationCentsPerPoint: mrCentsPerPoint,
+            contractRelease: contractRelease?.release,
+            contractDigest: contractRelease?.digest,
+            frozenInputs: frozen.flatMap { try? JSONEncoder().encode($0) },
             headline: headline))
         // Asking "which card here?" is an assertion of intent to buy, so the till record opens
         // now — otherwise the purchase would reach neither queue and the checkout could never be
