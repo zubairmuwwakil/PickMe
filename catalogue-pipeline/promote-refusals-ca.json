@@ -21,6 +21,13 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
+    "cardId": "capital-one-canada-capital-one-guaranteed",
+    "officialName": "Capital One Guaranteed Secured Mastercard",
+    "issuer": "Capital One",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
     "cardId": "cibc-costco-mastercard",
     "officialName": "CIBC Costco Mastercard",
     "issuer": "CIBC",
@@ -28,11 +35,25 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
+    "cardId": "mbna-true-line-mastercard",
+    "officialName": "MBNA True Line Mastercard",
+    "issuer": "MBNA",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
+    "cardId": "neo-financial-neo-world-mastercard",
+    "officialName": "Neo World Mastercard",
+    "issuer": "Neo Financial",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
     "cardId": "royal-bank-of-canada-rbc-british-airways-visa",
     "officialName": "RBC British Airways Visa Infinite",
     "issuer": "RBC",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "royal-bank-of-canada-more-rewards-rbc-visa",
@@ -63,6 +84,13 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
+    "cardId": "capital-one-canada-capital-one-guaranteed",
+    "officialName": "Capital One Guaranteed Secured Mastercard",
+    "issuer": "Capital One",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
     "cardId": "cibc-costco-mastercard",
     "officialName": "CIBC Costco Mastercard",
     "issuer": "CIBC",
@@ -70,11 +98,25 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
+    "cardId": "mbna-true-line-mastercard",
+    "officialName": "MBNA True Line Mastercard",
+    "issuer": "MBNA",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
+    "cardId": "neo-financial-neo-world-mastercard",
+    "officialName": "Neo World Mastercard",
+    "issuer": "Neo Financial",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
     "cardId": "royal-bank-of-canada-rbc-british-airways-visa",
     "officialName": "RBC British Airways Visa Infinite",
     "issuer": "RBC",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "royal-bank-of-canada-more-rewards-rbc-visa",

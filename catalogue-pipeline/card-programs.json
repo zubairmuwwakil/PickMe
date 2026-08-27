@@ -37,6 +37,24 @@
       "programId": "cashback",
       "unit": "usd"
     },
+    "american-express-delta-blue": {
+      "basis": "co-brand: Delta SkyMiles. Amex issuer implies the network.",
+      "officialName": "Amex Delta Blue",
+      "programId": "deltaSkyMiles",
+      "unit": "point"
+    },
+    "american-express-delta-skymiles-gold-business": {
+      "basis": "co-brand: Delta SkyMiles. Amex issuer implies the network.",
+      "officialName": "Delta SkyMiles Gold Business",
+      "programId": "deltaSkyMiles",
+      "unit": "point"
+    },
+    "american-express-delta-skymiles-platinum": {
+      "basis": "co-brand: Delta SkyMiles. Amex issuer implies the network.",
+      "officialName": "Delta SkyMiles\u00ae Platinum American Express Card",
+      "programId": "deltaSkyMiles",
+      "unit": "point"
+    },
     "american-express-everyday-card": {
       "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
       "officialName": "American Express EveryDay\u00ae Card",
@@ -91,6 +109,24 @@
       "programId": "amexMembershipRewardsUs",
       "unit": "point"
     },
+    "bank-of-america-alaska-airlines-atmos-ascent": {
+      "basis": "co-brand: Atmos Rewards, the combined Alaska/Hawaiian programme that replaced Mileage Plan on 2025-08-20. Name states the network.",
+      "officialName": "Alaska Airlines Atmos\u2122 Ascent Visa Signature\u00ae Card",
+      "programId": "atmosRewards",
+      "unit": "point"
+    },
+    "bank-of-america-atmos-rewards-summit-visa": {
+      "basis": "co-brand: Atmos Rewards. Name states the network.",
+      "officialName": "Atmos Rewards Summit Visa Infinite Credit Card",
+      "programId": "atmosRewards",
+      "unit": "point"
+    },
+    "bank-of-america-atmos-rewards-visa-signature": {
+      "basis": "co-brand: Atmos Rewards. Name states the network.",
+      "officialName": "Atmos\u2122 Rewards Visa Signature\u00ae Business Credit Card",
+      "programId": "atmosRewards",
+      "unit": "point"
+    },
     "bank-of-america-bankamericard-credit-card": {
       "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
       "officialName": "BankAmericard\u00ae Credit Card",
@@ -114,6 +150,12 @@
       "officialName": "Bank of America\u00ae Business Advantage Customized Cash Rewards Mastercard\u00ae",
       "programId": "bofaPreferredRewards",
       "unit": "usd"
+    },
+    "bank-of-america-free-spirit-travel-more-world": {
+      "basis": "co-brand: Spirit Free Spirit. Name states the network.",
+      "officialName": "Free Spirit\u00ae Travel More World Elite Mastercard\u00ae",
+      "programId": "spiritFreeSpirit",
+      "unit": "point"
     },
     "bank-of-america-premium-rewards-credit-card": {
       "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
@@ -144,6 +186,12 @@
       "officialName": "Bank of America\u00ae Unlimited Cash Rewards Credit Card",
       "programId": "bofaPreferredRewards",
       "unit": "usd"
+    },
+    "barclays-hawaiian-airlines-world-elite": {
+      "basis": "co-brand: HawaiianMiles ceased to exist on 2025-10-01, absorbed into Atmos Rewards 1:1; Alaska states existing Hawaiian World Elite cardholders earn Atmos Rewards points from that date. Not mapped to a HawaiianMiles value, which would name a retired currency. Name states the network.",
+      "officialName": "Hawaiian Airlines World Elite Mastercard\u00ae",
+      "programId": "atmosRewards",
+      "unit": "point"
     },
     "bmo-bank-n-a-bmo-cash-back-credit-card": {
       "basis": "name says cash back",
@@ -235,10 +283,40 @@
       "programId": "capitalOneMiles",
       "unit": "point"
     },
+    "chase-aer-lingus-visa-signature-card": {
+      "basis": "co-brand: Aer Lingus AerClub earns Avios, the shared IAG currency (British Airways / Aer Lingus / Iberia). Name states the network.",
+      "officialName": "Aer Lingus Visa Signature\u00ae Card",
+      "programId": "avios",
+      "unit": "point"
+    },
     "chase-aeroplan-card": {
       "basis": "co-brand: \\baeroplan\\b",
       "officialName": "Chase Aeroplan Card",
       "programId": "aeroplan",
+      "unit": "point"
+    },
+    "chase-british-airways-visa-signature-card": {
+      "basis": "co-brand: British Airways Executive Club earns Avios, the shared IAG currency. Name states the network.",
+      "officialName": "British Airways Visa Signature\u00ae Card",
+      "programId": "avios",
+      "unit": "point"
+    },
+    "chase-disney-inspire-visa-card": {
+      "basis": "co-brand: Disney Rewards Dollars. Name states the network.",
+      "officialName": "Disney Inspire Visa Card",
+      "programId": "disneyRewards",
+      "unit": "point"
+    },
+    "chase-disney-premier-visa": {
+      "basis": "co-brand: Disney Rewards Dollars. Name states the network.",
+      "officialName": "Disney Premier Visa",
+      "programId": "disneyRewards",
+      "unit": "point"
+    },
+    "chase-disney-visa-card": {
+      "basis": "co-brand: Disney Rewards Dollars. Name states the network.",
+      "officialName": "Chase Disney Visa Card",
+      "programId": "disneyRewards",
       "unit": "point"
     },
     "chase-freedom-flex": {
@@ -257,6 +335,12 @@
       "basis": "Chase family: freedom|ink business cash",
       "officialName": "Chase Freedom Unlimited\u00ae",
       "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "chase-iberia-visa-signature-card": {
+      "basis": "co-brand: Iberia Plus earns Avios, the shared IAG currency. Name states the network.",
+      "officialName": "Iberia Visa Signature\u00ae Card",
+      "programId": "avios",
       "unit": "point"
     },
     "chase-ink-business-cash-credit-card": {
@@ -293,6 +377,24 @@
       "basis": "Chase family: sapphire|\\bink\\b",
       "officialName": "Chase Sapphire Reserve\u00ae for Business",
       "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "citi-aadvantage-business-world-elite": {
+      "basis": "co-brand: American Airlines AAdvantage. Name states the network.",
+      "officialName": "Citi / AAdvantage Business World Elite Mastercard",
+      "programId": "aaAdvantage",
+      "unit": "point"
+    },
+    "citi-aadvantage-executive-world-elite": {
+      "basis": "co-brand: American Airlines AAdvantage. Name states the network.",
+      "officialName": "Citi\u00ae / AAdvantage\u00ae Executive World Elite Mastercard\u00ae",
+      "programId": "aaAdvantage",
+      "unit": "point"
+    },
+    "citi-aadvantage-globe-mastercard": {
+      "basis": "co-brand: American Airlines AAdvantage. Name states the network.",
+      "officialName": "Citi\u00ae / AAdvantage\u00ae Globe\u2122 Mastercard\u00ae",
+      "programId": "aaAdvantage",
       "unit": "point"
     },
     "citi-custom-cash-card": {
@@ -402,6 +504,18 @@
       "officialName": "PNC Cash Rewards\u00ae Visa\u00ae Credit Card",
       "programId": "cashback",
       "unit": "usd"
+    },
+    "royal-bank-of-canada-rbc-british-airways-visa": {
+      "basis": "co-brand: RBC's British Airways card earns Avios into a British Airways Executive Club account. The only Canadian card in the Avios batch.",
+      "officialName": "RBC British Airways Visa Infinite",
+      "programId": "avios",
+      "unit": "point"
+    },
+    "synchrony-cathay-world-elite-mastercard": {
+      "basis": "co-brand: Asia Miles, still the spendable currency after Cathay folded Asia Miles and Marco Polo Club into the single `Cathay` membership in 2022. Name states the network.",
+      "officialName": "Cathay World Elite Mastercard",
+      "programId": "cathayAsiaMiles",
+      "unit": "point"
     },
     "u-s-bank-shopper-cash-rewards-visa-signature": {
       "basis": "name says cash back",

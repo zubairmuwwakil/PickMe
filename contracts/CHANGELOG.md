@@ -2,6 +2,86 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-27 — card-catalogue 2.4: seven co-brand reward currencies, none of them valued
+
+- **Seven new `programId` values** — `aaAdvantage`, `atmosRewards`, `avios`, `cathayAsiaMiles`,
+  `deltaSkyMiles`, `disneyRewards`, `spiritFreeSpirit` — landing **15 new `draft` cards**.
+  Catalogue is now 41 CA published, 40 US draft, 4 CA draft. This is the Option 2 follow-up the
+  2026-08-27 Option 1 ruling explicitly did not drop: roughly two in three US candidates earn a
+  currency this catalogue could not name, and mapping them onto a near-enough enum value was
+  rejected outright, because a Delta card recorded as `amexMembershipRewardsUs` is not
+  approximately right — it values the card in a currency it does not earn.
+
+- **NOTHING was added to programs.json, and that is the point.** `centsPerPoint` is a DISCLOSED
+  ASSUMPTION requiring a sourced basis, and there is no honest source for these yet. Every card on
+  them is a `draft`, and `Scorer` refuses a draft on the status guard, so an unvalued co-brand
+  programme excludes nothing that was not already excluded. This is the same shape as the six
+  `*Us` placeholders added in 2.2, which have carried no valuation since. **The `knownUnvaluedPrograms`
+  allowlist is deliberately NOT used**: it has been scoped to published cards since 2026-08-27
+  (99cace9), so a draft-only programme never reaches it, and its ratchet is pinned at zero.
+  Valuing these is tracked as separate research; until then the honest record is silence.
+
+- **No engine code changed in any of the three languages, and none was needed.** `programId` is a
+  `String` in Swift, Kotlin and TypeScript alike — the closed enum exists only in
+  `schema/card-catalogue.schema.json`, and `Scorer.valueCad` dispatches on the *valuation's* model,
+  not on the programId. `noRewards` needed a mirror in 2.3 because it added a new valuation MODEL;
+  these are points programmes and add none. What each language gained instead is a regression test
+  (`CoBrandProgramTests`, `CoBrandProgramTest`, `coBrandProgram.test.ts`) whose set of new
+  programmes is DERIVED as "declared by a card, absent from programs.json" rather than hardcoded,
+  so it maintains itself as the remaining currencies land.
+
+- **The safety property is an ordering, and it turned out to be three-deep.** Writing the test
+  revealed that a draft on an unvalued programme is stopped three separate times: `isPublished`,
+  then an empty `earnRules` set that `RuleMatcher.resolve` cannot satisfy, and only then the
+  valuation check. That means **no draft can exercise the valuation guard at all** — the first
+  attempt at the test flipped a draft to `published` and it was still excluded for having no rule.
+  The risk this creates is that `status` could stop mattering while the empty rule set keeps the
+  suite green, so the tests now pin each layer to the reason it exists rather than asserting the
+  outcome and accepting any cause.
+
+- **Three of the nineteen proposed currencies were wrong, and were not shipped as proposed.**
+  `alaskaMileagePlan` names a programme that no longer exists and `hawaiianMiles` names a currency
+  that no longer exists: Alaska and Hawaiian merged both into **Atmos Rewards** (launched
+  2025-08-20, HawaiianMiles absorbed 1:1 on 2025-10-01, existing Hawaiian World Elite cardholders
+  earning Atmos points from that date). They are ONE currency, shipped as `atmosRewards` with four
+  cards, and the Barclays Hawaiian card is mapped to it on that sourced fact rather than to a
+  retired currency. `cathayAsiaMiles` is kept: Cathay folded Asia Miles and Marco Polo Club into a
+  single `Cathay` membership in 2022, but Asia Miles remains the spendable currency.
+
+- **`costcoCashRewards` was refused.** The CIBC card pays a CAD certificate redeemable only at
+  Canadian Costco warehouses; Citi Costco Anywhere pays a USD certificate redeemable only at US
+  ones. They are not fungible, so one shared programId would value a card in a currency it does not
+  earn — and the only *landable* card of the two was the Canadian one, which would have defined a
+  generically-named entry entirely from a CAD certificate. A shared programId is correct only where
+  the currency is genuinely the same, which is why `marriottBonvoy` and `aeroplan` are cross-market
+  and this is not. `avios` IS such a case and is deliberately cross-market: Aer Lingus, British
+  Airways and Iberia (US) plus RBC British Airways (CA) all earn into the same IAG currency.
+
+- **Twelve of the nineteen proposed values were held back because they land no card today.**
+  Six (`jetBlueTrueBlue`, `unitedMileagePlus`, `southwestRapidRewards`, `wyndhamRewards`,
+  `worldOfHyatt`, `ihgOneRewards`) are blocked on `network`, which the aggregator snapshots do not
+  carry and which is catastrophic to guess. Four more (`hiltonHonors`, `emiratesSkywards`,
+  `frontierMiles`, `choicePrivileges`) reached the *fee* gate and were refused there: giving them a
+  programId revealed a second, independent gap the currency gap had been masking, with sources
+  disagreeing at `[0, 150, 195, 550]` for the Hilton entry — the whole Hilton Amex family described
+  under one name. Shipping an enum value that names nothing puts a permanent, published entry in a
+  contract for a card that does not exist in it; 2.2 did that with six placeholders and the schema
+  now needs a paragraph explaining them. These come back for free once their gap is closed.
+
+- **Two of the deferred currencies are not points programmes** and will need the `ctMoney` model
+  rather than `points` when they are eventually valued: Disney Rewards Dollars and both Costco
+  certificates are store-locked, dollar-denominated annual rewards, which is exactly the shape
+  CT Money carries a usability factor for. Recorded here so the valuation pass does not default
+  them to `points` and quietly claim a dollar locked to one merchant is a dollar.
+
+- **The `programId` description in the schema was corrected.** It claimed `Scorer.valueCad` "still
+  returns 0.0 rather than excluding the card" and that the gap "is pinned in
+  `knownUnvaluedPrograms`". Both have been false since 2026-08-20: an unvalued programme answers
+  nil and the card is excluded with `unsupportedProgram`, and the allowlist is empty. That sentence
+  misdescribed the exact safety property this release depends on.
+
+- Verified: Swift 282/282, Kotlin 50/50, TypeScript 1109/1109.
+
 ## 2026-08-27 — card-catalogue 2.3 / programs 1.2: `noRewards`, for a card that earns nothing
 
 - **New `programId` value `noRewards`, and a matching valuation model.** MBNA True Line and
