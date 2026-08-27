@@ -1,0 +1,135 @@
+[
+  {
+    "cardId": "brim-financial-brim-world-elite-mastercard",
+    "officialName": "Brim World Elite Mastercard",
+    "issuer": "Brim Financial",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "brim-financial-brim-mastercard",
+    "officialName": "Brim Mastercard",
+    "issuer": "Brim Financial",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "capital-one-aspire-travel-platinum-mastercard",
+    "officialName": "Capital One Aspire Travel Platinum Mastercard",
+    "issuer": "Capital One",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "capital-one-guaranteed-secured-mastercard",
+    "officialName": "Capital One Guaranteed Secured Mastercard",
+    "issuer": "Capital One",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "cibc-costco-mastercard",
+    "officialName": "CIBC Costco Mastercard",
+    "issuer": "CIBC",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "mbna-true-line-mastercard",
+    "officialName": "MBNA True Line Mastercard",
+    "issuer": "MBNA",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "neo-financial-neo-world-mastercard",
+    "officialName": "Neo World Mastercard",
+    "issuer": "Neo Financial",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "rbc-british-airways-visa-infinite",
+    "officialName": "RBC British Airways Visa Infinite",
+    "issuer": "RBC",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "rbc-more-rewards-rbc-visa",
+    "officialName": "More Rewards RBC Visa",
+    "issuer": "RBC",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "brim-financial-brim-world-elite-mastercard",
+    "officialName": "Brim World Elite Mastercard",
+    "issuer": "Brim Financial",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "brim-financial-brim-mastercard",
+    "officialName": "Brim Mastercard",
+    "issuer": "Brim Financial",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "capital-one-aspire-travel-platinum-mastercard",
+    "officialName": "Capital One Aspire Travel Platinum Mastercard",
+    "issuer": "Capital One",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "capital-one-guaranteed-secured-mastercard",
+    "officialName": "Capital One Guaranteed Secured Mastercard",
+    "issuer": "Capital One",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "cibc-costco-mastercard",
+    "officialName": "CIBC Costco Mastercard",
+    "issuer": "CIBC",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "mbna-true-line-mastercard",
+    "officialName": "MBNA True Line Mastercard",
+    "issuer": "MBNA",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "neo-financial-neo-world-mastercard",
+    "officialName": "Neo World Mastercard",
+    "issuer": "Neo Financial",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "rbc-british-airways-visa-infinite",
+    "officialName": "RBC British Airways Visa Infinite",
+    "issuer": "RBC",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "rbc-more-rewards-rbc-visa",
+    "officialName": "More Rewards RBC Visa",
+    "issuer": "RBC",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "<batch>",
+    "officialName": "117 undiscovered ClearFin cards",
+    "issuer": "various",
+    "reason": "unmapped-issuer",
+    "detail": "add 'various' to issuer-aliases.json under aliases.CA"
+  }
+]

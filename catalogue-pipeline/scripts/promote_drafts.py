@@ -82,7 +82,9 @@ def legal_program_ids() -> set[str]:
 def build_drafts(market: str, limit: int | None):
     queue = load(QUEUE)["queue"]
     catalogue = load(CATALOGUE)
-    aliases = (load(ISSUER_ALIASES) or {}).get("aliases", {})
+    # Keyed by market on purpose: the vendor string "Capital One" appears in both markets and
+    # Capital One Canada issues Canadian-only products. A flat map merges two issuers silently.
+    aliases = ((load(ISSUER_ALIASES) or {}).get("aliases", {})).get(market, {})
     networks = load(NETWORKS) or {}
     programs = load(PROGRAMS) or {}
     valid_program_ids = legal_program_ids()
@@ -122,10 +124,19 @@ def build_drafts(market: str, limit: int | None):
 
         issuer_raw = entry.get("issuer")
         if issuer_raw not in aliases:
-            refuse(entry, "unmapped-issuer", f"add {issuer_raw!r} to issuer-aliases.json")
+            refuse(
+                entry,
+                "unmapped-issuer",
+                f"add {issuer_raw!r} to issuer-aliases.json under aliases.{market}",
+            )
             continue
 
-        network = networks.get(card_id)
+        # {"network": ..., "basis": ...} — basis records HOW the network was determined so the
+        # promotion pass knows what still needs an issuer check. "name-token" means the official
+        # name says it ("CIBC Costco Mastercard"); that is strong evidence but not issuer-
+        # confirmed, which is fine for a draft and must be re-verified before publishing.
+        entry_net = networks.get(card_id) or {}
+        network = entry_net.get("network") if isinstance(entry_net, dict) else entry_net
         if network not in ("amex", "visa", "mastercard", "discover"):
             refuse(entry, "unknown-network", "add cardId -> network in card-networks.json")
             continue
@@ -194,8 +205,10 @@ def main() -> int:
     for reason, n in Counter(r["reason"] for r in refusals).most_common():
         print(f"  {reason:<26} {n}")
 
-    (PIPELINE / "promote-refusals.json").write_text(json.dumps(refusals, indent=2) + "\n")
-    print(f"\nrefusals written to {PIPELINE / 'promote-refusals.json'} — this is the research queue")
+    # Per market: a single shared file meant a CA run silently clobbered the US worklist.
+    out = PIPELINE / f"promote-refusals-{args.market.lower()}.json"
+    out.write_text(json.dumps(refusals, indent=2) + "\n")
+    print(f"\nrefusals written to {out} — this is the research queue")
 
     if args.dry_run:
         print("\n--dry-run: catalogue untouched")
