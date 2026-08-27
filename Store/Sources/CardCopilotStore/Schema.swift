@@ -45,12 +45,53 @@ public enum CardCopilotSchemaV1: VersionedSchema {
 /// they were scored before provenance existed, and `contractRelease == nil` is the queryable
 /// predicate that keeps them out of any per-release accuracy figure.
 ///
-/// These are the live classes — the ones `Models.swift` and `DiscoveryCache.swift` declare and the
-/// typealiases below name. Every other entity is byte-identical to V1;
-/// `SchemaVersionTests.testV2ChangesOnlyStoredPrediction` is what keeps anything else from riding
-/// along in this migration.
+/// No longer the live classes — V3 below is — but the shape installed stores were carried to by
+/// the V1→V2 stage, and still needed as a migration source for exactly that reason. Every entity
+/// is byte-identical to V1; `SchemaVersionTests.testV2ChangesOnlyStoredPrediction` is what keeps
+/// anything else from riding along in that migration.
 public enum CardCopilotSchemaV2: VersionedSchema {
     public static var versionIdentifier: Schema.Version { Schema.Version(2, 0, 0) }
+
+    public static var models: [any PersistentModel.Type] {
+        [
+            StoredPrediction.self,
+            StoredPurchase.self,
+            StoredObservation.self,
+            StoredMerchant.self,
+            ExploredCell.self,
+            ShoppingArea.self,
+            AreaMember.self,
+        ]
+    }
+}
+
+/// Version 3 of the on-device store: two provenance fields on `StoredPurchase`, for Path B
+/// captures that were never asked about at a live checkout.
+///
+/// `CaptureMatcher.unclaimedCaptures` finds wallet taps that match no open `StoredPrediction` —
+/// the owner never asked "which card here?" before or during the purchase. Until now such a tap
+/// had nowhere to go but the standalone Sync Center feed: `StoredPurchase.prediction` is optional,
+/// but nothing ever constructed one without a prediction, and `PredictionLog`'s every accessor
+/// walks the graph starting FROM `StoredPrediction`, so an orphan purchase was invisible to Recent
+/// Purchases, the Finish queue, and the Reconcile queue alike.
+///
+/// `walletEventId` is both the provenance and the sync-time dedup key — `AutoCaptureLog` skips any
+/// feedback item whose id already appears on some purchase, so a re-sync can never double-log the
+/// same tap. `merchantLabel` exists because the merchant name normally lives on the `StoredPrediction`
+/// this purchase belongs to; a purchase with no prediction needs somewhere else to keep it. Both are
+/// optional and nil for every purchase created the ordinary way (`PredictionLog.recordPurchase`),
+/// which is what keeps this a lightweight migration — a nullable column, not a rewrite.
+///
+/// Deliberately NOT a new `StoredPrediction`: `AutoCaptureLog` never invents a `winnerCardId` for a
+/// purchase the app was never asked about. `StoredPrediction.winnerCardId` is a graded claim — "the
+/// engine said this card, here is whether that held up" — and the Experiment Scoreboard's accuracy
+/// figure is a predicate over that population. Fabricating one after the fact, even by honestly
+/// re-running the engine, would let the app grade advice it never gave; the value of a wallet-capture
+/// purchase to the owner is that it got logged at all, not a second data point for that experiment.
+/// Every other entity is byte-identical to V2; `SchemaVersionTests.testV3ChangesOnlyStoredPurchase`
+/// keeps anything else from riding along in this migration.
+public enum CardCopilotSchemaV3: VersionedSchema {
+    public static var versionIdentifier: Schema.Version { Schema.Version(3, 0, 0) }
 
     public static var models: [any PersistentModel.Type] {
         [
@@ -75,7 +116,7 @@ public enum CardCopilotSchemaV2: VersionedSchema {
 /// inserted. `SchemaVersionTests.testCurrentSchemaIsTheNewestInTheMigrationPlan` pins this to the
 /// plan's newest entry.
 public enum CardCopilotSchema {
-    public static var current: any VersionedSchema.Type { CardCopilotSchemaV2.self }
+    public static var current: any VersionedSchema.Type { CardCopilotSchemaV3.self }
 }
 
 /// How owners are carried from one schema version to the next.
@@ -89,7 +130,7 @@ public enum CardCopilotSchema {
 /// exist simultaneously — which is why the models are namespaced under their schema version.
 public enum CardCopilotMigrationPlan: SchemaMigrationPlan {
     public static var schemas: [any VersionedSchema.Type] {
-        [CardCopilotSchemaV1.self, CardCopilotSchemaV2.self]
+        [CardCopilotSchemaV1.self, CardCopilotSchemaV2.self, CardCopilotSchemaV3.self]
     }
 
     /// Lightweight because every added property is optional. `.custom` would be required only if
@@ -97,7 +138,10 @@ public enum CardCopilotMigrationPlan: SchemaMigrationPlan {
     /// provenance is "none". Backfilling one would invent the measurement this work exists to
     /// protect.
     public static var stages: [MigrationStage] {
-        [.lightweight(fromVersion: CardCopilotSchemaV1.self, toVersion: CardCopilotSchemaV2.self)]
+        [
+            .lightweight(fromVersion: CardCopilotSchemaV1.self, toVersion: CardCopilotSchemaV2.self),
+            .lightweight(fromVersion: CardCopilotSchemaV2.self, toVersion: CardCopilotSchemaV3.self),
+        ]
     }
 }
 
@@ -105,10 +149,10 @@ public enum CardCopilotMigrationPlan: SchemaMigrationPlan {
 // app and this package are unaffected by the nesting. Repointing these seven lines is what "the
 // current shape" means for every call site at once — and the only reason that is safe is that no
 // call site names a version literally. Containers get theirs from `CardCopilotSchema.current`.
-public typealias StoredPrediction = CardCopilotSchemaV2.StoredPrediction
-public typealias StoredPurchase = CardCopilotSchemaV2.StoredPurchase
-public typealias StoredObservation = CardCopilotSchemaV2.StoredObservation
-public typealias StoredMerchant = CardCopilotSchemaV2.StoredMerchant
-public typealias ExploredCell = CardCopilotSchemaV2.ExploredCell
-public typealias ShoppingArea = CardCopilotSchemaV2.ShoppingArea
-public typealias AreaMember = CardCopilotSchemaV2.AreaMember
+public typealias StoredPrediction = CardCopilotSchemaV3.StoredPrediction
+public typealias StoredPurchase = CardCopilotSchemaV3.StoredPurchase
+public typealias StoredObservation = CardCopilotSchemaV3.StoredObservation
+public typealias StoredMerchant = CardCopilotSchemaV3.StoredMerchant
+public typealias ExploredCell = CardCopilotSchemaV3.ExploredCell
+public typealias ShoppingArea = CardCopilotSchemaV3.ShoppingArea
+public typealias AreaMember = CardCopilotSchemaV3.AreaMember
