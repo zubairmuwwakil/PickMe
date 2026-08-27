@@ -8,13 +8,26 @@ import Foundation
 /// binary means discovery can never speak.
 ///
 /// The middle rung exists because "the POI is literally named Costco" and "the POI is an
-/// unnamed store pin" are not the same guess. The first can be checked against the engine's own
-/// brand vocabulary (`canonicalEngineBrand`); the second cannot be checked against anything.
+/// unnamed store pin" are not the same guess. The first can be checked against a merchant
+/// vocabulary; the second cannot be checked against anything. (Which vocabulary is the adapter's
+/// business — this file only needs the tiers to mean something.)
+///
+/// The tiers answer two questions that happen to travel together: whether we know *which*
+/// merchant this is, and whether we know how a charge here will *code*. `.frequented` exists
+/// because payment evidence answers the first decisively and the second not at all.
 public enum AmbientMerchantConfidence: String, Codable, Equatable, Sendable {
     /// The owner reconciled THIS terminal against a statement. Was `.high`.
     case verified
     /// A POI whose name resolves to a brand the catalogue knows. A guess, but a checkable one.
     case brandMatched
+    /// A recognised merchant the owner has paid at on several separate days.
+    ///
+    /// Evidence of a different kind from `.verified`, not merely a weaker grade of it. A
+    /// reconciled terminal proves how a charge *codes*; repeated payment proves the owner
+    /// actually shops here and that this is the merchant we think it is. So this tier answers
+    /// the identity and presence doubts and leaves the category question exactly where
+    /// `.brandMatched` leaves it — on a brand prior.
+    case frequented
     /// A bare pin. Was `.low`.
     case unknown
 }
@@ -64,6 +77,11 @@ public enum AmbientSuppressionReason: String, Codable, CaseIterable, Hashable, S
     /// tuning §5's multiplier against evidence needs those two to be tellable apart.
     case advantageBelowUnverifiedThreshold
     case merchantMuted
+    /// A frequented merchant whose advantage cleared nothing it needed to clear. Distinct from
+    /// `advantageBelowSwitchThreshold` for the same reason the unverified counter is distinct:
+    /// it is the only evidence that can say whether `frequentedAdvantageMultiplier` is set
+    /// right, and pooling it with the verified tier's misses would answer no question at all.
+    case advantageBelowFrequentedThreshold
 }
 
 /// A decision carries every failed conjunct rather than a single arbitrary first failure. This
@@ -88,6 +106,17 @@ public enum AmbientGate {
     /// test, rather than a policy spread across call sites.
     public static let unverifiedAdvantageMultiplier: Double = 2.0
 
+    /// What a frequented merchant's advantage is scaled by before it is judged.
+    ///
+    /// 1.0 — the owner's own floor, unscaled — is a judgement, not a measurement, and it is a
+    /// constant so that revising it is one edit with one test. The argument for it: the 2.0 above
+    /// covers three doubts at once, and patronage retires two of them. What it does not retire is
+    /// the third, since the category still comes from a brand prior. If
+    /// `advantageBelowFrequentedThreshold` turns out to dominate the counters while the owner
+    /// keeps shopping at those merchants, this is too high; if frequented notifications get
+    /// muted, too low.
+    public static let frequentedAdvantageMultiplier: Double = 1.0
+
     /// A3: fire only for a merchant confident enough to interrupt over, a non-default
     /// recommendation whose advantage clears that merchant's threshold, and a merchant the owner
     /// has not muted.
@@ -110,8 +139,16 @@ public enum AmbientGate {
                 reasons.insert(.advantageBelowSwitchThreshold)
             }
         case .brandMatched:
-            if !clearsSwitchThreshold(input.advantage, threshold: scaled(input.switchThreshold)) {
+            if !clearsSwitchThreshold(input.advantage,
+                                      threshold: scaled(input.switchThreshold,
+                                                        by: unverifiedAdvantageMultiplier)) {
                 reasons.insert(.advantageBelowUnverifiedThreshold)
+            }
+        case .frequented:
+            if !clearsSwitchThreshold(input.advantage,
+                                      threshold: scaled(input.switchThreshold,
+                                                        by: frequentedAdvantageMultiplier)) {
+                reasons.insert(.advantageBelowFrequentedThreshold)
             }
         }
 
@@ -120,10 +157,10 @@ public enum AmbientGate {
 
     /// Scales both floors, leaving `semantics` alone. Scaling only one axis would silently turn
     /// an `either` threshold into a stricter rule on whichever axis was left unscaled.
-    static func scaled(_ threshold: SwitchThreshold) -> SwitchThreshold {
+    static func scaled(_ threshold: SwitchThreshold, by multiplier: Double) -> SwitchThreshold {
         SwitchThreshold(
-            minAdvantagePercentagePoints: threshold.minAdvantagePercentagePoints * unverifiedAdvantageMultiplier,
-            minAdvantageCad: threshold.minAdvantageCad * unverifiedAdvantageMultiplier,
+            minAdvantagePercentagePoints: threshold.minAdvantagePercentagePoints * multiplier,
+            minAdvantageCad: threshold.minAdvantageCad * multiplier,
             semantics: threshold.semantics)
     }
 

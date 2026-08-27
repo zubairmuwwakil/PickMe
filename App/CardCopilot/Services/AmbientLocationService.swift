@@ -131,6 +131,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private let visitStore = AmbientVisitStore()
     private let queryLog = DiscoveryQueryLog()
     private let provider = LiveMerchantProvider()
+    private let patronageStore = MerchantPatronageStore()
 
     private var modelContainer: ModelContainer?
     private var catalogue: Catalogue?
@@ -205,6 +206,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         diagnosticsStore.forgetAll()
         visitStore.forgetAll()
         queryLog.forgetAll()
+        patronageStore.forgetAll()
     }
 
     /// Called only from the dedicated explainer screen, before either system prompt appears.
@@ -369,6 +371,10 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         let merchant: NearbyMerchant
         let prediction: CategoryPrediction
         let confidence: AmbientMerchantConfidence
+        /// The merchant category code, when the name resolved to a known merchant. Reaches the
+        /// scoring context so the catalogue's `mccInclude` rules can see it — without this the
+        /// index's best evidence is read and then dropped.
+        let mcc: Int?
         /// Mute identity. A string because discovered POIs have no local UUID.
         let muteKey: String
     }
@@ -385,7 +391,8 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                          forRegionId: regionId)
 
         let purchase = ambientPurchaseContext(merchant: arrival.merchant,
-                                              category: arrival.prediction.category)
+                                              category: arrival.prediction.category,
+                                              mcc: arrival.mcc)
         guard case .advised(let recommendation) = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
             .recommend(purchase, asOf: Date().formatted(.iso8601.year().month().day())) else { return }
         let advantageCad = recommendation.advantageOverDefaultCad ?? 0
@@ -413,7 +420,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         case .merchant(let id):
             guard let merchant = try? context.fetch(FetchDescriptor<StoredMerchant>(
                 predicate: #Predicate { $0.id == id })).first else { return nil }
-            return resolved(storedMerchant: merchant)
+            return resolved(storedMerchant: merchant, frequentedKeys: patronageStore.frequentedKeys())
 
         case .area(let id):
             guard let area = try? context.fetch(FetchDescriptor<ShoppingArea>(
@@ -428,33 +435,54 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                                       toLongitude: $0.longitude)) }
                 .filter { $0.1 <= Self.verifiedMerchantRadiusMeters && $0.0.confirmedCategory != nil }
                 .min { $0.1 < $1.1 }?.0
-            if let nearestConfirmed { return resolved(storedMerchant: nearestConfirmed) }
+            // Read once for the whole arrival rather than per candidate name: an area holds
+            // several members, and this is a background wake.
+            let frequentedKeys = patronageStore.frequentedKeys()
+            if let nearestConfirmed {
+                return resolved(storedMerchant: nearestConfirmed, frequentedKeys: frequentedKeys)
+            }
 
-            // Rung 2: a cached POI whose name the catalogue's own brand vocabulary recognises.
+            // Rung 2: a cached POI whose name resolves to a merchant the app can name.
             // Checkable, unlike a bare pin — which is the whole basis for the middle tier.
-            let branded = area.members.first { canonicalEngineBrand($0.name) != nil }
-            let member = branded ?? area.members.first
-            guard let member else { return nil }
+            //
+            // The tier and the category come from one call, deliberately. Deciding them
+            // separately is how a notification ends up confident about a store whose coding was
+            // guessed from a POI pin — the failure the three tiers exist to prevent.
+            let resolved = area.members.map {
+                ($0, resolveDiscoveredMerchant(name: $0.name, poiCategoryRaw: $0.poiCategoryRaw,
+                                               frequentedKeys: frequentedKeys))
+            }
+            // A plaza holding one recognisable store and four unnamed pins is answered by the
+            // store; a plaza of nothing but pins still answers, at `.unknown`, and is suppressed.
+            guard let (member, resolution) = resolved.first(where: { $0.1.confidence != .unknown })
+                    ?? resolved.first else { return nil }
             let nearby = NearbyMerchant(id: member.identifier ?? member.name, name: member.name,
                                         poiCategoryRaw: member.poiCategoryRaw,
                                         latitude: member.latitude, longitude: member.longitude,
                                         distanceMeters: nil)
             return ResolvedArrival(
                 merchant: nearby,
-                prediction: predict(poiCategoryRaw: member.poiCategoryRaw, merchantName: member.name),
-                confidence: branded != nil ? .brandMatched : .unknown,
+                prediction: resolution.prediction,
+                confidence: resolution.confidence,
+                mcc: resolution.mcc,
                 muteKey: nearby.id)
         }
     }
 
-    private func resolved(storedMerchant merchant: StoredMerchant) -> ResolvedArrival {
-        let prediction = predictionForKnownMerchant(merchant)
+    private func resolved(storedMerchant merchant: StoredMerchant,
+                          frequentedKeys: Set<String>) -> ResolvedArrival {
+        let resolution = resolveStoredMerchant(name: merchant.name,
+                                               poiCategoryRaw: merchant.poiCategoryRaw,
+                                               confirmedCategory: merchant.confirmedCategory,
+                                               confirmationCount: merchant.confirmationCount,
+                                               frequentedKeys: frequentedKeys)
         let nearby = NearbyMerchant(id: merchant.identifier ?? merchant.id.uuidString,
                                     name: merchant.name, poiCategoryRaw: merchant.poiCategoryRaw,
                                     latitude: merchant.latitude, longitude: merchant.longitude,
                                     distanceMeters: nil)
-        return ResolvedArrival(merchant: nearby, prediction: prediction,
-                               confidence: prediction.confidenceSource.isVerified ? .verified : .unknown,
+        return ResolvedArrival(merchant: nearby, prediction: resolution.prediction,
+                               confidence: resolution.confidence,
+                               mcc: resolution.mcc,
                                muteKey: nearby.id)
     }
 

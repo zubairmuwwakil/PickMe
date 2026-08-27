@@ -123,6 +123,18 @@ struct AmbientLocationExplainerView: View {
                         Text("\(diagnostics.fired) alerts fired · \(diagnostics.suppressed) suppressed")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
+
+                        // The per-reason counters were always recorded and never shown, so
+                        // "suppressed: 41" was unreadable — a silence with no stated cause looks
+                        // identical to a bug. Each reason names a different fix: an unrecognised
+                        // store is the app's problem, a threshold is a setting, a mute was a
+                        // choice.
+                        ForEach(diagnostics.suppressedByReason.sorted { $0.value > $1.value },
+                                id: \.key) { reason, count in
+                            Text("\(count) · \(reason.ownerFacingDescription)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     Spacer()
                 }
@@ -153,6 +165,34 @@ struct AmbientLocationExplainerView: View {
                         .frame(maxWidth: .infinity)
                 }
             }
+        }
+    }
+}
+
+extension AmbientSuppressionReason {
+    /// Why an arrival stayed silent, in the owner's terms. Deliberately names the cause rather
+    /// than the rule: the counters exist to be acted on, and "advantageBelowUnverifiedThreshold"
+    /// tells an owner nothing they can act on.
+    var ownerFacingDescription: String {
+        switch self {
+        case .merchantConfidenceLow:
+            return String(localized: "ambient.suppressed.unrecognised",
+                          defaultValue: "the store could not be identified")
+        case .recommendedDefaultCard:
+            return String(localized: "ambient.suppressed.already-best",
+                          defaultValue: "your usual card was already the best one")
+        case .advantageBelowSwitchThreshold:
+            return String(localized: "ambient.suppressed.below-threshold",
+                          defaultValue: "the gain was below your switch threshold")
+        case .advantageBelowUnverifiedThreshold:
+            return String(localized: "ambient.suppressed.below-unverified",
+                          defaultValue: "the gain was below the higher bar for unconfirmed stores")
+        case .advantageBelowFrequentedThreshold:
+            return String(localized: "ambient.suppressed.below-frequented",
+                          defaultValue: "the gain was below your switch threshold at a store you shop at often")
+        case .merchantMuted:
+            return String(localized: "ambient.suppressed.muted",
+                          defaultValue: "you muted that store")
         }
     }
 }

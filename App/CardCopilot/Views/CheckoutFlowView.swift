@@ -282,6 +282,7 @@ struct CheckoutFlowView: View {
                          ambientEnabled: ambient.isEnabled,
                          onOpenSync: { router.push(.sync) },
                          onOpenAmbient: { router.push(.ambientSetup) },
+                         onOpenLearnedMerchants: { router.push(.learnedMerchants) },
                          onEditWallet: { router.push(.walletSetup) },
                          onSignIn: { router.push(.sync) },
                          onSignOut: { Task { await environment.signOut(session: session, router: router) } },
@@ -316,6 +317,8 @@ struct CheckoutFlowView: View {
                     router.pop()
                 }
             )
+        case .learnedMerchants:
+            LearnedMerchantsView(onDone: { router.pop() })
         }
     }
 

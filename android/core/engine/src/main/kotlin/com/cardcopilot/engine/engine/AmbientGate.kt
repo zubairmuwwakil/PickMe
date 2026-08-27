@@ -5,6 +5,16 @@ import com.cardcopilot.engine.models.SwitchThreshold
 enum class AmbientMerchantConfidence {
     VERIFIED,
     BRAND_MATCHED,
+
+    /**
+     * A recognised merchant the owner has paid at on several separate days.
+     *
+     * Evidence of a different kind from VERIFIED, not a weaker grade of it: a reconciled terminal
+     * proves how a charge codes, while repeated payment proves the owner shops here and that this
+     * is the merchant we think it is. The category question stays exactly where BRAND_MATCHED
+     * leaves it — on a brand prior.
+     */
+    FREQUENTED,
     UNKNOWN
 }
 
@@ -27,6 +37,12 @@ enum class AmbientSuppressionReason {
     RECOMMENDED_DEFAULT_CARD,
     ADVANTAGE_BELOW_SWITCH_THRESHOLD,
     ADVANTAGE_BELOW_UNVERIFIED_THRESHOLD,
+
+    /**
+     * Kept apart from ADVANTAGE_BELOW_SWITCH_THRESHOLD for the reason the unverified counter is:
+     * it is the only evidence that can say whether FREQUENTED_ADVANTAGE_MULTIPLIER is set right.
+     */
+    ADVANTAGE_BELOW_FREQUENTED_THRESHOLD,
     MERCHANT_MUTED
 }
 
@@ -38,6 +54,13 @@ data class AmbientGateDecision(
 
 object AmbientGate {
     const val UNVERIFIED_ADVANTAGE_MULTIPLIER = 2.0
+
+    /**
+     * 1.0 — the owner's own floor, unscaled. The 2.0 above covers three doubts at once (identity,
+     * presence, coding) and patronage retires the first two. It does not retire the third, which
+     * is why this is a separate, tunable constant rather than a fold into VERIFIED.
+     */
+    const val FREQUENTED_ADVANTAGE_MULTIPLIER = 1.0
 
     fun evaluate(input: AmbientGateInput): AmbientGateDecision {
         val reasons = mutableSetOf<AmbientSuppressionReason>()
@@ -58,8 +81,21 @@ object AmbientGate {
                 }
             }
             AmbientMerchantConfidence.BRAND_MATCHED -> {
-                if (!clearsSwitchThreshold(input.advantage, scaled(input.switchThreshold))) {
+                if (!clearsSwitchThreshold(
+                        input.advantage,
+                        scaled(input.switchThreshold, UNVERIFIED_ADVANTAGE_MULTIPLIER)
+                    )
+                ) {
                     reasons.add(AmbientSuppressionReason.ADVANTAGE_BELOW_UNVERIFIED_THRESHOLD)
+                }
+            }
+            AmbientMerchantConfidence.FREQUENTED -> {
+                if (!clearsSwitchThreshold(
+                        input.advantage,
+                        scaled(input.switchThreshold, FREQUENTED_ADVANTAGE_MULTIPLIER)
+                    )
+                ) {
+                    reasons.add(AmbientSuppressionReason.ADVANTAGE_BELOW_FREQUENTED_THRESHOLD)
                 }
             }
         }
@@ -67,10 +103,10 @@ object AmbientGate {
         return AmbientGateDecision(suppressionReasons = reasons)
     }
 
-    fun scaled(threshold: SwitchThreshold): SwitchThreshold {
+    fun scaled(threshold: SwitchThreshold, multiplier: Double): SwitchThreshold {
         return SwitchThreshold(
-            minAdvantagePercentagePoints = threshold.minAdvantagePercentagePoints * UNVERIFIED_ADVANTAGE_MULTIPLIER,
-            minAdvantageCad = threshold.minAdvantageCad * UNVERIFIED_ADVANTAGE_MULTIPLIER,
+            minAdvantagePercentagePoints = threshold.minAdvantagePercentagePoints * multiplier,
+            minAdvantageCad = threshold.minAdvantageCad * multiplier,
             semantics = threshold.semantics
         )
     }

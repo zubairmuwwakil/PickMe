@@ -158,3 +158,45 @@ extension AmbientGateTests {
                        [.advantageBelowUnverifiedThreshold])
     }
 }
+
+// MARK: - Patronage tier (frequented merchants)
+
+extension AmbientGateTests {
+    private func frequentedInput(_ advantage: AmbientAdvantage) -> AmbientGateInput {
+        AmbientGateInput(merchantConfidence: .frequented,
+                         recommendedCardId: "amex-cobalt",
+                         defaultCardId: "wealthsimple-vip",
+                         advantage: advantage,
+                         switchThreshold: both,
+                         isMuted: false)
+    }
+
+    /// Patronage removes the two doubts the unverified multiplier exists to cover — whether this
+    /// is really that merchant, and whether the owner is shopping rather than walking past. The
+    /// category is still a brand prior, which is why this earns its own tunable multiplier rather
+    /// than being folded into `.verified`.
+    func testFrequentedMerchantFiresAtTheOwnersOwnThreshold() {
+        // Clears the owner's floor (1 / 1) but not the doubled floor a brand-matched guess faces.
+        let decision = AmbientGate.evaluate(frequentedInput(
+            AmbientAdvantage(percentagePoints: 1.5, cad: 1.5)))
+        XCTAssertTrue(decision.fires)
+    }
+
+    /// The same advantage at the same merchant, without the patronage evidence, stays silent.
+    /// This is the whole delta the tier buys, so it is pinned directly rather than inferred.
+    func testTheSameAdvantageIsSuppressedWithoutPatronage() {
+        var input = frequentedInput(AmbientAdvantage(percentagePoints: 1.5, cad: 1.5))
+        input.merchantConfidence = .brandMatched
+        XCTAssertEqual(AmbientGate.evaluate(input).suppressionReasons,
+                       [.advantageBelowUnverifiedThreshold])
+    }
+
+    /// Its own counter, for the reason `advantageBelowUnverifiedThreshold` has one: it is the
+    /// only evidence that can say whether the multiplier is set right, and mixing it with the
+    /// verified tier's misses would make both totals useless for that question.
+    func testFrequentedAdvantageMissIsCountedUnderItsOwnReason() {
+        let decision = AmbientGate.evaluate(frequentedInput(
+            AmbientAdvantage(percentagePoints: 0.5, cad: 0.5)))
+        XCTAssertEqual(decision.suppressionReasons, [.advantageBelowFrequentedThreshold])
+    }
+}

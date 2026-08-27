@@ -17,6 +17,7 @@ struct SettingsView: View {
     let ambientEnabled: Bool
     let onOpenSync: () -> Void
     let onOpenAmbient: () -> Void
+    let onOpenLearnedMerchants: () -> Void
     let onEditWallet: () -> Void
     let onSignIn: () -> Void
     let onSignOut: () -> Void
@@ -58,6 +59,7 @@ struct SettingsView: View {
             Section("Ambient") {
                 Button(ambientEnabled ? "Arrival alerts" : "Ambient arrival setup", action: onOpenAmbient)
                 LabeledContent("Status", value: ambientEnabled ? "On" : "Off")
+                Button("Learned merchants", action: onOpenLearnedMerchants)
             }
 
             Section("Wallet") {

@@ -22,6 +22,7 @@ enum Destination: Hashable {
     case settings
     case walletSetup
     case ambientSetup
+    case learnedMerchants
 }
 
 /// Where the owner is in the act of paying for something.

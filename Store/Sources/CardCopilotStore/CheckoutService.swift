@@ -42,11 +42,13 @@ let fallbackAmountEstimate: Double = 50
 /// Builds the same on-device scoring context used by checkout when no amount has been entered.
 /// Ambient delivery uses a clearly bounded category estimate only to decide whether to stay
 /// silent; it never persists that estimate as a purchase observation.
-public func ambientPurchaseContext(merchant: NearbyMerchant, category: String) -> PurchaseContext {
+public func ambientPurchaseContext(merchant: NearbyMerchant, category: String,
+                                   mcc: Int? = nil) -> PurchaseContext {
     let brand = canonicalEngineBrand(merchant.name)
     let amount = categoryAmountEstimates[category] ?? fallbackAmountEstimate
     return PurchaseContext(amountCad: amount,
                            category: category,
+                           mcc: mcc,
                            merchantBrand: brand,
                            acceptedNetworks: knownAcceptedNetworks(for: brand, merchantName: merchant.name))
 }

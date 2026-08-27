@@ -98,6 +98,14 @@ struct WalletCaptureIntent: AppIntent {
                                             diagnostic: diagnostic)
                 return .result(dialog: "No Wallet fields arrived. The trigger was retained for review; check the automation mappings in PickMe.")
             }
+            // A tap is the strongest evidence there is that the owner shops here, and it is
+            // the only such evidence that arrives without asking them for anything. Recorded
+            // from the merchant string alone: the coordinate never leaves the outbox, and brand
+            // standing does not need it.
+            if let key = patronageKey(forCapturedMerchant: event.transaction.merchantRaw,
+                                      transactionName: event.transaction.transactionNameRaw) {
+                MerchantPatronageStore().recordVisit(merchantKey: key, at: event.capturedAt)
+            }
             try? await runLogs?.finish(runID: run.runID,
                                         outcome: diagnostic?.deliveryState == .accepted || diagnostic?.deliveryState == .duplicate
                                             ? "savedAndDelivered" : "savedLocally",

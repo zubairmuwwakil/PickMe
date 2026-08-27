@@ -1,6 +1,7 @@
 package com.cardcopilot.engine.engine
 
 import com.cardcopilot.engine.models.Catalogue
+import com.cardcopilot.engine.models.CandidateSet
 import com.cardcopilot.engine.models.OwnerState
 import com.cardcopilot.engine.models.ReportingCurrency
 import com.cardcopilot.engine.models.SpendDistribution
@@ -54,15 +55,16 @@ data class AcquisitionAnalysis(
 }
 
 class AcquisitionAnalyzer(
-    val walletCatalogue: Catalogue,
-    val candidateCatalogue: Catalogue,
+    val catalogue: Catalogue,
+    val candidates: CandidateSet,
     val ownerState: OwnerState
 ) {
     fun analyze(distribution: SpendDistribution, asOf: String): AcquisitionAnalysis {
         val owned = ownerState.ownedCardIds.toSet()
-        val walletProductIds = walletCatalogue.cards.map { it.cardId }.toSet()
-        val knownCards = walletCatalogue.cards + candidateCatalogue.cards.filter { !walletProductIds.contains(it.cardId) }
-        val knownCatalogue = walletCatalogue.copy(cards = knownCards)
+        // Candidates are references into the single product corpus, not a second catalogue.
+        val knownCatalogue = catalogue
+        val productsById = catalogue.cards.associateBy { it.cardId }
+        val knownCards = catalogue.cards
 
         val walletIds = owned.intersect(knownCards.map { it.cardId }.toSet())
         val baselineAnalyzer = PortfolioAnalyzer(
@@ -74,8 +76,10 @@ class AcquisitionAnalyzer(
         val annualSpendByLabel = distribution.buckets.associate { it.label to it.annualCad }
 
         val results = mutableListOf<AcquisitionCandidate>()
-        for (card in candidateCatalogue.cards) {
-            if (owned.contains(card.cardId)) continue
+        for (cardId in candidates.cardIds) {
+            if (owned.contains(cardId)) continue
+            // A stale candidate reference should omit only that candidate, not the whole view.
+            val card = productsById[cardId] ?: continue
 
             val combinedIds = walletIds + card.cardId
             val combined = PortfolioAnalyzer(
