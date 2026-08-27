@@ -1,0 +1,1897 @@
+{
+  "needsEnumValue": {
+    "american-express-amazon-business-american-express-card": {
+      "basis": "co-brand: amazon",
+      "currency": "Amazon Rewards (US) \u2014 distinct from the CA amazonRewards entry",
+      "issuer": "American Express",
+      "officialName": "Amazon Business American Express Card"
+    },
+    "american-express-amex-delta-blue": {
+      "basis": "co-brand: delta|skymiles",
+      "currency": "Delta SkyMiles",
+      "issuer": "American Express",
+      "officialName": "Amex Delta Blue"
+    },
+    "american-express-amex-morgan-stanley-blue": {
+      "basis": "co-brand: harley|verizon|carecredit|aarp|\\bnhl\\b|morgan stanley|robinhood|\\bsofi\\b",
+      "currency": "Brand-specific rewards",
+      "issuer": "American Express",
+      "officialName": "Amex Morgan Stanley Blue"
+    },
+    "american-express-delta-skymiles-gold-business": {
+      "basis": "co-brand: delta|skymiles",
+      "currency": "Delta SkyMiles",
+      "issuer": "American Express",
+      "officialName": "Delta SkyMiles Gold Business"
+    },
+    "american-express-delta-skymiles-platinum-american-express-ca": {
+      "basis": "co-brand: delta|skymiles",
+      "currency": "Delta SkyMiles",
+      "issuer": "American Express",
+      "officialName": "Delta SkyMiles\u00ae Platinum American Express Card"
+    },
+    "american-express-hilton-honors-american-express-aspire-card": {
+      "basis": "co-brand: hilton|honors",
+      "currency": "Hilton Honors",
+      "issuer": "American Express",
+      "officialName": "Hilton Honors American Express Aspire Card"
+    },
+    "bank-of-america-alaska-airlines-atmos-ascent-visa-signature-": {
+      "basis": "co-brand: alaska|atmos",
+      "currency": "Alaska Mileage Plan / Atmos",
+      "issuer": "Bank of America",
+      "officialName": "Alaska Airlines Atmos\u2122 Ascent Visa Signature\u00ae Card"
+    },
+    "bank-of-america-atmos-rewards-summit-visa-infinite-credit-ca": {
+      "basis": "co-brand: alaska|atmos",
+      "currency": "Alaska Mileage Plan / Atmos",
+      "issuer": "Bank of America",
+      "officialName": "Atmos Rewards Summit Visa Infinite Credit Card"
+    },
+    "bank-of-america-atmos-rewards-visa-signature-business-credit": {
+      "basis": "co-brand: alaska|atmos",
+      "currency": "Alaska Mileage Plan / Atmos",
+      "issuer": "Bank of America",
+      "officialName": "Atmos\u2122 Rewards Visa Signature\u00ae Business Credit Card"
+    },
+    "bank-of-america-free-spirit-travel-more-world-elite-masterca": {
+      "basis": "co-brand: free spirit|spirit airlines",
+      "currency": "Spirit Free Spirit",
+      "issuer": "Bank of America",
+      "officialName": "Free Spirit\u00ae Travel More World Elite Mastercard\u00ae"
+    },
+    "barclays-aadvantage-aviator-silver": {
+      "basis": "co-brand: aadvantage|american airlines",
+      "currency": "AAdvantage",
+      "issuer": "Barclays",
+      "officialName": "AAdvantage Aviator Silver"
+    },
+    "barclays-aarp-essential-rewards-mastercard-from-barclays": {
+      "basis": "co-brand: harley|verizon|carecredit|aarp|\\bnhl\\b|morgan stanley|robinhood|\\bsofi\\b",
+      "currency": "Brand-specific rewards",
+      "issuer": "Barclays",
+      "officialName": "AARP\u00ae Essential Rewards Mastercard\u00ae from Barclays"
+    },
+    "barclays-athleta-rewards-mastercard": {
+      "basis": "co-brand: kohl|sam's club|sears|walgreens|\\bgap\\b|athleta|banana republic|nordstrom|target|bj's",
+      "currency": "Store-specific rewards",
+      "issuer": "Barclays",
+      "officialName": "Athleta Rewards Mastercard\u00ae"
+    },
+    "barclays-banana-republic-rewards-mastercard": {
+      "basis": "co-brand: kohl|sam's club|sears|walgreens|\\bgap\\b|athleta|banana republic|nordstrom|target|bj's",
+      "currency": "Store-specific rewards",
+      "issuer": "Barclays",
+      "officialName": "Banana Republic Rewards Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-aarp-essential-rewards-mastercard-fro": {
+      "basis": "co-brand: harley|verizon|carecredit|aarp|\\bnhl\\b|morgan stanley|robinhood|\\bsofi\\b",
+      "currency": "Brand-specific rewards",
+      "issuer": "Barclays",
+      "officialName": "AARP\u00ae Essential Rewards Mastercard\u00ae from Barclays"
+    },
+    "barclays-bank-delaware-athleta-encore-mastercard": {
+      "basis": "co-brand: kohl|sam's club|sears|walgreens|\\bgap\\b|athleta|banana republic|nordstrom|target|bj's",
+      "currency": "Store-specific rewards",
+      "issuer": "Barclays",
+      "officialName": "Athleta Encore Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-banana-republic-encore-mastercard": {
+      "basis": "co-brand: kohl|sam's club|sears|walgreens|\\bgap\\b|athleta|banana republic|nordstrom|target|bj's",
+      "currency": "Store-specific rewards",
+      "issuer": "Barclays",
+      "officialName": "Banana Republic Encore Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-carnival-world-mastercard": {
+      "basis": "co-brand: carnival|celebrity|princess|royal caribbean",
+      "currency": "Cruise-line loyalty",
+      "issuer": "Barclays",
+      "officialName": "Carnival\u00ae World Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-emirates-skywards-rewards-world-elite": {
+      "basis": "co-brand: emirates|skywards",
+      "currency": "Emirates Skywards",
+      "issuer": "Barclays",
+      "officialName": "Emirates Skywards Rewards World Elite Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-frontier-airlines-world-mastercard": {
+      "basis": "co-brand: frontier",
+      "currency": "Frontier Miles",
+      "issuer": "Barclays",
+      "officialName": "FRONTIER Airlines World Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-gap-encore-mastercard": {
+      "basis": "co-brand: kohl|sam's club|sears|walgreens|\\bgap\\b|athleta|banana republic|nordstrom|target|bj's",
+      "currency": "Store-specific rewards",
+      "issuer": "Barclays",
+      "officialName": "Gap Encore Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-wyndham-rewards-earner-business-card": {
+      "basis": "co-brand: wyndham",
+      "currency": "Wyndham Rewards",
+      "issuer": "Barclays",
+      "officialName": "Wyndham Rewards Earner\u00ae Business Card"
+    },
+    "barclays-carnival-world-mastercard": {
+      "basis": "co-brand: carnival|celebrity|princess|royal caribbean",
+      "currency": "Cruise-line loyalty",
+      "issuer": "Barclays",
+      "officialName": "Carnival\u00ae World Mastercard\u00ae"
+    },
+    "barclays-celebrity-cruises-visa-signature-card": {
+      "basis": "co-brand: carnival|celebrity|princess|royal caribbean",
+      "currency": "Cruise-line loyalty",
+      "issuer": "Barclays",
+      "officialName": "Celebrity Cruises Visa Signature\u00ae Card"
+    },
+    "barclays-emirates-skywards-premium-world-elite-mastercard": {
+      "basis": "co-brand: emirates|skywards",
+      "currency": "Emirates Skywards",
+      "issuer": "Barclays",
+      "officialName": "Emirates Skywards Premium World Elite Mastercard\u00ae"
+    },
+    "barclays-frontier-airlines-world-mastercard": {
+      "basis": "co-brand: frontier",
+      "currency": "Frontier Miles",
+      "issuer": "Barclays",
+      "officialName": "Frontier Airlines World Mastercard\u00ae"
+    },
+    "barclays-gap-good-rewards-mastercard": {
+      "basis": "co-brand: kohl|sam's club|sears|walgreens|\\bgap\\b|athleta|banana republic|nordstrom|target|bj's",
+      "currency": "Store-specific rewards",
+      "issuer": "Barclays",
+      "officialName": "Gap Good Rewards Mastercard\u00ae"
+    },
+    "barclays-harley-davidson-credit-card": {
+      "basis": "co-brand: harley|verizon|carecredit|aarp|\\bnhl\\b|morgan stanley|robinhood|\\bsofi\\b",
+      "currency": "Brand-specific rewards",
+      "issuer": "Barclays",
+      "officialName": "Harley-Davidson Credit Card"
+    },
+    "barclays-hawaiian-airlines-world-elite-mastercard": {
+      "basis": "co-brand: hawaiian",
+      "currency": "Hawaiian Miles",
+      "issuer": "Barclays",
+      "officialName": "Hawaiian Airlines World Elite Mastercard\u00ae"
+    },
+    "barclays-jetblue-business-card": {
+      "basis": "co-brand: jetblue",
+      "currency": "JetBlue TrueBlue",
+      "issuer": "Barclays",
+      "officialName": "JetBlue Business Card"
+    },
+    "barclays-jetblue-card": {
+      "basis": "co-brand: jetblue",
+      "currency": "JetBlue TrueBlue",
+      "issuer": "Barclays",
+      "officialName": "JetBlue Card"
+    },
+    "barclays-jetblue-plus-card": {
+      "basis": "co-brand: jetblue",
+      "currency": "JetBlue TrueBlue",
+      "issuer": "Barclays",
+      "officialName": "JetBlue Plus Card"
+    },
+    "barclays-jetblue-premier-card": {
+      "basis": "co-brand: jetblue",
+      "currency": "JetBlue TrueBlue",
+      "issuer": "Barclays",
+      "officialName": "JetBlue Premier Card"
+    },
+    "barclays-royal-caribbean-visa-signature-card": {
+      "basis": "co-brand: carnival|celebrity|princess|royal caribbean",
+      "currency": "Cruise-line loyalty",
+      "issuer": "Barclays",
+      "officialName": "Royal Caribbean Visa Signature\u00ae Card"
+    },
+    "barclays-wyndham-earner-business": {
+      "basis": "co-brand: wyndham",
+      "currency": "Wyndham Rewards",
+      "issuer": "Barclays",
+      "officialName": "Wyndham Earner Business"
+    },
+    "barclays-wyndham-rewards-earner-premier-card": {
+      "basis": "co-brand: wyndham",
+      "currency": "Wyndham Rewards",
+      "issuer": "Barclays",
+      "officialName": "Wyndham Rewards Earner Premier Card"
+    },
+    "capital-one-bj-s-one-mastercard": {
+      "basis": "co-brand: kohl|sam's club|sears|walgreens|\\bgap\\b|athleta|banana republic|nordstrom|target|bj's",
+      "currency": "Store-specific rewards",
+      "issuer": "Capital One",
+      "officialName": "BJ's One Mastercard"
+    },
+    "capital-one-kohl-s-charge-card": {
+      "basis": "co-brand: kohl|sam's club|sears|walgreens|\\bgap\\b|athleta|banana republic|nordstrom|target|bj's",
+      "currency": "Store-specific rewards",
+      "issuer": "Capital One",
+      "officialName": "Kohl's Charge Card"
+    },
+    "chase-aer-lingus-visa-signature-card": {
+      "basis": "co-brand: aer lingus|british airways|iberia|avios",
+      "currency": "Avios",
+      "issuer": "Chase",
+      "officialName": "Aer Lingus Visa Signature\u00ae Card"
+    },
+    "chase-amazon-visa": {
+      "basis": "co-brand: amazon",
+      "currency": "Amazon Rewards (US) \u2014 distinct from the CA amazonRewards entry",
+      "issuer": "Chase",
+      "officialName": "Amazon Visa"
+    },
+    "chase-british-airways-visa-signature-card": {
+      "basis": "co-brand: aer lingus|british airways|iberia|avios",
+      "currency": "Avios",
+      "issuer": "Chase",
+      "officialName": "British Airways Visa Signature\u00ae Card"
+    },
+    "chase-disney-inspire-visa-card": {
+      "basis": "co-brand: disney",
+      "currency": "Disney Rewards",
+      "issuer": "Chase",
+      "officialName": "Disney Inspire Visa Card"
+    },
+    "chase-disney-premier-visa": {
+      "basis": "co-brand: disney",
+      "currency": "Disney Rewards",
+      "issuer": "Chase",
+      "officialName": "Disney Premier Visa"
+    },
+    "chase-disney-visa-card": {
+      "basis": "co-brand: disney",
+      "currency": "Disney Rewards",
+      "issuer": "Chase",
+      "officialName": "Chase Disney Visa Card"
+    },
+    "chase-hyatt": {
+      "basis": "co-brand: \\bhyatt\\b",
+      "currency": "World of Hyatt",
+      "issuer": "Chase",
+      "officialName": "Chase Hyatt"
+    },
+    "chase-iberia-visa-signature-card": {
+      "basis": "co-brand: aer lingus|british airways|iberia|avios",
+      "currency": "Avios",
+      "issuer": "Chase",
+      "officialName": "Iberia Visa Signature\u00ae Card"
+    },
+    "chase-ihg-one-rewards-premier-business-credit-card": {
+      "basis": "co-brand: \\bihg\\b",
+      "currency": "IHG One Rewards",
+      "issuer": "Chase",
+      "officialName": "IHG One Rewards Premier Business Credit Card"
+    },
+    "chase-ihg-premier": {
+      "basis": "co-brand: \\bihg\\b",
+      "currency": "IHG One Rewards",
+      "issuer": "Chase",
+      "officialName": "Chase IHG Premier"
+    },
+    "chase-southwest-performance-business": {
+      "basis": "co-brand: southwest|rapid rewards",
+      "currency": "Southwest Rapid Rewards",
+      "issuer": "Chase",
+      "officialName": "Southwest Performance Business"
+    },
+    "chase-southwest-priority": {
+      "basis": "co-brand: southwest|rapid rewards",
+      "currency": "Southwest Rapid Rewards",
+      "issuer": "Chase",
+      "officialName": "Chase Southwest Priority"
+    },
+    "chase-southwest-rapid-rewards-plus-credit-card": {
+      "basis": "co-brand: southwest|rapid rewards",
+      "currency": "Southwest Rapid Rewards",
+      "issuer": "Chase",
+      "officialName": "Southwest Rapid Rewards\u00ae Plus Credit Card"
+    },
+    "chase-united-club-business-card": {
+      "basis": "co-brand: united|mileageplus",
+      "currency": "United MileagePlus",
+      "issuer": "Chase",
+      "officialName": "United Club\u2120 Business Card"
+    },
+    "chase-united-explorer-card": {
+      "basis": "co-brand: united|mileageplus",
+      "currency": "United MileagePlus",
+      "issuer": "Chase",
+      "officialName": "United\u2120 Explorer Card"
+    },
+    "chase-united-gateway-card": {
+      "basis": "co-brand: united|mileageplus",
+      "currency": "United MileagePlus",
+      "issuer": "Chase",
+      "officialName": "United\u2120 Gateway Card"
+    },
+    "chase-united-quest-card": {
+      "basis": "co-brand: united|mileageplus",
+      "currency": "United MileagePlus",
+      "issuer": "Chase",
+      "officialName": "United Quest Card"
+    },
+    "chase-world-of-hyatt-business-credit-card": {
+      "basis": "co-brand: \\bhyatt\\b",
+      "currency": "World of Hyatt",
+      "issuer": "Chase",
+      "officialName": "World of Hyatt Business Credit Card"
+    },
+    "citi-aadvantage-business-world-elite-mastercard": {
+      "basis": "co-brand: aadvantage|american airlines",
+      "currency": "AAdvantage",
+      "issuer": "Citi",
+      "officialName": "Citi / AAdvantage Business World Elite Mastercard"
+    },
+    "citi-aadvantage-executive-world-elite-mastercard": {
+      "basis": "co-brand: aadvantage|american airlines",
+      "currency": "AAdvantage",
+      "issuer": "Citi",
+      "officialName": "Citi\u00ae / AAdvantage\u00ae Executive World Elite Mastercard\u00ae"
+    },
+    "citi-aadvantage-globe-mastercard": {
+      "basis": "co-brand: aadvantage|american airlines",
+      "currency": "AAdvantage",
+      "issuer": "Citi",
+      "officialName": "Citi\u00ae / AAdvantage\u00ae Globe\u2122 Mastercard\u00ae"
+    },
+    "citi-aadvantage-platinum-select": {
+      "basis": "co-brand: aadvantage|american airlines",
+      "currency": "AAdvantage",
+      "issuer": "Citi",
+      "officialName": "AAdvantage Platinum Select"
+    },
+    "citi-american-airlines-aadvantage-mileup-card": {
+      "basis": "co-brand: aadvantage|american airlines",
+      "currency": "AAdvantage",
+      "issuer": "Citi",
+      "officialName": "American Airlines AAdvantage\u00ae MileUp\u00ae Card"
+    },
+    "citi-costco-anywhere-business": {
+      "basis": "co-brand: costco",
+      "currency": "Costco Cash Rewards",
+      "issuer": "Citi",
+      "officialName": "Costco Anywhere Business"
+    },
+    "discover-bank-nhl-discover-it-credit-card": {
+      "basis": "co-brand: harley|verizon|carecredit|aarp|\\bnhl\\b|morgan stanley|robinhood|\\bsofi\\b",
+      "currency": "Brand-specific rewards",
+      "issuer": "Discover",
+      "officialName": "NHL Discover it Credit Card"
+    },
+    "jpmorgan-chase-aer-lingus-visa-signature-credit-card": {
+      "basis": "co-brand: aer lingus|british airways|iberia|avios",
+      "currency": "Avios",
+      "issuer": "Chase",
+      "officialName": "Aer Lingus Visa Signature\u00ae Credit Card"
+    },
+    "jpmorgan-chase-ihg-one-rewards-premier-credit-card": {
+      "basis": "co-brand: \\bihg\\b",
+      "currency": "IHG One Rewards",
+      "issuer": "Chase",
+      "officialName": "IHG One Rewards Premier Credit Card"
+    },
+    "jpmorgan-chase-prime-visa-and-amazon-visa": {
+      "basis": "co-brand: amazon",
+      "currency": "Amazon Rewards (US) \u2014 distinct from the CA amazonRewards entry",
+      "issuer": "Chase",
+      "officialName": "Prime Visa and Amazon Visa"
+    },
+    "jpmorgan-chase-southwest-rapid-rewards-plus-credit-card": {
+      "basis": "co-brand: southwest|rapid rewards",
+      "currency": "Southwest Rapid Rewards",
+      "issuer": "Chase",
+      "officialName": "Southwest Rapid Rewards Plus Credit Card"
+    },
+    "jpmorgan-chase-united-business-card": {
+      "basis": "co-brand: united|mileageplus",
+      "currency": "United MileagePlus",
+      "issuer": "Chase",
+      "officialName": "United Business Card"
+    },
+    "jpmorgan-chase-united-club-card": {
+      "basis": "co-brand: united|mileageplus",
+      "currency": "United MileagePlus",
+      "issuer": "Chase",
+      "officialName": "United Club Card"
+    },
+    "jpmorgan-chase-united-explorer-card": {
+      "basis": "co-brand: united|mileageplus",
+      "currency": "United MileagePlus",
+      "issuer": "Chase",
+      "officialName": "United Explorer Card"
+    },
+    "jpmorgan-chase-united-gateway-card": {
+      "basis": "co-brand: united|mileageplus",
+      "currency": "United MileagePlus",
+      "issuer": "Chase",
+      "officialName": "United Gateway Card"
+    },
+    "jpmorgan-chase-united-quest-card": {
+      "basis": "co-brand: united|mileageplus",
+      "currency": "United MileagePlus",
+      "issuer": "Chase",
+      "officialName": "United Quest Card"
+    },
+    "jpmorgan-chase-world-of-hyatt-credit-card": {
+      "basis": "co-brand: \\bhyatt\\b",
+      "currency": "World of Hyatt",
+      "issuer": "Chase",
+      "officialName": "World of Hyatt Credit Card"
+    },
+    "robinhood-credit-robinhood-gold-card": {
+      "basis": "co-brand: harley|verizon|carecredit|aarp|\\bnhl\\b|morgan stanley|robinhood|\\bsofi\\b",
+      "currency": "Brand-specific rewards",
+      "issuer": "Robinhood",
+      "officialName": "Robinhood Gold Card"
+    },
+    "robinhood-credit-robinhood-platinum-card": {
+      "basis": "co-brand: harley|verizon|carecredit|aarp|\\bnhl\\b|morgan stanley|robinhood|\\bsofi\\b",
+      "currency": "Brand-specific rewards",
+      "issuer": "Robinhood",
+      "officialName": "Robinhood Platinum Card"
+    },
+    "sofi-first-bank-sofi-credit-card-unlimited-2": {
+      "basis": "co-brand: harley|verizon|carecredit|aarp|\\bnhl\\b|morgan stanley|robinhood|\\bsofi\\b",
+      "currency": "Brand-specific rewards",
+      "issuer": "SoFi",
+      "officialName": "SoFi Credit Card (Unlimited 2%)"
+    },
+    "synchrony-amazon-prime-store-card": {
+      "basis": "co-brand: amazon",
+      "currency": "Amazon Rewards (US) \u2014 distinct from the CA amazonRewards entry",
+      "issuer": "Synchrony",
+      "officialName": "Amazon Prime Store Card"
+    },
+    "synchrony-amazon-secured-card-and-prime-secured-card": {
+      "basis": "co-brand: amazon",
+      "currency": "Amazon Rewards (US) \u2014 distinct from the CA amazonRewards entry",
+      "issuer": "Synchrony",
+      "officialName": "Amazon Secured Card and Prime Secured Card"
+    },
+    "synchrony-bank-carecredit-credit-card": {
+      "basis": "co-brand: harley|verizon|carecredit|aarp|\\bnhl\\b|morgan stanley|robinhood|\\bsofi\\b",
+      "currency": "Brand-specific rewards",
+      "issuer": "Synchrony",
+      "officialName": "CareCredit Credit Card"
+    },
+    "synchrony-carecredit-rewards-mastercard": {
+      "basis": "co-brand: harley|verizon|carecredit|aarp|\\bnhl\\b|morgan stanley|robinhood|\\bsofi\\b",
+      "currency": "Brand-specific rewards",
+      "issuer": "Synchrony",
+      "officialName": "CareCredit Rewards Mastercard\u00ae"
+    },
+    "synchrony-cathay-world-elite-mastercard": {
+      "basis": "co-brand: cathay",
+      "currency": "Cathay Asia Miles",
+      "issuer": "Synchrony",
+      "officialName": "Cathay World Elite Mastercard"
+    },
+    "synchrony-mywalgreens-mastercard": {
+      "basis": "co-brand: kohl|sam's club|sears|walgreens|\\bgap\\b|athleta|banana republic|nordstrom|target|bj's",
+      "currency": "Store-specific rewards",
+      "issuer": "Synchrony",
+      "officialName": "myWalgreens Mastercard"
+    },
+    "synchrony-paypal-cashback-mastercard": {
+      "basis": "co-brand: paypal|venmo",
+      "currency": "PayPal / Venmo cashback",
+      "issuer": "Synchrony",
+      "officialName": "PayPal Cashback Mastercard\u00ae"
+    },
+    "synchrony-paypal-credit": {
+      "basis": "co-brand: paypal|venmo",
+      "currency": "PayPal / Venmo cashback",
+      "issuer": "Synchrony",
+      "officialName": "PayPal Credit"
+    },
+    "synchrony-sam-s-club-mastercard": {
+      "basis": "co-brand: kohl|sam's club|sears|walgreens|\\bgap\\b|athleta|banana republic|nordstrom|target|bj's",
+      "currency": "Store-specific rewards",
+      "issuer": "Synchrony",
+      "officialName": "Sam's Club\u00ae Mastercard\u00ae"
+    },
+    "synchrony-sears-mastercard": {
+      "basis": "co-brand: kohl|sam's club|sears|walgreens|\\bgap\\b|athleta|banana republic|nordstrom|target|bj's",
+      "currency": "Store-specific rewards",
+      "issuer": "Synchrony",
+      "officialName": "Sears Mastercard\u00ae"
+    },
+    "synchrony-venmo-credit-card": {
+      "basis": "co-brand: paypal|venmo",
+      "currency": "PayPal / Venmo cashback",
+      "issuer": "Synchrony",
+      "officialName": "Venmo Credit Card"
+    },
+    "synchrony-venmo-visa-signature-credit-card": {
+      "basis": "co-brand: paypal|venmo",
+      "currency": "PayPal / Venmo cashback",
+      "issuer": "Synchrony",
+      "officialName": "Venmo Visa Signature Credit Card"
+    },
+    "synchrony-verizon-visa-card": {
+      "basis": "co-brand: harley|verizon|carecredit|aarp|\\bnhl\\b|morgan stanley|robinhood|\\bsofi\\b",
+      "currency": "Brand-specific rewards",
+      "issuer": "Synchrony",
+      "officialName": "Verizon Visa\u00ae Card"
+    },
+    "td-bank-usa-n-a-nordstrom-credit-card": {
+      "basis": "co-brand: kohl|sam's club|sears|walgreens|\\bgap\\b|athleta|banana republic|nordstrom|target|bj's",
+      "currency": "Store-specific rewards",
+      "issuer": "TD Bank USA",
+      "officialName": "Nordstrom Credit Card"
+    },
+    "td-bank-usa-n-a-target-circle-credit-card-target-mastercard": {
+      "basis": "co-brand: kohl|sam's club|sears|walgreens|\\bgap\\b|athleta|banana republic|nordstrom|target|bj's",
+      "currency": "Store-specific rewards",
+      "issuer": "TD Bank USA",
+      "officialName": "Target Circle Credit Card / Target Mastercard"
+    },
+    "wells-fargo-bank-n-a-choice-privileges-mastercard": {
+      "basis": "co-brand: choice privileges",
+      "currency": "Choice Privileges",
+      "issuer": "Wells Fargo",
+      "officialName": "Choice Privileges Mastercard"
+    },
+    "wells-fargo-choice-privileges-mastercard": {
+      "basis": "co-brand: choice privileges",
+      "currency": "Choice Privileges",
+      "issuer": "Wells Fargo",
+      "officialName": "Choice Privileges Mastercard\u00ae"
+    }
+  },
+  "proposed": {
+    "alliant-credit-union-alliant-cashback-visa-signature-credit-": {
+      "basis": "name says cash back",
+      "issuer": "Alliant Credit Union",
+      "officialName": "Alliant Cashback Visa\u00ae Signature Credit Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "american-express-amex-blue-business-plus": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "Amex Blue Business Plus",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-amex-cash-magnet": {
+      "basis": "American Express family: blue cash|cash magnet|business cash|simplycash|graphite",
+      "issuer": "American Express",
+      "officialName": "Amex Cash Magnet",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "american-express-amex-everyday-preferred-credit-card": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "Amex EveryDay Preferred Credit Card",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-amex-graphite-business-cash": {
+      "basis": "American Express family: blue cash|cash magnet|business cash|simplycash|graphite",
+      "issuer": "American Express",
+      "officialName": "Amex Graphite Business Cash",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "american-express-blue-from-american-express": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "Blue from American Express\u00ae",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-business-gold-card": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "American Express Business Gold Card",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-everyday-card": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "American Express EveryDay\u00ae Card",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-gold-card": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "American Express\u00ae Gold Card",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-green-card": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "American Express\u00ae Green Card",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-marriott-bonvoy-bevy-american-express-card": {
+      "basis": "co-brand: marriott|ritz-?carlton|bonvoy",
+      "issuer": "American Express",
+      "officialName": "Marriott Bonvoy Bevy\u00ae American Express\u00ae Card",
+      "programId": "marriottBonvoy",
+      "unit": "point"
+    },
+    "american-express-national-bank-american-express-business-gol": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "American Express\u00ae Business Gold Card",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-national-bank-american-express-gold-card": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "American Express\u00ae Gold Card",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-national-bank-american-express-green-card": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "American Express\u00ae Green Card",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-national-bank-blue-business-plus-credit-car": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "Blue Business\u00ae Plus Credit Card from American Express",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-national-bank-blue-cash-preferred-card-from": {
+      "basis": "American Express family: blue cash|cash magnet|business cash|simplycash|graphite",
+      "issuer": "American Express",
+      "officialName": "Blue Cash Preferred\u00ae Card from American Express",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "american-express-national-bank-business-green-rewards-card-f": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "Business Green Rewards Card from American Express",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-national-bank-graphite-business-cash-unlimi": {
+      "basis": "American Express family: blue cash|cash magnet|business cash|simplycash|graphite",
+      "issuer": "American Express",
+      "officialName": "Graphite\u00ae Business Cash Unlimited Card from American Express",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "american-express-national-bank-the-business-platinum-card-fr": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "The Business Platinum Card\u00ae from American Express",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-national-bank-the-platinum-card-from-americ": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "The Platinum Card\u00ae from American Express",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-old-blue-cash-card": {
+      "basis": "American Express family: blue cash|cash magnet|business cash|simplycash|graphite",
+      "issuer": "American Express",
+      "officialName": "American Express Old Blue Cash Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "american-express-the-business-platinum-card-from-american-ex": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "The Business Platinum Card\u00ae from American Express",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "american-express-the-platinum-card-from-american-express": {
+      "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
+      "issuer": "American Express",
+      "officialName": "The Platinum Card\u00ae from American Express",
+      "programId": "amexMembershipRewardsUs",
+      "unit": "point"
+    },
+    "bank-of-america-business-advantage-customized-cash-rewards-m": {
+      "basis": "Bank of America family: customized cash|unlimited cash|cash rewards",
+      "issuer": "Bank of America",
+      "officialName": "Bank of America\u00ae Business Advantage Customized Cash Rewards Mastercard\u00ae",
+      "programId": "bofaPreferredRewards",
+      "unit": "usd"
+    },
+    "bank-of-america-n-a-bank-of-america-customized-cash-rewards-": {
+      "basis": "Bank of America family: customized cash|unlimited cash|cash rewards",
+      "issuer": "Bank of America",
+      "officialName": "Bank of America\u00ae Customized Cash Rewards Credit Card",
+      "programId": "bofaPreferredRewards",
+      "unit": "usd"
+    },
+    "bank-of-america-n-a-bank-of-america-premium-rewards-credit-c": {
+      "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
+      "issuer": "Bank of America",
+      "officialName": "Bank of America\u00ae Premium Rewards\u00ae Credit Card",
+      "programId": "bofaPreferredRewards",
+      "unit": "point"
+    },
+    "bank-of-america-n-a-bank-of-america-travel-rewards-credit-ca": {
+      "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
+      "issuer": "Bank of America",
+      "officialName": "Bank of America\u00ae Travel Rewards Credit Card",
+      "programId": "bofaPreferredRewards",
+      "unit": "point"
+    },
+    "bank-of-america-n-a-bank-of-america-unlimited-cash-rewards-c": {
+      "basis": "Bank of America family: customized cash|unlimited cash|cash rewards",
+      "issuer": "Bank of America",
+      "officialName": "Bank of America\u00ae Unlimited Cash Rewards Credit Card for Students",
+      "programId": "bofaPreferredRewards",
+      "unit": "usd"
+    },
+    "bank-of-america-n-a-bankamericard-credit-card": {
+      "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
+      "issuer": "Bank of America",
+      "officialName": "BankAmericard\u00ae Credit Card",
+      "programId": "bofaPreferredRewards",
+      "unit": "point"
+    },
+    "bank-of-america-n-a-bankamericard-credit-card-for-students": {
+      "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
+      "issuer": "Bank of America",
+      "officialName": "BankAmericard\u00ae Credit Card for Students",
+      "programId": "bofaPreferredRewards",
+      "unit": "point"
+    },
+    "bank-of-america-n-a-bankamericard-secured-credit-card": {
+      "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
+      "issuer": "Bank of America",
+      "officialName": "BankAmericard\u00ae Secured Credit Card",
+      "programId": "bofaPreferredRewards",
+      "unit": "point"
+    },
+    "bank-of-america-premium-rewards-credit-card": {
+      "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
+      "issuer": "Bank of America",
+      "officialName": "Bank of America\u00ae Premium Rewards\u00ae Credit Card",
+      "programId": "bofaPreferredRewards",
+      "unit": "point"
+    },
+    "bank-of-america-susan-g-komen-customized-cash-rewards-credit": {
+      "basis": "Bank of America family: customized cash|unlimited cash|cash rewards",
+      "issuer": "Bank of America",
+      "officialName": "Susan G. Komen\u00ae Customized Cash Rewards Credit Card",
+      "programId": "bofaPreferredRewards",
+      "unit": "usd"
+    },
+    "bank-of-america-travel-rewards-credit-card": {
+      "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
+      "issuer": "Bank of America",
+      "officialName": "Bank of America\u00ae Travel Rewards Credit Card",
+      "programId": "bofaPreferredRewards",
+      "unit": "point"
+    },
+    "bank-of-america-travel-rewards-credit-card-for-students": {
+      "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
+      "issuer": "Bank of America",
+      "officialName": "Bank of America\u00ae Travel Rewards Credit Card for Students",
+      "programId": "bofaPreferredRewards",
+      "unit": "point"
+    },
+    "bank-of-america-unlimited-cash-rewards-credit-card": {
+      "basis": "Bank of America family: customized cash|unlimited cash|cash rewards",
+      "issuer": "Bank of America",
+      "officialName": "Bank of America\u00ae Unlimited Cash Rewards Credit Card",
+      "programId": "bofaPreferredRewards",
+      "unit": "usd"
+    },
+    "bmo-bank-n-a-bmo-cash-back-credit-card": {
+      "basis": "name says cash back",
+      "issuer": "BMO Bank N.A.",
+      "officialName": "BMO Cash Back Credit Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "capital-one-journey-student-credit-card": {
+      "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
+      "issuer": "Capital One",
+      "officialName": "Capital One Journey Student Credit Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "capital-one-n-a-platinum-from-capital-one": {
+      "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
+      "issuer": "Capital One",
+      "officialName": "Platinum from Capital One",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "capital-one-n-a-platinum-secured-credit-card-from-capital-on": {
+      "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
+      "issuer": "Capital One",
+      "officialName": "Platinum Secured Credit Card from Capital One",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "capital-one-n-a-quicksilver-cash-rewards-credit-card": {
+      "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
+      "issuer": "Capital One",
+      "officialName": "Quicksilver Cash Rewards Credit Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "capital-one-n-a-savor-rewards-for-students": {
+      "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
+      "issuer": "Capital One",
+      "officialName": "Savor Rewards for Students",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "capital-one-n-a-savorone-rewards-from-capital-one": {
+      "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
+      "issuer": "Capital One",
+      "officialName": "SavorOne Rewards from Capital One",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "capital-one-n-a-venture-business-credit-card": {
+      "basis": "Capital One family: venture|spark miles",
+      "issuer": "Capital One",
+      "officialName": "Venture Business Credit Card",
+      "programId": "capitalOneMiles",
+      "unit": "point"
+    },
+    "capital-one-n-a-venture-x-rewards-credit-card": {
+      "basis": "Capital One family: venture|spark miles",
+      "issuer": "Capital One",
+      "officialName": "Venture X Rewards Credit Card",
+      "programId": "capitalOneMiles",
+      "unit": "point"
+    },
+    "capital-one-n-a-ventureone-business-credit-card": {
+      "basis": "Capital One family: venture|spark miles",
+      "issuer": "Capital One",
+      "officialName": "VentureOne Business Credit Card",
+      "programId": "capitalOneMiles",
+      "unit": "point"
+    },
+    "capital-one-n-a-ventureone-rewards-credit-card": {
+      "basis": "Capital One family: venture|spark miles",
+      "issuer": "Capital One",
+      "officialName": "VentureOne Rewards Credit Card",
+      "programId": "capitalOneMiles",
+      "unit": "point"
+    },
+    "capital-one-n-a-ventureone-rewards-for-good-credit": {
+      "basis": "Capital One family: venture|spark miles",
+      "issuer": "Capital One",
+      "officialName": "VentureOne Rewards for Good Credit",
+      "programId": "capitalOneMiles",
+      "unit": "point"
+    },
+    "capital-one-quicksilver-cash-rewards-credit-card": {
+      "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
+      "issuer": "Capital One",
+      "officialName": "Capital One Quicksilver Cash Rewards Credit Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "capital-one-spark-cash-plus": {
+      "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
+      "issuer": "Capital One",
+      "officialName": "Capital One Spark Cash Plus",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "capital-one-spark-cash-select-for-excellent-credit": {
+      "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
+      "issuer": "Capital One",
+      "officialName": "Capital One Spark Cash Select for Excellent Credit",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "capital-one-venture-business": {
+      "basis": "Capital One family: venture|spark miles",
+      "issuer": "Capital One",
+      "officialName": "Capital One Venture Business",
+      "programId": "capitalOneMiles",
+      "unit": "point"
+    },
+    "capital-one-venture-rewards-credit-card": {
+      "basis": "Capital One family: venture|spark miles",
+      "issuer": "Capital One",
+      "officialName": "Capital One Venture Rewards Credit Card",
+      "programId": "capitalOneMiles",
+      "unit": "point"
+    },
+    "capital-one-ventureone-business": {
+      "basis": "Capital One family: venture|spark miles",
+      "issuer": "Capital One",
+      "officialName": "Capital One VentureOne Business",
+      "programId": "capitalOneMiles",
+      "unit": "point"
+    },
+    "capital-one-ventureone-rewards-credit-card": {
+      "basis": "Capital One family: venture|spark miles",
+      "issuer": "Capital One",
+      "officialName": "Capital One VentureOne Rewards Credit Card",
+      "programId": "capitalOneMiles",
+      "unit": "point"
+    },
+    "chase-aeroplan-card": {
+      "basis": "co-brand: \\baeroplan\\b",
+      "issuer": "Chase",
+      "officialName": "Chase Aeroplan Card",
+      "programId": "aeroplan",
+      "unit": "point"
+    },
+    "chase-freedom-flex": {
+      "basis": "Chase family: freedom|ink business cash",
+      "issuer": "Chase",
+      "officialName": "Chase Freedom Flex\u00ae",
+      "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "chase-freedom-rise-credit-card": {
+      "basis": "Chase family: freedom|ink business cash",
+      "issuer": "Chase",
+      "officialName": "Chase Freedom Rise Credit Card",
+      "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "chase-freedom-unlimited": {
+      "basis": "Chase family: freedom|ink business cash",
+      "issuer": "Chase",
+      "officialName": "Chase Freedom Unlimited\u00ae",
+      "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "chase-ink-business-cash-credit-card": {
+      "basis": "Chase family: freedom|ink business cash",
+      "issuer": "Chase",
+      "officialName": "Chase Ink Business Cash\u00ae Credit Card",
+      "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "chase-marriott-bonvoy-bold-credit-card": {
+      "basis": "co-brand: marriott|ritz-?carlton|bonvoy",
+      "issuer": "Chase",
+      "officialName": "Marriott Bonvoy Bold\u00ae Credit Card",
+      "programId": "marriottBonvoy",
+      "unit": "point"
+    },
+    "chase-ritz-carlton-credit-card": {
+      "basis": "co-brand: marriott|ritz-?carlton|bonvoy",
+      "issuer": "Chase",
+      "officialName": "Chase Ritz-Carlton Credit Card",
+      "programId": "marriottBonvoy",
+      "unit": "point"
+    },
+    "chase-sapphire-preferred-card": {
+      "basis": "Chase family: sapphire|\\bink\\b",
+      "issuer": "Chase",
+      "officialName": "Chase Sapphire Preferred\u00ae Card",
+      "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "chase-sapphire-reserve": {
+      "basis": "Chase family: sapphire|\\bink\\b",
+      "issuer": "Chase",
+      "officialName": "Chase Sapphire Reserve\u00ae",
+      "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "chase-sapphire-reserve-for-business": {
+      "basis": "Chase family: sapphire|\\bink\\b",
+      "issuer": "Chase",
+      "officialName": "Chase Sapphire Reserve\u00ae for Business",
+      "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "citi-custom-cash-card": {
+      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
+      "issuer": "Citi",
+      "officialName": "Citi Custom Cash\u00ae Card",
+      "programId": "citiThankYou",
+      "unit": "point"
+    },
+    "citi-dividend": {
+      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
+      "issuer": "Citi",
+      "officialName": "Citi Dividend",
+      "programId": "citiThankYou",
+      "unit": "point"
+    },
+    "citi-double-cash-card": {
+      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
+      "issuer": "Citi",
+      "officialName": "Citi Double Cash\u00ae Card",
+      "programId": "citiThankYou",
+      "unit": "point"
+    },
+    "citi-prestige": {
+      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
+      "issuer": "Citi",
+      "officialName": "Citi Prestige",
+      "programId": "citiThankYou",
+      "unit": "point"
+    },
+    "citi-rewards-card": {
+      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
+      "issuer": "Citi",
+      "officialName": "Citi Rewards+\u00ae Card",
+      "programId": "citiThankYou",
+      "unit": "point"
+    },
+    "citi-secured-mastercard": {
+      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
+      "issuer": "Citi",
+      "officialName": "Citi\u00ae Secured Mastercard\u00ae",
+      "programId": "citiThankYou",
+      "unit": "point"
+    },
+    "citi-strata-elite-card": {
+      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
+      "issuer": "Citi",
+      "officialName": "Citi Strata Elite\u2120 Card",
+      "programId": "citiThankYou",
+      "unit": "point"
+    },
+    "citi-strata-premier-card": {
+      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
+      "issuer": "Citi",
+      "officialName": "Citi Strata Premier\u2120 Card",
+      "programId": "citiThankYou",
+      "unit": "point"
+    },
+    "citibank-n-a-citi-double-cash-card": {
+      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
+      "issuer": "Citi",
+      "officialName": "Citi Double Cash\u00ae Card",
+      "programId": "citiThankYou",
+      "unit": "point"
+    },
+    "citibank-n-a-citi-secured-mastercard": {
+      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
+      "issuer": "Citi",
+      "officialName": "Citi\u00ae Secured Mastercard\u00ae",
+      "programId": "citiThankYou",
+      "unit": "point"
+    },
+    "citibank-n-a-citi-strata-elite-card": {
+      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
+      "issuer": "Citi",
+      "officialName": "Citi Strata Elite\u2120 Card",
+      "programId": "citiThankYou",
+      "unit": "point"
+    },
+    "comenity-capital-bank-bread-cashback-american-express-credit": {
+      "basis": "name says cash back",
+      "issuer": "Comenity",
+      "officialName": "Bread Cashback\u00ae American Express\u00ae Credit Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "discover-bank-discover-it-chrome-gas-restaurant-credit-card": {
+      "basis": "Discover family: .",
+      "issuer": "Discover",
+      "officialName": "Discover it Chrome Gas & Restaurant Credit Card",
+      "programId": "discoverCashback",
+      "unit": "usd"
+    },
+    "discover-it-cash-back": {
+      "basis": "Discover family: .",
+      "issuer": "Discover",
+      "officialName": "Discover it\u00ae Cash Back",
+      "programId": "discoverCashback",
+      "unit": "usd"
+    },
+    "discover-it-chrome": {
+      "basis": "Discover family: .",
+      "issuer": "Discover",
+      "officialName": "Discover it\u00ae Chrome",
+      "programId": "discoverCashback",
+      "unit": "usd"
+    },
+    "discover-it-miles": {
+      "basis": "Discover family: .",
+      "issuer": "Discover",
+      "officialName": "Discover it\u00ae Miles",
+      "programId": "discoverCashback",
+      "unit": "usd"
+    },
+    "discover-it-secured-credit-card": {
+      "basis": "Discover family: .",
+      "issuer": "Discover",
+      "officialName": "Discover it\u00ae Secured Credit Card",
+      "programId": "discoverCashback",
+      "unit": "usd"
+    },
+    "jpmorgan-chase-aeroplan-card": {
+      "basis": "co-brand: \\baeroplan\\b",
+      "issuer": "Chase",
+      "officialName": "Aeroplan Card",
+      "programId": "aeroplan",
+      "unit": "point"
+    },
+    "jpmorgan-chase-bank-n-a-chase-freedom-flex-credit-card": {
+      "basis": "Chase family: freedom|ink business cash",
+      "issuer": "Chase",
+      "officialName": "Chase Freedom Flex\u00ae Credit Card",
+      "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "jpmorgan-chase-bank-n-a-chase-freedom-rise-credit-card": {
+      "basis": "Chase family: freedom|ink business cash",
+      "issuer": "Chase",
+      "officialName": "Chase Freedom Rise\u00ae Credit Card",
+      "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "jpmorgan-chase-bank-n-a-chase-freedom-unlimited-credit-card": {
+      "basis": "Chase family: freedom|ink business cash",
+      "issuer": "Chase",
+      "officialName": "Chase Freedom Unlimited\u00ae Credit Card",
+      "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "jpmorgan-chase-bank-n-a-chase-sapphire-preferred-credit-card": {
+      "basis": "Chase family: sapphire|\\bink\\b",
+      "issuer": "Chase",
+      "officialName": "Chase Sapphire Preferred\u00ae Credit Card",
+      "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "jpmorgan-chase-bank-n-a-chase-sapphire-reserve-credit-card": {
+      "basis": "Chase family: sapphire|\\bink\\b",
+      "issuer": "Chase",
+      "officialName": "Chase Sapphire Reserve\u00ae Credit Card",
+      "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "jpmorgan-chase-bank-n-a-ink-business-unlimited-credit-card": {
+      "basis": "Chase family: sapphire|\\bink\\b",
+      "issuer": "Chase",
+      "officialName": "Ink Business Unlimited\u00ae Credit Card",
+      "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "jpmorgan-chase-bank-n-a-sapphire-reserve-for-business-credit": {
+      "basis": "Chase family: sapphire|\\bink\\b",
+      "issuer": "Chase",
+      "officialName": "Sapphire Reserve for Business\u2120 Credit Card",
+      "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "jpmorgan-chase-marriott-bonvoy-boundless-credit-card": {
+      "basis": "co-brand: marriott|ritz-?carlton|bonvoy",
+      "issuer": "Chase",
+      "officialName": "Marriott Bonvoy Boundless Credit Card",
+      "programId": "marriottBonvoy",
+      "unit": "point"
+    },
+    "penfed-credit-union-penfed-power-cash-rewards-visa-signature": {
+      "basis": "name says cash back",
+      "issuer": "PenFed Credit Union",
+      "officialName": "PenFed Power Cash Rewards\u00ae Visa Signature\u00ae Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "pnc-bank-pnc-cash-rewards-visa-credit-card": {
+      "basis": "name says cash back",
+      "issuer": "PNC Bank",
+      "officialName": "PNC Cash Rewards\u00ae Visa\u00ae Credit Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "u-s-bank-national-association-u-s-bank-shopper-cash-rewards-": {
+      "basis": "name says cash back",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Shopper Cash Rewards\u00ae Visa Signature\u00ae Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "u-s-bank-national-association-u-s-bank-triple-cash-rewards-v": {
+      "basis": "name says cash back",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Triple Cash Rewards Visa\u00ae Business Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "u-s-bank-shopper-cash-rewards-visa-signature-card": {
+      "basis": "name says cash back",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Shopper Cash Rewards\u00ae Visa Signature\u00ae Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "u-s-bank-triple-cash-rewards-visa-business-card": {
+      "basis": "name says cash back",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Triple Cash Rewards Visa\u00ae Business Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "upgrade-cross-river-bank-upgrade-triple-cash-rewards-visa": {
+      "basis": "name says cash back",
+      "issuer": "Upgrade",
+      "officialName": "Upgrade Triple Cash Rewards Visa",
+      "programId": "cashback",
+      "unit": "usd"
+    }
+  },
+  "unmapped": {
+    "alliant-credit-union-alliant-visa-platinum-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Alliant Credit Union",
+      "officialName": "Alliant Visa\u00ae Platinum Credit Card"
+    },
+    "bank-of-america-air-france-klm-visa-signature-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Bank of America",
+      "officialName": "Air France KLM Visa Signature\u00ae Credit Card"
+    },
+    "bank-of-america-allways-rewards-visa-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Bank of America",
+      "officialName": "Allways Rewards Visa\u00ae Card"
+    },
+    "bank-of-america-norwegian-cruise-line-world-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Bank of America",
+      "officialName": "Norwegian Cruise Line\u00ae World Mastercard\u00ae"
+    },
+    "bank-of-america-royal-one-plus-visa-signature-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Bank of America",
+      "officialName": "Royal ONE Plus\u2122 Visa Signature\u00ae Credit Card"
+    },
+    "barclays-bank-delaware-barnes-noble-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "Barnes & Noble Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-breeze-easy-visa-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "Breeze Easy\u00ae Visa\u00ae Credit Card"
+    },
+    "barclays-bank-delaware-capital-vacations-world-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "Capital Vacations\u00ae World Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-gm-business-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "GM Business\u2122 Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-gm-rewards-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "GM Rewards\u2122 Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-miles-more-world-elite-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "Miles & More\u00ae World Elite Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-old-navy-encore-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "Old Navy Encore Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-rci-elite-rewards-world-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "RCI\u00ae Elite Rewards\u00ae World Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-upromise-world-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "Upromise\u00ae World Mastercard\u00ae"
+    },
+    "barclays-bank-delaware-xbox-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "Xbox Mastercard"
+    },
+    "barclays-luxury-card-mastercard-black-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "Luxury Card Mastercard\u00ae Black Card\u2122"
+    },
+    "barclays-luxury-card-mastercard-gold-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "Luxury Card Mastercard\u00ae Gold Card\u2122"
+    },
+    "barclays-luxury-card-mastercard-titanium-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "Luxury Card Mastercard\u00ae Titanium Card\u2122"
+    },
+    "barclays-old-navy-navyist-rewards-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "Old Navy Navyist Rewards Mastercard\u00ae"
+    },
+    "barclays-uber-visa-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "Uber Visa Card"
+    },
+    "barclays-uber-visa-card-legacy": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Barclays",
+      "officialName": "Uber Visa Card (Legacy)"
+    },
+    "bmo-bank-n-a-bmo-boost-secured-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "BMO Bank N.A.",
+      "officialName": "BMO Boost Secured Credit Card"
+    },
+    "bmo-bank-n-a-bmo-escape-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "BMO Bank N.A.",
+      "officialName": "BMO Escape Credit Card"
+    },
+    "bmo-bank-n-a-bmo-platinum-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "BMO Bank N.A.",
+      "officialName": "BMO Platinum Credit Card"
+    },
+    "bmo-bank-n-a-bmo-platinum-rewards-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "BMO Bank N.A.",
+      "officialName": "BMO Platinum Rewards Credit Card"
+    },
+    "bmo-bank-n-a-bmo-premium-rewards-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "BMO Bank N.A.",
+      "officialName": "BMO Premium Rewards Credit Card"
+    },
+    "bread-financial-bed-bath-beyond-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Bread Financial",
+      "officialName": "Bed Bath & Beyond Mastercard\u00ae"
+    },
+    "bread-financial-bread-rewards-american-express-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Bread Financial",
+      "officialName": "Bread Rewards\u2122 American Express\u00ae Credit Card"
+    },
+    "bread-financial-kayak-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Bread Financial",
+      "officialName": "KAYAK Credit Card"
+    },
+    "bread-financial-ulta-beauty-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Bread Financial",
+      "officialName": "Ulta Beauty Mastercard\u00ae"
+    },
+    "capital-one-n-a-spark-1-5-cash-select-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Capital One",
+      "officialName": "Spark 1.5% Cash Select Credit Card"
+    },
+    "capital-one-n-a-spark-1-classic-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Capital One",
+      "officialName": "Spark 1% Classic Credit Card"
+    },
+    "capital-one-n-a-spark-2-cash-plus-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Capital One",
+      "officialName": "Spark 2% Cash Plus Card"
+    },
+    "capital-one-n-a-t-mobile-visa": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Capital One",
+      "officialName": "T-Mobile Visa\u00ae"
+    },
+    "chase-doordash-rewards-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Chase",
+      "officialName": "DoorDash Rewards Mastercard\u00ae"
+    },
+    "chase-jpmorgan-reserve-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Chase",
+      "officialName": "JPMorgan Reserve Card"
+    },
+    "chase-prime-visa": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Chase",
+      "officialName": "Prime Visa"
+    },
+    "citibank-n-a-at-t-points-plus-card-from-citi": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Citi",
+      "officialName": "AT&T Points Plus\u00ae Card from Citi"
+    },
+    "citibank-n-a-citi-diamond-preferred-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Citi",
+      "officialName": "Citi\u00ae Diamond Preferred\u00ae Credit Card"
+    },
+    "citibank-n-a-citi-simplicity-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Citi",
+      "officialName": "Citi Simplicity\u00ae Credit Card"
+    },
+    "citibank-n-a-my-best-buy-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Citi",
+      "officialName": "My Best Buy\u00ae Credit Card"
+    },
+    "column-n-a-bilt-blue-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Column N.A.",
+      "officialName": "Bilt Blue Card"
+    },
+    "column-n-a-bilt-obsidian-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Column N.A.",
+      "officialName": "Bilt Obsidian Card"
+    },
+    "column-n-a-bilt-palladium-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Column N.A.",
+      "officialName": "Bilt Palladium Card"
+    },
+    "comenity-bank-bread-rewards-american-express-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Comenity",
+      "officialName": "Bread Rewards\u2122 American Express\u00ae Credit Card"
+    },
+    "comenity-capital-bank-aaa-daily-advantage-visa-signature-cre": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Comenity",
+      "officialName": "AAA Daily Advantage Visa Signature\u00ae Credit Card"
+    },
+    "fidelity-investments-elan-financial-services-fidelity-reward": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Elan Financial Services",
+      "officialName": "Fidelity Rewards Visa Signature Card"
+    },
+    "first-electronic-bank-alibaba-com-business-edge-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "First Electronic Bank",
+      "officialName": "Alibaba.com Business Edge Card"
+    },
+    "first-electronic-bank-avianca-lifemiles-american-express-car": {
+      "basis": "no signal in issuer or name",
+      "issuer": "First Electronic Bank",
+      "officialName": "avianca lifemiles American Express Card"
+    },
+    "first-electronic-bank-bilt-blue-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "First Electronic Bank",
+      "officialName": "Bilt Blue Card"
+    },
+    "first-electronic-bank-bilt-obsidian-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "First Electronic Bank",
+      "officialName": "Bilt Obsidian Card"
+    },
+    "first-electronic-bank-bilt-palladium-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "First Electronic Bank",
+      "officialName": "Bilt Palladium Card"
+    },
+    "first-electronic-bank-latam-airlines-world-elite-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "First Electronic Bank",
+      "officialName": "LATAM Airlines World Elite Mastercard"
+    },
+    "first-electronic-bank-qatar-airways-privilege-club-signature": {
+      "basis": "no signal in issuer or name",
+      "issuer": "First Electronic Bank",
+      "officialName": "Qatar Airways Privilege Club Signature Credit Card"
+    },
+    "first-electronic-bank-tap-miles-go-american-express-credit-c": {
+      "basis": "no signal in issuer or name",
+      "issuer": "First Electronic Bank",
+      "officialName": "TAP Miles&Go American Express Credit Card"
+    },
+    "fnbo-amtrak-guest-rewards-preferred-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "FNBO",
+      "officialName": "Amtrak Guest Rewards\u00ae Preferred Mastercard\u00ae"
+    },
+    "fnbo-evergreen-business-edition-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "FNBO",
+      "officialName": "Evergreen\u00ae Business Edition\u00ae Credit Card"
+    },
+    "fnbo-evergreen-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "FNBO",
+      "officialName": "Evergreen\u00ae Credit Card"
+    },
+    "fnbo-getaway-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "FNBO",
+      "officialName": "Getaway\u2120 Credit Card"
+    },
+    "fnbo-greenselect-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "FNBO",
+      "officialName": "GreenSelect\u2120 Credit Card"
+    },
+    "goldman-sachs-apple-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Goldman Sachs",
+      "officialName": "Apple Card"
+    },
+    "goldman-sachs-bank-usa-apple-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Goldman Sachs",
+      "officialName": "Apple Card"
+    },
+    "goldman-sachs-my-gm-rewards-card-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Goldman Sachs",
+      "officialName": "My GM Rewards Card Mastercard\u00ae"
+    },
+    "hsbc-elite-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "HSBC",
+      "officialName": "HSBC Elite Credit Card"
+    },
+    "hsbc-premier-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "HSBC",
+      "officialName": "HSBC Premier Credit Card"
+    },
+    "jpmorgan-chase-bank-n-a-slate-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Chase",
+      "officialName": "Slate\u00ae Credit Card"
+    },
+    "jpmorgan-chase-bank-n-a-slate-edge-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Chase",
+      "officialName": "Slate Edge\u00ae Credit Card"
+    },
+    "jpmorgan-chase-instacart-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Chase",
+      "officialName": "Instacart Mastercard"
+    },
+    "navy-federal-credit-union-navy-federal-cashrewards-credit-ca": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Navy Federal Credit Union",
+      "officialName": "Navy Federal cashRewards\u00ae Credit Card"
+    },
+    "navy-federal-credit-union-navy-federal-cashrewards-plus-cred": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Navy Federal Credit Union",
+      "officialName": "Navy Federal cashRewards PLUS\u00ae Credit Card"
+    },
+    "navy-federal-credit-union-navy-federal-flagship-rewards-cred": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Navy Federal Credit Union",
+      "officialName": "Navy Federal Flagship Rewards\u00ae Credit Card"
+    },
+    "navy-federal-credit-union-navy-federal-go-rewards-credit-car": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Navy Federal Credit Union",
+      "officialName": "Navy Federal GO REWARDS\u00ae Credit Card"
+    },
+    "navy-federal-credit-union-navy-federal-more-rewards-american": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Navy Federal Credit Union",
+      "officialName": "Navy Federal More Rewards American Express\u00ae Card"
+    },
+    "penfed-credit-union-penfed-gold-visa-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "PenFed Credit Union",
+      "officialName": "PenFed Gold Visa\u00ae Card"
+    },
+    "penfed-credit-union-penfed-pathfinder-rewards-visa-signature": {
+      "basis": "no signal in issuer or name",
+      "issuer": "PenFed Credit Union",
+      "officialName": "PenFed Pathfinder\u00ae Rewards Visa Signature\u00ae Card"
+    },
+    "petal-1-visa": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Petal",
+      "officialName": "Petal 1 Visa"
+    },
+    "petal-2-visa": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Petal",
+      "officialName": "Petal 2 Visa"
+    },
+    "pnc-bank-pnc-core-visa-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "PNC Bank",
+      "officialName": "PNC Core Visa\u00ae Credit Card"
+    },
+    "pnc-bank-pnc-points-visa-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "PNC Bank",
+      "officialName": "PNC Points Visa\u00ae Credit Card"
+    },
+    "synchrony-bank-cutting-edge-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Synchrony",
+      "officialName": "Cutting Edge Credit Card"
+    },
+    "synchrony-bank-synchrony-car-care-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Synchrony",
+      "officialName": "Synchrony Car Care\u2122 Credit Card"
+    },
+    "synchrony-bank-synchrony-home-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Synchrony",
+      "officialName": "Synchrony HOME\u2122 Credit Card"
+    },
+    "synchrony-bank-synchrony-luxury-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Synchrony",
+      "officialName": "Synchrony Luxury Credit Card"
+    },
+    "synchrony-bank-synchrony-music-sound-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Synchrony",
+      "officialName": "Synchrony Music & Sound Credit Card"
+    },
+    "synchrony-bank-synchrony-outdoors-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Synchrony",
+      "officialName": "Synchrony Outdoors\u00ae Credit Card"
+    },
+    "synchrony-bank-synchrony-plus-world-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Synchrony",
+      "officialName": "Synchrony Plus World Mastercard\u00ae"
+    },
+    "synchrony-bank-synchrony-preferred-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Synchrony",
+      "officialName": "Synchrony Preferred Mastercard\u00ae"
+    },
+    "synchrony-bank-synchrony-premier-world-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Synchrony",
+      "officialName": "Synchrony Premier World Mastercard\u00ae"
+    },
+    "synchrony-bank-synchrony-project-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Synchrony",
+      "officialName": "Synchrony Project Card"
+    },
+    "synchrony-bank-synchrony-sewing-more-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Synchrony",
+      "officialName": "Synchrony Sewing & More\u00ae Credit Card"
+    },
+    "synchrony-bank-synchrony-sport-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Synchrony",
+      "officialName": "Synchrony Sport\u00ae Credit Card"
+    },
+    "td-bank-td-business-solutions-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "TD Bank USA",
+      "officialName": "TD Business Solutions Credit Card"
+    },
+    "td-bank-td-cash-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "TD Bank USA",
+      "officialName": "TD Cash Credit Card"
+    },
+    "td-bank-td-double-up-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "TD Bank USA",
+      "officialName": "TD Double Up Credit Card"
+    },
+    "td-bank-td-first-class-visa-signature-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "TD Bank USA",
+      "officialName": "TD First Class Visa Signature\u00ae Credit Card"
+    },
+    "u-s-bank-altitude-connect-business": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "Altitude Connect Business"
+    },
+    "u-s-bank-altitude-go-visa-signature-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Altitude\u00ae Go Visa Signature\u00ae Card"
+    },
+    "u-s-bank-altitude-reserve-visa-infinite-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Altitude\u00ae Reserve Visa Infinite\u00ae Card"
+    },
+    "u-s-bank-business-leverage-visa-signature-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Business Leverage\u00ae Visa Signature\u00ae Card"
+    },
+    "u-s-bank-cash-visa-signature-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Cash+\u2122 Visa Signature\u00ae Card"
+    },
+    "u-s-bank-h-d-visa-signature-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "H-D Visa Signature Credit Card"
+    },
+    "u-s-bank-kroger-rewards-world-elite-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "Kroger Rewards World Elite Mastercard"
+    },
+    "u-s-bank-national-association-split-world-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "Split\u2122 World Mastercard\u00ae"
+    },
+    "u-s-bank-national-association-u-s-bank-altitude-go-visa-sign": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Altitude\u00ae Go Visa Signature\u00ae Card"
+    },
+    "u-s-bank-national-association-u-s-bank-business-altitude-pow": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Business Altitude\u00ae Power Visa Signature\u00ae Card"
+    },
+    "u-s-bank-national-association-u-s-bank-business-leverage-vis": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Business Leverage\u00ae Visa Signature\u00ae Card"
+    },
+    "u-s-bank-national-association-u-s-bank-business-shield-visa-": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Business Shield\u2122 Visa\u00ae Card"
+    },
+    "u-s-bank-national-association-u-s-bank-cash-secured-visa-car": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Cash+\u00ae Secured Visa\u00ae Card"
+    },
+    "u-s-bank-national-association-u-s-bank-cash-visa-signature-c": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Cash+\u00ae Visa Signature\u00ae Card"
+    },
+    "u-s-bank-national-association-u-s-bank-secured-visa-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Secured Visa\u00ae Card"
+    },
+    "u-s-bank-national-association-u-s-bank-shield-visa-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Shield\u2122 Visa\u00ae Card"
+    },
+    "u-s-bank-national-association-u-s-bank-smartly-visa-signatur": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Smartly\u2122 Visa Signature\u00ae Card"
+    },
+    "u-s-bank-smartly-visa-signature-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Smartly\u2122 Visa Signature\u00ae Card"
+    },
+    "u-s-bank-state-farm-cash-medallion": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "State Farm Cash Medallion"
+    },
+    "u-s-bank-visa-platinum-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "U.S. Bank",
+      "officialName": "U.S. Bank Visa\u00ae Platinum Card"
+    },
+    "webbank-gemini-credit-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "WebBank",
+      "officialName": "Gemini Credit Card"
+    },
+    "wells-fargo-active-cash-business": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Wells Fargo",
+      "officialName": "Active Cash Business"
+    },
+    "wells-fargo-attune-world-elite-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Wells Fargo",
+      "officialName": "Wells Fargo Attune World Elite Mastercard\u00ae"
+    },
+    "wells-fargo-autograph-journey": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Wells Fargo",
+      "officialName": "Wells Fargo Autograph Journey"
+    },
+    "wells-fargo-autograph-visa-signature-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Wells Fargo",
+      "officialName": "Wells Fargo Autograph Visa Signature\u00ae Card"
+    },
+    "wells-fargo-bank-n-a-one-key-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Wells Fargo",
+      "officialName": "One Key Mastercard"
+    },
+    "wells-fargo-bank-n-a-wells-fargo-active-cash-visa-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Wells Fargo",
+      "officialName": "Wells Fargo Active Cash Visa Card"
+    },
+    "wells-fargo-bank-n-a-wells-fargo-attune-world-elite-masterca": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Wells Fargo",
+      "officialName": "Wells Fargo Attune World Elite Mastercard"
+    },
+    "wells-fargo-bank-n-a-wells-fargo-autograph-journey-visa-sign": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Wells Fargo",
+      "officialName": "Wells Fargo Autograph Journey Visa Signature Card"
+    },
+    "wells-fargo-bank-n-a-wells-fargo-autograph-visa-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Wells Fargo",
+      "officialName": "Wells Fargo Autograph Visa Card"
+    },
+    "wells-fargo-bank-n-a-wells-fargo-reflect-visa-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Wells Fargo",
+      "officialName": "Wells Fargo Reflect Visa Card"
+    },
+    "wells-fargo-bank-n-a-wells-fargo-signify-business-cash-maste": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Wells Fargo",
+      "officialName": "Wells Fargo Signify Business Cash Mastercard"
+    },
+    "wells-fargo-one-key-card": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Wells Fargo",
+      "officialName": "One Key Card"
+    },
+    "wells-fargo-reflect": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Wells Fargo",
+      "officialName": "Wells Fargo Reflect"
+    }
+  }
+}

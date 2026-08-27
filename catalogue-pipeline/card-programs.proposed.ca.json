@@ -1,0 +1,54 @@
+{
+  "needsEnumValue": {
+    "cibc-costco-mastercard": {
+      "basis": "co-brand: costco",
+      "currency": "Costco Cash Rewards",
+      "issuer": "CIBC",
+      "officialName": "CIBC Costco Mastercard"
+    },
+    "rbc-british-airways-visa-infinite": {
+      "basis": "co-brand: aer lingus|british airways|iberia|avios",
+      "currency": "Avios",
+      "issuer": "Royal Bank of Canada",
+      "officialName": "RBC British Airways Visa Infinite"
+    }
+  },
+  "proposed": {},
+  "unmapped": {
+    "brim-financial-brim-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Brim Financial",
+      "officialName": "Brim Mastercard"
+    },
+    "brim-financial-brim-world-elite-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Brim Financial",
+      "officialName": "Brim World Elite Mastercard"
+    },
+    "capital-one-aspire-travel-platinum-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Capital One Canada",
+      "officialName": "Capital One Aspire Travel Platinum Mastercard"
+    },
+    "capital-one-guaranteed-secured-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Capital One Canada",
+      "officialName": "Capital One Guaranteed Secured Mastercard"
+    },
+    "mbna-true-line-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "MBNA",
+      "officialName": "MBNA True Line Mastercard"
+    },
+    "neo-financial-neo-world-mastercard": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Neo Financial",
+      "officialName": "Neo World Mastercard"
+    },
+    "rbc-more-rewards-rbc-visa": {
+      "basis": "no signal in issuer or name",
+      "issuer": "Royal Bank of Canada",
+      "officialName": "More Rewards RBC Visa"
+    }
+  }
+}
