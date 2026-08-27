@@ -75,7 +75,8 @@ final class CopilotSession {
         do {
             let purchase = try graph.service.log.recordPurchase(for: prediction,
                                                                 cardUsedId: entry.cardUsedId,
-                                                                cardSource: entry.cardSource)
+                                                                cardSource: entry.cardSource,
+                                                                walletEventId: entry.walletEventId)
             if let amount = entry.actualAmountCad {
                 try graph.service.log.recordAmount(amount,
                                                    source: entry.amountSource ?? .recalledLater,

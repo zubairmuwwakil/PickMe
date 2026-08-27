@@ -119,9 +119,18 @@ public struct PredictionLog {
     /// Get-or-create rather than insert: the same purchase can be reached from a notification
     /// action, from the app, and from reconcile. A second call must never orphan the first
     /// record — that would silently discard a card the owner already told us about.
+    ///
+    /// `walletEventId`, when the caller is saving a `CaptureProposal`'s facts, stamps which
+    /// Wallet-captured event supplied them. This is NOT what makes the purchase "auto-logged" —
+    /// `StoredPurchase.isAutoLogged` is `prediction == nil`, and this purchase plainly has one — it
+    /// is what keeps `AutoCaptureLog` from later mistaking the SAME tap for an orphaned one once
+    /// this checkout completes and its prediction drops out of the open set. Set once: a purchase
+    /// answered by two different captures across two syncs keeps the first, since the dedup key
+    /// only needs to name ONE representative event, not enumerate every one that ever touched it.
     @discardableResult
     public func recordPurchase(for prediction: StoredPrediction,
                                cardUsedId: String? = nil, cardSource: CaptureSource? = nil,
+                               walletEventId: String? = nil,
                                at date: Date = Date()) throws -> StoredPurchase {
         let purchase: StoredPurchase
         if let existing = prediction.purchase {
@@ -134,6 +143,9 @@ public struct PredictionLog {
         if let cardUsedId {
             purchase.cardUsedId = cardUsedId
             purchase.cardSourceRaw = cardSource?.rawValue
+        }
+        if purchase.walletEventId == nil, let walletEventId {
+            purchase.walletEventId = walletEventId
         }
         refreshCompletion(purchase, at: date)
         try context.save()

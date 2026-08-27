@@ -23,6 +23,10 @@ struct CheckoutFlowView: View {
     @State private var completionQueue: [StoredPrediction] = []
     @State private var reconcileQueue: [StoredPrediction] = []
     @State private var recentPurchases: [StoredPrediction] = []
+    /// Purchases logged automatically from a Wallet capture with no live checkout behind them.
+    /// Separate from `recentPurchases`: these carry no predicted category, so there is nothing
+    /// for `onUpdateCategory` to correct and nothing for the Experiment Scoreboard to grade.
+    @State private var autoLoggedPurchases: [StoredPurchase] = []
     @State private var metrics: ExperimentMetrics?
     @State private var sync = SyncCoordinator()
     @State private var ambient = AmbientLocationService()
@@ -204,6 +208,7 @@ struct CheckoutFlowView: View {
                             valueRecoveredCad: valueRecoveredCad,
                             pendingValueCad: pendingValueCad,
                             recentPurchases: recentPurchases,
+                            autoLoggedPurchases: autoLoggedPurchases,
                             cards: deps?.walletCards ?? [],
                             onFinish: { stage = .finish },
                             onReconcile: { stage = .reconcile },
@@ -662,7 +667,8 @@ struct CheckoutFlowView: View {
         do {
             let purchase = try deps.service.log.recordPurchase(for: prediction,
                                                                cardUsedId: entry.cardUsedId,
-                                                               cardSource: entry.cardSource)
+                                                               cardSource: entry.cardSource,
+                                                               walletEventId: entry.walletEventId)
             if let amount = entry.actualAmountCad {
                 try deps.service.log.recordAmount(amount,
                                                   source: entry.amountSource ?? .recalledLater,
@@ -714,8 +720,26 @@ struct CheckoutFlowView: View {
             recentPurchases = snapshot.recentPurchases
             metrics = snapshot.metrics
             homeMerchants = sortedHomeMerchants(try deps.service.knownMerchants())
+            autoLoggedPurchases = try deps.service.autoLoggedPurchases()
         } catch {
             stage = .failed(error.localizedDescription)
+        }
+    }
+
+    /// Wallet taps the owner never asked the app about get logged the moment they're synced down,
+    /// with no confirmation gate — see `CheckoutService.ingestAutomaticCaptures` and
+    /// `CaptureMatcher.unclaimedCaptures` for why that's safe here (there is no prediction, so no
+    /// accuracy claim to protect) and is deliberately NOT how `CaptureProposal`/Finish Purchases
+    /// behaves. Best-effort: a failure here must not turn a successful caps/feedback sync into a
+    /// hard failure screen over something the owner cannot act on.
+    private func ingestAutomaticCaptures() {
+        guard let deps else { return }
+        do {
+            try deps.service.ingestAutomaticCaptures(from: sync.walletFeedback)
+        } catch {
+            #if DEBUG
+            print("⚠️ Auto-capture ingest failed: \(error)")
+            #endif
         }
     }
 
@@ -878,6 +902,7 @@ struct CheckoutFlowView: View {
         deps = makeDependencies(catalogue: existing.catalogue, candidates: existing.candidateCardIds,
                                 owner: owner, benefits: existing.benefits)
         configureAmbient(catalogue: existing.catalogue, owner: owner)
+        ingestAutomaticCaptures()
         refreshHome()
     }
 

@@ -10,6 +10,10 @@ struct ActivityHubView: View {
     let valueRecoveredCad: Double
     let pendingValueCad: Double
     let recentPurchases: [StoredPrediction]
+    /// Purchases logged automatically from a Wallet capture with no live checkout behind them.
+    /// Kept out of `recentPurchases`/`filteredPurchases`/the category picker on purpose: these
+    /// carry no predicted category to filter by or correct, only what the tap itself evidenced.
+    var autoLoggedPurchases: [StoredPurchase] = []
     let cards: [CardProduct]
     let onFinish: () -> Void
     let onReconcile: () -> Void
@@ -132,6 +136,30 @@ struct ActivityHubView: View {
                                     purchaseRow(prediction: prediction)
                                 }
                                 .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
+
+                // Section: purchases logged automatically from a Wallet capture, with no live
+                // checkout behind them. Hidden entirely while empty rather than shown with its own
+                // empty state — Recent Purchases already owns that message, and this section's
+                // whole point is that it appears the moment there is something to show, with
+                // nothing the owner had to do.
+                if !autoLoggedPurchases.isEmpty {
+                    VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Logged from Card Taps")
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundStyle(.primary)
+                            Text("Captured automatically — no checkout was asked about these")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        }
+
+                        VStack(spacing: 10) {
+                            ForEach(autoLoggedPurchases) { purchase in
+                                autoLoggedPurchaseRow(purchase)
                             }
                         }
                     }
@@ -594,6 +622,75 @@ struct ActivityHubView: View {
                 .padding(.vertical, 2)
                 .background(Color.orange.opacity(0.12), in: Capsule())
         }
+    }
+
+    /// A purchase `AutoCaptureLog` wrote with no prediction — no category badge (none was ever
+    /// predicted) and no tap-to-edit (nothing here for `onUpdateCategory` to correct).
+    private func autoLoggedPurchaseRow(_ purchase: StoredPurchase) -> some View {
+        let timeLabel = CategoryVisuals.relativeTime(from: purchase.createdAt)
+
+        return HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color.secondary.opacity(0.14))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "wave.3.right")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(purchase.displayMerchant)
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                HStack(spacing: 4) {
+                    if let cardId = purchase.cardUsedId {
+                        Text(cardDisplayName(for: cardId))
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                        Text("•")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.tertiary)
+                    }
+                    Text(timeLabel)
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 4) {
+                if let amount = purchase.amountCad {
+                    Text(String(format: "$%.2f", amount))
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                } else {
+                    Text("—")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                if !purchase.missingFacts.isEmpty {
+                    Text(purchase.missingFacts.contains(.card) ? "Card unknown" : "Amount unknown")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(.orange)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2)
+                        .background(Color.orange.opacity(0.12), in: Capsule())
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+        )
     }
 
     private func cardDisplayName(for cardId: String) -> String {

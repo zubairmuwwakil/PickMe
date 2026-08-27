@@ -71,6 +71,51 @@ public enum CaptureMatcher {
         }
     }
 
+    /// One wallet-tap that matches no open checkout at all — not even ambiguously.
+    ///
+    /// Unlike `CaptureProposal`, this carries no `predictionId`: there is no prediction to join it
+    /// to, because the owner never asked "which card here?" for it. `AutoCaptureLog` writes it
+    /// straight into the purchase log with no confirmation gate, which is safe for exactly the
+    /// reason it is NOT safe for `CaptureProposal` — see that type's doc comment. A purchase with
+    /// no prediction carries no accuracy claim, so there is nothing here for a wrong guess to
+    /// corrupt; the worst a bad merchant/amount read can do is a purchase row worth correcting,
+    /// not a fabricated data point in the Experiment Scoreboard.
+    public struct UnclaimedCapture: Equatable, Sendable, Identifiable {
+        public let eventId: String
+        public let capturedAt: Date
+        public let merchant: String
+        /// nil when the charge is unavailable or in a currency this app cannot convert — see
+        /// `amountCad(from:)`.
+        public let amountCad: Double?
+        /// nil when the server's alias table could not resolve the card.
+        public let cardUsedId: String?
+
+        public var id: String { eventId }
+    }
+
+    /// Every synced wallet-tap that does not plausibly belong to any still-open checkout.
+    ///
+    /// Reuses `isPlausible` — the exact test `proposals(for:from:)` uses — so the two functions can
+    /// never disagree about which events belong to a live checkout. An event that plausibly matches
+    /// an open prediction is excluded here even when it is too AMBIGUOUS to produce a
+    /// `CaptureProposal` (matches more than one open prediction, or an open prediction matches more
+    /// than one event): auto-logging it as a second, standalone purchase would risk a duplicate the
+    /// moment the owner finishes the checkout it actually belonged to. Deferring entirely to Finish
+    /// Purchases for anything that MIGHT be a live checkout's answer is the fail-closed choice.
+    public static func unclaimedCaptures(from feedback: [WalletFeedback],
+                                         openPredictions: [StoredPrediction]) -> [UnclaimedCapture] {
+        let open = openPredictions.filter { ($0.purchase?.isComplete ?? true) == false }
+        return feedback
+            .filter { event in !open.contains { isPlausible(event, for: $0) } }
+            .map { event in
+                UnclaimedCapture(eventId: event.eventId,
+                                 capturedAt: event.capturedAt,
+                                 merchant: event.merchantNormalized ?? event.merchantRaw ?? "Unknown merchant",
+                                 amountCad: amountCad(from: event),
+                                 cardUsedId: event.resolvedCardId)
+            }
+    }
+
     // MARK: - Pairing
 
     private static func isPlausible(_ event: WalletFeedback, for prediction: StoredPrediction) -> Bool {

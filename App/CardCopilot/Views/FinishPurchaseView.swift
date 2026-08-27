@@ -11,6 +11,11 @@ struct FinishEntry {
     /// figure was saved exactly as offered. Nil when the fact was not supplied at all.
     let cardSource: CaptureSource?
     let amountSource: CaptureSource?
+    /// The Wallet-captured event this row was shown a proposal for, whether or not its figures
+    /// were saved unedited. Not an accuracy claim like `cardSource`/`amountSource` — purely a
+    /// dedup key, so `AutoCaptureLog` never mistakes this same tap for an orphaned one once this
+    /// checkout completes. Nil when the owner never saw a proposal for this purchase at all.
+    let walletEventId: String?
 }
 
 /// The "finish these" queue (design §8).
@@ -192,7 +197,8 @@ struct FinishPurchaseView: View {
         FinishEntry(cardUsedId: proposal.cardUsedId,
                     actualAmountCad: proposal.amountCad,
                     cardSource: proposal.cardUsedId == nil ? nil : .walletCapture,
-                    amountSource: proposal.amountCad == nil ? nil : .walletCapture)
+                    amountSource: proposal.amountCad == nil ? nil : .walletCapture,
+                    walletEventId: proposal.eventId)
     }
 
     /// The charge is the fact worth putting in the chip: it is the number the owner can check
@@ -335,7 +341,8 @@ struct FinishEntryView: View {
                            cardSource: card.map { proposal?.cardProvenance(forSaved: $0)
                                                   ?? .recalledLater },
                            amountSource: amount.map { proposal?.amountProvenance(forSaved: $0)
-                                                      ?? .recalledLater })
+                                                      ?? .recalledLater },
+                           walletEventId: proposal?.eventId)
     }
 
     /// Nil rather than zero when blank or unparseable. A zero would complete the purchase while
