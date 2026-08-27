@@ -74,8 +74,9 @@ class CapabilityGatingTest {
      */
     @Test
     fun outOfScopeIsNotExpressedAsARequirement() {
-        val all = SeedLoader.loadCatalogue().cards.flatMap { it.earnRules } +
-            SeedLoader.loadCandidateCatalogue().cards.flatMap { it.earnRules }
+        // Every product, candidates included — they are the same corpus since 2026-08-24
+        // (SeedLoader.loadCandidateCatalogue returns id references, not a second set of cards).
+        val all = SeedLoader.loadCatalogue().cards.flatMap { it.earnRules }
 
         for (r in all.filter { it.outOfScope != null }) {
             assertTrue(
@@ -99,14 +100,18 @@ class CapabilityGatingTest {
     @Test
     fun supportedCapabilitiesMatchTheSwiftTwin() {
         assertEquals(
-            listOf("cap.accountYear", "cap.calendarMonth", "cap.calendarYear"),
+            listOf(
+                "cap.accountYear", "cap.calendarMonth", "cap.calendarQuarter", "cap.calendarYear",
+                "predicate.ownerSelectedCategory"
+            ),
             EngineCapability.supported.map { it.rawValue }.sorted()
         )
         assertEquals(
             listOf(
-                "cap.accountYear", "cap.calendarMonth", "cap.calendarYear", "cap.globalGroup",
-                "cap.statementYear", "earn.marginal", "earn.perLitre",
-                "predicate.mccStrict", "predicate.merchantPartnerList"
+                "cap.accountYear", "cap.calendarMonth", "cap.calendarQuarter", "cap.calendarYear",
+                "cap.globalGroup", "cap.statementYear", "earn.marginal", "earn.perLitre",
+                "predicate.mccStrict", "predicate.merchantPartnerList",
+                "predicate.ownerSelectedCategory"
             ),
             EngineCapability.entries.map { it.rawValue }.sorted()
         )

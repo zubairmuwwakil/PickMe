@@ -3,47 +3,48 @@ import XCTest
 
 final class TombstoneTests: XCTestCase {
 
-    private func card(status: CardStatus?, effectiveTo: String?) -> CardProduct {
+    private func card(lifecycleStatus: ProductLifecycleStatus?, effectiveTo: String?) -> CardProduct {
         CardProduct(cardId: "dead-card", officialName: "Discontinued", issuer: "Test",
-                    network: .visa, kind: .credit, fee: Fee(annualCad: 0),
+                    network: .visa, kind: .credit,
+                    fee: Fee(annual: Money(amount: 0, currency: .cad)),
                     program: Program(programId: "cash", unit: "cad"),
                     fxRules: [], earnRules: [], caps: [],
                     perTransactionRewardVisibility: "none", lastVerifiedAt: "2026-08-15",
-                    credits: nil, status: status, effectiveTo: effectiveTo)
+                    credits: nil, lifecycleStatus: lifecycleStatus, effectiveTo: effectiveTo)
     }
 
     /// A card written before tombstoning existed has no status and must keep scoring.
     func testAbsentStatusMeansActive() {
-        XCTAssertTrue(card(status: nil, effectiveTo: nil).isScoreable(asOf: "2026-08-26"))
+        XCTAssertTrue(card(lifecycleStatus: nil, effectiveTo: nil).isScoreable(asOf: "2026-08-26"))
     }
 
     func testWithdrawnCardIsNotScoreable() {
-        XCTAssertFalse(card(status: .withdrawn, effectiveTo: "2026-01-01")
+        XCTAssertFalse(card(lifecycleStatus: .withdrawn, effectiveTo: "2026-01-01")
             .isScoreable(asOf: "2026-08-26"))
     }
 
     /// Withdrawal is dated: before the date the product was real and must still score, so
     /// historical asOf queries stay correct.
     func testWithdrawnCardStillScoresBeforeItsEndDate() {
-        XCTAssertTrue(card(status: .withdrawn, effectiveTo: "2026-12-31")
+        XCTAssertTrue(card(lifecycleStatus: .withdrawn, effectiveTo: "2026-12-31")
             .isScoreable(asOf: "2026-08-26"))
     }
 
     /// The whole point of tombstoning: the id keeps resolving so history can render.
     func testWithdrawnCardStillDecodesAndKeepsItsIdentity() throws {
-        let withdrawn = card(status: .withdrawn, effectiveTo: "2026-01-01")
+        let withdrawn = card(lifecycleStatus: .withdrawn, effectiveTo: "2026-01-01")
         let data = try JSONEncoder().encode(withdrawn)
         let decoded = try JSONDecoder().decode(CardProduct.self, from: data)
         XCTAssertEqual(decoded.cardId, "dead-card")
         XCTAssertEqual(decoded.officialName, "Discontinued")
-        XCTAssertEqual(decoded.status, .withdrawn)
+        XCTAssertEqual(decoded.lifecycleStatus, .withdrawn)
     }
 
     /// Every card in the shipped catalogue must be scoreable today, or the catalogue is
     /// carrying a tombstone that was never meant to be one.
     func testShippedCatalogueHasNoUnexpectedTombstones() throws {
         let catalogue = try SeedLoader.loadCatalogue()
-        let withdrawn = catalogue.cards.filter { $0.status == .withdrawn }
+        let withdrawn = catalogue.cards.filter { $0.lifecycleStatus == .withdrawn }
         XCTAssertTrue(withdrawn.allSatisfy { $0.effectiveTo != nil },
                       "A withdrawn card must say when it was withdrawn: \(withdrawn.map(\.cardId))")
     }
@@ -60,7 +61,7 @@ final class TombstoneTests: XCTestCase {
     private func catalogueWithdrawing(_ cardId: String, on date: String) throws -> Catalogue {
         var catalogue = try SeedLoader.loadCatalogue()
         let index = try XCTUnwrap(catalogue.cards.firstIndex { $0.cardId == cardId })
-        catalogue.cards[index].status = .withdrawn
+        catalogue.cards[index].lifecycleStatus = .withdrawn
         catalogue.cards[index].effectiveTo = date
         return catalogue
     }

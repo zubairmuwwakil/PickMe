@@ -10,11 +10,17 @@ import Foundation
 public enum EngineCapability: String, CaseIterable, Codable, Sendable {
     case capCalendarMonth    = "cap.calendarMonth"
     case capCalendarYear     = "cap.calendarYear"
+    case capCalendarQuarter  = "cap.calendarQuarter"
     case capAccountYear      = "cap.accountYear"
     case capStatementYear    = "cap.statementYear"
     case capGlobalGroup      = "cap.globalGroup"
     case merchantPartnerList = "predicate.merchantPartnerList"
     case mccStrict           = "predicate.mccStrict"
+    /// Generalized 2026-08-26 from the Tangerine-only mechanism (`CardState.selectedCategories`
+    /// already had this shape) so US selectable-category cards (Citi Custom Cash, US Bank Cash+)
+    /// can declare it too. `RuleMatcher` accepts both this and the old
+    /// `ownerSelectedTangerineCategory` predicate string.
+    case ownerSelectedCategory = "predicate.ownerSelectedCategory"
     case unitPerLitre        = "earn.perLitre"
     case marginalEarn        = "earn.marginal"
 
@@ -22,8 +28,13 @@ public enum EngineCapability: String, CaseIterable, Codable, Sendable {
     /// on automatically when they ship. `predicate.channelIdentity` is deliberately absent from
     /// this enum entirely — online booking channels are permanently out of scope for an
     /// at-the-register copilot, so rules needing them use `outOfScope`, not `requires`.
+    /// `capCalendarQuarter` and `ownerSelectedCategory` added 2026-08-26 for US rotating/selectable
+    /// category cards — the underlying mechanisms (`CapWindow`, `CardState.selectedCategories`)
+    /// ship in the same commit, so both are supported from day one rather than sitting as
+    /// declared-but-unimplemented.
     public static let supported: Set<EngineCapability> = [
-        .capCalendarMonth, .capCalendarYear, .capAccountYear,
+        .capCalendarMonth, .capCalendarYear, .capCalendarQuarter, .capAccountYear,
+        .ownerSelectedCategory,
     ]
 }
 

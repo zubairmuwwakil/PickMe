@@ -7,7 +7,7 @@ final class SeedLoaderTests: XCTestCase {
         // Every supported product, not just the seed owner's wallet (one corpus, 2026-08-24).
         XCTAssertEqual(catalogue.cards.count, 41)
         let cobalt = try XCTUnwrap(catalogue.cards.first { $0.cardId == "amex-cobalt" })
-        XCTAssertEqual(cobalt.fee.annualCad ?? 0, 191.88, accuracy: 0.005)
+        XCTAssertEqual(ReportingCurrency.toReporting(cobalt.fee.annual), 191.88, accuracy: 0.005)
         XCTAssertEqual(cobalt.network, .amex)
         XCTAssertEqual(cobalt.caps.first?.capId, "cobalt-eats-monthly")
         guard case .points(let ppc) = try XCTUnwrap(
@@ -56,14 +56,20 @@ final class SeedLoaderTests: XCTestCase {
     }
 
     func testCatalogueVersionRejectsAnUnknownMajor() {
-        XCTAssertThrowsError(try SeedLoader.validate(catalogueVersion: "2.0")) { error in
-            XCTAssertEqual(error as? SeedLoaderError, .unsupportedCatalogueVersion("2.0"))
+        // 1.x was the last major before the 2026-08-26 multi-market bump (Money-shaped fees/
+        // credits, market/billingCurrency, spendNative replacing spendCad, calendarQuarter) —
+        // still a real shape this build can no longer decode correctly, so it must still throw.
+        XCTAssertThrowsError(try SeedLoader.validate(catalogueVersion: "1.6")) { error in
+            XCTAssertEqual(error as? SeedLoaderError, .unsupportedCatalogueVersion("1.6"))
+        }
+        XCTAssertThrowsError(try SeedLoader.validate(catalogueVersion: "3.0")) { error in
+            XCTAssertEqual(error as? SeedLoaderError, .unsupportedCatalogueVersion("3.0"))
         }
     }
 
     func testCatalogueVersionAcceptsTheKnownMajorRegardlessOfMinor() {
-        XCTAssertNoThrow(try SeedLoader.validate(catalogueVersion: "1.0"))
-        XCTAssertNoThrow(try SeedLoader.validate(catalogueVersion: "1.7"))
+        XCTAssertNoThrow(try SeedLoader.validate(catalogueVersion: "2.0"))
+        XCTAssertNoThrow(try SeedLoader.validate(catalogueVersion: "2.7"))
     }
 
     func testCatalogueVersionRejectsAMalformedString() {

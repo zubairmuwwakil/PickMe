@@ -20,6 +20,7 @@ enum CardVisualTheme {
         case visa = "VISA"
         case mastercardWorldElite = "WORLD ELITE"
         case mastercard = "MASTERCARD"
+        case discover = "DISCOVER"
         case prepaid = "PREPAID"
     }
 
@@ -472,7 +473,9 @@ enum CardVisualTheme {
         // MARK: - Smart Fallback for Custom or Unstyled Cards
         let lower = cardId.lowercased()
         let inferredNetwork: CardNetwork
-        if lower.contains("amex") || lower.hasPrefix("american-express") {
+        if lower.contains("discover") {
+            inferredNetwork = .discover
+        } else if lower.contains("amex") || lower.hasPrefix("american-express") {
             inferredNetwork = .amex
         } else if lower.contains("vip") || lower.contains("privilege") {
             inferredNetwork = .visaInfinitePrivilege
@@ -491,7 +494,9 @@ enum CardVisualTheme {
         }
 
         let inferredIssuer: String
-        if lower.contains("amex") || lower.contains("american-express") {
+        if lower.contains("discover") {
+            inferredIssuer = "Discover"
+        } else if lower.contains("amex") || lower.contains("american-express") {
             inferredIssuer = "American Express"
         } else if lower.contains("td-") || lower.contains("td") {
             inferredIssuer = "TD"

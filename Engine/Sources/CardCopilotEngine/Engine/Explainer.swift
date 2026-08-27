@@ -77,6 +77,9 @@ public struct RecommendationExplainer {
         // Also excluded-only, for the same reason. Worded as a fact about the product rather than
         // an instruction, because there is no action the owner can take on a discontinued card.
         case .productWithdrawn: return "This card has been discontinued and is no longer recommended."
+        // Never reachable on a winner: a draft card is excluded before scoring, so this warning
+        // never travels with a Recommendation. Listed for exhaustiveness only.
+        case .draftProduct: return "This card is a research-grade catalogue entry and should not have been scorable."
         }
     }
 

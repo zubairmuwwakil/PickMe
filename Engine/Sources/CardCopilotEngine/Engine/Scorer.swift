@@ -13,7 +13,12 @@ public enum Warning: String, Codable, Equatable, Sendable {
          /// than borrowing `drawerCard`: that one means "you left it at home", which is advice a
          /// withdrawn card cannot act on. Warnings are frozen into the append-only prediction log
          /// now, so a borrowed one would be a wrong record that can never be corrected.
-         productWithdrawn
+         productWithdrawn,
+         /// `card.status == .draft` — a research-grade catalogue record that has not cleared D3's
+         /// issuer-confirmed sourcing bar. Excluded outright, never merely scored with a caveat:
+         /// a draft record must never produce a checkout pick, even if it somehow appears in
+         /// `ownedCardIds`.
+         draftProduct
 }
 
 public struct CandidateScore: Equatable, Sendable {
@@ -40,6 +45,22 @@ public enum Scorer {
     /// caller supplied no converted amount. Only Crypto.com's monthly cap uses this measure.
     static let fallbackCadToUsd = 0.73
 
+    /// The purchase amount expressed in a card's own `billingCurrency` — 'points per currency
+    /// unit' means per unit of that currency, not per CAD unconditionally. For a CAD-billing
+    /// card (every card in this catalogue until the multi-market import) this is exactly
+    /// `purchase.amountCad`, unchanged. A USD-billing card reuses `usdEquivalent`, the same
+    /// field `spendUsdEquivalent` caps already relied on, falling back to the same pinned
+    /// `fallbackCadToUsd` approximation when the caller supplied no converted amount.
+    ///
+    /// Shared with `PortfolioAnalyzer.accrueCapProgress` so a `.spendNative` cap is always
+    /// compared and accrued in the same currency `score(card:purchase:ownerState:asOf:)` uses —
+    /// the two must never independently decide what "native" means for the same card.
+    static func nativeAmount(for purchase: PurchaseContext, billingCurrency: Currency) -> Double {
+        billingCurrency == .usd
+            ? (purchase.usdEquivalent ?? purchase.amountCad * fallbackCadToUsd)
+            : purchase.amountCad
+    }
+
     public static func score(card: CardProduct, purchase: PurchaseContext,
                              ownerState: OwnerState, asOf: String) -> CandidateScore {
         func excludedScore(_ warning: Warning, _ reason: String) -> CandidateScore {
@@ -54,6 +75,10 @@ public enum Scorer {
         // it from advice, not from history.
         guard card.isScoreable(asOf: asOf) else {
             return excludedScore(.productWithdrawn, "product withdrawn")
+        }
+
+        guard card.isPublished else {
+            return excludedScore(.draftProduct, "draft catalogue record, not yet issuer-verified")
         }
 
         guard purchase.acceptedNetworks.contains(card.network) else {
@@ -82,23 +107,39 @@ public enum Scorer {
                                  "no valuation for program \(card.program.programId)")
         }
 
-        var inCapCad = purchase.amountCad
-        var overCapCad = 0.0
+        let nativeAmount = nativeAmount(for: purchase, billingCurrency: card.billingCurrency)
+
+        var inCapAmount = nativeAmount
+        var overCapAmount = 0.0
         if let capId = rule.capId, let cap = card.caps.first(where: { $0.capId == capId }) {
             let usage = state.capProgress?[capId] ?? 0
             let measureAmount = cap.measure == .spendUsdEquivalent
                 ? (purchase.usdEquivalent ?? purchase.amountCad * fallbackCadToUsd)
-                : purchase.amountCad
+                : nativeAmount
             let split = CapMath.split(amount: measureAmount, capLimit: cap.limit, usage: usage)
             let inFraction = measureAmount > 0 ? split.inCap / measureAmount : 1
-            inCapCad = purchase.amountCad * inFraction
-            overCapCad = purchase.amountCad - inCapCad
+            inCapAmount = nativeAmount * inFraction
+            overCapAmount = nativeAmount - inCapAmount
             if usage >= cap.limit * 0.9 { warnings.append(.capNearlyExhausted) }
         }
 
+        // Cashback earns real money in the card's own billing currency — unlike points, which are
+        // a currency-agnostic token whose *count* does not depend on what currency was spent, a
+        // cashback "unit" IS a dollar amount and must be converted to the CAD reporting currency
+        // before `valueCad`'s cashback case (`units * cadPerDollar`) treats it as one. Converted
+        // per portion, not once at the end, in case a straddling purchase's post-cap earn is ever
+        // a different type than its in-cap earn.
+        func unitsInReportingCurrency(_ earn: Earn, amount: Double) -> Double {
+            let raw = earnUnits(earn, amount: amount)
+            if case .cashback = earn {
+                return ReportingCurrency.toReporting(Money(amount: raw, currency: card.billingCurrency))
+            }
+            return raw
+        }
+
         let postCapEarn = rule.capId.flatMap { id in card.caps.first { $0.capId == id }?.postCapEarn }
-        let units = earnUnits(rule.earn, amountCad: inCapCad)
-            + earnUnits(postCapEarn ?? rule.earn, amountCad: overCapCad)
+        let units = unitsInReportingCurrency(rule.earn, amount: inCapAmount)
+            + unitsInReportingCurrency(postCapEarn ?? rule.earn, amount: overCapAmount)
         // Force-unwrapped, not `?? 0`: the guard above proves a valuation exists, and `?? 0`
         // would quietly reinstate the zero-scoring bug if a refactor ever moved that guard.
         let gross = valueCad(units: units, program: card.program.programId,
@@ -111,11 +152,19 @@ public enum Scorer {
                                          band: .aspirational)!
 
         var fxCost = 0.0
-        if purchase.currency != "CAD", let fx = RuleMatcher.activeFxRule(for: card, asOf: asOf) {
+        // Compares against THIS card's billing currency, not a hardcoded "CAD" — an FX spread
+        // applies whenever the purchase's currency differs from what the card bills in, in
+        // either direction.
+        if purchase.currency != card.billingCurrency.rawValue,
+           let fx = RuleMatcher.activeFxRule(for: card, asOf: asOf) {
             if fx.freeAllowanceCadPerCalendarMonth != nil {
                 warnings.append(.fxAllowanceAssumed)
             } else {
-                fxCost = purchase.amountCad * fx.rate
+                // The spread is charged in the card's own billing currency, then converted to the
+                // CAD reporting figure. For a CAD-billing card this `toReporting` is the identity
+                // — exactly today's `purchase.amountCad * fx.rate`.
+                fxCost = ReportingCurrency.toReporting(
+                    Money(amount: nativeAmount * fx.rate, currency: card.billingCurrency))
             }
         }
 
@@ -133,10 +182,12 @@ public enum Scorer {
                               warnings: warnings, excluded: false, exclusionReason: nil)
     }
 
-    static func earnUnits(_ earn: Earn, amountCad: Double) -> Double {
+    /// `amount` is already expressed in the card's own `billingCurrency` — the caller
+    /// (`score(card:purchase:ownerState:asOf:)`) converts before calling this.
+    static func earnUnits(_ earn: Earn, amount: Double) -> Double {
         switch earn {
-        case .points(let p): return amountCad * p
-        case .cashback(let r, _): return amountCad * r
+        case .points(let p): return amount * p
+        case .cashback(let r, _): return amount * r
         case .centsPerLitre: return 0
         }
     }

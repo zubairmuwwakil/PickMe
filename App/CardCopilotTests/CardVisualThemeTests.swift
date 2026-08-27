@@ -87,6 +87,9 @@ final class CardVisualThemeTests: XCTestCase {
                     style.network == .mastercard || style.network == .mastercardWorldElite,
                     "Mastercard \(card.cardId) has unexpected network \(style.network) in CardVisualTheme"
                 )
+            case .discover:
+                XCTAssertEqual(style.network, .discover,
+                               "Discover card \(card.cardId) must have .discover network in CardVisualTheme")
             }
         }
     }

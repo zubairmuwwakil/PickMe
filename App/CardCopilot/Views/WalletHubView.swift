@@ -53,7 +53,11 @@ struct WalletHubView: View {
                                             HStack(spacing: 4) {
                                                 Text(card.network.rawValue.capitalized)
                                                 Text("•")
-                                                let fee = card.fee.annualCad ?? 0
+                                                // A single card's own fee, shown in its own billing
+                                                // currency — not a cross-card sum, so this is never
+                                                // converted to the CAD reporting currency (see
+                                                // ReportingCurrency.swift).
+                                                let fee = card.fee.annual?.amount ?? 0
                                                 Text(fee == 0 ? "No Fee" : String(format: "$%.0f/yr", fee))
                                             }
                                             .font(.system(size: 11, weight: .medium))

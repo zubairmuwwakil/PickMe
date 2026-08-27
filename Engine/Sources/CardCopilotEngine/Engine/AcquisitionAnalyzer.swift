@@ -44,6 +44,12 @@ public struct AcquisitionCandidate: Equatable, Sendable {
     public let feeWaiverUnresolved: Bool
     public let neverScorable: Bool
     public let bucketGains: [AcquisitionBucketGain]
+    /// Whether a resident of `OwnerState.resolvedMarket` can hold this card at all —
+    /// `card.eligibility?.residency ?? [card.market]`. Does NOT remove the candidate from
+    /// `candidates` (never silently discard a fact the caller might want, e.g. an explicit
+    /// "show other markets" override) — it only gates `recommended`, so a US card never surfaces
+    /// as a default suggestion to a Canadian resident while still being comparable on request.
+    public let eligibleForResident: Bool
 }
 
 public struct AcquisitionAnalysis: Equatable, Sendable {
@@ -56,7 +62,7 @@ public struct AcquisitionAnalysis: Equatable, Sendable {
     public let candidates: [AcquisitionCandidate]
 
     public var recommended: [AcquisitionCandidate] {
-        candidates.filter { $0.verdict == .worthAdding }
+        candidates.filter { $0.verdict == .worthAdding && $0.eligibleForResident }
     }
 
     public func candidate(_ cardId: String) -> AcquisitionCandidate? {
@@ -106,8 +112,17 @@ public struct AcquisitionAnalyzer {
                 .run(distribution, excluding: [], asOf: asOf)
 
             let marginal = combined.totalValueCad - baseline.totalValueCad
-            let fee = card.fee.annualCad ?? card.fee.monthlyCad.map { $0 * 12 } ?? 0
+            let fee: Double
+            if let annual = card.fee.annual {
+                fee = ReportingCurrency.toReporting(annual)
+            } else if let monthly = card.fee.monthly {
+                fee = ReportingCurrency.toReporting(monthly) * 12
+            } else {
+                fee = 0
+            }
             let net = marginal - fee
+            let eligibleMarkets = card.eligibility?.residency ?? [card.market]
+            let eligibleForResident = eligibleMarkets.contains(ownerState.resolvedMarket)
             let gains = combined.winnersByBucket.keys.compactMap { label -> AcquisitionBucketGain? in
                 guard combined.winnersByBucket[label]?.contains(card.cardId) == true else {
                     return nil
@@ -147,7 +162,8 @@ public struct AcquisitionAnalyzer {
                 feeWaiverUnresolved: card.fee.waiver != nil
                     && ownerState.cardStates[card.cardId]?.feeWaiverActive == nil,
                 neverScorable: !scorable,
-                bucketGains: gains))
+                bucketGains: gains,
+                eligibleForResident: eligibleForResident))
         }
         results.sort {
             $0.netAnnualValueCad != $1.netAnnualValueCad

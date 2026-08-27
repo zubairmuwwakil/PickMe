@@ -97,8 +97,10 @@ public struct PortfolioRun: Equatable, Sendable {
 ///   producing negative marginal values that are an artefact of the gate rather than a fact about
 ///   the card.
 /// - The year is simulated as twelve equal months from `asOf`, with cap progress carried forward.
-///   Monthly caps reset each month; annual and account-year caps are treated as one full year of
-///   room across the window, which is exact for account-year caps and never double-counts a reset.
+///   Monthly caps reset each month, quarterly caps every third simulated month (loop-relative, not
+///   pinned to real Jan/Apr/Jul/Oct boundaries); annual and account-year caps are treated as one
+///   full year of room across the window, which is exact for account-year caps and never
+///   double-counts a reset.
 /// - Cap progress starts at zero: this is a forward-looking year, not the remainder of the current
 ///   one. (The seeded Scotia progress is flagged suspect in owner-state.json regardless.)
 public struct PortfolioAnalyzer {
@@ -129,7 +131,7 @@ public struct PortfolioAnalyzer {
         for card in catalogue.cards {
             let without = run(distribution, excluding: [card.cardId], asOf: asOf)
             let marginal = full.totalValueCad - without.totalValueCad
-            let fee = card.fee.annualCad ?? 0
+            let fee = ReportingCurrency.toReporting(card.fee.annual)
             let wins = full.winnersByBucket
                 .filter { $0.value.contains(card.cardId) }
                 .keys.sorted()
@@ -158,7 +160,7 @@ public struct PortfolioAnalyzer {
             asOf: asOf,
             totalAnnualSpendCad: distribution.totalAnnualCad,
             portfolioValueCad: full.totalValueCad,
-            totalAnnualFeesCad: catalogue.cards.reduce(0) { $0 + ($1.fee.annualCad ?? 0) },
+            totalAnnualFeesCad: catalogue.cards.reduce(0) { $0 + ReportingCurrency.toReporting($1.fee.annual) },
             contributions: contributions,
             redundantPairs: redundantPairs(distribution, asOf: asOf,
                                            full: full, contributions: contributions))
@@ -188,7 +190,7 @@ public struct PortfolioAnalyzer {
         var scorable: Set<String> = []
 
         for month in 0..<12 {
-            resetMonthlyCaps(in: &state, catalogue: subCatalogue)
+            resetPeriodicCaps(in: &state, catalogue: subCatalogue, month: month)
             let monthAsOf = Self.advance(asOf, byMonths: month)
 
             for bucket in distribution.buckets where bucket.annualCad > 0 {
@@ -237,9 +239,17 @@ public struct PortfolioAnalyzer {
         return state
     }
 
-    private func resetMonthlyCaps(in state: inout OwnerState, catalogue: Catalogue) {
+    /// Resets caps whose period completes on this simulated month. `month` is the loop-relative
+    /// index from `run(_:excluding:asOf:)` (0...11 from `asOf`, not a real calendar month), so a
+    /// `.calendarQuarter` cap resets every third simulated month — "one quarter of room" per the
+    /// same non-calendar-pinned simplification `.calendarYear`/`.accountYear` already get treated
+    /// with as "one full year of room" across the window.
+    private func resetPeriodicCaps(in state: inout OwnerState, catalogue: Catalogue, month: Int) {
         for card in catalogue.cards {
-            for cap in card.caps where cap.period == .calendarMonth {
+            for cap in card.caps {
+                let dueForReset = cap.period == .calendarMonth
+                    || (cap.period == .calendarQuarter && month % 3 == 0)
+                guard dueForReset else { continue }
                 state.cardStates[card.cardId, default: CardState()]
                     .capProgress?[cap.capId] = 0
             }
@@ -255,9 +265,11 @@ public struct PortfolioAnalyzer {
               let cap = card.caps.first(where: { $0.capId == capId })
         else { return }
 
+        // `.spendNative` must accrue in the same currency `Scorer.score` compares it against —
+        // the card's own billingCurrency, not unconditionally CAD.
         let amount = cap.measure == .spendUsdEquivalent
             ? (purchase.usdEquivalent ?? purchase.amountCad * Scorer.fallbackCadToUsd)
-            : purchase.amountCad
+            : Scorer.nativeAmount(for: purchase, billingCurrency: card.billingCurrency)
         var cardState = state.cardStates[card.cardId] ?? CardState()
         cardState.capProgress = (cardState.capProgress ?? [:])
             .merging([capId: amount], uniquingKeysWith: +)

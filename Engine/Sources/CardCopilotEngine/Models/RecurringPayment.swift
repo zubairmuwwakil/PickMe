@@ -97,7 +97,7 @@ public struct RecurringPayment: Equatable, Sendable, Identifiable {
     /// acceptance is near-universal for Canadian billers; Amex is the live question, which is
     /// why the assumption is disclosed instead of narrowed here.
     public var effectiveAcceptedNetworks: Set<Network> {
-        declaredAcceptedNetworks ?? [.amex, .visa, .mastercard]
+        declaredAcceptedNetworks ?? [.amex, .visa, .mastercard, .discover]
     }
 }
 

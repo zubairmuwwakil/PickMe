@@ -665,9 +665,9 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             return String(localized: "ambient.reward.best-return", defaultValue: "best return")
         }
         switch rule.earn {
-        case .points(let pointsPerCad):
-            let multiplier = pointsPerCad.rounded() == pointsPerCad
-                ? String(Int(pointsPerCad)) : String(format: "%.1f", pointsPerCad)
+        case .points(let pointsPerUnit):
+            let multiplier = pointsPerUnit.rounded() == pointsPerUnit
+                ? String(Int(pointsPerUnit)) : String(format: "%.1f", pointsPerUnit)
             let unit = card.program.programId == "amexMembershipRewards"
                 ? "MR"
                 : String(localized: "ambient.reward.points", defaultValue: "points")

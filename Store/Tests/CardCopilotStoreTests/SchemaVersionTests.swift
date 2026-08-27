@@ -259,7 +259,8 @@ final class SchemaVersionTests: XCTestCase {
             for: Schema(versionedSchema: CardCopilotSchemaV2.self),
             migrationPlan: CardCopilotMigrationPlan.self,
             configurations: ModelConfiguration(url: url))
-        let migrated = try ModelContext(v2).fetch(FetchDescriptor<StoredPrediction>())
+        let migrated = try ModelContext(v2).fetch(
+            FetchDescriptor<CardCopilotSchemaV2.StoredPrediction>())
 
         XCTAssertEqual(migrated.count, 1, "The V1 row did not survive migration.")
         XCTAssertEqual(migrated[0].merchantName, "Loblaws")

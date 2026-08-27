@@ -17,7 +17,7 @@ public struct PurchaseContext: Codable, Equatable, Sendable {
                 category: String, mcc: Int? = nil, merchantBrand: String? = nil,
                 country: String = "CA", channel: String = "cardPresent",
                 recurringIndicator: Bool = false,
-                acceptedNetworks: Set<Network> = [.amex, .visa, .mastercard]) {
+                acceptedNetworks: Set<Network> = [.amex, .visa, .mastercard, .discover]) {
         self.amountCad = amountCad
         self.currency = currency
         self.usdEquivalent = usdEquivalent
@@ -47,6 +47,6 @@ public struct PurchaseContext: Codable, Equatable, Sendable {
         channel = try c.decodeIfPresent(String.self, forKey: .channel) ?? "cardPresent"
         recurringIndicator = try c.decodeIfPresent(Bool.self, forKey: .recurringIndicator) ?? false
         acceptedNetworks = Set(try c.decodeIfPresent([Network].self, forKey: .acceptedNetworks)
-                               ?? [.amex, .visa, .mastercard])
+                               ?? [.amex, .visa, .mastercard, .discover])
     }
 }

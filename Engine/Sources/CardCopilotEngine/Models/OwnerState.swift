@@ -289,10 +289,24 @@ public struct OwnerState: Codable, Equatable, Sendable {
     public var carry: Carry
     public var cardStates: [String: CardState]
     public var valuationsCad: Valuations
+    /// The owner's own residency, as a raw `Market.rawValue` string ("CA"/"US") rather than
+    /// `Market` itself — Layer 2 owner/account state, never a product fact, and kept exactly as
+    /// permissive as `Predicate.country` in case a market this engine doesn't yet model needs to
+    /// round-trip through here without a decode failure. `nil` (every pre-2.0 owner-state file)
+    /// means unresolved; `RecommendationEngine`'s empty-wallet fallback defaults it to "CA" rather
+    /// than refusing to advise, since Canada-only was this engine's only behavior before 2.0 and a
+    /// silent default here changes nothing for an existing installation.
+    ///
+    /// Deliberately does NOT gate which cards an owner can hold (`ownedCardIds` is unrestricted —
+    /// a Canadian resident holding a US card on a USD purchase can be the objectively correct
+    /// checkout pick) or which cards `AcquisitionAnalyzer` will SCORE (marginal-value math is
+    /// still meaningful across markets). It only gates `AcquisitionAnalyzer`'s recommended-facing
+    /// output and the empty-wallet browse default — see `AcquisitionCandidate.eligibleForResident`.
+    public var market: String?
 
     public init(ownerStateVersion: String, ownedCardIds: [String], defaultCardId: String,
                 switchThreshold: SwitchThreshold, carry: Carry, cardStates: [String: CardState],
-                valuationsCad: Valuations) {
+                valuationsCad: Valuations, market: String? = nil) {
         self.ownerStateVersion = ownerStateVersion
         self.ownedCardIds = ownedCardIds
         self.defaultCardId = defaultCardId
@@ -300,5 +314,10 @@ public struct OwnerState: Codable, Equatable, Sendable {
         self.carry = carry
         self.cardStates = cardStates
         self.valuationsCad = valuationsCad
+        self.market = market
     }
+
+    /// The owner's residency for market-scoping purposes, defaulting to `.ca` when unresolved —
+    /// see `market`'s doc comment for why a default (rather than a refusal) is correct here.
+    public var resolvedMarket: Market { market.flatMap(Market.init(rawValue:)) ?? .ca }
 }

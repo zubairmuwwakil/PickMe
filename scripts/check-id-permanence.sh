@@ -46,7 +46,7 @@ if [ -n "$missing" ]; then
   echo "$missing" | sed 's/^/  /' >&2
   echo "check-id-permanence:" >&2
   echo "check-id-permanence: card ids are permanent. A discontinued product is tombstoned, not" >&2
-  echo "check-id-permanence: deleted — set \"status\": \"withdrawn\" and \"effectiveTo\", and leave" >&2
+  echo "check-id-permanence: deleted — set \"lifecycleStatus\": \"withdrawn\" and \"effectiveTo\", and leave" >&2
   echo "check-id-permanence: the card in place. Prediction rows and other repos key on these ids." >&2
   exit 1
 fi

@@ -33,8 +33,13 @@ class RecommendationEngine(
     )
 
     fun recommend(purchase: PurchaseContext, asOf: String): RecommendationOutcome {
+        // The empty-wallet fallback ("no cards recorded yet, show what a typical wallet could do")
+        // is scoped to the owner's own market — without this, a multi-market catalogue would
+        // recommend a Chase card to a new Canadian user who hasn't recorded a wallet yet. A
+        // non-empty wallet is NEVER market-filtered: an owned card is an owned card regardless of
+        // where it was issued (see OwnerState.market's doc comment).
         val candidateCards = if (ownerState.ownedCardIds.isEmpty()) {
-            catalogue.cards
+            catalogue.cards.filter { it.market == ownerState.resolvedMarket }
         } else {
             val ownedSet = ownerState.ownedCardIds.toSet()
             catalogue.cards.filter { ownedSet.contains(it.cardId) }

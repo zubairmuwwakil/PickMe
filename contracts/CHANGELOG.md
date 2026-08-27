@@ -2,6 +2,86 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-26 — card-catalogue 2.0: multi-market shape (Money, market/billingCurrency, spendNative, calendarQuarter, draft status)
+
+**Why:** preparing to import US cards surfaced that the catalogue baked CAD into its shape —
+`fee.annualCad`, `credit.valueCad`, `earn.pointsPerCad`, `cap.measure: spendCad` — rather than
+representing currency explicitly. A US card's fee is stated in USD; converting it to CAD at
+authoring time (as the old field names would force) is exactly the "invented number" this
+catalogue's D3 sourcing bar exists to prevent. This bump makes every monetary field
+currency-tagged and gives every card an explicit market before any non-Canadian product enters.
+
+**Breaking shape changes (MAJOR 1 → 2):**
+- `fee.annualCad`/`monthlyCad: number` → `fee.annual`/`monthly: {amount, currency}`.
+- `credit.valueCad: number` → `credit.value: {amount, currency}`.
+- `earn.pointsPerCad` → `earn.pointsPerUnit` — per unit of the card's OWN `billingCurrency`, not
+  CAD unconditionally.
+- `cap.measure: "spendCad"` → `"spendNative"` — measured in the card's own `billingCurrency`.
+  `spendUsdEquivalent` unchanged.
+- Every card now requires `market` (`"CA"|"US"`) and `billingCurrency` (`"CAD"|"USD"`). All 41
+  existing cards migrated to `market: "CA"`, `billingCurrency: "CAD"` — behaviourally identical
+  to today, verified by the unchanged 28 golden fixtures.
+
+**Additive:**
+- `cap.period`/`credit.period` gain `"calendarQuarter"` (`EngineCapability.capCalendarQuarter`,
+  supported from day one) — US rotating-category cards (5x groceries up to $1,500/quarter) were a
+  shape this catalogue could not express at all before this.
+- `predicate.ownerSelectedCategory` generalizes the Tangerine-only `ownerSelectedTangerineCategory`
+  mechanism (`CardState.selectedCategories` was never Tangerine-specific, only the string naming
+  it was) for US selectable-category cards. Both strings accepted; no existing rule rewritten.
+- `network` gains `"discover"`.
+- `status: "published"|"draft"` (absent = published). A `draft` record is a research-grade entry
+  that has not cleared the issuer-confirmed sourcing bar; `Scorer`/`RecommendationEngine` and
+  `PortfolioAnalyzer` refuse to score one even if it ends up in `ownedCardIds`.
+  `AcquisitionAnalyzer` may still surface one, clearly excluded from `recommended`. This is the
+  two-tier corpus mechanism a bulk US import will use — no draft cards are added by this commit.
+  `card-catalogue.schema.json` still validates every card as before; nothing here relaxes it.
+- `eligibility.residency` (optional; absent means "assume `[market]`") plus documentation-only
+  `incomeRequirementCad`/`creditScoreTier`/`provinceStateRestriction`/`businessOnly` capture
+  points for a later pass.
+- `OwnerState.market` (optional, raw `Market` string) — the owner's own residency. Gates the
+  empty-wallet checkout fallback (`RecommendationEngine`) and `AcquisitionAnalyzer.recommended`
+  to the owner's market by default; never gates `ownedCardIds` itself (a Canadian resident
+  legitimately holding a US card is not locked out) or which candidates get scored (marginal-value
+  math stays meaningful cross-market — only the *default-surfaced* recommendation is scoped).
+
+**Engine changes, mirrored in all three implementations (Swift/Kotlin/TypeScript):**
+- `Scorer` computes earn and the FX gate against the purchase amount converted into the CARD's
+  OWN billing currency (reusing the existing `usdEquivalent`/pinned-fallback mechanism
+  `spendUsdEquivalent` caps already relied on), not `amountCad` unconditionally. For every
+  CAD-billing card (all 41 today) this is the identity — verified unchanged by the golden
+  fixtures — and is exercised for a USD-billing card by new `MultiMarketTest`/`multiMarket.test.ts`
+  suites (7 cases each: USD-equivalent earn, pinned-rate fallback, FX-gate-by-billing-currency in
+  both directions, quarterly cap straddle, draft exclusion).
+- New `ReportingCurrency` (Swift/Kotlin) / `reportingCurrency.ts` (TS): converts a `Money` value
+  to the engine's fixed CAD reporting currency at the point of use (`PortfolioAnalyzer`,
+  `AcquisitionAnalyzer`, `catalogueCard.ts`) — a catalogue `Money` value itself is never rewritten.
+  Reuses the existing pinned `fallbackCadToUsd` rather than a second constant that could drift.
+- `CapWindow` (Swift/Kotlin) resolves `calendarQuarter` windows; the TS twin has no window
+  resolver (unchanged — MoneyTalks doesn't do cap-window projection).
+- **Not done, deliberately:** program *valuations* (`programs.json`, `ProgramValuation`) stay
+  CAD-only in this bump — no catalogue program is USD-valued yet, so adding currency-awareness to
+  the valuation model is deferred until Stage C actually sources one, rather than building a
+  mechanism with nothing to exercise it.
+
+**A pre-existing, unrelated bug found and fixed while re-running the Kotlin suite against the
+migrated catalogue:** `SeedLoader.loadCandidateCatalogue()` (Kotlin only) still decoded
+`candidate-catalogue.json` as a full `Catalogue`, a shape that file left behind on 2026-08-24 when
+candidates became id references. Nothing had run the Kotlin suite against a real candidate file
+since; two Kotlin-only tests (`ProgramValuationTest`, `CapabilityGatingTest`) still unioned
+`loadCandidateCatalogue().cards` into their "every card" scans, the exact "wallet + candidates"
+duplication the one-corpus decision retired in Swift. Kotlin now has its own `CandidateSet`
+mirroring Swift's, and both tests read `loadCatalogue().cards` alone.
+
+**Verified:** PickMe `Engine` — no Swift toolchain in this environment; changes reviewed by hand
+against the exact signatures involved but NOT compiler-checked, and CI on `macos-15` is the first
+real check. Android `:core:engine:test` — 41/41 passing (34 pre-existing + 7 new
+`MultiMarketTest`), including the golden `FixtureHarnessTest` unchanged. MoneyTalks — `tsc --noEmit`
+clean project-wide; `vitest run` 977/988 passing; the 11 failures are `contracts.test.ts`'s
+commit-provenance checks, which by design cannot pass while PickMe's contract changes are
+uncommitted (`scripts/sync-contracts.sh --allow-dirty` was used for local verification) — they
+clear on a clean re-sync once this lands.
+
 ## 2026-08-20 — card-catalogue: 51 `scoredInV1: false` rules migrated to `requires`/`outOfScope`
 
 - **`scoredInV1: false` had no machine meaning.** 51 of the 96 earn rules carried it, and nothing

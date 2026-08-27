@@ -13,5 +13,5 @@ data class PurchaseContext(
     val country: String = "CA",
     val channel: String = "cardPresent",
     val recurringIndicator: Boolean = false,
-    val acceptedNetworks: Set<Network> = setOf(Network.AMEX, Network.VISA, Network.MASTERCARD)
+    val acceptedNetworks: Set<Network> = setOf(Network.AMEX, Network.VISA, Network.MASTERCARD, Network.DISCOVER)
 )

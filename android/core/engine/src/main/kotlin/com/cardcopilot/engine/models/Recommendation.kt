@@ -28,12 +28,14 @@ enum class Warning(val rawValue: String) {
     /**
      * The issuer has discontinued this product as of the scored date. Mirrors Swift's
      * `Warning.productWithdrawn`, which PickMe's engine owns.
-     *
-     * Declared here ahead of any Kotlin scoring behaviour on purpose: `ignoreUnknownKeys` skips
-     * unknown object keys, not unknown enum values, so a value this enum lacks fails the whole
-     * decode. The case has to exist before the first withdrawn card ships, not after.
      */
-    @SerialName("productWithdrawn") PRODUCT_WITHDRAWN("productWithdrawn");
+    @SerialName("productWithdrawn") PRODUCT_WITHDRAWN("productWithdrawn"),
+
+    /**
+     * `card.status == DRAFT` — a research-grade catalogue record that has not cleared D3's
+     * issuer-confirmed sourcing bar. Excluded outright, never merely scored with a caveat.
+     */
+    @SerialName("draftProduct") DRAFT_PRODUCT("draftProduct");
 
     companion object {
         fun fromRaw(raw: String): Warning? = entries.firstOrNull { it.rawValue == raw }
