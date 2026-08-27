@@ -15,6 +15,12 @@ struct FlowError: Identifiable, Equatable {
 
     init(message: String) { self.message = message }
     init(_ error: Error) { self.message = error.localizedDescription }
+
+    /// Compared by message, not by `id`. The synthesised `==` would include the fresh UUID, so
+    /// two reports of the same failure were never equal and any test asserting on a whole
+    /// FlowError would fail for a reason nothing on screen could explain. `id` still exists and
+    /// still varies per report — that is what makes `.alert(item:)` re-present a repeat failure.
+    static func == (lhs: FlowError, rhs: FlowError) -> Bool { lhs.message == rhs.message }
 }
 
 /// The last known device location, and whether it is fresh enough to sort by.
@@ -109,8 +115,6 @@ final class CopilotSession {
         }
     }
 
-    func noteLocationDenied() { locationDenied = true }
-
     /// Finds shops near the owner. Returns an outcome rather than setting navigation, so the
     /// mapping to a step stays a pure function that tests can exercise.
     func findNearby(using graph: DependencyGraph) async -> FlowOutcome {
@@ -150,6 +154,12 @@ final class CopilotSession {
     /// Ported verbatim from `CheckoutFlowView.recommend` (846-line predecessor): the Live
     /// Activity start is not incidental UI, it is the reason the owner opens the app mid-checkout
     /// at all, so the fork/single branch, headline, and advantage text must survive the move.
+    ///
+    /// Deliberately does not `refresh`, matching the original. The rows this writes — a
+    /// prediction, an open purchase, a merchant — are all behind the recommendation screen the
+    /// owner is about to see, and `RecommendationView`'s Done already refreshes on the way out.
+    /// A snapshot fetch here would only add store reads to the one path where the owner is
+    /// standing at a till waiting for an answer.
     func recommend(merchant: NearbyMerchant, amount: Double?,
                    using graph: DependencyGraph) -> CheckoutStep {
         do {
@@ -157,8 +167,6 @@ final class CopilotSession {
             let result = try graph.service.recommend(merchant: merchant,
                                                      amountCad: amount,
                                                      asOf: today)
-            refresh(using: graph)
-
             let (winnerCardId, headline, advantageCad, isFork): (String, String, Double?, Bool) = {
                 switch result.outcome {
                 case .single(let rec):

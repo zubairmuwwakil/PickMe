@@ -72,7 +72,9 @@ struct MerchantConfirmView: View {
         }
         .listStyle(.insetGrouped)
         .searchable(text: $searchText, prompt: "Search different merchant…")
-        .onSubmit(of: .search) { onSearch(searchText) }
+        .onSubmit(of: .search) {
+            if let text = SearchSubmission.query(from: searchText) { onSearch(text) }
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel", action: onCancel)

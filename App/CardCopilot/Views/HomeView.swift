@@ -599,8 +599,7 @@ struct HomeView: View {
     }
 
     private func submitSearch() {
-        let text = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
+        guard let text = SearchSubmission.query(from: searchText) else { return }
         isSearchFocused = false
         onSearch(text)
     }

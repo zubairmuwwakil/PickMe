@@ -116,7 +116,9 @@ final class CopilotSessionTests: XCTestCase {
     }
 
     /// An empty query must not reach MapKit. The old code guarded with
-    /// `guard let deps, !text.isEmpty` and silently returned, leaving the owner on a spinner.
+    /// `guard let deps, !text.isEmpty` ahead of its own `.locating` assignment, so an empty
+    /// submission was a silent no-op. Reaching this line at all means a caller skipped
+    /// `SearchSubmission.query(from:)` — the outcome below is the backstop, not the UX.
     func testEmptySearchReturnsNothingFoundWithoutCallingTheProvider() async throws {
         let context = try makeContext()
         let session = CopilotSession()
