@@ -26,7 +26,7 @@ public enum ReportingCurrency {
     public static func toReporting(_ money: Money?) -> Double {
         guard let money else { return 0 }
         switch money.currency {
-        case reportingCurrency:
+        case .cad:
             return money.amount
         case .usd:
             return money.amount * pinnedUsdToCad
