@@ -6,8 +6,8 @@ import CardCopilotStore
 /// Allows the user to experiment with different cents-per-point valuations (Amex MR, Aeroplan,
 /// Scene+, Avion) and visually observe where credit card recommendations flip against cash back.
 struct ValuationSandboxView: View {
-    let deps: DependencyGraph
-    let onDone: () -> Void
+    @Environment(CopilotEnvironment.self) private var environment
+    @Environment(\.dismiss) private var dismiss
 
     @State private var amexMrCents: Double = 1.8
     @State private var aeroplanCents: Double = 2.0
@@ -32,21 +32,25 @@ struct ValuationSandboxView: View {
     ]
 
     var body: some View {
-        ScrollView {
+        if let graph = environment.graph {
+            ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 explainerBanner
                 valuationSlidersCard
-                simulationResultsSection
+                simulationResultsSection(graph: graph)
             }
             .padding(16)
-        }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle("Point Valuation Sandbox")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Done", action: onDone).font(.headline)
             }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Point Valuation Sandbox")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }.font(.headline)
+                }
+            }
+        } else {
+            EmptyView()
         }
     }
 
@@ -96,7 +100,7 @@ struct ValuationSandboxView: View {
         }
     }
 
-    private var simulationResultsSection: some View {
+    private func simulationResultsSection(graph: DependencyGraph) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Simulated Checkout Outcomes").font(.headline)
             Text("Live evaluation using your active cards and customized point valuations.")
@@ -104,7 +108,7 @@ struct ValuationSandboxView: View {
 
             VStack(spacing: 8) {
                 ForEach(samples) { sample in
-                    let result = simulateCheckout(sample: sample)
+                    let result = simulateCheckout(sample: sample, graph: graph)
                     HStack(spacing: 12) {
                         Image(systemName: sample.icon)
                             .font(.title3)
@@ -141,21 +145,21 @@ struct ValuationSandboxView: View {
         let returnCad: Double
     }
 
-    private func simulateCheckout(sample: SimulationSample) -> SimulationResult {
+    private func simulateCheckout(sample: SimulationSample, graph: DependencyGraph) -> SimulationResult {
         // Build customized owner state with current slider values
-        var customOwner = deps.ownerState
+        var customOwner = graph.ownerState
         customOwner.valuationsCad[points: "amexMembershipRewards"]?.centsPerPoint = amexMrCents
         customOwner.valuationsCad[points: "rbcAvion"]?.centsPerPoint = avionCents
         customOwner.valuationsCad[points: "aeroplan"]?.centsPerPoint = aeroplanCents
         customOwner.valuationsCad[points: "scenePlus"]?.centsPerPoint = scenePlusCents
 
         let context = PurchaseContext(amountCad: sample.amountCad, category: sample.category)
-        let engine = RecommendationEngine(catalogue: deps.catalogue, ownerState: customOwner)
+        let engine = RecommendationEngine(catalogue: graph.catalogue, ownerState: customOwner)
         let today = Date().formatted(.iso8601.year().month().day())
         let outcome = engine.recommend(context, asOf: today)
 
         if case .advised(let recommendation) = outcome {
-            let winnerName = deps.catalogue.cards.first { $0.cardId == recommendation.winner.cardId }?.officialName ?? recommendation.winner.cardId
+            let winnerName = graph.catalogue.cards.first { $0.cardId == recommendation.winner.cardId }?.officialName ?? recommendation.winner.cardId
             return SimulationResult(winningCardName: winnerName, returnCad: recommendation.winner.netValueCad)
         } else {
             return SimulationResult(winningCardName: "Cannot advise", returnCad: 0.0)

@@ -4,31 +4,27 @@ import CardCopilotEngine
 /// The "two runs" screen: declare a planned purchase, see which card earns best
 /// and — separately — what each card's certificate says about protecting it.
 struct ProtectionLensView: View {
-    let deps: DependencyGraph
     let initialContext: BenefitContext
-    let onDone: () -> Void
+    @Environment(CopilotEnvironment.self) private var environment
+    @Environment(\.dismiss) private var dismiss
 
     @State private var contextKind: BenefitContextKind
     @State private var abroad: Bool
     @State private var amountText = ""
     @State private var selectedDisclosure: BenefitDisclosure?
 
-    init(deps: DependencyGraph,
-         initialContext: BenefitContext = BenefitContext(kind: .flight),
-         onDone: @escaping () -> Void) {
-        self.deps = deps
+    init(initialContext: BenefitContext = BenefitContext(kind: .flight)) {
         self.initialContext = initialContext
-        self.onDone = onDone
         _contextKind = State(initialValue: initialContext.kind)
         _abroad = State(initialValue: initialContext.abroad)
     }
 
     private var context: BenefitContext { BenefitContext(kind: contextKind, abroad: abroad) }
 
-    private var comparison: ProtectionComparison {
+    private func comparison(for graph: DependencyGraph) -> ProtectionComparison {
         BenefitsAdvisor.comparison(context: context,
-                                   wallet: deps.walletCardIds,
-                                   catalogue: deps.benefits)
+                                   wallet: graph.walletCardIds,
+                                   catalogue: graph.benefits)
     }
 
     private var amountCad: Double? {
@@ -38,31 +34,37 @@ struct ProtectionLensView: View {
     }
 
     var body: some View {
-        List {
+        if let graph = environment.graph {
+            let comparison = comparison(for: graph)
+
+            List {
             contextSection
-            earnSection
-            verdictSection
+            earnSection(graph: graph)
+            verdictSection(comparison: comparison, graph: graph)
             ForEach(comparison.columns, id: \.cardId) { column in
-                cardSection(column)
+                cardSection(column, comparison: comparison, graph: graph)
             }
-            absentSection
+            absentSection(comparison: comparison, graph: graph)
             Section {
                 Text(BenefitsFormatting.certificateFooter)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-        }
-        .listStyle(.insetGrouped)
-        .navigationTitle("Big purchase or trip")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Done", action: onDone)
-                    .font(.headline)
             }
-        }
-        .sheet(item: $selectedDisclosure) { disclosure in
-            BenefitDetailSheet(disclosure: disclosure, cardName: cardName(disclosure.cardId))
+            .listStyle(.insetGrouped)
+            .navigationTitle("Big purchase or trip")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                        .font(.headline)
+                }
+            }
+            .sheet(item: $selectedDisclosure) { disclosure in
+                BenefitDetailSheet(disclosure: disclosure, cardName: cardName(disclosure.cardId, graph: graph))
+            }
+        } else {
+            EmptyView()
         }
     }
 
@@ -91,16 +93,16 @@ struct ProtectionLensView: View {
 
     /// The earn run — computed by the engine directly so nothing is logged.
     @ViewBuilder
-    private var earnSection: some View {
+    private func earnSection(graph: DependencyGraph) -> some View {
         if let amount = amountCad {
             let today = Date().formatted(.iso8601.year().month().day())
-            if case .advised(let recommendation) = deps.engine.recommend(
+            if case .advised(let recommendation) = graph.engine.recommend(
                 PurchaseContext(amountCad: amount, category: "other"), asOf: today) {
                 Section("Best Reward Return") {
                     HStack(spacing: 12) {
                         CardMiniBadge(cardId: recommendation.winner.cardId, size: 22)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(cardName(recommendation.winner.cardId))
+                            Text(cardName(recommendation.winner.cardId, graph: graph))
                                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                             Text("Earns ≈ $\(String(format: "%.2f", recommendation.winner.netValueCad)) back on $\(Int(amount))")
                                 .font(.caption)
@@ -116,7 +118,7 @@ struct ProtectionLensView: View {
     }
 
     @ViewBuilder
-    private var verdictSection: some View {
+    private func verdictSection(comparison: ProtectionComparison, graph: DependencyGraph) -> some View {
         if comparison.columns.isEmpty {
             Section("Protection Verdict") {
                 HStack(spacing: 10) {
@@ -144,7 +146,7 @@ struct ProtectionLensView: View {
                         Text("Dominant Protection Card")
                             .font(.system(size: 12, weight: .bold, design: .rounded))
                             .foregroundStyle(.green)
-                        Text("\(cardName(dominant)) equals or beats all other cards on every line below.")
+                        Text("\(cardName(dominant, graph: graph)) equals or beats all other cards on every line below.")
                             .font(.system(size: 14, weight: .semibold, design: .rounded))
                             .foregroundStyle(.primary)
                     }
@@ -177,7 +179,8 @@ struct ProtectionLensView: View {
         }
     }
 
-    private func cardSection(_ column: ProtectionComparison.Column) -> some View {
+    private func cardSection(_ column: ProtectionComparison.Column, comparison: ProtectionComparison,
+                             graph: DependencyGraph) -> some View {
         Section {
             ForEach(comparison.relevantKinds, id: \.rawValue) { kind in
                 if let disclosure = column.byKind[kind.rawValue] {
@@ -205,7 +208,7 @@ struct ProtectionLensView: View {
         } header: {
             HStack(spacing: 8) {
                 CardMiniBadge(cardId: column.cardId, size: 16)
-                Text(cardName(column.cardId))
+                Text(cardName(column.cardId, graph: graph))
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                 Spacer()
@@ -223,13 +226,13 @@ struct ProtectionLensView: View {
     }
 
     @ViewBuilder
-    private var absentSection: some View {
+    private func absentSection(comparison: ProtectionComparison, graph: DependencyGraph) -> some View {
         if !comparison.absent.isEmpty {
             Section("No Applicable Coverage") {
                 ForEach(comparison.absent, id: \.cardId) { absent in
                     HStack {
                         CardMiniBadge(cardId: absent.cardId, size: 16)
-                        Text(cardName(absent.cardId))
+                        Text(cardName(absent.cardId, graph: graph))
                             .font(.system(size: 14, weight: .medium))
                         Spacer()
                         Text(absent.verification == .certificateVerified ? "Confirmed No Coverage" : "Unverified")
@@ -241,7 +244,7 @@ struct ProtectionLensView: View {
         }
     }
 
-    private func cardName(_ cardId: String) -> String {
-        deps.catalogue.cards.first { $0.cardId == cardId }?.officialName ?? cardId
+    private func cardName(_ cardId: String, graph: DependencyGraph) -> String {
+        graph.catalogue.cards.first { $0.cardId == cardId }?.officialName ?? cardId
     }
 }

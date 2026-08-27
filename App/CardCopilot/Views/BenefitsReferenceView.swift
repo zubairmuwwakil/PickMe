@@ -3,19 +3,20 @@ import CardCopilotEngine
 
 /// Per-card benefits browser: shows all certificate verified coverage and terms per card.
 struct BenefitsReferenceView: View {
-    let deps: DependencyGraph
-    let onDone: () -> Void
+    @Environment(CopilotEnvironment.self) private var environment
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        List(deps.benefits.cards) { card in
+        if let graph = environment.graph {
+            List(graph.benefits.cards) { card in
             NavigationLink {
-                CardBenefitsDetailView(card: card, cardName: cardName(card.cardId))
+                CardBenefitsDetailView(card: card, cardName: cardName(card.cardId, graph: graph))
             } label: {
                 HStack(spacing: 12) {
                     CardMiniBadge(cardId: card.cardId, size: 20)
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(cardName(card.cardId))
+                        Text(cardName(card.cardId, graph: graph))
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
                         Text(card.benefits.isEmpty
                              ? (card.certificate.verificationStatus == .certificateVerified
@@ -43,14 +44,17 @@ struct BenefitsReferenceView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button("Done", action: onDone)
+                Button("Done") { dismiss() }
                     .font(.headline)
             }
+            }
+        } else {
+            EmptyView()
         }
     }
 
-    private func cardName(_ cardId: String) -> String {
-        deps.catalogue.cards.first { $0.cardId == cardId }?.officialName ?? cardId
+    private func cardName(_ cardId: String, graph: DependencyGraph) -> String {
+        graph.catalogue.cards.first { $0.cardId == cardId }?.officialName ?? cardId
     }
 
     private func chipColor(_ verification: BenefitVerification) -> Color {

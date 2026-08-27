@@ -7,20 +7,21 @@ import CardCopilotEngine
 /// render time (see `CategoryPickerAdvisor`) — nothing here is a fixed list of categories or
 /// cards.
 struct CategoryPickerView: View {
-    let deps: DependencyGraph
-    let onDone: () -> Void
+    @Environment(CopilotEnvironment.self) private var environment
+    @Environment(\.dismiss) private var dismiss
 
     private let distribution = SpendDistribution.placeholderCanadianHousehold
     private let columns = [GridItem(.adaptive(minimum: 140), spacing: 12)]
 
-    private var categories: [String] {
-        CategoryPickerAdvisor.derivedCategories(catalogue: deps.catalogue)
+    private func categories(for graph: DependencyGraph) -> [String] {
+        CategoryPickerAdvisor.derivedCategories(catalogue: graph.catalogue)
             .sorted { CategoryPickerAdvisor.label(for: $0, distribution: distribution)
                         < CategoryPickerAdvisor.label(for: $1, distribution: distribution) }
     }
 
     var body: some View {
-        ScrollView {
+        if let graph = environment.graph {
+            ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Text("The answer can change with the amount — tap a category to see how.")
                     .font(.subheadline)
@@ -28,9 +29,9 @@ struct CategoryPickerView: View {
                     .padding(.horizontal, 16)
 
                 LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(categories, id: \.self) { category in
+                    ForEach(categories(for: graph), id: \.self) { category in
                         NavigationLink {
-                            CategoryBandListView(category: category, deps: deps, distribution: distribution)
+                            CategoryBandListView(category: category, deps: graph, distribution: distribution)
                         } label: {
                             pill(category)
                         }
@@ -40,15 +41,18 @@ struct CategoryPickerView: View {
                 .padding(.horizontal, 16)
             }
             .padding(.vertical, 14)
-        }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle("Which Card?")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Done", action: onDone)
-                    .font(.headline)
             }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Which Card?")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                        .font(.headline)
+                }
+            }
+        } else {
+            EmptyView()
         }
     }
 

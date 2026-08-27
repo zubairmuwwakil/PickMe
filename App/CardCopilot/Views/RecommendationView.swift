@@ -6,18 +6,21 @@ import CardCopilotStore
 /// structured reward breakdown, and honest split-branch scenarios for ambiguous merchants.
 struct RecommendationView: View {
     let result: CheckoutResult
-    let deps: DependencyGraph?
     let onCompare: ((BenefitContextKind) -> Void)?
-    let onDone: () -> Void
+    @Environment(CopilotEnvironment.self) private var environment
+    @Environment(CopilotSession.self) private var session
+    @Environment(CheckoutRouter.self) private var router
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        ScrollView {
+        if let graph = environment.graph {
+            ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 switch result.outcome {
                 case .single(let recommendation):
-                    singleOutcomeView(recommendation)
+                    singleOutcomeView(recommendation, graph: graph)
                 case .fork(let branches):
-                    forkOutcomeView(branches)
+                    forkOutcomeView(branches, graph: graph)
                 }
 
                 if result.amountWasEstimated {
@@ -37,7 +40,12 @@ struct RecommendationView: View {
                     )
                 }
 
-                Button(action: onDone) {
+                Button {
+                    LiveActivityManager.shared.endActivity()
+                    session.refresh(using: graph)
+                    router.resetToIdle()
+                    dismiss()
+                } label: {
                     Text("Done")
                         .font(.system(size: 17, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
@@ -51,18 +59,21 @@ struct RecommendationView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationBarBackButtonHidden()
+        } else {
+            EmptyView()
         }
-        .background(Color(.systemGroupedBackground))
-        .navigationBarBackButtonHidden()
     }
 
     // MARK: - Single Outcome View
 
     @ViewBuilder
-    private func singleOutcomeView(_ recommendation: Recommendation) -> some View {
-        let explanation = explanation(for: recommendation, category: result.prediction.category)
+    private func singleOutcomeView(_ recommendation: Recommendation, graph: DependencyGraph) -> some View {
+        let explanation = explanation(for: recommendation, category: result.prediction.category, graph: graph)
         let winnerCard = recommendation.winner
-        let officialName = cardName(winnerCard.cardId)
+        let officialName = cardName(winnerCard.cardId, graph: graph)
         let returnText = String(format: "$%.2f back", winnerCard.netValueCad)
 
         VStack(alignment: .leading, spacing: 16) {
@@ -90,7 +101,7 @@ struct RecommendationView: View {
                 Spacer()
 
                 if winnerCard.rewardUnits > 0 {
-                    let unitKind = deps?.catalogue.cards.first { $0.cardId == winnerCard.cardId }?.program.unit
+                    let unitKind = graph.catalogue.cards.first { $0.cardId == winnerCard.cardId }?.program.unit
                     VStack(alignment: .trailing, spacing: 2) {
                         Text("REWARDS EARNED")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -148,21 +159,19 @@ struct RecommendationView: View {
             }
 
             // Benefits and protections section
-            if let deps {
-                BenefitsDisclosureSection(
-                    result: result,
-                    deps: deps,
-                    winnerCardId: winnerCard.cardId,
-                    onCompare: { onCompare?($0) }
-                )
-            }
+            BenefitsDisclosureSection(
+                result: result,
+                deps: graph,
+                winnerCardId: winnerCard.cardId,
+                onCompare: { onCompare?($0) }
+            )
         }
     }
 
     // MARK: - Fork Outcome View (Ambiguous Merchant)
 
     @ViewBuilder
-    private func forkOutcomeView(_ branches: [CheckoutBranch]) -> some View {
+    private func forkOutcomeView(_ branches: [CheckoutBranch], graph: DependencyGraph) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 8) {
@@ -182,7 +191,7 @@ struct RecommendationView: View {
 
             ForEach(branches, id: \.category) { branch in
                 let cardId = branch.recommendation.winner.cardId
-                let cardOfficialName = cardName(cardId)
+                let cardOfficialName = cardName(cardId, graph: graph)
                 let netValue = branch.recommendation.winner.netValueCad
 
                 VStack(alignment: .leading, spacing: 12) {
@@ -259,15 +268,15 @@ struct RecommendationView: View {
         }
     }
 
-    private func explanation(for recommendation: Recommendation, category: String) -> Explanation? {
-        deps?.explainer.explain(
+    private func explanation(for recommendation: Recommendation, category: String, graph: DependencyGraph) -> Explanation? {
+        graph.explainer.explain(
             recommendation,
             purchase: PurchaseContext(amountCad: result.effectiveAmountCad, category: category)
         )
     }
 
-    private func cardName(_ cardId: String) -> String {
-        deps?.catalogue.cards.first { $0.cardId == cardId }?.officialName ?? cardId
+    private func cardName(_ cardId: String, graph: DependencyGraph) -> String {
+        graph.catalogue.cards.first { $0.cardId == cardId }?.officialName ?? cardId
     }
 
     /// Routes through the same shared, catalogue-derived label source the category picker uses

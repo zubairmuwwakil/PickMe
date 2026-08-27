@@ -7,9 +7,9 @@ import CardCopilotStore
 /// the spend profile is a placeholder (decision #19), and every dollar figure that drives a
 /// verdict is marginal, never gross (decision #17).
 struct WalletHealthView: View {
-    let deps: DependencyGraph
     var recentPurchases: [StoredPrediction] = []
-    let onDone: () -> Void
+    @Environment(CopilotEnvironment.self) private var environment
+    @Environment(\.dismiss) private var dismiss
 
     @State private var analysis: PortfolioAnalysis?
     @State private var acquisitionAnalysis: AcquisitionAnalysis?
@@ -31,10 +31,8 @@ struct WalletHealthView: View {
 
     @State private var selectedProfile: SpendProfileChoice
 
-    init(deps: DependencyGraph, recentPurchases: [StoredPrediction] = [], onDone: @escaping () -> Void) {
-        self.deps = deps
+    init(recentPurchases: [StoredPrediction] = []) {
         self.recentPurchases = recentPurchases
-        self.onDone = onDone
         _selectedProfile = State(initialValue: recentPurchases.isEmpty ? .standard : .personalized)
     }
 
@@ -55,34 +53,37 @@ struct WalletHealthView: View {
         }
     }
 
-    private var cardNames: [String: String] {
-        Dictionary(uniqueKeysWithValues: deps.catalogue.cards.map { ($0.cardId, $0.officialName) })
+    private func cardNames(for graph: DependencyGraph) -> [String: String] {
+        Dictionary(uniqueKeysWithValues: graph.catalogue.cards.map { ($0.cardId, $0.officialName) })
     }
 
     /// Names come from the one corpus now; the candidate list only says WHICH products are
     /// candidates, so there is no second place for a card's name to disagree with itself.
-    private var candidateNames: [String: String] {
-        let byId = Dictionary(deps.catalogue.cards.map { ($0.cardId, $0.officialName) },
+    private func candidateNames(for graph: DependencyGraph) -> [String: String] {
+        let byId = Dictionary(graph.catalogue.cards.map { ($0.cardId, $0.officialName) },
                               uniquingKeysWith: { first, _ in first })
         return Dictionary(uniqueKeysWithValues:
-            deps.candidateCardIds.compactMap { id in byId[id].map { (id, $0) } })
+            graph.candidateCardIds.compactMap { id in byId[id].map { (id, $0) } })
     }
 
     var body: some View {
-        ScrollView {
+        if let graph = environment.graph {
+            ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 if let analysis, let acquisitionAnalysis {
                     assumptionBanner
-                    profileSwitcher
+                    profileSwitcher(graph: graph)
                     modePicker
                     if mode == .wallet {
                         summaryCard(analysis)
-                        cardsSection(analysis)
+                        cardsSection(analysis, cardNames: cardNames(for: graph))
                         if !analysis.redundantPairs.isEmpty {
-                            redundantPairsSection(analysis)
+                            redundantPairsSection(analysis, cardNames: cardNames(for: graph))
                         }
                     } else {
-                        acquisitionSection(acquisitionAnalysis)
+                        acquisitionSection(acquisitionAnalysis,
+                                           candidateNames: candidateNames(for: graph),
+                                           cardNames: cardNames(for: graph))
                     }
                     footer
                 } else {
@@ -92,33 +93,36 @@ struct WalletHealthView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
-        }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle("Wallet Health")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Done", action: onDone)
-                    .font(.headline)
             }
-        }
-        .task {
-            recalculateAnalysis()
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Wallet Health")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                        .font(.headline)
+                }
+            }
+            .task {
+                recalculateAnalysis(graph: graph)
+            }
+        } else {
+            EmptyView()
         }
     }
 
-    private func recalculateAnalysis() {
+    private func recalculateAnalysis(graph: DependencyGraph) {
         let today = Date().formatted(.iso8601.year().month().day())
-        analysis = PortfolioAnalyzer(catalogue: deps.catalogue, ownerState: deps.ownerState)
+        analysis = PortfolioAnalyzer(catalogue: graph.catalogue, ownerState: graph.ownerState)
             .analyze(activeDistribution, asOf: today)
         acquisitionAnalysis = AcquisitionAnalyzer(
-            catalogue: deps.catalogue,
-            candidateCardIds: deps.candidateCardIds,
-            ownerState: deps.ownerState)
+            catalogue: graph.catalogue,
+            candidateCardIds: graph.candidateCardIds,
+            ownerState: graph.ownerState)
             .analyze(activeDistribution, asOf: today)
     }
 
-    private var profileSwitcher: some View {
+    private func profileSwitcher(graph: DependencyGraph) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Spend Profile").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
             Picker("Spend Profile", selection: $selectedProfile) {
@@ -128,7 +132,7 @@ struct WalletHealthView: View {
             }
             .pickerStyle(.segmented)
             .onChange(of: selectedProfile) { _, _ in
-                recalculateAnalysis()
+                recalculateAnalysis(graph: graph)
             }
         }
     }
@@ -244,7 +248,7 @@ struct WalletHealthView: View {
 
     // MARK: - Per-card verdicts
 
-    private func cardsSection(_ analysis: PortfolioAnalysis) -> some View {
+    private func cardsSection(_ analysis: PortfolioAnalysis, cardNames: [String: String]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Per Card")
                 .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -262,7 +266,7 @@ struct WalletHealthView: View {
 
     // MARK: - Redundant pairs (decision #17: a pair observation, never two cancel verdicts)
 
-    private func redundantPairsSection(_ analysis: PortfolioAnalysis) -> some View {
+    private func redundantPairsSection(_ analysis: PortfolioAnalysis, cardNames: [String: String]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 6) {
                 Image(systemName: "link")
@@ -279,7 +283,7 @@ struct WalletHealthView: View {
 
             VStack(spacing: 10) {
                 ForEach(analysis.redundantPairs, id: \.cardIds) { pair in
-                    redundantPairRow(pair)
+                    redundantPairRow(pair, cardNames: cardNames)
                 }
             }
         }
@@ -295,7 +299,7 @@ struct WalletHealthView: View {
         )
     }
 
-    private func redundantPairRow(_ pair: RedundantPair) -> some View {
+    private func redundantPairRow(_ pair: RedundantPair, cardNames: [String: String]) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(pair.cardIds.map { cardNames[$0] ?? $0 }.joined(separator: " + "))
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
@@ -314,7 +318,8 @@ struct WalletHealthView: View {
 
     // MARK: - Acquisition (the reverse portfolio counterfactual)
 
-    private func acquisitionSection(_ acquisition: AcquisitionAnalysis) -> some View {
+    private func acquisitionSection(_ acquisition: AcquisitionAnalysis, candidateNames: [String: String],
+                                    cardNames: [String: String]) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             acquisitionOutcome(acquisition)
 
