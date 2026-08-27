@@ -66,14 +66,21 @@ final class MultiMarketTests: XCTestCase {
         let score = Scorer.score(card: usdCashbackCard(), purchase: purchase, ownerState: ownerState(), asOf: asOf)
         XCTAssertFalse(score.excluded)
         XCTAssertEqual(score.appliedRuleId, "grocery-5x-quarterly")
-        XCTAssertEqual(score.rewardUnits, 5, accuracy: 0.000001)
-        XCTAssertEqual(score.grossRewardCad, 5, accuracy: 0.000001)
+        // 5% of the $100 USD equivalent (= US$5 cashback), converted to the CAD reporting figure
+        // — NOT left as if US$5 were C$5. Cashback is real money in the card's billing currency,
+        // unlike points (a currency-agnostic token), so this conversion is load-bearing.
+        let expectedCad = 100 * 0.05 * ReportingCurrency.pinnedUsdToCad
+        XCTAssertEqual(score.rewardUnits, expectedCad, accuracy: 0.000001)
+        XCTAssertEqual(score.grossRewardCad, expectedCad, accuracy: 0.000001)
     }
 
     func testFallsBackToThePinnedRateWhenNoUsdEquivalentSupplied() {
         let purchase = PurchaseContext(amountCad: 137, currency: "CAD", category: "grocery")
         let score = Scorer.score(card: usdCashbackCard(), purchase: purchase, ownerState: ownerState(), asOf: asOf)
-        XCTAssertEqual(score.rewardUnits, 137 * Scorer.fallbackCadToUsd * 0.05, accuracy: 0.000001)
+        // CAD -> USD (fallbackCadToUsd) to compute native earn, then USD -> CAD (its exact
+        // inverse) to report it — the two conversions cancel, leaving 137 * 0.05.
+        let expected = 137 * Scorer.fallbackCadToUsd * 0.05 * ReportingCurrency.pinnedUsdToCad
+        XCTAssertEqual(score.rewardUnits, expected, accuracy: 0.000001)
     }
 
     func testChargesFxWhenPurchaseCurrencyDiffersFromTheCardsBillingCurrency() {
@@ -95,7 +102,8 @@ final class MultiMarketTests: XCTestCase {
         state.capProgress = ["grocery-cap": 1400]
         let owner = ownerState(cardStates: ["usd-cashback-test": state])
         let score = Scorer.score(card: usdCashbackCard(), purchase: purchase, ownerState: owner, asOf: asOf)
-        XCTAssertEqual(score.rewardUnits, 100 * 0.05 + 100 * 0.01, accuracy: 0.000001)
+        let expected = (100 * 0.05 + 100 * 0.01) * ReportingCurrency.pinnedUsdToCad
+        XCTAssertEqual(score.rewardUnits, expected, accuracy: 0.000001)
     }
 
     func testExcludesADraftCardEvenWhenOwned() {

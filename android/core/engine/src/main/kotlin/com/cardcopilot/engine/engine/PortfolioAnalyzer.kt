@@ -165,7 +165,7 @@ class PortfolioAnalyzer(
         val scorable = mutableSetOf<String>()
 
         for (month in 0 until 12) {
-            state = resetMonthlyCaps(state, subCatalogue)
+            state = resetPeriodicCaps(state, subCatalogue, month)
             val monthAsOf = advance(asOf, month)
 
             for (bucket in distribution.buckets) {
@@ -202,18 +202,41 @@ class PortfolioAnalyzer(
         )
     }
 
+    /**
+     * Caps start empty: the question is what a card is worth over the *next* year, not what is
+     * left of the current one.
+     *
+     * The simulated owner also owns exactly the cards in this counterfactual's catalogue.
+     * [RecommendationEngine] re-filters its catalogue by `ownedCardIds` — a checkout-path guard
+     * against advising a card the owner doesn't hold — and without this the two filters
+     * intersect, silently deleting any scoped-in card that isn't already owned. For keep/cancel
+     * the scoped set is a subset of the owned set, so this is a no-op; for the *acquisition*
+     * counterfactual the candidate is unowned by definition, so it would score on nothing at all.
+     */
     private fun forwardYearState(): OwnerState {
         val resetCardStates = ownerState.cardStates.mapValues { (_, cardState) ->
             cardState.copy(capProgress = cardState.capProgress?.mapValues { 0.0 })
         }
-        return ownerState.copy(cardStates = resetCardStates)
+        return ownerState.copy(
+            ownedCardIds = scopedCatalogue.cards.map { it.cardId },
+            cardStates = resetCardStates,
+        )
     }
 
-    private fun resetMonthlyCaps(state: OwnerState, catalogue: Catalogue): OwnerState {
+    /**
+     * Resets caps whose period completes on this simulated month. [month] is the loop-relative
+     * index from [run] (0..11 from `asOf`, not a real calendar month), so a `CALENDAR_QUARTER`
+     * cap resets every third simulated month — "one quarter of room" per the same
+     * non-calendar-pinned simplification `CALENDAR_YEAR`/`ACCOUNT_YEAR` already get treated with
+     * as "one full year of room" across the window.
+     */
+    private fun resetPeriodicCaps(state: OwnerState, catalogue: Catalogue, month: Int): OwnerState {
         val updatedCardStates = state.cardStates.toMutableMap()
         for (card in catalogue.cards) {
             for (cap in card.caps) {
-                if (cap.period == CapPeriod.CALENDAR_MONTH) {
+                val dueForReset = cap.period == CapPeriod.CALENDAR_MONTH ||
+                    (cap.period == CapPeriod.CALENDAR_QUARTER && month % 3 == 0)
+                if (dueForReset) {
                     val cs = updatedCardStates[card.cardId] ?: CardState()
                     val progress = (cs.capProgress ?: emptyMap()).toMutableMap()
                     progress[cap.capId] = 0.0
@@ -235,10 +258,12 @@ class PortfolioAnalyzer(
         val capId = card.earnRules.firstOrNull { it.ruleId == ruleId }?.capId ?: return state
         val cap = card.caps.firstOrNull { it.capId == capId } ?: return state
 
+        // SPEND_NATIVE must accrue in the same currency `Scorer.score` compares it against — the
+        // card's own billingCurrency, not unconditionally CAD.
         val amount = if (cap.measure == CapMeasure.SPEND_USD_EQUIVALENT) {
             purchase.usdEquivalent ?: (purchase.amountCad * Scorer.FALLBACK_CAD_TO_USD)
         } else {
-            purchase.amountCad
+            Scorer.nativeAmount(purchase, card.billingCurrency)
         }
 
         val cardState = state.cardStates[card.cardId] ?: CardState()

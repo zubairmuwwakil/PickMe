@@ -209,4 +209,84 @@ final class PortfolioAnalyzerTests: XCTestCase {
         XCTAssertNotNil(analysis.redundantPairs
             .first { $0.cardIds == ["amex-cobalt", "mbna-rewards-we"] })
     }
+
+    // MARK: - Multi-market: quarterly caps and native-currency accrual across the simulated year
+
+    /// A USD-billing card with a $1,500 USD/quarter grocery cap — the annual simulation's own
+    /// synthetic fixture, not the shared CAD-only catalogue. `amountCad` is deliberately NOT
+    /// `usdEquivalent * 1.37` in the tidy way a real FX rate would produce; it's picked so the two
+    /// numbers are far enough apart that a currency mix-up in cap accrual is impossible to miss.
+    private func quarterlyUsdCashbackCard() -> CardProduct {
+        CardProduct(
+            cardId: "usd-cashback-quarterly-test",
+            officialName: "Test USD Quarterly Cashback Card",
+            issuer: "Test Bank",
+            market: .us,
+            billingCurrency: .usd,
+            network: .visa,
+            kind: .credit,
+            fee: Fee(),
+            program: Program(programId: "cashback", unit: "cashback"),
+            fxRules: [FxRule(status: .current, effectiveFrom: nil, effectiveTo: nil, rate: 0.025,
+                             freeAllowanceCadPerCalendarMonth: nil, postAllowanceRate: nil)],
+            earnRules: [
+                EarnRule(ruleId: "grocery-5x-quarterly", status: .current,
+                         sourceType: .issuerConfirmed,
+                         earn: .cashback(rate: 0.05, rewardCurrency: nil),
+                         predicate: {
+                             var p = Predicate()
+                             p.categories = ["grocery"]
+                             return p
+                         }(),
+                         capId: "grocery-cap"),
+            ],
+            caps: [
+                Cap(capId: "grocery-cap", measure: .spendNative, limit: 1500, period: .calendarQuarter,
+                    anchor: nil, resetTimeZone: "UTC",
+                    postCapEarn: .cashback(rate: 0.01, rewardCurrency: nil), proration: true),
+            ],
+            perTransactionRewardVisibility: "issuerConfirmed",
+            lastVerifiedAt: "2026-08-26",
+            credits: nil)
+    }
+
+    /// Twelve months of grocery spend sized to blow through the $1,500 USD quarterly cap by the
+    /// third month of every quarter — so a full year is four identical quarters *only if* the cap
+    /// actually resets every three months and is checked against the same currency it accrues in.
+    ///
+    /// Before this fix: `resetMonthlyCaps` never reset a `.calendarQuarter` cap at all, so month 4
+    /// onward stayed permanently over-cap; separately, `accrueCapProgress` recorded
+    /// `purchase.amountCad` (here, a CAD figure picked to diverge sharply from the $600 USD
+    /// actually spent) against a limit denominated in the card's own USD billing currency. Either
+    /// bug alone moves the annual total far from the value below; this pins the fixed number so
+    /// neither can silently come back.
+    func testQuarterlyCapsResetAndAccrueInTheCardsNativeCurrencyOverAFullYear() throws {
+        let catalogue = Catalogue(cards: [quarterlyUsdCashbackCard()])
+        let ownerState = OwnerState(
+            ownerStateVersion: "test", ownedCardIds: [], defaultCardId: "usd-cashback-quarterly-test",
+            switchThreshold: SwitchThreshold(minAdvantagePercentagePoints: 0, minAdvantageCad: 0,
+                                             semantics: "either"),
+            carry: Carry(drawerCards: []), cardStates: [:],
+            valuationsCad: Valuations(programs: ["cashback": .cashback(CashBackValuation(cadPerDollar: 1))]))
+
+        let distribution = SpendDistribution(
+            profileId: "quarterly-cap-currency-check",
+            basis: "synthetic: $600 USD/mo of grocery spend against a $1,500 USD/quarter cap, "
+                 + "quoted at a CAD amount ($822/mo) chosen to diverge sharply from $600 so a "
+                 + "currency mix-up in cap accrual cannot cancel out unnoticed",
+            buckets: [.init(label: "Groceries", annualCad: 822 * 12, category: "grocery",
+                            usdEquivalent: 600 * 12)])
+
+        let analyzer = PortfolioAnalyzer(catalogue: catalogue, ownerState: ownerState)
+        let run = analyzer.run(distribution, excluding: [], asOf: "2026-01-01")
+
+        // Every quarter: $600 in-cap at 5% for two months, then a 3rd month split $300 in-cap /
+        // $300 over-cap (300×0.05 + 300×0.01) — 78 USD cashback units/quarter, ×4 quarters, minus
+        // the 2.5% FX spread charged every month on the full $600 USD (never gated by the cap),
+        // all converted to CAD at the pinned USD→CAD rate.
+        let quarterlyUnitsUsd = 600 * 0.05 + 600 * 0.05 + (300 * 0.05 + 300 * 0.01)
+        let quarterlyFxUsd = 600 * 0.025 * 3
+        let expected = (quarterlyUnitsUsd * 4 - quarterlyFxUsd * 4) * ReportingCurrency.pinnedUsdToCad
+        XCTAssertEqual(run.totalValueCad, expected, accuracy: 0.01)
+    }
 }

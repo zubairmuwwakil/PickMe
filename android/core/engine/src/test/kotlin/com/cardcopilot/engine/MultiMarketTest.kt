@@ -109,14 +109,20 @@ class MultiMarketTest {
         val score = Scorer.score(usdCashbackCard, purchase, ownerState(), asOf)
         assertFalse(score.excluded)
         assertEquals("grocery-5x-quarterly", score.appliedRuleId)
-        assertTrue(abs(score.rewardUnits - 5.0) < 1e-6, "expected 5.0, got ${score.rewardUnits}")
+        // 5% of the $100 USD equivalent (= US$5 cashback), converted to the CAD reporting figure
+        // — NOT left as if US$5 were C$5. Cashback is real money in the card's billing currency,
+        // unlike points (a currency-agnostic token), so this conversion is load-bearing.
+        val expectedCad = 100.0 * 0.05 * (1.0 / Scorer.FALLBACK_CAD_TO_USD)
+        assertTrue(abs(score.rewardUnits - expectedCad) < 1e-6, "expected $expectedCad, got ${score.rewardUnits}")
     }
 
     @Test
     fun fallsBackToThePinnedRateWhenNoUsdEquivalentSupplied() {
         val purchase = PurchaseContext(amountCad = 137.0, currency = "CAD", category = "grocery")
         val score = Scorer.score(usdCashbackCard, purchase, ownerState(), asOf)
-        val expected = 137.0 * Scorer.FALLBACK_CAD_TO_USD * 0.05
+        // CAD -> USD (FALLBACK_CAD_TO_USD) to compute native earn, then USD -> CAD (its exact
+        // inverse) to report it — the two conversions cancel, leaving 137 * 0.05.
+        val expected = 137.0 * Scorer.FALLBACK_CAD_TO_USD * 0.05 * (1.0 / Scorer.FALLBACK_CAD_TO_USD)
         assertTrue(abs(score.rewardUnits - expected) < 1e-6)
     }
 
@@ -140,7 +146,7 @@ class MultiMarketTest {
         val purchase = PurchaseContext(amountCad = 274.0, currency = "CAD", usdEquivalent = 200.0, category = "grocery")
         val state = ownerState(cardStates = mapOf("usd-cashback-test" to CardState(capProgress = mapOf("grocery-cap" to 1400.0))))
         val score = Scorer.score(usdCashbackCard, purchase, state, asOf)
-        val expected = 100.0 * 0.05 + 100.0 * 0.01
+        val expected = (100.0 * 0.05 + 100.0 * 0.01) * (1.0 / Scorer.FALLBACK_CAD_TO_USD)
         assertTrue(abs(score.rewardUnits - expected) < 1e-6, "expected $expected, got ${score.rewardUnits}")
     }
 

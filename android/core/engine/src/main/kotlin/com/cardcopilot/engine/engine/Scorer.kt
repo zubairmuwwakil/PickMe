@@ -23,6 +23,26 @@ object Scorer {
 
     enum class ValuationBand { DECLARED, FLOOR, ASPIRATIONAL }
 
+    /**
+     * The purchase amount expressed in a card's own `billingCurrency` — 'points per currency
+     * unit' means per unit of that currency, not per CAD unconditionally. For a CAD-billing card
+     * (every card in this catalogue until the multi-market import) this is exactly
+     * `purchase.amountCad`, unchanged. A USD-billing card reuses `usdEquivalent`, the same field
+     * `spendUsdEquivalent` caps already relied on, falling back to the same pinned
+     * `FALLBACK_CAD_TO_USD` approximation when the caller supplied no converted amount.
+     *
+     * Shared with `PortfolioAnalyzer.accrueCapProgress` so a `.SPEND_NATIVE` cap is always
+     * compared and accrued in the same currency `score` uses — the two must never independently
+     * decide what "native" means for the same card.
+     */
+    fun nativeAmount(purchase: PurchaseContext, billingCurrency: Currency): Double {
+        return if (billingCurrency == Currency.USD) {
+            purchase.usdEquivalent ?: (purchase.amountCad * FALLBACK_CAD_TO_USD)
+        } else {
+            purchase.amountCad
+        }
+    }
+
     fun score(
         card: CardProduct,
         purchase: PurchaseContext,
@@ -79,11 +99,7 @@ object Scorer {
         // unit' means per unit of that currency, not per CAD unconditionally. For a CAD-billing
         // card (every card in this catalogue until the multi-market import) this is exactly
         // `purchase.amountCad`, unchanged.
-        val nativeAmount = if (card.billingCurrency == Currency.USD) {
-            purchase.usdEquivalent ?: (purchase.amountCad * FALLBACK_CAD_TO_USD)
-        } else {
-            purchase.amountCad
-        }
+        val nativeAmount = nativeAmount(purchase, card.billingCurrency)
 
         var inCapAmount = nativeAmount
         var overCapAmount = 0.0
@@ -107,8 +123,24 @@ object Scorer {
             }
         }
 
+        // Cashback earns real money in the card's own billing currency — unlike points, which are
+        // a currency-agnostic token whose count does not depend on what currency was spent, a
+        // cashback "unit" IS a dollar amount and must be converted to the CAD reporting currency
+        // before valueCad's cashback case (units * cadPerDollar) treats it as one. Converted per
+        // portion, not once at the end, in case a straddling purchase's post-cap earn is ever a
+        // different type than its in-cap earn.
+        fun unitsInReportingCurrency(earn: Earn, amount: Double): Double {
+            val raw = earnUnits(earn, amount)
+            return if (earn is Earn.Cashback) {
+                ReportingCurrency.toReporting(Money(raw, card.billingCurrency))
+            } else {
+                raw
+            }
+        }
+
         val postCapEarn = rule.capId?.let { id -> card.caps.firstOrNull { it.capId == id }?.postCapEarn }
-        val units = earnUnits(rule.earn, inCapAmount) + earnUnits(postCapEarn ?: rule.earn, overCapAmount)
+        val units = unitsInReportingCurrency(rule.earn, inCapAmount) +
+            unitsInReportingCurrency(postCapEarn ?: rule.earn, overCapAmount)
 
         // Non-null asserted, not `?: 0.0`: the check above proves a valuation exists, and a zero
         // fallback would quietly reinstate the zero-scoring bug if a refactor ever moved it.

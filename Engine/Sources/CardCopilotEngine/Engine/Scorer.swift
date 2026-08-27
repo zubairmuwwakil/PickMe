@@ -40,6 +40,22 @@ public enum Scorer {
     /// caller supplied no converted amount. Only Crypto.com's monthly cap uses this measure.
     static let fallbackCadToUsd = 0.73
 
+    /// The purchase amount expressed in a card's own `billingCurrency` — 'points per currency
+    /// unit' means per unit of that currency, not per CAD unconditionally. For a CAD-billing
+    /// card (every card in this catalogue until the multi-market import) this is exactly
+    /// `purchase.amountCad`, unchanged. A USD-billing card reuses `usdEquivalent`, the same
+    /// field `spendUsdEquivalent` caps already relied on, falling back to the same pinned
+    /// `fallbackCadToUsd` approximation when the caller supplied no converted amount.
+    ///
+    /// Shared with `PortfolioAnalyzer.accrueCapProgress` so a `.spendNative` cap is always
+    /// compared and accrued in the same currency `score(card:purchase:ownerState:asOf:)` uses —
+    /// the two must never independently decide what "native" means for the same card.
+    static func nativeAmount(for purchase: PurchaseContext, billingCurrency: Currency) -> Double {
+        billingCurrency == .usd
+            ? (purchase.usdEquivalent ?? purchase.amountCad * fallbackCadToUsd)
+            : purchase.amountCad
+    }
+
     public static func score(card: CardProduct, purchase: PurchaseContext,
                              ownerState: OwnerState, asOf: String) -> CandidateScore {
         func excludedScore(_ warning: Warning, _ reason: String) -> CandidateScore {
@@ -79,15 +95,7 @@ public enum Scorer {
                                  "no valuation for program \(card.program.programId)")
         }
 
-        // The purchase amount expressed in THIS card's own billingCurrency — 'points per currency
-        // unit' means per unit of that currency, not per CAD unconditionally. For a CAD-billing
-        // card (every card in this catalogue until the multi-market import) this is exactly
-        // `purchase.amountCad`, unchanged. A USD-billing card reuses `usdEquivalent`, the same
-        // field `spendUsdEquivalent` caps already relied on, falling back to the same pinned
-        // `fallbackCadToUsd` approximation when the caller supplied no converted amount.
-        let nativeAmount = card.billingCurrency == .usd
-            ? (purchase.usdEquivalent ?? purchase.amountCad * fallbackCadToUsd)
-            : purchase.amountCad
+        let nativeAmount = nativeAmount(for: purchase, billingCurrency: card.billingCurrency)
 
         var inCapAmount = nativeAmount
         var overCapAmount = 0.0
@@ -103,9 +111,23 @@ public enum Scorer {
             if usage >= cap.limit * 0.9 { warnings.append(.capNearlyExhausted) }
         }
 
+        // Cashback earns real money in the card's own billing currency — unlike points, which are
+        // a currency-agnostic token whose *count* does not depend on what currency was spent, a
+        // cashback "unit" IS a dollar amount and must be converted to the CAD reporting currency
+        // before `valueCad`'s cashback case (`units * cadPerDollar`) treats it as one. Converted
+        // per portion, not once at the end, in case a straddling purchase's post-cap earn is ever
+        // a different type than its in-cap earn.
+        func unitsInReportingCurrency(_ earn: Earn, amount: Double) -> Double {
+            let raw = earnUnits(earn, amount: amount)
+            if case .cashback = earn {
+                return ReportingCurrency.toReporting(Money(amount: raw, currency: card.billingCurrency))
+            }
+            return raw
+        }
+
         let postCapEarn = rule.capId.flatMap { id in card.caps.first { $0.capId == id }?.postCapEarn }
-        let units = earnUnits(rule.earn, amount: inCapAmount)
-            + earnUnits(postCapEarn ?? rule.earn, amount: overCapAmount)
+        let units = unitsInReportingCurrency(rule.earn, amount: inCapAmount)
+            + unitsInReportingCurrency(postCapEarn ?? rule.earn, amount: overCapAmount)
         // Force-unwrapped, not `?? 0`: the guard above proves a valuation exists, and `?? 0`
         // would quietly reinstate the zero-scoring bug if a refactor ever moved that guard.
         let gross = valueCad(units: units, program: card.program.programId,
