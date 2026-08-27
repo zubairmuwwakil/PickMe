@@ -228,6 +228,12 @@ public enum Scorer {
                             ? v.faceValueFactorIfAutoSold : v.defaultHeldRiskFactor)
         case .cashback(let v):
             return units * v.cadPerDollar
+        case .noRewards:
+            // 0.0, never nil. nil means "unvalued" and excludes the card; this card IS valued,
+            // and what it earns is nothing. Collapsing the two would hide a real product from a
+            // comparison it belongs in — a no-rewards card is a legitimate answer to "which card
+            // should I use" when every alternative is worse for another reason.
+            return 0
         }
     }
 }

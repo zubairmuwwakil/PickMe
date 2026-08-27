@@ -21,30 +21,9 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "capital-one-canada-capital-one-guaranteed",
-    "officialName": "Capital One Guaranteed Secured Mastercard",
-    "issuer": "Capital One",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
     "cardId": "cibc-costco-mastercard",
     "officialName": "CIBC Costco Mastercard",
     "issuer": "CIBC",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "mbna-true-line-mastercard",
-    "officialName": "MBNA True Line Mastercard",
-    "issuer": "MBNA",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "neo-financial-neo-world-mastercard",
-    "officialName": "Neo World Mastercard",
-    "issuer": "Neo Financial",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
   },
@@ -84,30 +63,9 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "capital-one-canada-capital-one-guaranteed",
-    "officialName": "Capital One Guaranteed Secured Mastercard",
-    "issuer": "Capital One",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
     "cardId": "cibc-costco-mastercard",
     "officialName": "CIBC Costco Mastercard",
     "issuer": "CIBC",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "mbna-true-line-mastercard",
-    "officialName": "MBNA True Line Mastercard",
-    "issuer": "MBNA",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "neo-financial-neo-world-mastercard",
-    "officialName": "Neo World Mastercard",
-    "issuer": "Neo Financial",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
   },

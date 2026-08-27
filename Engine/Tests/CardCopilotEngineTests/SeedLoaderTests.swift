@@ -83,7 +83,7 @@ final class SeedLoaderTests: XCTestCase {
 extension SeedLoaderTests {
     func testLoadsProgramDefaults() throws {
         let programs = try SeedLoader.loadPrograms()
-        XCTAssertEqual(programs.programsVersion, "1.1")
+        XCTAssertEqual(programs.programsVersion, "1.2")   // 1.2 adds the noRewards valuation
         guard case .cashback(let cash) = try XCTUnwrap(programs.defaults["cashback"])
         else { return XCTFail("expected .cashback") }
         XCTAssertEqual(cash.cadPerDollar, 1.0)
@@ -111,6 +111,7 @@ extension SeedLoaderTests {
             case .cashback(let v): basis = v.basis
             case .ctMoney(let v):  basis = v.basis
             case .cro(let v):      basis = v.basis
+            case .noRewards(let v): basis = v.basis
             }
             XCTAssertFalse((basis ?? "").isEmpty,
                            "programs.json default '\(programId)' ships no basis disclosure")

@@ -16,6 +16,18 @@ public enum ProgramValuation: Equatable, Sendable {
     case cashback(CashBackValuation)
     case ctMoney(CtMoneyValuation)
     case cro(CroValuation)
+    /// A card with no rewards programme at all — MBNA True Line, Capital One Guaranteed Secured.
+    ///
+    /// Carries no payload because there is nothing to disclose: the card earns nothing, and that
+    /// is a FACT about the product, not a missing valuation. The distinction is the one
+    /// `Scorer.valueCad` already draws and this case exists to make expressible — a missing
+    /// valuation answers nil and excludes the card, because "we do not know what this is worth"
+    /// must never rank as "worth nothing". `noRewards` answers 0.0 and the card is scored,
+    /// ranking last on merit rather than vanishing from a comparison it belongs in.
+    ///
+    /// Named `noRewards`, not `none`: a bare `none` case on a non-Optional enum is a standing
+    /// ambiguity trap at every optional call site.
+    case noRewards(NoRewardsValuation)
 }
 
 extension ProgramValuation: Codable {
@@ -31,6 +43,7 @@ extension ProgramValuation: Codable {
         case "cashback": self = .cashback(try CashBackValuation(from: decoder))
         case "ctMoney":  self = .ctMoney(try CtMoneyValuation(from: decoder))
         case "cro":      self = .cro(try CroValuation(from: decoder))
+        case "noRewards": self = .noRewards(try NoRewardsValuation(from: decoder))
         case let other:
             throw DecodingError.dataCorruptedError(
                 forKey: .model, in: keyed,
@@ -45,6 +58,7 @@ extension ProgramValuation: Codable {
         case .cashback(let v): try keyed.encode("cashback", forKey: .model); try v.encode(to: encoder)
         case .ctMoney(let v):  try keyed.encode("ctMoney", forKey: .model);  try v.encode(to: encoder)
         case .cro(let v):      try keyed.encode("cro", forKey: .model);      try v.encode(to: encoder)
+        case .noRewards(let v): try keyed.encode("noRewards", forKey: .model); try v.encode(to: encoder)
         }
     }
 }

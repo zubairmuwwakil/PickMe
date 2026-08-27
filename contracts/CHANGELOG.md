@@ -2,6 +2,36 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-27 — card-catalogue 2.3 / programs 1.2: `noRewards`, for a card that earns nothing
+
+- **New `programId` value `noRewards`, and a matching valuation model.** MBNA True Line and
+  Capital One Guaranteed Secured have no rewards programme at all, and `program` is a REQUIRED
+  field with a closed enum, so until now there was no way to say so. Every workaround was a lie:
+  mapping them to `cashback` claims a programme they do not have, and omitting the field is not
+  permitted.
+- **The whole point is the distinction `Scorer.valueCad` already drew and could not express.** A
+  MISSING valuation returns nil/null and `Scorer.score` excludes the card with
+  `unsupportedProgram`, because "we do not know what this is worth" must never rank as "worth
+  nothing" — that rule dates from the 11-of-16 unvalued-programs bug. `noRewards` returns **0.0**
+  and the card is scored, ranking last on merit rather than vanishing from a comparison it belongs
+  in. Same principle as `fxRules`, where a fee-free card declares `rate: 0.0` rather than saying
+  nothing: the fact is STATED, never inferred from an absence.
+- **It carries a `basis` like every other default**, because `testEveryProgramDefaultDisclosesItsBasis`
+  requires one and it is right to — "this is a fact, not an estimate" is exactly what a reader of
+  the valuation disclosure needs told. Named `noRewards` and not `none`: a bare `none` case on a
+  non-Optional Swift enum is a standing ambiguity trap.
+- **Three cards land with it (catalogue 2.3, all `draft`):** MBNA True Line and Capital One
+  Guaranteed Secured on `noRewards`, and Neo World Mastercard on the existing `cashback` — the
+  first Canadian candidates to enter since the corpus collapse. Catalogue is now 41 CA published,
+  26 US draft, 3 CA draft.
+- **The ratchet forced the ordering, correctly.** `testEveryProgramDefaultKeyIsARealCatalogueProgramId`
+  refuses a programs.json valuation that no card declares, so the enum value, the default and the
+  cards had to land in one change rather than three. That gate was written to catch typos and it
+  caught a real sequencing error instead.
+- Mirrored in Swift (`NoRewardsValuation`, `ProgramValuation.noRewards`), Kotlin
+  (`NoRewardsValuation`) and TypeScript, each with its own regression test. Swift 276/276,
+  Kotlin 46/46, TypeScript 1095/1095.
+
 ## 2026-08-27 — card-catalogue 2.2: first draft records, and the integrity gates that did not know about them
 
 - **26 US cards added with `status: draft`** under the Option 1 ruling (issuer-flagship reward

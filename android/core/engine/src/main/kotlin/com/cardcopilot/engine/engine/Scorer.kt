@@ -10,6 +10,7 @@ import com.cardcopilot.engine.models.EarnRule
 import com.cardcopilot.engine.models.CashBackValuation
 import com.cardcopilot.engine.models.CroValuation
 import com.cardcopilot.engine.models.CtMoneyValuation
+import com.cardcopilot.engine.models.NoRewardsValuation
 import com.cardcopilot.engine.models.OwnerState
 import com.cardcopilot.engine.models.PointValuation
 import com.cardcopilot.engine.models.Money
@@ -240,6 +241,9 @@ object Scorer {
                 else valuation.defaultHeldRiskFactor
                 )
             is CashBackValuation -> units * valuation.cadPerDollar
+            // 0.0, never null. null means "unvalued" and excludes the card; this card IS valued,
+            // and what it earns is nothing.
+            is NoRewardsValuation -> 0.0
         }
     }
 }

@@ -151,6 +151,12 @@
       "programId": "cashback",
       "unit": "usd"
     },
+    "capital-one-canada-capital-one-guaranteed": {
+      "basis": "Capital One Guaranteed Secured is a credit-building card with no rewards programme. Same caveat: re-confirm against the issuer before promotion.",
+      "officialName": "Capital One Guaranteed Secured Mastercard",
+      "programId": "noRewards",
+      "unit": "none"
+    },
     "capital-one-journey-student-credit-card": {
       "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
       "officialName": "Capital One Journey Student Credit Card",
@@ -372,6 +378,18 @@
       "officialName": "Discover it\u00ae Secured Credit Card",
       "programId": "discoverCashback",
       "unit": "usd"
+    },
+    "mbna-true-line-mastercard": {
+      "basis": "MBNA True Line is a low-interest card with no rewards programme \u2014 a stated product fact, not a gap. Verified against the card's own name and positioning; re-confirm against MBNA's terms before promoting to published.",
+      "officialName": "MBNA True Line Mastercard",
+      "programId": "noRewards",
+      "unit": "none"
+    },
+    "neo-financial-neo-world-mastercard": {
+      "basis": "Neo pays cash back; needs no new enum value. Rate is NOT recorded \u2014 earnRules stays empty until someone reads Neo's terms.",
+      "officialName": "Neo World Mastercard",
+      "programId": "cashback",
+      "unit": "cad"
     },
     "penfed-credit-union-penfed-power-cash-rewards": {
       "basis": "name says cash back",

@@ -180,6 +180,17 @@ public struct CashBackValuation: Codable, Equatable, Sendable {
     }
 }
 
+/// A card with no rewards programme. Carries only its disclosure.
+///
+/// The value is not configurable — zero is not an assumption anyone could hold differently — but
+/// it still discloses a basis, because every entry in programs.json must say where it came from
+/// and "this is a fact, not an estimate" is exactly the kind of thing a reader needs told.
+public struct NoRewardsValuation: Codable, Equatable, Sendable {
+    public var basis: String?
+
+    public init(basis: String? = nil) { self.basis = basis }
+}
+
 /// Reward-currency valuations, keyed by the catalogue's `programId`.
 ///
 /// Was six hardcoded properties, which made every new rewards program a Swift change, a Kotlin

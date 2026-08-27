@@ -55,6 +55,24 @@ data class CtMoneyValuation(
     val basis: String? = null
 ) : ProgramValuation()
 
+/**
+ * A card with no rewards programme at all — MBNA True Line, Capital One Guaranteed Secured.
+ *
+ * Carries only its disclosure, because there is no number to configure: zero is not an assumption
+ * anyone could hold differently. It exists so the difference [Scorer.valueCad] has always drawn
+ * becomes expressible — a MISSING valuation answers null and excludes the card, because "we do not
+ * know what this is worth" must never rank as "worth nothing"; this one answers 0.0 and the card
+ * is scored, ranking last on merit rather than vanishing from a comparison it belongs in.
+ *
+ * Mirrors Swift's `NoRewardsValuation`.
+ */
+@Serializable
+@SerialName("noRewards")
+data class NoRewardsValuation(
+    /** Where the number came from. Here: that it is a fact, not an estimate. */
+    val basis: String? = null
+) : ProgramValuation()
+
 @Serializable
 @SerialName("cro")
 data class CroValuation(

@@ -70,7 +70,7 @@ final class CatalogueDefaultValuationTests: XCTestCase {
         let added = Set(merged.programs.keys).subtracting(owner.valuationsCad.programs.keys)
         XCTAssertEqual(added, ["scenePlus", "aeroplan", "rbcAvion", "tdRewards", "bmoRewards",
                                "aventura", "nbcRewards", "pcOptimum", "westJetPoints",
-                               "amazonRewards"],
+                               "amazonRewards", "noRewards"],
                        "the catalogue-only programs are what make the other 14 cards scorable")
     }
 
