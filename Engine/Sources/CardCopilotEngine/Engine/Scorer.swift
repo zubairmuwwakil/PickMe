@@ -8,7 +8,12 @@ public enum Warning: String, Codable, Equatable, Sendable {
          unsupportedProgram,
          /// An earn rule requires an engine capability this build does not have. The rule is
          /// skipped; the card is still scored on its remaining rules.
-         unsupportedCapability
+         unsupportedCapability,
+         /// The issuer has discontinued this product as of the scored date. Its own case rather
+         /// than borrowing `drawerCard`: that one means "you left it at home", which is advice a
+         /// withdrawn card cannot act on. Warnings are frozen into the append-only prediction log
+         /// now, so a borrowed one would be a wrong record that can never be corrected.
+         productWithdrawn
 }
 
 public struct CandidateScore: Equatable, Sendable {
@@ -42,6 +47,13 @@ public enum Scorer {
                            grossRewardCad: 0, fxCostCad: 0, netValueCad: 0, floorNetValueCad: 0,
                            aspirationalNetValueCad: 0,
                            warnings: [warning], excluded: true, exclusionReason: reason)
+        }
+
+        // First guard of all: a discontinued product cannot win a pick regardless of what it
+        // would have earned. It stays in the catalogue and stays resolvable by id — this excludes
+        // it from advice, not from history.
+        guard card.isScoreable(asOf: asOf) else {
+            return excludedScore(.productWithdrawn, "product withdrawn")
         }
 
         guard purchase.acceptedNetworks.contains(card.network) else {

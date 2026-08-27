@@ -25,7 +25,7 @@ final class ScoredRuleSnapshotTests: XCTestCase {
                     caps: [],
                     perTransactionRewardVisibility: "none",
                     lastVerifiedAt: "2026-08-15",
-                    credits: nil)
+                    credits: nil, status: nil, effectiveTo: nil)
     }
 
     private func sampleScore(ruleId: String?) -> CandidateScore {

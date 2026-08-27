@@ -23,7 +23,17 @@ enum class Warning(val rawValue: String) {
      * An earn rule requires an engine capability this build does not have. The rule is
      * skipped; the card is still scored on its remaining rules.
      */
-    @SerialName("unsupportedCapability") UNSUPPORTED_CAPABILITY("unsupportedCapability");
+    @SerialName("unsupportedCapability") UNSUPPORTED_CAPABILITY("unsupportedCapability"),
+
+    /**
+     * The issuer has discontinued this product as of the scored date. Mirrors Swift's
+     * `Warning.productWithdrawn`, which PickMe's engine owns.
+     *
+     * Declared here ahead of any Kotlin scoring behaviour on purpose: `ignoreUnknownKeys` skips
+     * unknown object keys, not unknown enum values, so a value this enum lacks fails the whole
+     * decode. The case has to exist before the first withdrawn card ships, not after.
+     */
+    @SerialName("productWithdrawn") PRODUCT_WITHDRAWN("productWithdrawn");
 
     companion object {
         fun fromRaw(raw: String): Warning? = entries.firstOrNull { it.rawValue == raw }

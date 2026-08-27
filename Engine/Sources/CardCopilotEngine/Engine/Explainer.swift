@@ -74,6 +74,9 @@ public struct RecommendationExplainer {
         // Reachable on a card that WON: the excluded case never reaches an explanation, because
         // an excluded card is never the winner. Worded for the case the owner can actually see.
         case .unsupportedCapability: return "This card has a better rule here that this app can't check yet — it may be worth more than shown."
+        // Also excluded-only, for the same reason. Worded as a fact about the product rather than
+        // an instruction, because there is no action the owner can take on a discontinued card.
+        case .productWithdrawn: return "This card has been discontinued and is no longer recommended."
         }
     }
 

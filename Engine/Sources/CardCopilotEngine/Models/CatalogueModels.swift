@@ -3,6 +3,10 @@ import Foundation
 public enum Network: String, Codable, Sendable { case amex, visa, mastercard }
 public enum CardKind: String, Codable, Sendable { case credit, charge, prepaid }
 public enum RuleStatus: String, Codable, Sendable { case current, announced }
+/// A card product's lifecycle, distinct from `RuleStatus` (which is `current`/`announced` and
+/// describes a rule, not a product). Absent means active: a catalogue written before tombstoning
+/// existed must keep scoring unchanged.
+public enum CardStatus: String, Codable, Sendable { case active, withdrawn }
 public enum SourceType: String, Codable, Sendable { case issuerConfirmed, ownerObserved, inferred }
 
 public enum Earn: Equatable, Sendable {
@@ -186,8 +190,26 @@ public struct CardProduct: Codable, Equatable, Identifiable, Sendable {
     /// before credits existed still decodes, exactly as `sources` and `stacking` do by being
     /// absent from this struct entirely.
     public var credits: [CardCredit]?
+    /// Set when the issuer has discontinued the product. The card is never deleted from the
+    /// catalogue and its id is never reused: ledgers, prediction rows, and other repos' vendored
+    /// copies all key on that id, and an id that stops resolving turns history into orphans.
+    public var status: CardStatus?
+    /// The date the product stopped being available. Scoring respects it, so an `asOf` before
+    /// this date still scores the card exactly as it scored at the time.
+    public var effectiveTo: String?
 
     public var id: String { cardId }
+
+    /// Whether this product can win a pick on the given date.
+    ///
+    /// Dated rather than a flat boolean so that historical `asOf` queries stay truthful — a card
+    /// withdrawn last month was a legitimate answer the month before. Compared as ISO-8601
+    /// strings, which sort lexicographically, exactly as `RuleMatcher` compares rule windows.
+    public func isScoreable(asOf: String) -> Bool {
+        guard status == .withdrawn else { return true }
+        guard let effectiveTo else { return false }
+        return asOf <= effectiveTo
+    }
 }
 
 /// The researched acquisition candidates, as references into `Catalogue` — never as card
