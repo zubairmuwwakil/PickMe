@@ -86,7 +86,7 @@ def build_drafts(market: str, limit: int | None):
     # Capital One Canada issues Canadian-only products. A flat map merges two issuers silently.
     aliases = ((load(ISSUER_ALIASES) or {}).get("aliases", {})).get(market, {})
     networks = load(NETWORKS) or {}
-    programs = load(PROGRAMS) or {}
+    programs = (load(PROGRAMS) or {}).get("programs", {})
     valid_program_ids = legal_program_ids()
 
     existing = {c["cardId"]: c for c in catalogue["cards"]}
@@ -174,7 +174,10 @@ def build_drafts(market: str, limit: int | None):
                 "network": network,
                 "kind": "credit",
                 "fee": {"annual": {"amount": fee_candidates[0], "currency": MARKET_CURRENCY[market]}},
-                "program": program,
+                # Built explicitly, never spread: card-programs.json carries provenance keys
+                # (basis, officialName) and `program` is additionalProperties: false, so
+                # passing the map entry through would emit a schema-invalid card.
+                "program": {"programId": program["programId"], "unit": program["unit"]},
                 "fxRules": [],
                 # Deliberately empty. The schema sets no minItems, so this validates — and it is
                 # the honest import: aggregators carry rewards as free prose, and a guessed rate

@@ -7,53 +7,11 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "american-express-business-gold-card",
-    "officialName": "American Express Business Gold Card",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-everyday-card",
-    "officialName": "American Express EveryDay\u00ae Card",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
     "cardId": "american-express-old-blue-cash-card",
     "officialName": "American Express Old Blue Cash Card",
     "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-gold-card",
-    "officialName": "American Express\u00ae Gold Card",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-green-card",
-    "officialName": "American Express\u00ae Green Card",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-amex-blue-business-plus",
-    "officialName": "Amex Blue Business Plus",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-amex-cash-magnet",
-    "officialName": "Amex Cash Magnet",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
+    "reason": "conflicting-annual-fee",
+    "detail": "sources disagree: [0, 95]"
   },
   {
     "cardId": "american-express-amex-delta-blue",
@@ -63,29 +21,8 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "american-express-amex-everyday-preferred-credit-card",
-    "officialName": "Amex EveryDay Preferred Credit Card",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-amex-graphite-business-cash",
-    "officialName": "Amex Graphite Business Cash",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
     "cardId": "american-express-amex-morgan-stanley-blue",
     "officialName": "Amex Morgan Stanley Blue",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-blue-from-american-express",
-    "officialName": "Blue from American Express\u00ae",
     "issuer": "American Express",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
@@ -115,22 +52,8 @@
     "cardId": "american-express-marriott-bonvoy-bevy-american-express-card",
     "officialName": "Marriott Bonvoy Bevy\u00ae American Express\u00ae Card",
     "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-the-business-platinum-card-from-american-ex",
-    "officialName": "The Business Platinum Card\u00ae from American Express",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-the-platinum-card-from-american-express",
-    "officialName": "The Platinum Card\u00ae from American Express",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
+    "reason": "conflicting-annual-fee",
+    "detail": "sources disagree: [125, 250, 650]"
   },
   {
     "cardId": "bank-of-america-alaska-airlines-atmos-ascent-visa-signature-",
@@ -142,13 +65,6 @@
   {
     "cardId": "bank-of-america-atmos-rewards-visa-signature-business-credit",
     "officialName": "Atmos\u2122 Rewards Visa Signature\u00ae Business Credit Card",
-    "issuer": "Bank of America",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "bank-of-america-business-advantage-customized-cash-rewards-m",
-    "officialName": "Bank of America\u00ae Business Advantage Customized Cash Rewards Mastercard\u00ae",
     "issuer": "Bank of America",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
@@ -749,46 +665,11 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "citi-secured-mastercard",
-    "officialName": "Citi\u00ae Secured Mastercard\u00ae",
-    "issuer": "Citi",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
     "cardId": "citi-costco-anywhere-business",
     "officialName": "Costco Anywhere Business",
     "issuer": "Citi",
     "reason": "unknown-network",
     "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "discover-it-cash-back",
-    "officialName": "Discover it\u00ae Cash Back",
-    "issuer": "Discover",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "discover-it-chrome",
-    "officialName": "Discover it\u00ae Chrome",
-    "issuer": "Discover",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "discover-it-miles",
-    "officialName": "Discover it\u00ae Miles",
-    "issuer": "Discover",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "discover-it-secured-credit-card",
-    "officialName": "Discover it\u00ae Secured Credit Card",
-    "issuer": "Discover",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
   },
   {
     "cardId": "fidelity-investments-elan-financial-services-fidelity-reward",
@@ -882,13 +763,6 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "pnc-bank-pnc-cash-rewards-visa-credit-card",
-    "officialName": "PNC Cash Rewards\u00ae Visa\u00ae Credit Card",
-    "issuer": "PNC Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
     "cardId": "pnc-bank-pnc-core-visa-credit-card",
     "officialName": "PNC Core Visa\u00ae Credit Card",
     "issuer": "PNC Bank",
@@ -912,13 +786,6 @@
   {
     "cardId": "penfed-credit-union-penfed-pathfinder-rewards-visa-signature",
     "officialName": "PenFed Pathfinder\u00ae Rewards Visa Signature\u00ae Card",
-    "issuer": "PenFed Credit Union",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "penfed-credit-union-penfed-power-cash-rewards-visa-signature",
-    "officialName": "PenFed Power Cash Rewards\u00ae Visa Signature\u00ae Card",
     "issuer": "PenFed Credit Union",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
@@ -1099,22 +966,8 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "u-s-bank-shopper-cash-rewards-visa-signature-card",
-    "officialName": "U.S. Bank Shopper Cash Rewards\u00ae Visa Signature\u00ae Card",
-    "issuer": "U.S. Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
     "cardId": "u-s-bank-smartly-visa-signature-card",
     "officialName": "U.S. Bank Smartly\u2122 Visa Signature\u00ae Card",
-    "issuer": "U.S. Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "u-s-bank-triple-cash-rewards-visa-business-card",
-    "officialName": "U.S. Bank Triple Cash Rewards Visa\u00ae Business Card",
     "issuer": "U.S. Bank",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
@@ -1123,13 +976,6 @@
     "cardId": "u-s-bank-visa-platinum-card",
     "officialName": "U.S. Bank Visa\u00ae Platinum Card",
     "issuer": "U.S. Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "upgrade-cross-river-bank-upgrade-triple-cash-rewards-visa",
-    "officialName": "Upgrade Triple Cash Rewards Visa",
-    "issuer": "Upgrade (Cross River Bank)",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
   },
@@ -1351,13 +1197,6 @@
     "detail": "add cardId -> network in card-networks.json"
   },
   {
-    "cardId": "discover-bank-discover-it-chrome-gas-restaurant-credit-card",
-    "officialName": "Discover it Chrome Gas & Restaurant Credit Card",
-    "issuer": "Discover Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
     "cardId": "discover-bank-nhl-discover-it-credit-card",
     "officialName": "NHL Discover it Credit Card",
     "issuer": "Discover Bank",
@@ -1533,67 +1372,11 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "american-express-national-bank-the-platinum-card-from-americ",
-    "officialName": "The Platinum Card\u00ae from American Express",
-    "issuer": "American Express National Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-national-bank-american-express-gold-card",
-    "officialName": "American Express\u00ae Gold Card",
-    "issuer": "American Express National Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-national-bank-american-express-green-card",
-    "officialName": "American Express\u00ae Green Card",
-    "issuer": "American Express National Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
     "cardId": "american-express-national-bank-blue-cash-preferred-card-from",
     "officialName": "Blue Cash Preferred\u00ae Card from American Express",
     "issuer": "American Express National Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-national-bank-the-business-platinum-card-fr",
-    "officialName": "The Business Platinum Card\u00ae from American Express",
-    "issuer": "American Express National Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-national-bank-american-express-business-gol",
-    "officialName": "American Express\u00ae Business Gold Card",
-    "issuer": "American Express National Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-national-bank-graphite-business-cash-unlimi",
-    "officialName": "Graphite\u00ae Business Cash Unlimited Card from American Express",
-    "issuer": "American Express National Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-national-bank-blue-business-plus-credit-car",
-    "officialName": "Blue Business\u00ae Plus Credit Card from American Express",
-    "issuer": "American Express National Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-national-bank-business-green-rewards-card-f",
-    "officialName": "Business Green Rewards Card from American Express",
-    "issuer": "American Express National Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
+    "reason": "conflicting-annual-fee",
+    "detail": "sources disagree: [0, 95]"
   },
   {
     "cardId": "barclays-bank-delaware-emirates-skywards-rewards-world-elite",
@@ -1718,13 +1501,6 @@
     "cardId": "barclays-bank-delaware-gm-business-mastercard",
     "officialName": "GM Business\u2122 Mastercard\u00ae",
     "issuer": "Barclays Bank Delaware",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "comenity-capital-bank-bread-cashback-american-express-credit",
-    "officialName": "Bread Cashback\u00ae American Express\u00ae Credit Card",
-    "issuer": "Comenity Capital Bank",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
   },
@@ -1862,13 +1638,6 @@
     "detail": "add cardId -> network in card-networks.json"
   },
   {
-    "cardId": "citibank-n-a-citi-secured-mastercard",
-    "officialName": "Citi\u00ae Secured Mastercard\u00ae",
-    "issuer": "Citibank, N.A.",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
     "cardId": "citibank-n-a-at-t-points-plus-card-from-citi",
     "officialName": "AT&T Points Plus\u00ae Card from Citi",
     "issuer": "Citibank, N.A.",
@@ -2002,13 +1771,6 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "u-s-bank-national-association-u-s-bank-shopper-cash-rewards-",
-    "officialName": "U.S. Bank Shopper Cash Rewards\u00ae Visa Signature\u00ae Card",
-    "issuer": "U.S. Bank National Association",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
     "cardId": "u-s-bank-national-association-u-s-bank-cash-secured-visa-car",
     "officialName": "U.S. Bank Cash+\u00ae Secured Visa\u00ae Card",
     "issuer": "U.S. Bank National Association",
@@ -2018,13 +1780,6 @@
   {
     "cardId": "u-s-bank-national-association-u-s-bank-secured-visa-card",
     "officialName": "U.S. Bank Secured Visa\u00ae Card",
-    "issuer": "U.S. Bank National Association",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "u-s-bank-national-association-u-s-bank-triple-cash-rewards-v",
-    "officialName": "U.S. Bank Triple Cash Rewards Visa\u00ae Business Card",
     "issuer": "U.S. Bank National Association",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
@@ -2140,13 +1895,6 @@
     "issuer": "Synchrony Bank",
     "reason": "unknown-network",
     "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "alliant-credit-union-alliant-cashback-visa-signature-credit-",
-    "officialName": "Alliant Cashback Visa\u00ae Signature Credit Card",
-    "issuer": "Alliant Credit Union",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
   },
   {
     "cardId": "alliant-credit-union-alliant-visa-platinum-credit-card",
