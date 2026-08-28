@@ -88,6 +88,30 @@ final class SchemaVersionTests: XCTestCase {
                            "prediction", "walletEventId"],
     ]
 
+    /// V4 keeps the seven entities and makes StoredPurchase the complete activity record.
+    private static let v4Shape: [String: [String]] = [
+        "AreaMember": ["area", "identifier", "latitude", "longitude", "name", "poiCategoryRaw"],
+        "ExploredCell": ["areaCount", "cellKey", "exploredAt"],
+        "ShoppingArea": ["cellKey", "centroidLatitude", "centroidLongitude", "discoveredAt",
+                         "id", "members", "radiusMeters"],
+        "StoredMerchant": ["confirmationCount", "confirmedCategory", "id", "identifier",
+                           "lastSeenAt", "latitude", "longitude", "name", "poiCategoryRaw"],
+        "StoredObservation": ["confirmedAt", "id", "missClassRaw", "note", "observedCategory",
+                              "observedRewardUnits", "purchase"],
+        "StoredPrediction": ["categoryCorrectedAt", "confidenceSourceRaw", "contractDigest", "contractRelease",
+                             "defaultCardValueCad", "frozenInputs", "headline", "id",
+                             "merchantIdentifier", "merchantName", "predictedCategory",
+                             "predictedRewardUnitKind", "predictedRewardUnits", "purchase",
+                             "recordedAt", "runnerUpCardId", "runnerUpValueCad", "scoredAmountCad",
+                             "valuationCentsPerPoint", "winnerCardId", "winnerRuleId", "winnerValueCad"],
+        "StoredPurchase": ["activitySourceRaw", "advantageCad", "amountCad", "amountSourceRaw",
+                           "bestCardId", "bestCardValueCad", "cardSourceRaw", "cardUsedId",
+                           "categoryAtPurchase", "categoryConfidenceRaw", "completedAt", "createdAt",
+                           "evaluatedAt", "id", "merchantIdentifier", "merchantKey", "merchantLabel",
+                           "merchantLatitude", "merchantLongitude", "observation", "prediction",
+                           "usedCardValueCad", "walletEventId"],
+    ]
+
     /// The failure this catches is adding an eighth `@Model` and not registering it. Such a model
     /// compiles, and every test that builds its own `ModelContainer(for:)` passes, because those
     /// name their types directly. It fails only on a real device, where the app's container is
@@ -201,18 +225,21 @@ final class SchemaVersionTests: XCTestCase {
         let v1Purchase: KeyPath<CardCopilotSchemaV1.StoredPrediction, CardCopilotSchemaV1.StoredPurchase?> = \.purchase
         let v2Purchase: KeyPath<CardCopilotSchemaV2.StoredPrediction, CardCopilotSchemaV2.StoredPurchase?> = \.purchase
         let v3Purchase: KeyPath<CardCopilotSchemaV3.StoredPrediction, CardCopilotSchemaV3.StoredPurchase?> = \.purchase
+        let v4Purchase: KeyPath<CardCopilotSchemaV4.StoredPrediction, CardCopilotSchemaV4.StoredPurchase?> = \.purchase
 
         XCTAssertEqual(v1Purchase, \CardCopilotSchemaV1.StoredPrediction.purchase)
         XCTAssertEqual(v2Purchase, \CardCopilotSchemaV2.StoredPrediction.purchase)
         XCTAssertEqual(v3Purchase, \CardCopilotSchemaV3.StoredPrediction.purchase)
+        XCTAssertEqual(v4Purchase, \CardCopilotSchemaV4.StoredPrediction.purchase)
     }
 
     func testMigrationPlanCarriesV1ToV2ToV3() {
-        XCTAssertEqual(CardCopilotMigrationPlan.schemas.count, 3)
+        XCTAssertEqual(CardCopilotMigrationPlan.schemas.count, 4)
         XCTAssertTrue(CardCopilotMigrationPlan.schemas[0] == CardCopilotSchemaV1.self)
         XCTAssertTrue(CardCopilotMigrationPlan.schemas[1] == CardCopilotSchemaV2.self)
         XCTAssertTrue(CardCopilotMigrationPlan.schemas[2] == CardCopilotSchemaV3.self)
-        XCTAssertEqual(CardCopilotMigrationPlan.stages.count, 2,
+        XCTAssertTrue(CardCopilotMigrationPlan.schemas[3] == CardCopilotSchemaV4.self)
+        XCTAssertEqual(CardCopilotMigrationPlan.stages.count, 3,
                        "A version with no stage is how a store gets orphaned.")
     }
 
@@ -220,7 +247,7 @@ final class SchemaVersionTests: XCTestCase {
     /// the half-finished migration: a new version added to the plan while every container still
     /// opens at the old one.
     func testCurrentSchemaIsTheNewestInTheMigrationPlan() {
-        XCTAssertTrue(CardCopilotSchema.current == CardCopilotSchemaV3.self)
+        XCTAssertTrue(CardCopilotSchema.current == CardCopilotSchemaV4.self)
         XCTAssertTrue(CardCopilotSchema.current == CardCopilotMigrationPlan.schemas.last!,
                       "The current schema must be the plan's newest, or new stores open behind the plan.")
     }
@@ -396,7 +423,8 @@ final class SchemaVersionTests: XCTestCase {
             for: Schema(versionedSchema: CardCopilotSchemaV3.self),
             migrationPlan: CardCopilotMigrationPlan.self,
             configurations: ModelConfiguration(url: url))
-        let migrated = try ModelContext(v3).fetch(FetchDescriptor<StoredPurchase>())
+        let migrated = try ModelContext(v3).fetch(
+            FetchDescriptor<CardCopilotSchemaV3.StoredPurchase>())
 
         XCTAssertEqual(migrated.count, 1, "The V2 row did not survive migration.")
         XCTAssertEqual(migrated[0].cardUsedId, "amex-cobalt")
@@ -440,5 +468,55 @@ final class SchemaVersionTests: XCTestCase {
         XCTAssertEqual(rows[0].merchantLabel, "Tim Hortons")
         XCTAssertEqual(rows[0].displayMerchant, "Tim Hortons")
         XCTAssertTrue(rows[0].isAutoLogged)
+    }
+
+    // MARK: - V4: unified purchase activity
+
+    func testV4RegistersEveryModelAndChangesOnlyStoredPurchase() {
+        XCTAssertEqual(CardCopilotSchemaV4.models.count, Self.v4Shape.count)
+        let entities = Schema(versionedSchema: CardCopilotSchemaV4.self).entities
+        let actual = Dictionary(uniqueKeysWithValues:
+            entities.map { ($0.name, $0.properties.map(\.name).sorted()) })
+        XCTAssertEqual(actual, Self.v4Shape)
+
+        for (name, v3Properties) in Self.v3Shape where name != "StoredPurchase" {
+            XCTAssertEqual(Self.v4Shape[name], v3Properties)
+        }
+        let added = Set(Self.v4Shape["StoredPurchase"]!)
+            .subtracting(Self.v3Shape["StoredPurchase"]!)
+        XCTAssertEqual(added, ["activitySourceRaw", "merchantKey", "merchantIdentifier",
+                               "merchantLatitude", "merchantLongitude", "categoryAtPurchase",
+                               "categoryConfidenceRaw", "evaluatedAt", "bestCardId",
+                               "bestCardValueCad", "usedCardValueCad", "advantageCad"])
+    }
+
+    func testV3StoreOpensUnderV4WithoutInventingActivityFacts() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("purchase-activity-migration-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("CardCopilot.store")
+
+        do {
+            let v3 = try ModelContainer(
+                for: Schema(versionedSchema: CardCopilotSchemaV3.self),
+                migrationPlan: CardCopilotMigrationPlan.self,
+                configurations: ModelConfiguration(url: url))
+            let context = ModelContext(v3)
+            context.insert(CardCopilotSchemaV3.StoredPurchase(merchantLabel: "Walmart",
+                                                               walletEventId: "event-v3"))
+            try context.save()
+        }
+
+        let v4 = try ModelContainer(
+            for: Schema(versionedSchema: CardCopilotSchemaV4.self),
+            migrationPlan: CardCopilotMigrationPlan.self,
+            configurations: ModelConfiguration(url: url))
+        let rows = try ModelContext(v4).fetch(FetchDescriptor<StoredPurchase>())
+        XCTAssertEqual(rows.count, 1)
+        XCTAssertEqual(rows[0].merchantLabel, "Walmart")
+        XCTAssertNil(rows[0].activitySource)
+        XCTAssertNil(rows[0].merchantLatitude)
+        XCTAssertNil(rows[0].bestCardId)
     }
 }

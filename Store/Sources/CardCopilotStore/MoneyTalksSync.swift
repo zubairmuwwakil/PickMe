@@ -29,13 +29,18 @@ public struct WalletFeedback: Codable, Equatable, Sendable, Identifiable {
     public let resolvedCardId: String?
     public let verdict: String
     public let warning: String?
+    /// Optional capture coordinates. Older servers omit these and decode as nil.
+    public let latitude: Double?
+    public let longitude: Double?
+    public let locationAccuracyMeters: Double?
 
     public var id: String { eventId }
 
     public init(eventId: String, capturedAt: Date, merchantRaw: String?,
                 merchantNormalized: String? = nil, amountMinor: Int?, currency: String?,
                 cardRaw: String?, resolvedCardId: String? = nil,
-                verdict: String, warning: String?) {
+                verdict: String, warning: String?, latitude: Double? = nil,
+                longitude: Double? = nil, locationAccuracyMeters: Double? = nil) {
         self.eventId = eventId
         self.capturedAt = capturedAt
         self.merchantRaw = merchantRaw
@@ -46,6 +51,9 @@ public struct WalletFeedback: Codable, Equatable, Sendable, Identifiable {
         self.resolvedCardId = resolvedCardId
         self.verdict = verdict
         self.warning = warning
+        self.latitude = latitude
+        self.longitude = longitude
+        self.locationAccuracyMeters = locationAccuracyMeters
     }
 }
 

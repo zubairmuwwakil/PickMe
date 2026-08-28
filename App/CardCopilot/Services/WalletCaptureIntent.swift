@@ -102,7 +102,10 @@ struct WalletCaptureIntent: AppIntent {
             // standing does not need it.
             if let key = patronageKey(forCapturedMerchant: event.transaction.merchantRaw,
                                       transactionName: event.transaction.transactionNameRaw) {
-                MerchantPatronageStore().recordVisit(merchantKey: key, at: event.capturedAt)
+                MerchantPatronageStore().recordVisit(
+                    merchantKey: key,
+                    displayName: event.transaction.merchantRaw ?? event.transaction.transactionNameRaw,
+                    at: event.capturedAt)
             }
             try? await runLogs?.finish(runID: run.runID,
                                         outcome: diagnostic?.deliveryState == .accepted || diagnostic?.deliveryState == .duplicate

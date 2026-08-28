@@ -27,13 +27,16 @@ final class CardVisualThemeTests: XCTestCase {
 
     func testAllCatalogueCardsHaveDedicatedVisualTheme() throws {
         let catalogue = try SeedLoader.loadCatalogue()
-        let catalogueCardIds = Set(catalogue.cards.map(\.cardId))
 
-        let missingThemeKeys = catalogueCardIds.subtracting(CardVisualTheme.definedCardIds)
-        XCTAssertTrue(
-            missingThemeKeys.isEmpty,
-            "card-catalogue.json contains cards that lack a dedicated style in CardVisualTheme: \(missingThemeKeys). Add explicit styles for these cards."
-        )
+        for card in catalogue.cards {
+            let style = CardVisualTheme.style(for: card.cardId)
+
+            XCTAssertEqual(style.cardId, card.cardId, "Style cardId mismatch for \(card.cardId)")
+            XCTAssertFalse(style.shortName.trimmingCharacters(in: .whitespaces).isEmpty, "shortName must not be empty for \(card.cardId)")
+            XCTAssertFalse(style.issuer.trimmingCharacters(in: .whitespaces).isEmpty, "issuer must not be empty for \(card.cardId)")
+            XCTAssertNotEqual(style.issuer, "Card", "\(card.cardId) unexpectedly resolved to generic fallback issuer 'Card'")
+            XCTAssertGreaterThanOrEqual(style.gradientColors.count, 2, "gradientColors must contain at least 2 gradient stops for \(card.cardId)")
+        }
     }
 
     func testEveryDefinedCardProducesNonGenericStyle() {
@@ -90,6 +93,9 @@ final class CardVisualThemeTests: XCTestCase {
             case .discover:
                 XCTAssertEqual(style.network, .discover,
                                "Discover card \(card.cardId) must have .discover network in CardVisualTheme")
+            case .privateLabel:
+                XCTAssertEqual(style.network, .privateLabel,
+                               "Private-label card \(card.cardId) must be identified as a store card in CardVisualTheme")
             }
         }
     }

@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import CoreLocation
+import CardCopilotEngine
 import CardCopilotStore
 import CardCopilotCapture
 
@@ -34,6 +35,119 @@ struct CachedLocation: Equatable {
     }
 }
 
+/// Whether the card used was PickMe's best material choice for this purchase.
+enum PurchaseCardAssessment: Equatable {
+    case best
+    case better(cardId: String, advantageCad: Double?)
+    case unavailable(reason: String)
+}
+
+/// Pure, read-only interpretation for Activity rows. Checkout rows use the recommendation frozen
+/// when advice was given. Automatic captures are scored only when merchant category, amount, and
+/// tapped card are all known; an unknown merchant stays unknown instead of being guessed as
+/// general merchandise.
+enum PurchaseActivityEvaluator {
+    static func category(for purchase: StoredPurchase,
+                         knownMerchants: [StoredMerchant] = []) -> String? {
+        if let category = purchase.displayCategory, category != "other" { return category }
+        let name = purchase.displayMerchant
+        if let known = knownMerchants.first(where: {
+            $0.name.compare(name, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+        }) {
+            let prediction = predictionForKnownMerchant(known)
+            if prediction.confidenceSource != .fallback, prediction.candidates.count == 1 {
+                return prediction.category
+            }
+        }
+        if let indexed = MerchantRecognizer.recognise(name), indexed.category != "other" {
+            return indexed.category
+        }
+        let prediction = CardCopilotStore.predict(poiCategoryRaw: nil, merchantName: name)
+        guard prediction.confidenceSource == .brandPrior,
+              prediction.candidates.count == 1 else { return nil }
+        return prediction.category
+    }
+
+    static func cardAssessment(for purchase: StoredPurchase,
+                               graph: DependencyGraph,
+                               knownMerchants: [StoredMerchant] = [],
+                               walletFeedback: WalletFeedback? = nil) -> PurchaseCardAssessment {
+        guard let usedCardId = purchase.cardUsedId else {
+            return .unavailable(reason: purchase.prediction == nil ? "Card not captured"
+                                                                  : "Add the card used to compare")
+        }
+        if let bestCardId = purchase.bestCardId {
+            guard usedCardId != bestCardId else { return .best }
+            return .better(cardId: bestCardId, advantageCad: purchase.advantageCad)
+        }
+
+        if let prediction = purchase.prediction {
+            guard usedCardId != prediction.winnerCardId else { return .best }
+            let advantage = scoreDifference(
+                betterCardId: prediction.winnerCardId,
+                usedCardId: usedCardId,
+                merchantName: purchase.displayMerchant,
+                amountCad: purchase.amountCad ?? prediction.scoredAmountCad,
+                category: category(for: purchase, knownMerchants: knownMerchants),
+                at: purchase.createdAt,
+                graph: graph)
+            return .better(cardId: prediction.winnerCardId, advantageCad: advantage)
+        }
+        guard let amountCad = purchase.amountCad else {
+            return .unavailable(reason: "Add the amount to compare cards")
+        }
+        if let walletFeedback,
+           ["best", "optimal"].contains(walletFeedback.verdict.lowercased()) { return .best }
+        guard let category = category(for: purchase, knownMerchants: knownMerchants) else {
+            return .unavailable(reason: "Category needed to compare cards")
+        }
+        guard let recommendation = recommendation(merchantName: purchase.displayMerchant,
+                                                  amountCad: amountCad, category: category,
+                                                  at: purchase.createdAt, graph: graph) else {
+            return .unavailable(reason: "Card comparison unavailable")
+        }
+        guard recommendation.winner.cardId != usedCardId else { return .best }
+        guard let used = recommendation.allCandidates.first(where: { $0.cardId == usedCardId }) else {
+            return .better(cardId: recommendation.winner.cardId, advantageCad: nil)
+        }
+        let advantage = recommendation.winner.netValueCad - used.netValueCad
+        return advantage > 0.0001
+            ? .better(cardId: recommendation.winner.cardId, advantageCad: advantage) : .best
+    }
+
+    private static func scoreDifference(betterCardId: String, usedCardId: String,
+                                        merchantName: String, amountCad: Double?, category: String?,
+                                        at date: Date, graph: DependencyGraph) -> Double? {
+        guard let amountCad, let category,
+              let recommendation = recommendation(merchantName: merchantName,
+                                                  amountCad: amountCad,
+                                                  category: category,
+                                                  at: date,
+                                                  graph: graph),
+              let better = recommendation.allCandidates.first(where: { $0.cardId == betterCardId }),
+              let used = recommendation.allCandidates.first(where: { $0.cardId == usedCardId })
+        else { return nil }
+        let difference = better.netValueCad - used.netValueCad
+        return difference > 0.0001 ? difference : nil
+    }
+
+    private static func recommendation(merchantName: String, amountCad: Double, category: String,
+                                       at date: Date, graph: DependencyGraph) -> Recommendation? {
+        let indexed = MerchantRecognizer.recognise(merchantName)
+        let brand = indexed?.merchantBrand ?? canonicalEngineBrand(merchantName)
+        let networks = indexed?.acceptedNetworks
+            ?? knownAcceptedNetworks(for: brand, merchantName: merchantName)
+        let purchase = PurchaseContext(amountCad: amountCad,
+                                       category: category,
+                                       mcc: indexed?.mcc,
+                                       merchantBrand: brand,
+                                       acceptedNetworks: networks)
+        guard case .advised(let recommendation) = graph.engine.recommend(
+            purchase, asOf: date.formatted(.iso8601.year().month().day())) else { return nil }
+        return recommendation
+    }
+}
+
 /// Everything that changes while the owner is using the app, and the operations that change it.
 ///
 /// Owns no navigation. Operations that affect where the owner goes return a `FlowOutcome` and
@@ -50,14 +164,19 @@ final class CopilotSession {
     private(set) var completionQueue: [StoredPrediction] = []
     private(set) var reconcileQueue: [StoredPrediction] = []
     private(set) var recentPurchases: [StoredPrediction] = []
-    /// Wallet taps logged without a live checkout. These have no prediction to score or edit.
-    private(set) var autoLoggedPurchases: [StoredPurchase] = []
+    /// One direct fetch over StoredPurchase, regardless of origin.
+    private(set) var purchaseHistory: [StoredPurchase] = []
     private(set) var metrics: ExperimentMetrics?
     private(set) var homeMerchants: [StoredMerchant] = []
     private(set) var cachedLocation: CachedLocation?
     private(set) var locationDenied = false
 
     var lastError: FlowError?
+
+    /// Every real purchase, regardless of whether PickMe was asked before payment. Kept as a UI
+    /// read model rather than changing `PredictionLog.recentPurchases`, whose prediction-only
+    /// population is still the correct denominator for experiment metrics.
+    var recentPurchaseItems: [StoredPurchase] { purchaseHistory }
 
     func report(_ error: FlowError) { lastError = error }
     func clearError() { lastError = nil }
@@ -72,7 +191,7 @@ final class CopilotSession {
             completionQueue = snapshot.awaitingCompletion
             reconcileQueue = snapshot.awaitingConfirmation
             recentPurchases = snapshot.recentPurchases
-            autoLoggedPurchases = try graph.service.autoLoggedPurchases()
+            purchaseHistory = snapshot.purchaseHistory
             metrics = snapshot.metrics
             homeMerchants = sortedHomeMerchants(try graph.service.knownMerchants())
         } catch {
@@ -92,6 +211,8 @@ final class CopilotSession {
                                                    source: entry.amountSource ?? .recalledLater,
                                                    on: purchase)
             }
+            try graph.service.assessPurchase(purchase)
+            recordPatronage(purchase)
             refresh(using: graph)
         } catch {
             report(FlowError(error))
@@ -113,6 +234,8 @@ final class CopilotSession {
                                           observedRewardUnits: entry.observedRewardUnits,
                                           missClass: entry.missClass,
                                           note: entry.note)
+            try graph.service.assessPurchase(purchase)
+            recordPatronage(purchase)
             refresh(using: graph)
         } catch {
             report(FlowError(error))
@@ -262,6 +385,8 @@ final class CopilotSession {
                 let purchase = try graph.service.log.recordPurchase(for: stored, cardUsedId: winnerCardId,
                                                                     cardSource: .atTill)
                 try graph.service.log.recordAmount(amount, source: .atTill, on: purchase)
+                try graph.service.assessPurchase(purchase)
+                recordPatronage(purchase)
             }
             refresh(using: graph)
 
@@ -304,5 +429,14 @@ final class CopilotSession {
             if lhsDistance != rhsDistance { return lhsDistance < rhsDistance }
             return lhs.lastSeenAt > rhs.lastSeenAt
         }
+    }
+
+    private func recordPatronage(_ purchase: StoredPurchase) {
+        guard let key = purchase.merchantKey
+                ?? merchantActivityKey(name: purchase.displayMerchant,
+                                       locationIdentifier: purchase.merchantIdentifier) else { return }
+        MerchantPatronageStore().recordVisit(merchantKey: key,
+                                             displayName: purchase.displayMerchant,
+                                             at: purchase.createdAt)
     }
 }

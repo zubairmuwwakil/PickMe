@@ -1,4 +1,5 @@
 import SwiftUI
+import CardCopilotEngine
 
 /// Visual theme and branding metadata for cards in the user's wallet.
 enum CardVisualTheme {
@@ -21,6 +22,7 @@ enum CardVisualTheme {
         case mastercardWorldElite = "WORLD ELITE"
         case mastercard = "MASTERCARD"
         case discover = "DISCOVER"
+        case privateLabel = "STORE CARD"
         case prepaid = "PREPAID"
     }
 
@@ -465,17 +467,223 @@ enum CardVisualTheme {
         ),
     ]
 
+    private static let catalogueCardsById: [String: CardProduct] = {
+        guard let catalogue = try? SeedLoader.loadCatalogue() else { return [:] }
+        return Dictionary(uniqueKeysWithValues: catalogue.cards.map { ($0.cardId, $0) })
+    }()
+
+    private struct VisualPalette {
+        let gradientColors: [Color]
+        let textColor: Color
+        let accentColor: Color
+        let isDark: Bool
+    }
+
+    private static func defaultVisuals(forIssuer issuer: String, network: CardNetwork) -> VisualPalette {
+        let lower = issuer.lowercased()
+        if lower.contains("american express") || lower == "amex" {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.08, green: 0.22, blue: 0.45), Color(red: 0.12, green: 0.38, blue: 0.72)],
+                textColor: .white,
+                accentColor: Color(red: 0.45, green: 0.82, blue: 1.0),
+                isDark: true
+            )
+        } else if lower.contains("chase") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.06, green: 0.22, blue: 0.48), Color(red: 0.02, green: 0.10, blue: 0.26)],
+                textColor: .white,
+                accentColor: Color(red: 0.40, green: 0.75, blue: 1.0),
+                isDark: true
+            )
+        } else if lower.contains("citi") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.05, green: 0.20, blue: 0.42), Color(red: 0.02, green: 0.08, blue: 0.20)],
+                textColor: .white,
+                accentColor: Color(red: 0.95, green: 0.30, blue: 0.30),
+                isDark: true
+            )
+        } else if lower.contains("capital one") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.08, green: 0.18, blue: 0.32), Color(red: 0.03, green: 0.08, blue: 0.18)],
+                textColor: .white,
+                accentColor: Color(red: 0.85, green: 0.20, blue: 0.20),
+                isDark: true
+            )
+        } else if lower.contains("bank of america") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.65, green: 0.08, blue: 0.12), Color(red: 0.12, green: 0.16, blue: 0.30)],
+                textColor: .white,
+                accentColor: Color(red: 0.95, green: 0.80, blue: 0.40),
+                isDark: true
+            )
+        } else if lower.contains("wells fargo") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.58, green: 0.06, blue: 0.10), Color(red: 0.22, green: 0.02, blue: 0.05)],
+                textColor: .white,
+                accentColor: Color(red: 1.0, green: 0.82, blue: 0.40),
+                isDark: true
+            )
+        } else if lower.contains("discover") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.22, green: 0.24, blue: 0.28), Color(red: 0.10, green: 0.11, blue: 0.14)],
+                textColor: .white,
+                accentColor: Color(red: 1.0, green: 0.50, blue: 0.10),
+                isDark: true
+            )
+        } else if lower.contains("td") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.06, green: 0.26, blue: 0.15), Color(red: 0.02, green: 0.10, blue: 0.06)],
+                textColor: .white,
+                accentColor: Color(red: 0.25, green: 0.85, blue: 0.45),
+                isDark: true
+            )
+        } else if lower.contains("scotia") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.65, green: 0.08, blue: 0.12), Color(red: 0.35, green: 0.03, blue: 0.06)],
+                textColor: .white,
+                accentColor: Color(red: 1.0, green: 0.82, blue: 0.45),
+                isDark: true
+            )
+        } else if lower.contains("cibc") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.55, green: 0.06, blue: 0.15), Color(red: 0.25, green: 0.02, blue: 0.08)],
+                textColor: .white,
+                accentColor: Color(red: 0.95, green: 0.75, blue: 0.80),
+                isDark: true
+            )
+        } else if lower.contains("bmo") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.05, green: 0.25, blue: 0.50), Color(red: 0.02, green: 0.10, blue: 0.24)],
+                textColor: .white,
+                accentColor: Color(red: 0.45, green: 0.85, blue: 1.0),
+                isDark: true
+            )
+        } else if lower.contains("rbc") || lower.contains("royal bank") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.06, green: 0.20, blue: 0.48), Color(red: 0.02, green: 0.08, blue: 0.25)],
+                textColor: .white,
+                accentColor: Color(red: 1.0, green: 0.82, blue: 0.15),
+                isDark: true
+            )
+        } else if lower.contains("tangerine") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.95, green: 0.45, blue: 0.05), Color(red: 0.80, green: 0.30, blue: 0.02)],
+                textColor: .white,
+                accentColor: .white,
+                isDark: true
+            )
+        } else if lower.contains("barclays") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.00, green: 0.35, blue: 0.55), Color(red: 0.00, green: 0.15, blue: 0.28)],
+                textColor: .white,
+                accentColor: Color(red: 0.35, green: 0.85, blue: 0.95),
+                isDark: true
+            )
+        } else if lower.contains("u.s. bank") || lower.contains("us bank") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.08, green: 0.16, blue: 0.35), Color(red: 0.03, green: 0.07, blue: 0.18)],
+                textColor: .white,
+                accentColor: Color(red: 0.90, green: 0.20, blue: 0.25),
+                isDark: true
+            )
+        } else if lower.contains("goldman sachs") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.22, green: 0.22, blue: 0.24), Color(red: 0.11, green: 0.11, blue: 0.12)],
+                textColor: .white,
+                accentColor: Color(red: 0.85, green: 0.88, blue: 0.92),
+                isDark: true
+            )
+        } else if lower.contains("desjardins") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.00, green: 0.42, blue: 0.26), Color(red: 0.00, green: 0.17, blue: 0.11)],
+                textColor: .white,
+                accentColor: Color(red: 0.45, green: 0.95, blue: 0.65),
+                isDark: true
+            )
+        } else if lower.contains("pnc") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.08, green: 0.18, blue: 0.35), Color(red: 0.03, green: 0.08, blue: 0.18)],
+                textColor: .white,
+                accentColor: Color(red: 0.95, green: 0.55, blue: 0.15),
+                isDark: true
+            )
+        } else if lower.contains("fnbo") {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.08, green: 0.24, blue: 0.20), Color(red: 0.03, green: 0.10, blue: 0.08)],
+                textColor: .white,
+                accentColor: Color(red: 0.45, green: 0.85, blue: 0.65),
+                isDark: true
+            )
+        } else {
+            return VisualPalette(
+                gradientColors: [Color(red: 0.25, green: 0.30, blue: 0.38), Color(red: 0.15, green: 0.18, blue: 0.24)],
+                textColor: .white,
+                accentColor: .white,
+                isDark: true
+            )
+        }
+    }
+
     static func style(for cardId: String) -> CardStyle {
         if let style = styles[cardId] {
             return style
         }
 
-        // MARK: - Smart Fallback for Custom or Unstyled Cards
+        // MARK: - Derived Default for Unthemed Catalogue Cards
+        if let card = catalogueCardsById[cardId] {
+            let derivedNetwork: CardNetwork
+            switch card.network {
+            case .amex:
+                derivedNetwork = .amex
+            case .visa:
+                let lower = (card.cardId + " " + card.officialName).lowercased()
+                if lower.contains("privilege") || lower.contains("vip") {
+                    derivedNetwork = .visaInfinitePrivilege
+                } else if lower.contains("infinite") || lower.contains("-vi") {
+                    derivedNetwork = .visaInfinite
+                } else {
+                    derivedNetwork = .visa
+                }
+            case .mastercard:
+                let lower = (card.cardId + " " + card.officialName).lowercased()
+                if lower.contains("world-elite") || lower.contains("world elite") || lower.contains("-we") {
+                    derivedNetwork = .mastercardWorldElite
+                } else {
+                    derivedNetwork = .mastercard
+                }
+            case .discover:
+                derivedNetwork = .discover
+            case .privateLabel:
+                derivedNetwork = .privateLabel
+            }
+
+            let colors = defaultVisuals(forIssuer: card.issuer, network: derivedNetwork)
+            let trimmedOfficial = card.officialName
+                .replacingOccurrences(of: " Credit Card", with: "")
+                .replacingOccurrences(of: " credit card", with: "")
+                .trimmingCharacters(in: .whitespaces)
+            let shortName = trimmedOfficial.isEmpty
+                ? card.cardId.replacingOccurrences(of: "-", with: " ").capitalized
+                : trimmedOfficial
+
+            return CardStyle(
+                cardId: cardId,
+                shortName: shortName,
+                issuer: card.issuer,
+                network: derivedNetwork,
+                gradientColors: colors.gradientColors,
+                textColor: colors.textColor,
+                accentColor: colors.accentColor,
+                isDark: colors.isDark
+            )
+        }
+
+        // MARK: - Smart Fallback for Custom or Uncatalogued Cards
         let lower = cardId.lowercased()
         let inferredNetwork: CardNetwork
         if lower.contains("discover") {
             inferredNetwork = .discover
-        } else if lower.contains("amex") || lower.hasPrefix("american-express") {
+        } else if lower.contains("amex") || lower.contains("american-express") {
             inferredNetwork = .amex
         } else if lower.contains("vip") || lower.contains("privilege") {
             inferredNetwork = .visaInfinitePrivilege
@@ -520,15 +728,17 @@ enum CardVisualTheme {
             .replacingOccurrences(of: "-", with: " ")
             .capitalized
 
+        let colors = defaultVisuals(forIssuer: inferredIssuer, network: inferredNetwork)
+
         return CardStyle(
             cardId: cardId,
             shortName: cleanedName,
             issuer: inferredIssuer,
             network: inferredNetwork,
-            gradientColors: [Color(red: 0.25, green: 0.3, blue: 0.38), Color(red: 0.15, green: 0.18, blue: 0.24)],
-            textColor: .white,
-            accentColor: .white,
-            isDark: true
+            gradientColors: colors.gradientColors,
+            textColor: colors.textColor,
+            accentColor: colors.accentColor,
+            isDark: colors.isDark
         )
     }
 }

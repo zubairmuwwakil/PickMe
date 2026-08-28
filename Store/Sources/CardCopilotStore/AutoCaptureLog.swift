@@ -62,9 +62,25 @@ public struct AutoCaptureLog {
 
     @discardableResult
     private func record(_ capture: CaptureMatcher.UnclaimedCapture) throws -> StoredPurchase {
+        let indexed = MerchantRecognizer.recognise(capture.merchant)
+        let categoryPrediction = indexed.flatMap { merchant in
+            guard merchant.category != "other" else { return nil }
+            return CategoryPrediction(category: merchant.category, confidenceSource: .brandPrior,
+                                      candidates: [merchant.category])
+        } ?? predict(poiCategoryRaw: nil, merchantName: capture.merchant)
+        let category = categoryPrediction.confidenceSource == .fallback
+            ? nil : categoryPrediction.category
         let purchase = StoredPurchase(createdAt: capture.capturedAt,
                                       merchantLabel: capture.merchant,
-                                      walletEventId: capture.eventId)
+                                      walletEventId: capture.eventId,
+                                      activitySource: .walletCapture,
+                                      merchantKey: merchantActivityKey(name: capture.merchant,
+                                                                       locationIdentifier: nil),
+                                      merchantLatitude: capture.latitude,
+                                      merchantLongitude: capture.longitude,
+                                      categoryAtPurchase: category,
+                                      categoryConfidence: category == nil
+                                        ? nil : categoryPrediction.confidenceSource)
         context.insert(purchase)
         if let cardUsedId = capture.cardUsedId {
             purchase.cardUsedId = cardUsedId
@@ -79,6 +95,12 @@ public struct AutoCaptureLog {
         // leave one fact missing, and this purchase should say so honestly rather than claim done.
         if purchase.cardUsedId != nil, purchase.amountCad != nil {
             purchase.completedAt = capture.capturedAt
+        }
+        if let used = purchase.cardUsedId,
+           ["best", "optimal"].contains(capture.verdict.lowercased()) {
+            purchase.bestCardId = used
+            purchase.advantageCad = 0
+            purchase.evaluatedAt = capture.capturedAt
         }
         try context.save()
         return purchase

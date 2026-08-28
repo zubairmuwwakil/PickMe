@@ -89,6 +89,9 @@ public enum CaptureMatcher {
         public let amountCad: Double?
         /// nil when the server's alias table could not resolve the card.
         public let cardUsedId: String?
+        public let verdict: String
+        public let latitude: Double?
+        public let longitude: Double?
 
         public var id: String { eventId }
     }
@@ -112,7 +115,10 @@ public enum CaptureMatcher {
                                  capturedAt: event.capturedAt,
                                  merchant: event.merchantNormalized ?? event.merchantRaw ?? "Unknown merchant",
                                  amountCad: amountCad(from: event),
-                                 cardUsedId: event.resolvedCardId)
+                                 cardUsedId: event.resolvedCardId,
+                                 verdict: event.verdict,
+                                 latitude: event.latitude,
+                                 longitude: event.longitude)
             }
     }
 

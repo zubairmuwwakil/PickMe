@@ -128,7 +128,8 @@ public struct CheckoutService {
     }
 
     public func recommend(merchant: NearbyMerchant, amountCad: Double?,
-                          asOf: String) throws -> CheckoutResult {
+                          asOf: String,
+                          purchaseSource: PurchaseActivitySource = .pickMeCheckout) throws -> CheckoutResult {
         let prediction = try confirmedPrediction(forMerchantId: merchant.id)
             ?? predict(poiCategoryRaw: merchant.poiCategoryRaw, merchantName: merchant.name)
         let brand = canonicalEngineBrand(merchant.name)
@@ -207,7 +208,13 @@ public struct CheckoutService {
         // reconciled. It opens EMPTY on purpose: the amount above is what the owner expected to
         // spend, and writing it here as the charge would rebuild the very conflation this model
         // exists to break. Both facts arrive after payment.
-        try log.recordPurchase(for: stored)
+        try log.recordPurchase(for: stored,
+                               activitySource: purchaseSource,
+                               merchantKey: merchantActivityKey(name: merchant.name,
+                                                                locationIdentifier: merchant.id),
+                               merchantIdentifier: merchant.id,
+                               merchantLatitude: merchant.latitude,
+                               merchantLongitude: merchant.longitude)
         try upsertMerchant(merchant)
 
         return CheckoutResult(merchant: merchant, prediction: prediction, outcome: outcome,
@@ -215,6 +222,42 @@ public struct CheckoutService {
                               amountWasEstimated: amountCad == nil,
                               categoryWasAmbiguous: ambiguous,
                               storedPredictionId: stored.id)
+    }
+
+    /// Freezes the best-vs-used comparison once enough purchase facts exist.
+    public func assessPurchase(_ purchase: StoredPurchase, evaluatedAt: Date = Date()) throws {
+        guard purchase.evaluatedAt == nil,
+              let usedCardId = purchase.cardUsedId,
+              let amountCad = purchase.amountCad,
+              let category = purchase.observation?.observedCategory
+                ?? purchase.categoryAtPurchase
+                ?? purchase.prediction?.predictedCategory else { return }
+
+        let merchantName = purchase.displayMerchant
+        let indexed = MerchantRecognizer.recognise(merchantName)
+        let brand = indexed?.merchantBrand ?? canonicalEngineBrand(merchantName)
+        let context = PurchaseContext(
+            amountCad: amountCad,
+            category: category,
+            mcc: indexed?.mcc,
+            merchantBrand: brand,
+            acceptedNetworks: indexed?.acceptedNetworks
+                ?? knownAcceptedNetworks(for: brand, merchantName: merchantName))
+        guard case .advised(let current) = engine.recommend(
+            context, asOf: evaluatedAt.formatted(.iso8601.year().month().day())) else { return }
+
+        // Advice-bearing purchases preserve the winner the owner was actually shown. Automatic
+        // captures freeze the winner from their first successful post-purchase evaluation.
+        let bestCardId = purchase.prediction?.winnerCardId
+            ?? purchase.bestCardId
+            ?? current.winner.cardId
+        let bestValue = current.allCandidates.first { $0.cardId == bestCardId }?.netValueCad
+            ?? purchase.bestCardValueCad
+        let usedValue = current.allCandidates.first { $0.cardId == usedCardId }?.netValueCad
+        try log.recordAssessment(on: purchase, bestCardId: bestCardId,
+                                 bestCardValueCad: bestValue,
+                                 usedCardValueCad: usedValue,
+                                 evaluatedAt: evaluatedAt)
     }
 
     /// Rungs 1 and 2 of the prediction ladder (design §6). An owner-reconciled result for THIS
@@ -258,7 +301,17 @@ public struct CheckoutService {
     /// reflected in the same UI update as the sync that produced them.
     @discardableResult
     public func ingestAutomaticCaptures(from feedback: [WalletFeedback]) throws -> [StoredPurchase] {
-        try AutoCaptureLog(context: context).ingest(feedback: feedback, openPredictions: log.allPredictions())
+        let purchases = try AutoCaptureLog(context: context)
+            .ingest(feedback: feedback, openPredictions: log.allPredictions())
+        for purchase in purchases {
+            try assessPurchase(purchase, evaluatedAt: purchase.createdAt)
+            if let merchantKey = purchase.merchantKey {
+                MerchantPatronageStore().recordVisit(merchantKey: merchantKey,
+                                                     displayName: purchase.displayMerchant,
+                                                     at: purchase.createdAt)
+            }
+        }
+        return purchases
     }
 
     /// Purchases logged automatically from a Wallet capture with no live checkout behind them —

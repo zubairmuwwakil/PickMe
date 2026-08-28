@@ -125,4 +125,110 @@ final class CopilotSessionTests: XCTestCase {
         let outcome = await session.search("", using: try makeGraph(context: context))
         XCTAssertEqual(outcome, .nothingFound(query: ""))
     }
+
+    /// Activity is a purchase history, not a prediction history. Automatic Wallet captures and
+    /// checkouts share one ordered read model while the metric-bearing arrays stay separate.
+    func testRecentPurchaseItemsMergeBothSourcesNewestFirst() throws {
+        let context = try makeContext()
+        let graph = try makeGraph(context: context)
+        let prediction = StoredPrediction(merchantName: "Loblaws",
+                                          predictedCategory: "grocery",
+                                          confidenceSource: .brandPrior,
+                                          winnerCardId: "amex-cobalt",
+                                          winnerValueCad: 2.50,
+                                          headline: "Cobalt",
+                                          recordedAt: Date().addingTimeInterval(-3600))
+        context.insert(prediction)
+        try context.save()
+        _ = try graph.service.log.recordPurchase(for: prediction,
+                                                 cardUsedId: "amex-cobalt",
+                                                 cardSource: .atTill)
+
+        let automaticDate = Date().addingTimeInterval(3600)
+        let feedback = WalletFeedback(eventId: "automatic-newest",
+                                      capturedAt: automaticDate,
+                                      merchantRaw: "Tim Hortons",
+                                      amountMinor: 725,
+                                      currency: "CAD",
+                                      cardRaw: "Cobalt",
+                                      resolvedCardId: "amex-cobalt",
+                                      verdict: "best",
+                                      warning: nil)
+        _ = try AutoCaptureLog(context: context).ingest(feedback: [feedback], openPredictions: [])
+
+        let session = CopilotSession()
+        session.refresh(using: graph)
+
+        XCTAssertEqual(session.recentPurchases.count, 1)
+        XCTAssertEqual(session.purchaseHistory.count, 2)
+        XCTAssertEqual(session.recentPurchaseItems.count, 2)
+        let first = session.recentPurchaseItems[0]
+        XCTAssertEqual(first.walletEventId, "automatic-newest")
+        XCTAssertNotNil(session.recentPurchaseItems[1].prediction)
+    }
+
+    func testCheckoutAssessmentUsesTheFrozenRecommendedCard() throws {
+        let context = try makeContext()
+        let graph = try makeGraph(context: context)
+        let prediction = StoredPrediction(merchantName: "Loblaws",
+                                          predictedCategory: "grocery",
+                                          confidenceSource: .brandPrior,
+                                          winnerCardId: "amex-cobalt",
+                                          winnerValueCad: 2.50,
+                                          headline: "Cobalt")
+        context.insert(prediction)
+        try context.save()
+        let purchase = try graph.service.log.recordPurchase(for: prediction,
+                                                            cardUsedId: "amex-cobalt",
+                                                            cardSource: .atTill)
+        XCTAssertEqual(PurchaseActivityEvaluator.cardAssessment(for: purchase, graph: graph), .best)
+
+        let otherCard = try XCTUnwrap(graph.walletCardIds.first { $0 != "amex-cobalt" })
+        purchase.cardUsedId = otherCard
+        guard case .better(let cardId, _) = PurchaseActivityEvaluator.cardAssessment(for: purchase,
+                                                                                     graph: graph) else {
+            return XCTFail("using a different card should surface the frozen better card")
+        }
+        XCTAssertEqual(cardId, "amex-cobalt")
+    }
+
+    func testAutomaticCaptureCanBeRecognisedAndMarkedBestWithoutCheckoutAdvice() throws {
+        let context = try makeContext()
+        let graph = try makeGraph(context: context)
+        let indexed = try XCTUnwrap(MerchantRecognizer.recognise("Loblaws"))
+        let recommendation = try XCTUnwrap(graph.engine.recommendOrNil(
+            PurchaseContext(amountCad: 50,
+                            category: indexed.category,
+                            mcc: indexed.mcc,
+                            merchantBrand: indexed.merchantBrand,
+                            acceptedNetworks: indexed.acceptedNetworks),
+            asOf: Date().formatted(.iso8601.year().month().day())))
+        let purchase = StoredPurchase(merchantLabel: "Loblaws", walletEventId: "tap-best")
+        purchase.amountCad = 50
+        purchase.cardUsedId = recommendation.winner.cardId
+        XCTAssertEqual(PurchaseActivityEvaluator.category(for: purchase), "grocery")
+        XCTAssertEqual(PurchaseActivityEvaluator.cardAssessment(for: purchase, graph: graph), .best)
+    }
+
+    func testTrustedWalletVerdictMarksAnUnknownMerchantBestWithoutGuessingItsCategory() throws {
+        let graph = try makeGraph(context: makeContext())
+        let purchase = StoredPurchase(merchantLabel: "Mom's Kitchen", walletEventId: "local-place")
+        purchase.amountCad = 47.43
+        purchase.cardUsedId = "amex-cobalt"
+        let feedback = WalletFeedback(eventId: "local-place",
+                                      capturedAt: purchase.createdAt,
+                                      merchantRaw: "Mom's Kitchen",
+                                      amountMinor: 4743,
+                                      currency: "CAD",
+                                      cardRaw: "Cobalt",
+                                      resolvedCardId: "amex-cobalt",
+                                      verdict: "best",
+                                      warning: nil)
+
+        XCTAssertNil(PurchaseActivityEvaluator.category(for: purchase))
+        XCTAssertEqual(PurchaseActivityEvaluator.cardAssessment(for: purchase,
+                                                                graph: graph,
+                                                                walletFeedback: feedback),
+                       .best)
+    }
 }

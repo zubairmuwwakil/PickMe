@@ -477,7 +477,21 @@ extension StoredPurchase {
     /// reads it from the `StoredPrediction`; one `AutoCaptureLog` wrote directly reads its own
     /// `merchantLabel`, since it has no prediction to read from.
     public var displayMerchant: String {
-        prediction?.merchantName ?? merchantLabel ?? "Unknown merchant"
+        merchantLabel ?? prediction?.merchantName ?? "Unknown merchant"
+    }
+
+    /// Source for legacy rows is derived from whether advice exists; V4 rows carry it explicitly.
+    public var resolvedActivitySource: PurchaseActivitySource {
+        activitySource ?? (prediction == nil ? .walletCapture : .pickMeCheckout)
+    }
+
+    public var displayCategory: String? {
+        observation?.observedCategory ?? categoryAtPurchase ?? prediction?.predictedCategory
+    }
+
+    public var hasPreciseLocation: Bool {
+        guard let merchantLatitude, let merchantLongitude else { return false }
+        return merchantLatitude != 0 || merchantLongitude != 0
     }
 
     /// True for a purchase with no `StoredPrediction` behind it — `AutoCaptureLog` wrote it

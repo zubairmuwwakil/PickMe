@@ -1392,13 +1392,13 @@
     "Connect native Wallet Capture" : {
 
     },
-    "Connected securely" : {
-
-    },
     "Connected to Inunity Cloud" : {
 
     },
     "Connecting…" : {
+
+    },
+    "Connection saved on this iPhone" : {
 
     },
     "Continue" : {
@@ -3952,7 +3952,7 @@
         }
       }
     },
-    "The write-only installation credential is protected on this iPhone. It is not copied into Shortcuts or displayed on screen." : {
+    "The write-only installation credential is protected on this iPhone. Verification and delivery status appear below." : {
 
     },
     "These captures arrived while no account was connected or a different account was signed in. They will not be sent until you choose." : {

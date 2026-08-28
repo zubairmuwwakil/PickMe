@@ -1,12 +1,32 @@
 import Foundation
 
+/// Stable identity used by purchase history, patronage, and arrival-alert preferences.
+/// Recognised retailers use their chain id so another branch can match; an unrecognised local
+/// merchant uses a normalized-name namespace and therefore only supports an exact-location
+/// alert. The preference itself retains the POI id and coordinates for precise matching.
+public let localMerchantKeyPrefix = "local:"
+
+public func merchantActivityKey(name: String, locationIdentifier: String?) -> String? {
+    if let chain = MerchantRecognizer.recognise(name)?.id { return chain }
+    let folded = name.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+    let normalized = folded.lowercased()
+        .components(separatedBy: CharacterSet.alphanumerics.inverted)
+        .joined()
+    if !normalized.isEmpty { return localMerchantKeyPrefix + normalized }
+    guard let locationIdentifier, !locationIdentifier.isEmpty else { return nil }
+    return localMerchantKeyPrefix + locationIdentifier
+}
+
+public func supportsChainArrivalAlerts(merchantKey: String) -> Bool {
+    !merchantKey.hasPrefix(localMerchantKeyPrefix)
+}
+
 /// Which merchants the owner keeps paying at, and on how many separate days.
 ///
-/// Deliberately holds day keys and nothing else. Not the amount, not the card, not the
-/// coordinate — the outbox already carries those to where they belong, and a second copy here
-/// would be a retention liability serving no decision this file makes. What is kept is the
-/// minimum that answers "does this merchant earn an interruption", and it is pruned to the
-/// patronage window on every write.
+/// Deliberately holds only day keys plus the display label needed by the owner-facing list. Not
+/// the amount, not the card, not the coordinate — those already live with the purchase, and a
+/// second copy here would be a retention liability serving no decision this file makes. Both the
+/// visits and their labels are pruned to the patronage window on every write.
 ///
 /// Lives in the shared App Group suite because the writer and the reader are not reliably the
 /// same process: visits are recorded from the Wallet Capture App Intent, and standing is read on
@@ -27,12 +47,19 @@ public final class MerchantPatronageStore: @unchecked Sendable {
     /// at the same shop the same afternoon changes nothing. A blocked merchant refuses the write
     /// outright — blocking stops collection, not just display, so a capture that slips through
     /// before the block list is consulted elsewhere still cannot accrue standing here.
-    public func recordVisit(merchantKey: String, at date: Date = Date(),
+    public func recordVisit(merchantKey: String, displayName: String? = nil,
+                            at date: Date = Date(),
                             calendar: Calendar = .current) {
         guard !isBlocked(merchantKey: merchantKey) else { return }
         var all = load()
         all[merchantKey, default: []].insert(patronageDayKey(for: date, calendar: calendar))
-        save(pruned(all, asOf: date, calendar: calendar))
+        let retained = pruned(all, asOf: date, calendar: calendar)
+        save(retained)
+        var names = loadDisplayNames().filter { retained[$0.key] != nil }
+        if let displayName, !displayName.isEmpty {
+            names[merchantKey] = displayName
+        }
+        saveDisplayNames(names)
     }
 
     public func visitDayKeys(for merchantKey: String) -> Set<String> {
@@ -63,6 +90,9 @@ public final class MerchantPatronageStore: @unchecked Sendable {
         var all = load()
         all.removeValue(forKey: merchantKey)
         save(all)
+        var names = loadDisplayNames()
+        names.removeValue(forKey: merchantKey)
+        saveDisplayNames(names)
     }
 
     // MARK: - Block list
@@ -105,10 +135,13 @@ public final class MerchantPatronageStore: @unchecked Sendable {
     }
 
     public func learnedMerchants(asOf date: Date = Date(), calendar: Calendar = .current) -> [LearnedMerchant] {
-        load().compactMap { key, days in
+        let names = loadDisplayNames()
+        return load().compactMap { key, days in
             let live = patronageDaysWithinWindow(days, asOf: date, calendar: calendar)
             guard let earliest = live.min(), let latest = live.max() else { return nil }
-            let displayName = CanadianMerchantPreIndex.all.first { $0.id == key }?.name ?? key
+            let displayName = names[key]
+                ?? CanadianMerchantPreIndex.all.first { $0.id == key }?.name
+                ?? key
             return LearnedMerchant(merchantKey: key, displayName: displayName, visitCount: live.count,
                                    earliestDayKey: earliest, latestDayKey: latest,
                                    qualifies: live.count >= patronageVisitDaysRequired)
@@ -121,6 +154,7 @@ public final class MerchantPatronageStore: @unchecked Sendable {
     public func forgetAll() {
         defaults.removeObject(forKey: key)
         defaults.removeObject(forKey: blockedKeysKey)
+        defaults.removeObject(forKey: displayNamesKey)
     }
 
     // MARK: - Storage
@@ -151,6 +185,15 @@ public final class MerchantPatronageStore: @unchecked Sendable {
     }
 
     private var blockedKeysKey: String { key + ".blocked" }
+    private var displayNamesKey: String { key + ".names" }
+
+    private func loadDisplayNames() -> [String: String] {
+        defaults.dictionary(forKey: displayNamesKey) as? [String: String] ?? [:]
+    }
+
+    private func saveDisplayNames(_ value: [String: String]) {
+        defaults.set(value, forKey: displayNamesKey)
+    }
 
     private func loadBlocked() -> Set<String> {
         Set(defaults.stringArray(forKey: blockedKeysKey) ?? [])

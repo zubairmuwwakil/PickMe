@@ -203,6 +203,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private let queryLog = DiscoveryQueryLog()
     private let provider = LiveMerchantProvider()
     private let patronageStore = MerchantPatronageStore()
+    private let alertPreferenceStore = ArrivalAlertPreferenceStore()
 
     private var modelContainer: ModelContainer?
     private var catalogue: Catalogue?
@@ -280,6 +281,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         visitStore.forgetAll()
         queryLog.forgetAll()
         patronageStore.forgetAll()
+        alertPreferenceStore.forgetAll()
     }
 
     /// Called only from the dedicated explainer screen, before either system prompt appears.
@@ -288,6 +290,12 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             _ = try? await notificationCenter.requestAuthorization(options: [.alert, .badge, .sound])
         }
         manager.requestAlwaysAuthorization()
+    }
+
+    /// Re-aims regions after an owner changes a merchant-level alert preference.
+    func refreshNow() {
+        guard manager.authorizationStatus == .authorizedAlways else { return }
+        manager.requestLocation()
     }
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
@@ -366,12 +374,16 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
         // Read once for the whole rotation, exactly as the arrival path does: this is a background
         // wake and `merchants` can hold every merchant the owner has ever saved.
-        let frequentedKeys = patronageStore.frequentedKeys()
+        let frequentedKeys = effectiveFrequentedKeys()
         let standings = merchants.map {
             storedMerchantRegionTier(
                 confirmedCategory: $0.confirmedCategory,
-                isFrequented: MerchantRecognizer.recognise($0.name)
-                    .map { frequentedKeys.contains($0.id) } ?? false)
+                isFrequented: explicitlyPrioritized(name: $0.name,
+                                                    identifier: $0.identifier,
+                                                    latitude: $0.latitude,
+                                                    longitude: $0.longitude)
+                    ?? (MerchantRecognizer.recognise($0.name)
+                        .map { frequentedKeys.contains($0.id) } ?? false))
         }
 
         // Which area, if any, already covers each merchant. Computed once and used twice: a
@@ -504,13 +516,17 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         let advantageCad = recommendation.advantageOverDefaultCad ?? 0
         let advantagePP = purchase.amountCad > 0 ? advantageCad / purchase.amountCad * 100 : 0
 
+        let explicit = explicitlyPrioritized(name: arrival.merchant.name,
+                                             identifier: arrival.merchant.id,
+                                             latitude: arrival.merchant.latitude,
+                                             longitude: arrival.merchant.longitude)
         let decision = AmbientGate.evaluate(AmbientGateInput(
-            merchantConfidence: arrival.confidence,
+            merchantConfidence: explicit == true ? .frequented : arrival.confidence,
             recommendedCardId: recommendation.winner.cardId,
             defaultCardId: ownerState.defaultCardId,
             advantage: AmbientAdvantage(percentagePoints: advantagePP, cad: advantageCad),
             switchThreshold: ownerState.switchThreshold,
-            isMuted: muteStore.isMuted(arrival.muteKey)
+            isMuted: muteStore.isMuted(arrival.muteKey) || explicit == false
         ))
         diagnosticsStore.record(decision)
         guard decision.fires else { return }
@@ -526,7 +542,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         case .merchant(let id):
             guard let merchant = try? context.fetch(FetchDescriptor<StoredMerchant>(
                 predicate: #Predicate { $0.id == id })).first else { return nil }
-            return resolved(storedMerchant: merchant, frequentedKeys: patronageStore.frequentedKeys())
+            return resolved(storedMerchant: merchant, frequentedKeys: effectiveFrequentedKeys())
 
         case .area(let id):
             guard let area = try? context.fetch(FetchDescriptor<ShoppingArea>(
@@ -543,7 +559,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                 .min { $0.1 < $1.1 }?.0
             // Read once for the whole arrival rather than per candidate name: an area holds
             // several members, and this is a background wake.
-            let frequentedKeys = patronageStore.frequentedKeys()
+            let frequentedKeys = effectiveFrequentedKeys()
             if let nearestConfirmed {
                 return resolved(storedMerchant: nearestConfirmed, frequentedKeys: frequentedKeys)
             }
@@ -590,6 +606,22 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                confidence: resolution.confidence,
                                mcc: resolution.mcc,
                                muteKey: nearby.id)
+    }
+
+    /// Chain choices lift every recognised branch. Exact choices are checked against the POI id
+    /// and a 100 m coordinate fallback. Nil deliberately preserves automatic learning.
+    private func explicitlyPrioritized(name: String, identifier: String?,
+                                       latitude: Double, longitude: Double) -> Bool? {
+        guard let merchantKey = merchantActivityKey(name: name,
+                                                    locationIdentifier: identifier) else { return nil }
+        return alertPreferenceStore.permits(merchantKey: merchantKey,
+                                            locationIdentifier: identifier,
+                                            latitude: latitude,
+                                            longitude: longitude)
+    }
+
+    private func effectiveFrequentedKeys() -> Set<String> {
+        patronageStore.frequentedKeys().union(alertPreferenceStore.chainKeys())
     }
 
     // MARK: - Exit
@@ -714,7 +746,8 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         // No amount: the owner has not paid yet, or has not said. `recommend` scores a category
         // estimate for the advice and stores nil, which is exactly right — the charge lands later.
         guard let result = try? service.recommend(merchant: merchant, amountCad: nil,
-                                                  asOf: Date().formatted(.iso8601.year().month().day()))
+                                                  asOf: Date().formatted(.iso8601.year().month().day()),
+                                                  purchaseSource: .arrivalAlert)
         else { return }
         // Bound to a local first: #Predicate lifts captured values, not property accesses on them.
         let predictionId = result.storedPredictionId
@@ -726,6 +759,15 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                                              cardSource: cardId == nil ? nil : .atTill)
         else { return }
 
+        // Engaging with the arrival alert is explicit evidence that this was a real shopping
+        // visit. The day-key store is idempotent, so a later Wallet tap cannot double-count it.
+        if let key = purchase.merchantKey
+            ?? merchantActivityKey(name: merchantName,
+                                   locationIdentifier: purchase.merchantIdentifier) {
+            patronageStore.recordVisit(merchantKey: key, displayName: merchantName,
+                                       at: purchase.createdAt)
+        }
+
         visitStore.update(regionId: regionId) { visit in
             visit.didEngage = true
             visit.purchaseId = purchase.id
@@ -733,7 +775,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     }
 
     private func recordTypedAmount(userInfo: [AnyHashable: Any], typedText: String?) {
-        guard let modelContainer,
+        guard let modelContainer, let catalogue, let ownerState,
               let raw = userInfo["purchaseId"] as? String, let purchaseId = UUID(uuidString: raw),
               let amount = Self.parseAmount(typedText) else { return }
         let context = ModelContext(modelContainer)
@@ -741,7 +783,9 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             predicate: #Predicate { $0.id == purchaseId })).first else { return }
         // `.atTill`: typed on the way out with the receipt in hand, which is the strongest a
         // manual amount gets and materially better than the same figure recalled next week.
-        try? PredictionLog(context: context).recordAmount(amount, source: .atTill, on: purchase)
+        let service = CheckoutService(catalogue: catalogue, ownerState: ownerState, context: context)
+        try? service.log.recordAmount(amount, source: .atTill, on: purchase)
+        try? service.assessPurchase(purchase)
     }
 
     /// Lenient on purpose. A lock-screen keyboard produces "$47.83", "47,83" and stray spaces, and

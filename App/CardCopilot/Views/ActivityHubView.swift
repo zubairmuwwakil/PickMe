@@ -2,20 +2,32 @@ import SwiftUI
 import CardCopilotEngine
 import CardCopilotStore
 
-/// The Activity hub: Pending queues (Finish Purchases, Reconcile Statements), Recent Purchases with Category Intelligence & Experiment Scoreboard.
+/// The Activity hub: pending queues, one chronological purchase history, category intelligence,
+/// and the experiment scoreboard. Automatic Wallet captures share the history but never the
+/// prediction-only metrics.
 struct ActivityHubView: View {
     @Environment(CopilotSession.self) private var session
     @Environment(CheckoutRouter.self) private var router
     @Environment(CopilotEnvironment.self) private var environment
+    @Environment(SyncCoordinator.self) private var sync
 
     @State private var selectedCategory: String? = nil
     @State private var isShowingAllPurchases = false
     @State private var inspectingPurchase: StoredPrediction? = nil
+    @State private var isChoosingArrivalScope = false
+
+    private struct ArrivalPromptContext {
+        let purchase: StoredPurchase
+        let merchantKey: String
+        let merchantName: String
+        let supportsChain: Bool
+        let locationIdentifier: String?
+        let latitude: Double
+        let longitude: Double
+    }
 
     private var availableCategories: [String] {
-        let cats = session.recentPurchases.map {
-            $0.purchase?.observation?.observedCategory ?? $0.predictedCategory
-        }.filter { !$0.isEmpty }
+        let cats = session.recentPurchaseItems.compactMap(category)
         var unique: [String] = []
         for cat in cats where !unique.contains(cat) {
             unique.append(cat)
@@ -23,20 +35,52 @@ struct ActivityHubView: View {
         return unique
     }
 
-    private var filteredPurchases: [StoredPrediction] {
+    private var filteredItems: [StoredPurchase] {
         if let selectedCategory {
-            return session.recentPurchases.filter {
-                ($0.purchase?.observation?.observedCategory ?? $0.predictedCategory) == selectedCategory
-            }
+            return session.recentPurchaseItems.filter { category(for: $0) == selectedCategory }
         }
-        return session.recentPurchases
+        return session.recentPurchaseItems
     }
 
-    private var displayedPurchases: [StoredPrediction] {
+    private var displayedItems: [StoredPurchase] {
         if selectedCategory != nil {
-            return filteredPurchases
+            return filteredItems
         }
-        return Array(session.recentPurchases.prefix(5))
+        return Array(session.recentPurchaseItems.prefix(5))
+    }
+
+    private var filteredCheckoutPurchases: [StoredPrediction] {
+        filteredItems.compactMap(\.prediction)
+    }
+
+    /// Ask once after the first repeat (two separate visit days), while the exact branch is still
+    /// known. Three days remains the threshold only for owners who choose automatic learning.
+    private var arrivalPromptContext: ArrivalPromptContext? {
+        let patronage = MerchantPatronageStore()
+        let preferences = ArrivalAlertPreferenceStore()
+        for purchase in session.recentPurchaseItems {
+            guard let merchantKey = purchase.merchantKey
+                    ?? merchantActivityKey(name: purchase.displayMerchant,
+                                           locationIdentifier: purchase.merchantIdentifier),
+                  preferences.preference(for: merchantKey) == nil,
+                  patronage.visitDayKeys(for: merchantKey).count >= 2 else { continue }
+
+            let stored = session.homeMerchants.first {
+                purchase.merchantIdentifier != nil && $0.identifier == purchase.merchantIdentifier
+            }
+            guard let latitude = purchase.merchantLatitude ?? stored?.latitude,
+                  let longitude = purchase.merchantLongitude ?? stored?.longitude,
+                  latitude != 0 || longitude != 0 else { continue }
+            return ArrivalPromptContext(
+                purchase: purchase,
+                merchantKey: merchantKey,
+                merchantName: purchase.displayMerchant,
+                supportsChain: supportsChainArrivalAlerts(merchantKey: merchantKey),
+                locationIdentifier: purchase.merchantIdentifier ?? stored?.identifier,
+                latitude: latitude,
+                longitude: longitude)
+        }
+        return nil
     }
 
     var body: some View {
@@ -84,67 +128,55 @@ struct ActivityHubView: View {
                             Text("Recent Purchases")
                                 .font(.system(size: 18, weight: .bold, design: .rounded))
                                 .foregroundStyle(.primary)
-                            if !session.recentPurchases.isEmpty {
-                                Text("\(session.recentPurchases.count) total • \(availableCategories.count) categories")
+                            if !session.recentPurchaseItems.isEmpty {
+                                Text("\(session.recentPurchaseItems.count) total • \(availableCategories.count) categories")
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundStyle(.secondary)
                             }
                         }
                         Spacer()
-                        if session.recentPurchases.count > 5 {
+                        if session.recentPurchaseItems.count > 5 {
                             Button {
                                 isShowingAllPurchases = true
                             } label: {
-                                Text("See All (\(session.recentPurchases.count))")
+                                Text("See All (\(session.recentPurchaseItems.count))")
                                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                                     .foregroundStyle(.blue)
                             }
                         }
                     }
 
-                    if session.recentPurchases.isEmpty {
+                    if session.recentPurchaseItems.isEmpty {
                         emptyPurchasesCard
                     } else {
                         // Horizontal Category Filter Pills
                         categoryFilterBar
 
                         // Category Insight & Cap Card (when filtering or aggregate)
-                        if let selectedCategory {
-                            categoryInsightCard(category: selectedCategory, purchases: filteredPurchases)
+                        if let selectedCategory, !filteredCheckoutPurchases.isEmpty {
+                            categoryInsightCard(category: selectedCategory,
+                                                purchases: filteredCheckoutPurchases)
                         }
 
                         // Purchase rows
                         VStack(spacing: 10) {
-                            ForEach(displayedPurchases) { prediction in
-                                Button {
-                                    inspectingPurchase = prediction
-                                    openPurchase(prediction)
-                                } label: {
-                                    purchaseRow(prediction: prediction)
+                            ForEach(displayedItems) { item in
+                                if let prediction = item.prediction {
+                                    Button {
+                                        inspectingPurchase = prediction
+                                        openPurchase(prediction)
+                                    } label: {
+                                        purchaseRow(item)
+                                    }
+                                    .buttonStyle(.plain)
+                                } else {
+                                    purchaseRow(item)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
-                    }
-                }
 
-                // These purchases came from Wallet taps with no live checkout, so they stay
-                // separate from category filtering and the experiment scoreboard.
-                if !session.autoLoggedPurchases.isEmpty {
-                    VStack(alignment: .leading, spacing: 14) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Logged from Card Taps")
-                                .font(.system(size: 18, weight: .bold, design: .rounded))
-                                .foregroundStyle(.primary)
-                            Text("Captured automatically — no checkout was asked about these")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.secondary)
-                        }
-
-                        VStack(spacing: 10) {
-                            ForEach(session.autoLoggedPurchases) { purchase in
-                                autoLoggedPurchaseRow(purchase)
-                            }
+                        if let prompt = arrivalPromptContext {
+                            arrivalAlertPrompt(for: prompt)
                         }
                     }
                 }
@@ -175,9 +207,12 @@ struct ActivityHubView: View {
         .background(Color(.systemGroupedBackground))
         .sheet(isPresented: $isShowingAllPurchases) {
             AllPurchasesSheetView(
-                purchases: session.recentPurchases,
+                purchases: session.recentPurchaseItems,
                 cards: environment.graph?.walletCards ?? [],
-                onSelectPurchase: { prediction in
+                graph: environment.graph,
+                knownMerchants: session.homeMerchants,
+                onSelectPurchase: { item in
+                    guard let prediction = item.prediction else { return }
                     inspectingPurchase = prediction
                     openPurchase(prediction)
                 },
@@ -200,6 +235,36 @@ struct ActivityHubView: View {
                     updateCategory(updatedPrediction, newCategory)
                 }
             )
+        }
+        .confirmationDialog(
+            arrivalPromptContext.map { "Arrival alerts for \($0.merchantName)" }
+                ?? "Arrival alerts",
+            isPresented: $isChoosingArrivalScope,
+            titleVisibility: .visible
+        ) {
+            if let prompt = arrivalPromptContext {
+                if prompt.supportsChain {
+                    Button("Any \(prompt.merchantName) location") {
+                        saveArrivalPreference(.chain, prompt: prompt)
+                    }
+                }
+                Button("Only this location") {
+                    saveArrivalPreference(.exactLocation, prompt: prompt)
+                }
+                Button("Keep learning automatically") {
+                    saveArrivalPreference(.automatic, prompt: prompt)
+                }
+                Button("Don't alert for this merchant", role: .destructive) {
+                    saveArrivalPreference(.disabled, prompt: prompt)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if arrivalPromptContext?.supportsChain == true {
+                Text("Choose whether PickMe should recognize every branch or only this exact store.")
+            } else {
+                Text("PickMe can alert you when you return to this exact store.")
+            }
         }
     }
 
@@ -231,7 +296,7 @@ struct ActivityHubView: View {
                             .font(.system(size: 12, weight: .semibold))
                         Text("All")
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        Text("(\(session.recentPurchases.count))")
+                        Text("(\(session.recentPurchaseItems.count))")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(selectedCategory == nil ? .white.opacity(0.8) : .secondary)
                     }
@@ -254,9 +319,7 @@ struct ActivityHubView: View {
                 // Individual Category Pills
                 ForEach(availableCategories, id: \.self) { category in
                     let meta = CategoryVisuals.meta(for: category)
-                    let count = session.recentPurchases.filter {
-                        ($0.purchase?.observation?.observedCategory ?? $0.predictedCategory) == category
-                    }.count
+                    let count = session.recentPurchaseItems.filter { self.category(for: $0) == category }.count
                     let isSelected = selectedCategory == category
 
                     Button {
@@ -492,7 +555,7 @@ struct ActivityHubView: View {
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
                     .foregroundStyle(.primary)
 
-                Text("Pick a card or log spend at checkout, and your past transactions with category breakdown will appear here.")
+                Text("Pick a card in PickMe or capture a card tap, and every logged purchase will appear here.")
                     .font(.system(size: 12, weight: .regular))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -508,72 +571,85 @@ struct ActivityHubView: View {
         )
     }
 
-    private func purchaseRow(prediction: StoredPrediction) -> some View {
-        let category = prediction.purchase?.observation?.observedCategory ?? prediction.predictedCategory
-        let meta = CategoryVisuals.meta(for: category)
-        let cardId = prediction.purchase?.cardUsedId ?? prediction.winnerCardId
-        let cardName = cardDisplayName(for: cardId)
-        let date = prediction.purchase?.createdAt ?? prediction.recordedAt
-        let timeLabel = CategoryVisuals.relativeTime(from: date)
+    private func purchaseRow(_ item: StoredPurchase) -> some View {
+        let category = category(for: item)
+        let meta = CategoryVisuals.meta(for: category ?? "other")
+        let tint = category == nil ? Color.secondary : meta.color
+        let icon = category == nil ? "wave.3.right" : meta.icon
+        let cardId = item.cardUsedId
+        let actualAmount = item.amountCad
+        let estimatedAmount = actualAmount == nil ? item.prediction?.scoredAmountCad : nil
 
-        return HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(meta.color.opacity(0.14))
-                    .frame(width: 44, height: 44)
-                Image(systemName: meta.icon)
-                    .font(.system(size: 19, weight: .semibold))
-                    .foregroundStyle(meta.color)
-            }
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(tint.opacity(0.14))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: icon)
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(tint)
+                }
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(prediction.merchantName.isEmpty ? "Purchase" : prediction.merchantName)
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-
-                HStack(spacing: 4) {
-                    Text(cardName)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(item.displayMerchant)
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.primary)
                         .lineLimit(1)
 
-                    Text("•")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.tertiary)
+                    HStack(spacing: 4) {
+                        Text(cardId.map { cardDisplayName(for: $0) } ?? "Card not recorded")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                        if let category {
+                            Text("•").font(.system(size: 10)).foregroundStyle(.tertiary)
+                            Text(CategoryVisuals.meta(for: category).displayName)
+                                .font(.system(size: 12))
+                                .foregroundStyle(.secondary)
+                        }
+                        Text("•").font(.system(size: 10)).foregroundStyle(.tertiary)
+                        Text(CategoryVisuals.relativeTime(from: item.createdAt))
+                            .font(.system(size: 12))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
 
-                    Text(meta.displayName)
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundStyle(.secondary)
+                Spacer()
 
-                    Text("•")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.tertiary)
+                VStack(alignment: .trailing, spacing: 4) {
+                    if let actualAmount {
+                        Text(String(format: "$%.2f", actualAmount))
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                    } else if let estimatedAmount {
+                        Text(String(format: "~$%.2f", estimatedAmount))
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("—")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
 
-                    Text(timeLabel)
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundStyle(.tertiary)
+                    if let prediction = item.prediction {
+                        statusTag(for: prediction)
+                    } else {
+                        Text("Card tap")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2)
+                            .background(Color.secondary.opacity(0.12), in: Capsule())
+                    }
                 }
             }
 
-            Spacer()
+            cardAssessmentLine(for: item)
 
-            VStack(alignment: .trailing, spacing: 4) {
-                if let amount = prediction.purchase?.amountCad {
-                    Text(String(format: "$%.2f", amount))
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary)
-                } else if let scored = prediction.scoredAmountCad {
-                    Text(String(format: "~$%.2f", scored))
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text("—")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundStyle(.secondary)
-                }
-
-                statusTag(for: prediction)
+            if environment.ambientEnabled && isFrequented(item) {
+                Label("Arrival alerts prioritize this merchant", systemImage: "location.circle.fill")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.blue)
             }
         }
         .padding(14)
@@ -620,69 +696,103 @@ struct ActivityHubView: View {
         }
     }
 
-    /// An automatic capture has no prediction and therefore no category badge or edit action.
-    private func autoLoggedPurchaseRow(_ purchase: StoredPurchase) -> some View {
-        let timeLabel = CategoryVisuals.relativeTime(from: purchase.createdAt)
-
-        return HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.secondary.opacity(0.14))
-                    .frame(width: 44, height: 44)
-                Image(systemName: "wave.3.right")
-                    .font(.system(size: 19, weight: .semibold))
-                    .foregroundStyle(.secondary)
-            }
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(purchase.displayMerchant)
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-
-                HStack(spacing: 4) {
-                    if let cardId = purchase.cardUsedId {
-                        Text(cardDisplayName(for: cardId))
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                        Text("•").font(.system(size: 10)).foregroundStyle(.tertiary)
+    @ViewBuilder
+    private func cardAssessmentLine(for item: StoredPurchase) -> some View {
+        if let graph = environment.graph {
+            let assessment = PurchaseActivityEvaluator.cardAssessment(
+                for: item, graph: graph, knownMerchants: session.homeMerchants,
+                walletFeedback: walletFeedback(for: item))
+            HStack(spacing: 6) {
+                switch assessment {
+                case .best:
+                    Label("Best card used", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                case .better(let cardId, let advantageCad):
+                    Label {
+                        Text(betterCardText(cardId: cardId, advantageCad: advantageCad))
+                    } icon: {
+                        Image(systemName: "arrow.up.right.circle.fill")
                     }
-                    Text(timeLabel)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.tertiary)
-                }
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 4) {
-                if let amount = purchase.amountCad {
-                    Text(String(format: "$%.2f", amount))
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                } else {
-                    Text("—")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundStyle(.orange)
+                case .unavailable(let reason):
+                    Label(reason, systemImage: "questionmark.circle")
                         .foregroundStyle(.secondary)
                 }
-
-                if !purchase.missingFacts.isEmpty {
-                    Text(purchase.missingFacts.contains(.card) ? "Card unknown" : "Amount unknown")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(.orange)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 2)
-                        .background(Color.orange.opacity(0.12), in: Capsule())
-                }
+                Spacer()
+                Text(itemSourceLabel(item))
+                    .foregroundStyle(.tertiary)
             }
+            .font(.system(size: 11, weight: .semibold, design: .rounded))
+        }
+    }
+
+    private func betterCardText(cardId: String, advantageCad: Double?) -> String {
+        let card = cardDisplayName(for: cardId)
+        guard let advantageCad else { return "Better card: \(card)" }
+        return String(format: "Better card: %@ · +$%.2f", card, advantageCad)
+    }
+
+    private func itemSourceLabel(_ item: StoredPurchase) -> String {
+        switch item.resolvedActivitySource {
+        case .pickMeCheckout: return "PickMe advised"
+        case .walletCapture: return "Auto-captured"
+        case .arrivalAlert: return "Arrival alert"
+        }
+    }
+
+    private func category(for item: StoredPurchase) -> String? {
+        PurchaseActivityEvaluator.category(for: item, knownMerchants: session.homeMerchants)
+    }
+
+    private func walletFeedback(for item: StoredPurchase) -> WalletFeedback? {
+        guard let eventId = item.walletEventId else { return nil }
+        return sync.walletFeedback.first { $0.eventId == eventId }
+    }
+
+    private func isFrequented(_ item: StoredPurchase) -> Bool {
+        guard let key = item.merchantKey
+            ?? merchantActivityKey(name: item.displayMerchant,
+                                   locationIdentifier: item.merchantIdentifier) else {
+            return false
+        }
+        return MerchantPatronageStore().isFrequented(merchantKey: key)
+    }
+
+    private func arrivalAlertPrompt(for prompt: ArrivalPromptContext) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "location.circle.fill")
+                .font(.system(size: 26))
+                .foregroundStyle(.blue)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Shop at \(prompt.merchantName) often?")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                Text(prompt.supportsChain
+                     ? "Choose any branch, this location only, or let PickMe keep learning."
+                     : "Add this exact location, or let PickMe keep learning.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button("Choose") { isChoosingArrivalScope = true }
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
         }
         .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
-        )
+        .background(Color.blue.opacity(0.09), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func saveArrivalPreference(_ scope: ArrivalAlertScope,
+                                       prompt: ArrivalPromptContext) {
+        ArrivalAlertPreferenceStore().save(ArrivalAlertPreference(
+            merchantKey: prompt.merchantKey,
+            merchantName: prompt.merchantName,
+            scope: scope,
+            locationIdentifier: scope == .exactLocation ? prompt.locationIdentifier : nil,
+            latitude: scope == .exactLocation ? prompt.latitude : nil,
+            longitude: scope == .exactLocation ? prompt.longitude : nil))
+        environment.arrivalPreferenceChanged()
+        if scope != .disabled, !environment.ambientEnabled { router.push(.ambientSetup) }
     }
 
     private func cardDisplayName(for cardId: String) -> String {
@@ -810,19 +920,20 @@ struct ActivityHubView: View {
 
 /// Sheet presenting the complete list of all recent purchases with Category Filtering and Search.
 struct AllPurchasesSheetView: View {
-    let purchases: [StoredPrediction]
+    let purchases: [StoredPurchase]
     let cards: [CardProduct]
-    let onSelectPurchase: (StoredPrediction) -> Void
+    let graph: DependencyGraph?
+    let knownMerchants: [StoredMerchant]
+    let onSelectPurchase: (StoredPurchase) -> Void
     var onUpdateCategory: ((StoredPrediction, String) -> Void)? = nil
 
     @State private var selectedCategory: String? = nil
     @State private var searchQuery: String = ""
     @Environment(\.dismiss) private var dismiss
+    @Environment(SyncCoordinator.self) private var sync
 
     private var availableCategories: [String] {
-        let cats = purchases.map {
-            $0.purchase?.observation?.observedCategory ?? $0.predictedCategory
-        }.filter { !$0.isEmpty }
+        let cats = purchases.compactMap(category)
         var unique: [String] = []
         for cat in cats where !unique.contains(cat) {
             unique.append(cat)
@@ -830,13 +941,13 @@ struct AllPurchasesSheetView: View {
         return unique
     }
 
-    private var filteredPurchases: [StoredPrediction] {
-        purchases.filter { p in
-            let category = p.purchase?.observation?.observedCategory ?? p.predictedCategory
-            let matchesCategory = selectedCategory == nil || category == selectedCategory
+    private var filteredPurchases: [StoredPurchase] {
+        purchases.filter { item in
+            let itemCategory = category(for: item)
+            let matchesCategory = selectedCategory == nil || itemCategory == selectedCategory
             let matchesSearch = searchQuery.isEmpty
-                || p.merchantName.localizedCaseInsensitiveContains(searchQuery)
-                || category.localizedCaseInsensitiveContains(searchQuery)
+                || item.displayMerchant.localizedCaseInsensitiveContains(searchQuery)
+                || (itemCategory?.localizedCaseInsensitiveContains(searchQuery) ?? false)
             return matchesCategory && matchesSearch
         }
     }
@@ -888,14 +999,18 @@ struct AllPurchasesSheetView: View {
                 }
 
                 List {
-                    ForEach(filteredPurchases) { prediction in
-                        Button {
-                            dismiss()
-                            onSelectPurchase(prediction)
-                        } label: {
-                            allPurchasesRow(prediction: prediction)
+                    ForEach(filteredPurchases) { item in
+                        if item.prediction != nil {
+                            Button {
+                                dismiss()
+                                onSelectPurchase(item)
+                            } label: {
+                                allPurchasesRow(item)
+                            }
+                            .buttonStyle(.plain)
+                        } else {
+                            allPurchasesRow(item)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
                 .listStyle(.insetGrouped)
@@ -912,46 +1027,46 @@ struct AllPurchasesSheetView: View {
         }
     }
 
-    private func allPurchasesRow(prediction: StoredPrediction) -> some View {
-        let category = prediction.purchase?.observation?.observedCategory ?? prediction.predictedCategory
-        let meta = CategoryVisuals.meta(for: category)
-        let cardId = prediction.purchase?.cardUsedId ?? prediction.winnerCardId
-        let cardName = cardDisplayName(for: cardId)
-        let date = prediction.purchase?.createdAt ?? prediction.recordedAt
+    private func allPurchasesRow(_ item: StoredPurchase) -> some View {
+        let category = category(for: item)
+        let meta = CategoryVisuals.meta(for: category ?? "other")
+        let tint = category == nil ? Color.secondary : meta.color
+        let icon = category == nil ? "wave.3.right" : meta.icon
+        let cardId = item.cardUsedId
+        let amount = item.amountCad ?? item.prediction?.scoredAmountCad
 
         return HStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(meta.color.opacity(0.14))
+                    .fill(tint.opacity(0.14))
                     .frame(width: 40, height: 40)
-                Image(systemName: meta.icon)
+                Image(systemName: icon)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(meta.color)
+                    .foregroundStyle(tint)
             }
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(prediction.merchantName.isEmpty ? "Purchase" : prediction.merchantName)
+                Text(item.displayMerchant)
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
                     .foregroundStyle(.primary)
 
                 HStack(spacing: 4) {
-                    Text(cardName)
+                    Text(cardId.map { cardDisplayName(for: $0) } ?? "Card not recorded")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
+
+                    if let category {
+                        Text("•").font(.system(size: 10)).foregroundStyle(.tertiary)
+                        Text(CategoryVisuals.meta(for: category).displayName)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
 
                     Text("•")
                         .font(.system(size: 10))
                         .foregroundStyle(.tertiary)
 
-                    Text(meta.displayName)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-
-                    Text("•")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.tertiary)
-
-                    Text(date.formatted(.dateTime.month(.abbreviated).day().hour().minute()))
+                    Text(item.createdAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()))
                         .font(.system(size: 11))
                         .foregroundStyle(.tertiary)
                 }
@@ -960,32 +1075,44 @@ struct AllPurchasesSheetView: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 3) {
-                if let amount = prediction.purchase?.amountCad {
+                if let amount {
                     Text(String(format: "$%.2f", amount))
                         .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
-                } else if let scored = prediction.scoredAmountCad {
-                    Text(String(format: "~$%.2f", scored))
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .foregroundStyle(.secondary)
                 }
 
-                if prediction.purchase?.observation != nil {
-                    Text("Reconciled")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(.green)
-                } else if prediction.purchase?.isComplete == true {
-                    Text("Finished")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(.blue)
-                } else {
-                    Text("Needs info")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(.orange)
+                if let graph {
+                    assessmentLabel(PurchaseActivityEvaluator.cardAssessment(
+                        for: item, graph: graph, knownMerchants: knownMerchants,
+                        walletFeedback: walletFeedback(for: item)))
                 }
             }
         }
         .padding(.vertical, 2)
+    }
+
+    @ViewBuilder
+    private func assessmentLabel(_ assessment: PurchaseCardAssessment) -> some View {
+        switch assessment {
+        case .best:
+            Label("Best card", systemImage: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+        case .better(let cardId, _):
+            Text("Better: \(cardDisplayName(for: cardId))")
+                .foregroundStyle(.orange)
+        case .unavailable:
+            Text("Not compared")
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func category(for item: StoredPurchase) -> String? {
+        PurchaseActivityEvaluator.category(for: item, knownMerchants: knownMerchants)
+    }
+
+    private func walletFeedback(for item: StoredPurchase) -> WalletFeedback? {
+        guard let eventId = item.walletEventId else { return nil }
+        return sync.walletFeedback.first { $0.eventId == eventId }
     }
 
     private func cardDisplayName(for cardId: String) -> String {

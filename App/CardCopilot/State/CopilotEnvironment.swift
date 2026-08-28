@@ -139,6 +139,11 @@ final class CopilotEnvironment {
         ambientCoverage = ambient.coverage
         ambientEnabled = ambient.isEnabled
     }
+
+    func arrivalPreferenceChanged() {
+        ambient.refreshNow()
+        refreshAmbientDiagnostics()
+    }
 }
 
 // MARK: - Account lifecycle

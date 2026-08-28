@@ -131,12 +131,31 @@ public struct PredictionLog {
     public func recordPurchase(for prediction: StoredPrediction,
                                cardUsedId: String? = nil, cardSource: CaptureSource? = nil,
                                walletEventId: String? = nil,
+                               activitySource: PurchaseActivitySource = .pickMeCheckout,
+                               merchantKey: String? = nil,
+                               merchantIdentifier: String? = nil,
+                               merchantLatitude: Double? = nil,
+                               merchantLongitude: Double? = nil,
                                at date: Date = Date()) throws -> StoredPurchase {
         let purchase: StoredPurchase
         if let existing = prediction.purchase {
             purchase = existing
         } else {
-            purchase = StoredPurchase(createdAt: date)
+            purchase = StoredPurchase(
+                createdAt: date,
+                merchantLabel: prediction.merchantName,
+                activitySource: activitySource,
+                merchantKey: merchantKey
+                    ?? merchantActivityKey(name: prediction.merchantName,
+                                           locationIdentifier: merchantIdentifier
+                                            ?? prediction.merchantIdentifier),
+                merchantIdentifier: merchantIdentifier ?? prediction.merchantIdentifier,
+                merchantLatitude: merchantLatitude,
+                merchantLongitude: merchantLongitude,
+                categoryAtPurchase: prediction.predictedCategory,
+                categoryConfidence: prediction.confidenceSource,
+                bestCardId: prediction.winnerCardId,
+                bestCardValueCad: prediction.winnerValueCad)
             context.insert(purchase)
             purchase.prediction = prediction
         }
@@ -150,6 +169,22 @@ public struct PredictionLog {
         refreshCompletion(purchase, at: date)
         try context.save()
         return purchase
+    }
+
+    /// Saves the comparison as it was evaluated for this purchase. Activity reads this snapshot
+    /// first, so a later wallet/catalogue edit does not rewrite history on screen.
+    public func recordAssessment(on purchase: StoredPurchase, bestCardId: String,
+                                 bestCardValueCad: Double?, usedCardValueCad: Double?,
+                                 evaluatedAt: Date = Date()) throws {
+        purchase.bestCardId = bestCardId
+        purchase.bestCardValueCad = bestCardValueCad
+        purchase.usedCardValueCad = usedCardValueCad
+        purchase.advantageCad = {
+            guard let bestCardValueCad, let usedCardValueCad else { return nil }
+            return max(0, bestCardValueCad - usedCardValueCad)
+        }()
+        purchase.evaluatedAt = evaluatedAt
+        try context.save()
     }
 
     public func recordAmount(_ amountCad: Double, source: CaptureSource,
@@ -230,6 +265,14 @@ public struct PredictionLog {
             sortBy: [SortDescriptor(\.recordedAt, order: .reverse)]))
     }
 
+    /// The one purchase history, independent of whether advice preceded the purchase.
+    public func allPurchases(limit: Int = 100) throws -> [StoredPurchase] {
+        var descriptor = FetchDescriptor<StoredPurchase>(
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
+        descriptor.fetchLimit = limit
+        return try context.fetch(descriptor)
+    }
+
     /// Purchases missing a card or an amount — the "finish these" queue. One field each, and no
     /// statement required, so this is deliberately a different ritual from reconciling.
     public func awaitingCompletion() throws -> [StoredPrediction] {
@@ -281,6 +324,7 @@ public struct PredictionLog {
         public let awaitingConfirmation: [StoredPrediction]
         public let metrics: ExperimentMetrics
         public let recentPurchases: [StoredPrediction]
+        public let purchaseHistory: [StoredPurchase]
     }
 
     public func snapshot(recentLimit: Int = 20) throws -> LogSnapshot {
@@ -289,7 +333,8 @@ public struct PredictionLog {
                            awaitingCompletion: Self.awaitingCompletion(from: predictions),
                            awaitingConfirmation: Self.awaitingConfirmation(from: predictions),
                            metrics: Self.metrics(from: predictions),
-                           recentPurchases: Self.recentPurchases(from: predictions, limit: recentLimit))
+                           recentPurchases: Self.recentPurchases(from: predictions, limit: recentLimit),
+                           purchaseHistory: try allPurchases(limit: recentLimit))
     }
 
     public func metrics() throws -> ExperimentMetrics {
