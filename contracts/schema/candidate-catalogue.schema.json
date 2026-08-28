@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pickme.local/contracts/candidate-catalogue.schema.json",
+  "title": "PickMe candidate catalogue",
+  "description": "Documents the shape of candidate-catalogue.json exactly as decoded by Engine/Sources/CardCopilotEngine/Models/CatalogueModels.swift's CandidateSet (see SeedLoader.loadCandidateCatalogue). Since 2.0 this file names which card-catalogue.json products are researched acquisition candidates by id; it does not redefine them (a card defined in two places drifts — see candidate-catalogue.json's own _provenance note). `_provenance` is documentation-only: CandidateSet decodes only candidateCatalogueVersion and cardIds, so a free-text `_` key is present in the JSON but silently dropped on load, same convention as card-catalogue.schema.json's own `_provenance`.",
+  "type": "object",
+  "required": [
+    "candidateCatalogueVersion",
+    "cardIds"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {
+      "description": "Free-text annotation (e.g. _provenance). Not decoded by the engine."
+    }
+  },
+  "properties": {
+    "candidateCatalogueVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "MAJOR.MINOR. Load-bearing: SeedLoader.validate(candidateCatalogueVersion:) parses MAJOR and throws SeedLoaderError.unsupportedCatalogueVersion if it isn't supportedCandidateCatalogueMajorVersion (currently 2, the bump when this file became a list of cardIds instead of full card definitions)."
+    },
+    "cardIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Ids of products in card-catalogue.json that are acquisition candidates. Referential integrity against card-catalogue.json's own cardId values is not expressed here — JSON Schema validates shape, not cross-file references; AcquisitionAnalyzerTests covers that a listed id actually resolves."
+    }
+  }
+}

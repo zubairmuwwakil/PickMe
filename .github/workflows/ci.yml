@@ -24,6 +24,17 @@ jobs:
       - name: Verify RELEASE.json describes the contracts in this commit
         run: ./scripts/release-catalogue.sh --check
 
+      # RELEASE.json only proves the bytes match what was stamped — it says nothing about
+      # whether those bytes are *valid*. This is the only place card-catalogue.json,
+      # benefits-catalogue.json and candidate-catalogue.json are checked against their
+      # contracts/schema/*.schema.json, which is where conditional rules like cardProduct's
+      # privateLabel/acceptance allOf live. programs.json shipped a schema violation for a day
+      # (fixed 2026-08-27, commit 929dbb1) precisely because nothing evaluated its schema either.
+      - name: Contracts validate against their JSON Schemas
+        run: |
+          pip install jsonschema
+          python3 scripts/validate-catalogue-schema.py
+
       - name: Card ids are permanent
         run: scripts/check-id-permanence.sh
         env:
