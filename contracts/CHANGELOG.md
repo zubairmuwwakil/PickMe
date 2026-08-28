@@ -2,6 +2,68 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-27 — card-catalogue 2.6 & programs 1.4: high-ROI US catalogue and scoring expansion
+
+- **Prompt 2 Architectural Rulings**:
+  - `costcoCashRewardsCa` and `costcoCashRewardsUs` added to `$defs/programId/enum` and valued under the `ctMoney` store-scrip model (`optionalUsabilityFactor: 0.95`, `usabilityFactorApplied: true`), acknowledging that annual warehouse reward certificates have no cross-border reciprocity and cannot be cashed out unconditionally as statement credits.
+  - `amazonRewardsUs` added to `$defs/programId/enum` and valued with a guaranteed `floorCentsPerPoint: 1.0` (unconditional cash-out / statement credit via Chase).
+- **Prompt 1 Co-Brand Valuations Completed in `programs.json`**:
+  - Added defaults for `hiltonHonors` (0.5¢ / 0.5¢ floor via Amazon checkout / 0.6¢ aspirational), `emiratesSkywards` (1.0¢ / dynamic), `frontierMiles` (1.0¢ / dynamic), `choicePrivileges` (0.6¢ / 0.8¢ aspirational), `costcoCashRewardsCa` (1.0 / 0.95 factor), `costcoCashRewardsUs` (1.0 / 0.95 factor), and `amazonRewardsUs` (1.0¢ / 1.0¢ floor).
+- **8 Flagship US Cards Promoted to `published`**:
+  - Full issuer-confirmed `earnRules`, `caps`, `fxRules`, and `credits` authored for:
+    1. `chase-sapphire-preferred-card` (3x dining, 3x streaming, 3x online grocery, 2x travel, 0% FX, $50 hotel credit)
+    2. `chase-sapphire-reserve` (3x dining, 3x travel, 0% FX, $300 travel credit)
+    3. `chase-freedom-unlimited` (1.5x base, 3x dining, 3x drugstore)
+    4. `chase-freedom-flex` (1x base, 3x dining, 3x drugstore)
+    5. `american-express-gold-card` (4x dining up to $50k/yr, 4x US grocery up to $25k/yr, 3x flights, $120 dining credit)
+    6. `american-express-the-platinum-card` (5x flights up to $500k/yr, $200 airline fee credit, 0% FX)
+    7. `american-express-blue-business-plus` (2x everyday up to $50k/yr)
+    8. `citi-double-cash-card` (2x base)
+- **17 New US Draft Cards Minted**:
+  - Refined `infer_networks.py` with product and tier heuristics (190 networks mapped, 0 conflicts).
+  - Resolved all remaining annual fee conflicts across the queue (`citi-strata-elite-card`, `chase-ink-business-cash-credit-card`, `chase-marriott-bonvoy-bold-credit-card`, `american-express-marriott-bonvoy-bevy`).
+  - Successfully imported 17 new draft cards including Apple Card, Bilt Blue/Obsidian/Palladium, Citi Costco Anywhere, Wells Fargo Autograph Journey, FNBO Evergreen, Chase Slate Edge, etc.
+
+## 2026-08-27 — card-catalogue 2.5: four co-brand currencies unblocked, eight annual fees resolved
+
+- **Four new `programId` enum values added** — `hiltonHonors`, `emiratesSkywards`, `frontierMiles`, `choicePrivileges`.
+- **Eight disputed annual fees resolved from official issuer terms** (Prompt 3 from `RESEARCH-PROMPTS.md`):
+  - `american-express-hilton-honors`: resolved to **$550** ongoing for the Aspire tier (`Hilton Honors American Express Aspire Card`), disentangling the $0 / $150 / $195 / $550 range across the Amex Hilton family.
+  - `american-express-delta-skymiles-gold-business`: resolved to **$150** ongoing ($0 intro yr 1), disentangling the Gold ($150), Platinum ($350), and Reserve ($650) business tiers.
+  - `american-express-delta-skymiles-platinum`: resolved to **$350** ongoing, disentangling from Reserve ($650).
+  - `bank-of-america-alaska-airlines-atmos-ascent`: resolved to **$95** ongoing, disentangling from Summit ($395).
+  - `bank-of-america-atmos-rewards-visa-signature`: resolved to **$95** ongoing ($70 base company fee + $25 per card).
+  - `barclays-emirates-skywards-premium-world`: resolved to **$499** ongoing for the Premium tier, disentangling from Rewards ($99).
+  - `barclays-frontier-airlines-world-mastercard`: resolved to **$99** ongoing, clearing stale historical $89 aggregator records.
+  - `wells-fargo-choice-privileges-mastercard`: resolved to **$0** ongoing, disentangling from Select ($95).
+- **Minted 24 schema-valid draft cards into `contracts/card-catalogue.json`** via `promote_drafts.py`.
+- Verified: Swift test suites green; `check-raw-source-policy.sh` green; `release-catalogue.sh` stamped `card-contracts@2.5`.
+
+## 2026-08-27 — programs 1.3: default valuations for six co-brand currencies
+
+- **Default valuations added for six co-brand currencies** — `aaAdvantage`, `atmosRewards`,
+  `avios`, `cathayAsiaMiles`, `deltaSkyMiles`, `disneyRewards`. Closes the Prompt 1 research gap left
+  open by catalogue 2.4.
+- **Strict adherence to the valuation standard**:
+  - `floorCentsPerPoint` is **omitted** across all five airline points currencies (`aaAdvantage`,
+    `atmosRewards`, `avios`, `cathayAsiaMiles`, `deltaSkyMiles`), because none offers an unconditional
+    statement credit or cash-out with nothing but the card. Scorer falls back to `centsPerPoint` rather
+    than assuming a floor.
+  - `centsPerPoint` is anchored at **1.0¢ by transfer parity** across dynamic airline currencies: major
+    bank currencies (Amex MR, Chase UR, Citi ThankYou, Capital One, RBC Avion) transfer 1:1, so
+    ranking a co-brand currency above 1.0¢ would make one point worth more after a free transfer than
+    before it.
+  - `deltaSkyMiles` independently carries a posted fixed conversion: **1.0¢** via Delta's "Pay with Miles"
+    (5,000 miles = $50 on `delta.com`), available to all Delta Amex cardholders in this catalogue.
+  - `disneyRewards` is valued under the **`ctMoney`** store-scrip model (`cadPerUnit: 1.0`,
+    `optionalUsabilityFactor: 0.95`, `usabilityFactorApplied: true`) rather than `points`, recognizing
+    that Disney Rewards Dollars are store-locked merchant scrip rather than an abstract point currency.
+  - `spiritFreeSpirit` is **deliberately omitted** (`refused`): Spirit Airlines ceased independent
+    operations, Free Spirit is defunct, and Bank of America discontinued the cards (converting
+    cardholders to Customized Cash Rewards).
+- **Cards remain drafts**: Adding valuations does not promote any card from `draft` to `published`
+  ahead of issuer-confirmed earn rules (D3).
+
 ## 2026-08-27 — card-catalogue 2.4: seven co-brand reward currencies, none of them valued
 
 - **Seven new `programId` values** — `aaAdvantage`, `atmosRewards`, `avios`, `cathayAsiaMiles`,

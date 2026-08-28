@@ -170,6 +170,22 @@
         }
       }
     },
+    "%lld · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld · %2$@"
+          }
+        }
+      }
+    },
+    "%lld · could not tell which store it was" : {
+
+    },
+    "%lld · no card advice was available" : {
+
+    },
     "%lld active" : {
 
     },
@@ -179,6 +195,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$lld alerts fired · %2$lld suppressed"
+          }
+        }
+      }
+    },
+    "%lld arrivals · %lld evaluated" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld arrivals · %2$lld evaluated"
           }
         }
       }
@@ -222,6 +248,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "à %lld m"
+          }
+        }
+      }
+    },
+    "%lld of %lld checks used all 20 places" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld checks used all 20 places"
           }
         }
       }
@@ -557,6 +593,50 @@
         }
       }
     },
+    "ambient.coverage.dropped-area" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "dropped a nearby shopping area"
+          }
+        }
+      }
+    },
+    "ambient.coverage.dropped-confirmed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "dropped a store you confirmed"
+          }
+        }
+      }
+    },
+    "ambient.coverage.dropped-frequented" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "dropped a store you shop at often"
+          }
+        }
+      }
+    },
+    "ambient.coverage.dropped-saved" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "dropped a store you saved"
+          }
+        }
+      }
+    },
     "ambient.enter-amount" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -710,6 +790,72 @@
         }
       }
     },
+    "ambient.suppressed.already-best" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "your usual card was already the best one"
+          }
+        }
+      }
+    },
+    "ambient.suppressed.below-frequented" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "the gain was below your switch threshold at a store you shop at often"
+          }
+        }
+      }
+    },
+    "ambient.suppressed.below-threshold" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "the gain was below your switch threshold"
+          }
+        }
+      }
+    },
+    "ambient.suppressed.below-unverified" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "the gain was below the higher bar for unconfirmed stores"
+          }
+        }
+      }
+    },
+    "ambient.suppressed.muted" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "you muted that store"
+          }
+        }
+      }
+    },
+    "ambient.suppressed.unrecognised" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "the store could not be identified"
+          }
+        }
+      }
+    },
     "ambient.used-other-card" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -776,6 +922,9 @@
           }
         }
       }
+    },
+    "Amount unknown" : {
+
     },
     "Amount:" : {
 
@@ -965,6 +1114,9 @@
     "Captured" : {
 
     },
+    "Captured automatically — no checkout was asked about these" : {
+
+    },
     "Car Rental" : {
       "localizations" : {
         "fr-CA" : {
@@ -1012,6 +1164,9 @@
       }
     },
     "Card Tapped" : {
+
+    },
+    "Card unknown" : {
 
     },
     "Card Used" : {
@@ -1184,6 +1339,17 @@
     "Collision damage waiver coverage terms and deductible rules" : {
 
     },
+    "common.done" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Done"
+          }
+        }
+      }
+    },
     "Compare certificate-backed coverage before booking flights, renting cars, or buying expensive electronics." : {
 
     },
@@ -1289,6 +1455,9 @@
           }
         }
       }
+    },
+    "Coverage (Last 7 Days)" : {
+
     },
     "Create installation token" : {
       "extractionState" : "stale",
@@ -2229,6 +2398,86 @@
     "Last synced: %@" : {
 
     },
+    "Learned merchants" : {
+
+    },
+    "learned-merchants.empty" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "PickMe hasn't learned any merchants yet. Arrival alerts get more confident once you've paid at the same place a few times."
+          }
+        }
+      }
+    },
+    "learned-merchants.footer" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Standing is based only on which days you paid there — never the amount, the card, or where you were."
+          }
+        }
+      }
+    },
+    "learned-merchants.forget" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Forget"
+          }
+        }
+      }
+    },
+    "learned-merchants.never-learn" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Never learn this place"
+          }
+        }
+      }
+    },
+    "learned-merchants.progress" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$d of %2$d visits"
+          }
+        }
+      }
+    },
+    "learned-merchants.qualifies" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Recognized"
+          }
+        }
+      }
+    },
+    "learned-merchants.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Learned merchants"
+          }
+        }
+      }
+    },
     "Live evaluation using your active cards and customized point valuations." : {
 
     },
@@ -2268,6 +2517,9 @@
           }
         }
       }
+    },
+    "Logged from Card Taps" : {
+
     },
     "Manage in iOS Settings" : {
 

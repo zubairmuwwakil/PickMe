@@ -187,6 +187,22 @@
     "basis": "name-token",
     "network": "mastercard"
   },
+  "barclays-jetblue-business-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "barclays-jetblue-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "barclays-jetblue-plus-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "barclays-jetblue-premier-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
   "barclays-luxury-card-mastercard-black-card": {
     "basis": "name-token",
     "network": "mastercard"
@@ -235,6 +251,30 @@
     "basis": "name-token",
     "network": "mastercard"
   },
+  "bmo-bank-n-a-bmo-boost-secured-credit-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "bmo-bank-n-a-bmo-cash-back-credit-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "bmo-bank-n-a-bmo-escape-credit-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "bmo-bank-n-a-bmo-platinum-credit-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "bmo-bank-n-a-bmo-platinum-rewards-credit-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "bmo-bank-n-a-bmo-premium-rewards-credit-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
   "bread-financial-bed-bath-beyond-mastercard": {
     "basis": "name-token",
     "network": "mastercard"
@@ -271,6 +311,26 @@
     "basis": "name-token",
     "network": "visa"
   },
+  "capital-one-venture-business": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "capital-one-venture-rewards-credit-card": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "capital-one-ventureone-business": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "capital-one-ventureone-rewards-credit-card": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "capital-one-ventureone-rewards-for-good": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
   "chase-aer-lingus-visa-signature-card": {
     "basis": "name-token",
     "network": "visa"
@@ -299,8 +359,28 @@
     "basis": "name-token",
     "network": "mastercard"
   },
+  "chase-freedom-flex": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "chase-freedom-rise-credit-card": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "chase-freedom-unlimited": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
   "chase-iberia-visa-signature-card": {
     "basis": "name-token",
+    "network": "visa"
+  },
+  "chase-ihg-one-rewards-premier-business": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "chase-ink-business-cash-credit-card": {
+    "basis": "product-exclusive",
     "network": "visa"
   },
   "chase-instacart-mastercard": {
@@ -313,6 +393,50 @@
   },
   "chase-prime-visa-and-amazon-visa": {
     "basis": "name-token",
+    "network": "visa"
+  },
+  "chase-sapphire-preferred-card": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "chase-sapphire-reserve": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "chase-sapphire-reserve-for-business": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "chase-slate-credit-card": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "chase-slate-edge-credit-card": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "chase-southwest-rapid-rewards-plus": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "chase-united-club-business-card": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "chase-united-explorer-card": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "chase-united-gateway-card": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "chase-united-quest-card": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "chase-world-of-hyatt-business-credit-card": {
+    "basis": "product-exclusive",
     "network": "visa"
   },
   "cibc-costco-mastercard": {
@@ -331,8 +455,40 @@
     "basis": "name-token",
     "network": "mastercard"
   },
+  "citi-at-t-points-plus-card-from-citi": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "citi-costco-anywhere-business": {
+    "basis": "name-token",
+    "network": "visa"
+  },
+  "citi-diamond-preferred-credit-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "citi-double-cash-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
   "citi-secured-mastercard": {
     "basis": "name-token",
+    "network": "mastercard"
+  },
+  "citi-simplicity-credit-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "column-n-a-bilt-blue-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "column-n-a-bilt-obsidian-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "column-n-a-bilt-palladium-card": {
+    "basis": "product-exclusive",
     "network": "mastercard"
   },
   "comenity-aaa-daily-advantage-visa-signature": {
@@ -389,6 +545,26 @@
   },
   "fnbo-amtrak-guest-rewards-preferred": {
     "basis": "name-token",
+    "network": "mastercard"
+  },
+  "fnbo-evergreen-business-edition-credit-card": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "fnbo-evergreen-credit-card": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "fnbo-getaway-credit-card": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "fnbo-greenselect-credit-card": {
+    "basis": "product-exclusive",
+    "network": "visa"
+  },
+  "goldman-sachs-apple-card": {
+    "basis": "product-exclusive",
     "network": "mastercard"
   },
   "goldman-sachs-my-gm-rewards-card-mastercard": {
@@ -567,9 +743,21 @@
     "basis": "name-token",
     "network": "visa"
   },
+  "webbank-gemini-credit-card": {
+    "basis": "product-exclusive",
+    "network": "mastercard"
+  },
+  "wells-fargo-active-cash-business": {
+    "basis": "name-token",
+    "network": "visa"
+  },
   "wells-fargo-attune-world-elite-mastercard": {
     "basis": "name-token",
     "network": "mastercard"
+  },
+  "wells-fargo-autograph-journey": {
+    "basis": "name-token",
+    "network": "visa"
   },
   "wells-fargo-autograph-visa-card": {
     "basis": "name-token",
@@ -582,5 +770,13 @@
   "wells-fargo-choice-privileges-mastercard": {
     "basis": "name-token",
     "network": "mastercard"
+  },
+  "wells-fargo-one-key-card": {
+    "basis": "name-token",
+    "network": "mastercard"
+  },
+  "wells-fargo-reflect": {
+    "basis": "name-token",
+    "network": "visa"
   }
 }

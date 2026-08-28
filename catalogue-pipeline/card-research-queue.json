@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-08-27",
-  "queueLength": 129,
+  "queueLength": 134,
   "queue": [
     {
       "cardId": "chase-aeroplan-card",
@@ -680,19 +680,15 @@
       "missingField": "earnRules, caps, fxRules, credits — entire card",
       "currentValue": {
         "annualFeeCandidates": [
-          95,
-          250,
-          0
+          95
         ],
         "rewardsProse": "Up to 17X total points at Marriott Bonvoy hotels; 6X points with the card at participating hotels; 3X on first $6,000 annually in combined gas, grocery, and dining purchases; 2X travel and all other purchases; automatic Silver Elite status; 15 Elite Night Credits; anniversary Free Night Award up to 35,000 points; no foreign transaction fees.",
         "welcomeOffer": "Earn up to 4 Free Night Awards plus up to $100 in airline credits."
       },
       "sourceOfCurrentValue": [
-        "ccOffers",
-        "ccOffers",
-        "ccOffers"
+        "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/boundless"
       ],
-      "reasonItNeedsResearch": "Discovered via aggregator only; zero issuer-verified fields.",
+      "reasonItNeedsResearch": "Discovered via aggregator; fee resolved to $95 ongoing from issuer terms; earnRules pending issuer confirmation.",
       "likelyAuthoritativeSource": "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/boundless",
       "suggestedSearch": "\"Marriott Bonvoy Boundless Credit Card\" JPMorgan Chase rewards terms and conditions",
       "priority": "CRITICAL",
@@ -708,17 +704,15 @@
       "missingField": "earnRules, caps, fxRules, credits — entire card",
       "currentValue": {
         "annualFeeCandidates": [
-          250,
-          650
+          250
         ],
         "rewardsProse": "Up to 18.5X points at Marriott Bonvoy hotels; 6X with the card at participating hotels; 4X at restaurants worldwide and U.S. supermarkets on up to $15,000 combined per calendar year, then 2X; 2X other eligible purchases; complimentary Gold Elite status, 15 Elite Night Credits, 1,000 bonus points per paid eligible stay, Free Night Award after $15,000 annual spend, no foreign transaction fees.",
         "welcomeOffer": "Earn up to 135,000 Bonus Points."
       },
       "sourceOfCurrentValue": [
-        "ccOffers",
-        "ccOffers"
+        "https://www.marriott.com/credit-cards/marriott-bonvoy-bevy-american-express-card.mi"
       ],
-      "reasonItNeedsResearch": "Discovered via aggregator only; zero issuer-verified fields.",
+      "reasonItNeedsResearch": "Discovered via aggregator; fee resolved to $250 ongoing from issuer terms; earnRules pending issuer confirmation.",
       "likelyAuthoritativeSource": "https://www.marriott.com/credit-cards/marriott-bonvoy-bevy-american-express-card.mi",
       "suggestedSearch": "\"Marriott Bonvoy Bevy American Express Card\" American Express rewards terms and conditions",
       "priority": "CRITICAL",
@@ -728,27 +722,23 @@
     },
     {
       "cardId": "american-express-hilton-honors",
-      "officialName": "Hilton Honors American Express Card",
+      "officialName": "Hilton Honors American Express Aspire Card",
       "issuer": "American Express",
       "country": "US",
       "missingField": "earnRules, caps, fxRules, credits — entire card",
       "currentValue": {
         "annualFeeCandidates": [
-          0,
-          150,
           550
         ],
-        "rewardsProse": "7X points on eligible Hilton purchases; 5X at U.S. restaurants, U.S. gas stations, and U.S. supermarkets; 3X on all other eligible purchases; complimentary Silver status; no foreign transaction fees; upgrade to Gold Status through end of next calendar year after $20,000 purchases in a calendar year; Plan It eligible purchases may be split with a fixed monthly fee.",
-        "welcomeOffer": "Limited Time Offer: Earn a $100 Statement Credit plus 100,000 Hilton Honors Bonus Points; offer ends 7/29/26."
+        "rewardsProse": "14X points on eligible Hilton purchases; 7X on select travel and dining; 3X on all other eligible purchases; complimentary Diamond status; up to $400 annual Hilton resort credit; up to $200 annual airline flight credit; free night reward annually.",
+        "welcomeOffer": "Earn 150,000 Hilton Honors Bonus Points after spending $6,000 in purchases in the first 6 months."
       },
       "sourceOfCurrentValue": [
-        "ccOffers",
-        "ccOffers",
-        "ccOffers"
+        "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/"
       ],
-      "reasonItNeedsResearch": "Discovered via aggregator only; zero issuer-verified fields.",
-      "likelyAuthoritativeSource": "https://www.hilton.com/en/hilton-honors/credit-cards/",
-      "suggestedSearch": "\"Hilton Honors American Express Card\" American Express rewards terms and conditions",
+      "reasonItNeedsResearch": "Discovered via aggregator; fee resolved to $550 ongoing from issuer terms; earnRules pending issuer confirmation.",
+      "likelyAuthoritativeSource": "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/",
+      "suggestedSearch": "\"Hilton Honors American Express Aspire Card\" American Express rewards terms and conditions",
       "priority": "CRITICAL",
       "affectsCheckoutScoring": true,
       "affectsAcquisitionScoring": true,
@@ -908,18 +898,16 @@
       "missingField": "earnRules, caps, fxRules, credits — entire card",
       "currentValue": {
         "annualFeeCandidates": [
-          0,
-          95
+          0
         ],
         "rewardsProse": "5X points at participating Choice Hotels and on Choice Privileges point purchases; 3X at gas stations, grocery stores, home improvement stores, and phone plan services; 1X on other purchases; Gold Elite status-related benefits are listed.",
         "welcomeOffer": "60,000 bonus points after $1,000 in purchases in the first 3 months; enough to redeem for up to 7 reward nights at select Choice Hotels properties, with additional fees and terms applying."
       },
       "sourceOfCurrentValue": [
-        "ccOffers",
-        "ccOffers"
+        "https://www.wellsfargo.com/credit-cards/choice-privileges-mastercard/"
       ],
-      "reasonItNeedsResearch": "Discovered via aggregator only; zero issuer-verified fields.",
-      "likelyAuthoritativeSource": "https://creditcards.wellsfargo.com/choice-hotel-privileges-mastercard/?FPID=0124CEIXP10000&product_code=CC&subproduct_code=CP&sub_channel=WEB&vendor_code=WF&cx_nm=CXNAME_CSMPD_MC",
+      "reasonItNeedsResearch": "Discovered via aggregator; fee resolved to $0 ongoing from issuer terms; earnRules pending issuer confirmation.",
+      "likelyAuthoritativeSource": "https://www.wellsfargo.com/credit-cards/choice-privileges-mastercard/",
       "suggestedSearch": "\"Choice Privileges Mastercard\" Wells Fargo Bank, N.A. rewards terms and conditions",
       "priority": "CRITICAL",
       "affectsCheckoutScoring": true,
@@ -1224,25 +1212,23 @@
     },
     {
       "cardId": "barclays-emirates-skywards-premium-world",
-      "officialName": "Emirates Skywards Rewards World Elite Mastercard®",
+      "officialName": "Emirates Skywards Premium World Elite Mastercard®",
       "issuer": "Barclays Bank Delaware",
       "country": "US",
       "missingField": "earnRules, caps, fxRules, credits — entire card",
       "currentValue": {
         "annualFeeCandidates": [
-          99,
           499
         ],
-        "rewardsProse": "3 Skywards Miles per $1 on eligible Emirates purchases; 2 miles per $1 on eligible travel purchases; 1 mile per $1 on other purchases; no foreign transaction fees.",
-        "welcomeOffer": "Earn 40,000 bonus Skywards Miles after spending $3,000 on purchases in the first 90 days; enjoy Emirates Skywards Silver tier membership during the first year."
+        "rewardsProse": "3 Skywards Miles per $1 on eligible Emirates purchases; 2 miles per $1 on eligible travel purchases; 1 mile per $1 on other purchases; complimentary Emirates Skywards Gold tier membership in the first year; no foreign transaction fees.",
+        "welcomeOffer": "Earn 70,000 bonus Skywards Miles after spending $3,000 on purchases in the first 90 days."
       },
       "sourceOfCurrentValue": [
-        "ccOffers",
-        "ccOffers"
+        "https://cards.barclaycardus.com/banking/cards/emirates-skywards-premium-world-elite-mastercard/"
       ],
-      "reasonItNeedsResearch": "Discovered via aggregator only; zero issuer-verified fields.",
-      "likelyAuthoritativeSource": "https://cards.barclaycardus.com/banking/cards/emirates-skywards-rewards-world-elite-mastercard/",
-      "suggestedSearch": "\"Emirates Skywards Rewards World Elite Mastercard®\" Barclays Bank Delaware rewards terms and conditions",
+      "reasonItNeedsResearch": "Discovered via aggregator; fee resolved to $499 ongoing from issuer terms; earnRules pending issuer confirmation.",
+      "likelyAuthoritativeSource": "https://cards.barclaycardus.com/banking/cards/emirates-skywards-premium-world-elite-mastercard/",
+      "suggestedSearch": "\"Emirates Skywards Premium World Elite Mastercard®\" Barclays Bank Delaware rewards terms and conditions",
       "priority": "CRITICAL",
       "affectsCheckoutScoring": true,
       "affectsAcquisitionScoring": true,
@@ -1670,19 +1656,15 @@
       "missingField": "earnRules, caps, fxRules, credits — entire card",
       "currentValue": {
         "annualFeeCandidates": [
-          395,
-          95,
           395
         ],
         "rewardsProse": "2X miles on every purchase; access to 1,300+ lounges; 10,000 anniversary miles; $300 annual Capital One Travel credit; eligible cardholders earn 5X miles on Capital One Entertainment purchases.",
         "welcomeOffer": "Earn 75,000 bonus miles after spending $4,000 on purchases within the first 3 months from account opening."
       },
       "sourceOfCurrentValue": [
-        "ccOffers",
-        "ccOffers",
-        "ccOffers"
+        "https://www.capitalone.com/credit-cards/venture-x/"
       ],
-      "reasonItNeedsResearch": "Discovered via aggregator only; zero issuer-verified fields.",
+      "reasonItNeedsResearch": "Discovered via aggregator; fee resolved to $395 ongoing from issuer terms; earnRules pending issuer confirmation.",
       "likelyAuthoritativeSource": "https://www.capitalone.com/credit-cards/venture-x/",
       "suggestedSearch": "\"Venture X Rewards Credit Card\" Capital One, N.A. rewards terms and conditions",
       "priority": "CRITICAL",
@@ -2000,20 +1982,16 @@
       "missingField": "earnRules, caps, fxRules, credits — entire card",
       "currentValue": {
         "annualFeeCandidates": [
-          595,
-          0,
-          95
+          595
         ],
         "rewardsProse": "12X points on hotels, car rentals and attractions booked through Citi Travel; 6X on air travel booked through Citi Travel; 6X at restaurants during Citi Nights; 3X restaurants other times; 1.5X all other purchases; up to $300 annual hotel benefit, up to $200 Splurge Credit, up to $200 Blacklane credit, Priority Pass Select, Admirals Club passes, and up to $120 Global Entry/TSA PreCheck credit.",
         "welcomeOffer": "Earn 75,000 bonus ThankYou Points after spending $6,000 in the first 3 months."
       },
       "sourceOfCurrentValue": [
-        "ccOffers",
-        "ccOffers",
-        "ccOffers"
+        "https://www.citi.com/credit-cards/citi-strata-elite-credit-card"
       ],
-      "reasonItNeedsResearch": "Discovered via aggregator only; zero issuer-verified fields.",
-      "likelyAuthoritativeSource": "https://www.citi.com/credit-cards/citi-strata-elite-credit-card?category=view-all-credit-cards&afc=161",
+      "reasonItNeedsResearch": "Discovered via aggregator; fee resolved to $595 ongoing from issuer terms; earnRules pending issuer confirmation.",
+      "likelyAuthoritativeSource": "https://www.citi.com/credit-cards/citi-strata-elite-credit-card",
       "suggestedSearch": "\"Citi Strata Elite℠ Card\" Citibank, N.A. rewards terms and conditions",
       "priority": "CRITICAL",
       "affectsCheckoutScoring": true,
@@ -2390,19 +2368,15 @@
       "missingField": "earnRules, caps, fxRules, credits — entire card",
       "currentValue": {
         "annualFeeCandidates": [
-          0,
-          0,
-          95
+          0
         ],
         "rewardsProse": "Unlimited 1.5% cash back on every purchase made for the business.",
         "welcomeOffer": "Earn $750 cash back after spending $6,000 on purchases in the first 3 months after account opening; 0% intro APR for 12 months on purchases."
       },
       "sourceOfCurrentValue": [
-        "ccOffers",
-        "ccOffers",
-        "ccOffers"
+        "https://creditcards.chase.com/business-credit-cards/ink/unlimited"
       ],
-      "reasonItNeedsResearch": "Discovered via aggregator only; zero issuer-verified fields.",
+      "reasonItNeedsResearch": "Discovered via aggregator; fee resolved to $0 ongoing from issuer terms; earnRules pending issuer confirmation.",
       "likelyAuthoritativeSource": "https://creditcards.chase.com/business-credit-cards/ink/unlimited",
       "suggestedSearch": "\"Ink Business Unlimited® Credit Card\" JPMorgan Chase Bank, N.A. rewards terms and conditions",
       "priority": "CRITICAL",
@@ -3157,6 +3131,126 @@
       "reasonItNeedsResearch": "Discovered via aggregator only; zero issuer-verified fields.",
       "likelyAuthoritativeSource": "https://www.gemini.com/credit-card",
       "suggestedSearch": "\"Gemini Credit Card\" WebBank rewards terms and conditions",
+      "priority": "CRITICAL",
+      "affectsCheckoutScoring": true,
+      "affectsAcquisitionScoring": true,
+      "affectsBenefitsDisplay": true
+    },
+    {
+      "cardId": "barclays-frontier-airlines-world-mastercard",
+      "officialName": "Frontier Airlines World Mastercard®",
+      "issuer": "Barclays Bank Delaware",
+      "country": "US",
+      "missingField": "earnRules, caps, fxRules, credits — entire card",
+      "currentValue": {
+        "annualFeeCandidates": [
+          99
+        ],
+        "rewardsProse": "5X miles on eligible Flyfrontier.com purchases; 3X at restaurants; 1X on all other purchases; $100 flight voucher after $2,500 spend per cardmembership year; award redemption fee waiver.",
+        "welcomeOffer": "Earn 50,000 bonus miles after spending $500 in purchases in the first 90 days."
+      },
+      "sourceOfCurrentValue": [
+        "https://cards.barclaycardus.com/banking/cards/frontier-airlines-world-mastercard/"
+      ],
+      "reasonItNeedsResearch": "Discovered via aggregator; fee resolved to $99 ongoing from issuer terms; earnRules pending issuer confirmation.",
+      "likelyAuthoritativeSource": "https://cards.barclaycardus.com/banking/cards/frontier-airlines-world-mastercard/",
+      "suggestedSearch": "\"Frontier Airlines World Mastercard®\" Barclays Bank Delaware rewards terms and conditions",
+      "priority": "CRITICAL",
+      "affectsCheckoutScoring": true,
+      "affectsAcquisitionScoring": true,
+      "affectsBenefitsDisplay": true
+    },
+    {
+      "cardId": "american-express-delta-skymiles-gold-business",
+      "officialName": "Delta SkyMiles® Gold Business American Express Card",
+      "issuer": "American Express",
+      "country": "US",
+      "missingField": "earnRules, caps, fxRules, credits — entire card",
+      "currentValue": {
+        "annualFeeCandidates": [
+          150
+        ],
+        "rewardsProse": "2X miles on Delta purchases, U.S. shipping, and U.S. advertising in select media; 1X on other eligible purchases; first checked bag free on Delta flights; $150 Delta Stays credit.",
+        "welcomeOffer": "Earn 55,000 Bonus Miles after spending $4,000 in purchases on the Card in the first 6 months of Card Membership."
+      },
+      "sourceOfCurrentValue": [
+        "https://www.americanexpress.com/us/credit-cards/business-cards/american-express-delta-skymiles-gold-business-credit-card/"
+      ],
+      "reasonItNeedsResearch": "Discovered via aggregator; fee resolved to $150 ongoing ($0 intro yr 1) from issuer terms; earnRules pending issuer confirmation.",
+      "likelyAuthoritativeSource": "https://www.americanexpress.com/us/credit-cards/business-cards/american-express-delta-skymiles-gold-business-credit-card/",
+      "suggestedSearch": "\"Delta SkyMiles Gold Business\" American Express rewards terms and conditions",
+      "priority": "CRITICAL",
+      "affectsCheckoutScoring": true,
+      "affectsAcquisitionScoring": true,
+      "affectsBenefitsDisplay": true
+    },
+    {
+      "cardId": "american-express-delta-skymiles-platinum",
+      "officialName": "Delta SkyMiles® Platinum American Express Card",
+      "issuer": "American Express",
+      "country": "US",
+      "missingField": "earnRules, caps, fxRules, credits — entire card",
+      "currentValue": {
+        "annualFeeCandidates": [
+          350
+        ],
+        "rewardsProse": "3X miles on Delta purchases and purchases made directly with hotels; 2X at restaurants and U.S. supermarkets; 1X on other purchases; annual Companion Certificate; $120 Resy credit; $120 Rideshare credit.",
+        "welcomeOffer": "Earn 65,000 Bonus Miles after spending $4,000 in eligible purchases on the Card in the first 6 months of Card Membership."
+      },
+      "sourceOfCurrentValue": [
+        "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-platinum-american-express-card/"
+      ],
+      "reasonItNeedsResearch": "Discovered via aggregator; fee resolved to $350 ongoing from issuer terms; earnRules pending issuer confirmation.",
+      "likelyAuthoritativeSource": "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-platinum-american-express-card/",
+      "suggestedSearch": "\"Delta SkyMiles Platinum\" American Express rewards terms and conditions",
+      "priority": "CRITICAL",
+      "affectsCheckoutScoring": true,
+      "affectsAcquisitionScoring": true,
+      "affectsBenefitsDisplay": true
+    },
+    {
+      "cardId": "bank-of-america-alaska-airlines-atmos-ascent",
+      "officialName": "Alaska Airlines Atmos™ Ascent Visa Signature® Card",
+      "issuer": "Bank of America",
+      "country": "US",
+      "missingField": "earnRules, caps, fxRules, credits — entire card",
+      "currentValue": {
+        "annualFeeCandidates": [
+          95
+        ],
+        "rewardsProse": "3X points on eligible Alaska and Hawaiian Airlines purchases; 2X on gas, EV charging, local transit, cable, and streaming; 1X on all other purchases; annual Companion Fare from $99; first checked bag free.",
+        "welcomeOffer": "Earn 50,000 bonus points plus Companion Fare after spending $3,000 in purchases within the first 90 days."
+      },
+      "sourceOfCurrentValue": [
+        "https://www.bankofamerica.com/credit-cards/products/alaska-airlines-credit-card/"
+      ],
+      "reasonItNeedsResearch": "Discovered via aggregator; fee resolved to $95 ongoing from issuer terms; earnRules pending issuer confirmation.",
+      "likelyAuthoritativeSource": "https://www.bankofamerica.com/credit-cards/products/alaska-airlines-credit-card/",
+      "suggestedSearch": "\"Atmos Rewards Ascent Visa Signature\" Bank of America rewards terms and conditions",
+      "priority": "CRITICAL",
+      "affectsCheckoutScoring": true,
+      "affectsAcquisitionScoring": true,
+      "affectsBenefitsDisplay": true
+    },
+    {
+      "cardId": "bank-of-america-atmos-rewards-visa-signature",
+      "officialName": "Atmos™ Rewards Visa Signature® Business Credit Card",
+      "issuer": "Bank of America",
+      "country": "US",
+      "missingField": "earnRules, caps, fxRules, credits — entire card",
+      "currentValue": {
+        "annualFeeCandidates": [
+          95
+        ],
+        "rewardsProse": "3X points on eligible Alaska and Hawaiian Airlines purchases; 2X on eligible gas, EV charging, shipping, and transit; 1X on other purchases; annual Companion Fare; first checked bag free; fee is $70 company + $25 per card ($95 total for 1 card).",
+        "welcomeOffer": "Earn 50,000 bonus points plus Companion Fare after spending $4,000 in purchases within the first 90 days."
+      },
+      "sourceOfCurrentValue": [
+        "https://www.bankofamerica.com/smallbusiness/credit-cards/products/alaska-airlines-business-credit-card/"
+      ],
+      "reasonItNeedsResearch": "Discovered via aggregator; fee resolved to $95 ongoing ($70+$25) from issuer terms; earnRules pending issuer confirmation.",
+      "likelyAuthoritativeSource": "https://www.bankofamerica.com/smallbusiness/credit-cards/products/alaska-airlines-business-credit-card/",
+      "suggestedSearch": "\"Atmos Rewards Visa Signature Business\" Bank of America rewards terms and conditions",
       "priority": "CRITICAL",
       "affectsCheckoutScoring": true,
       "affectsAcquisitionScoring": true,

@@ -30,6 +30,10 @@ final class BenefitsLoaderTests: XCTestCase {
             "mbna-smart-cash-world", "pc-financial-mastercard", "pc-financial-world-elite",
             "pc-financial-world-mastercard", "rbc-cashback-preferred-we",
             "simplii-cashback-visa", "td-aeroplan-visa-infinite-privilege",
+            "american-express-blue-business-plus", "american-express-gold-card",
+            "american-express-the-platinum-card", "chase-freedom-flex",
+            "chase-freedom-unlimited", "chase-sapphire-preferred-card",
+            "chase-sapphire-reserve", "citi-double-cash-card",
         ]
         // Published only: a draft has no benefits entry because nobody has read its issuer's
         // terms yet, which is the definition of a draft rather than a gap to track.

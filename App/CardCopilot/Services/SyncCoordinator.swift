@@ -218,13 +218,22 @@ public final class SyncCoordinator {
         }
     }
 
-    public func testWalletCaptureConnection() async -> Bool {
-        guard let credential = WalletCaptureCredentialStore().load(),
-              Clerk.shared.user?.id == credential.boundUserID,
-              let baseURL = MoneyTalksConfiguration.apiBaseURL else { return false }
-        let valid = await WalletCaptureHTTPUploader(baseURL: baseURL, token: credential.token).testConnection()
-        if valid { WalletCaptureSettingsStore().markConnectionVerified(boundUserID: credential.boundUserID) }
-        return valid
+    public func testWalletCaptureConnection() async -> WalletCaptureConnectionTestResult {
+        guard let credential = WalletCaptureCredentialStore().load() else {
+            return .init(isConnected: false, failureReason: "No secure connection is stored on this iPhone.")
+        }
+        guard let signedInUserID = Clerk.shared.user?.id else {
+            return .init(isConnected: false, failureReason: "Sign in before testing the secure connection.")
+        }
+        guard signedInUserID == credential.boundUserID else {
+            return .init(isConnected: false, failureReason: "This secure connection belongs to a different signed-in account.")
+        }
+        guard let baseURL = MoneyTalksConfiguration.apiBaseURL else {
+            return .init(isConnected: false, failureReason: "The Inunity server URL is not configured.")
+        }
+        let result = await WalletCaptureHTTPUploader(baseURL: baseURL, token: credential.token).testConnectionResult()
+        if result.isConnected { WalletCaptureSettingsStore().markConnectionVerified(boundUserID: credential.boundUserID) }
+        return result
     }
 
     public func assignUnassignedCaptures() async throws {

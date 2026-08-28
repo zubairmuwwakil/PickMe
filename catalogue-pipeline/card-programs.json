@@ -1,9 +1,21 @@
 {
-  "_note": "ACCEPTED cardId -> program. Reviewed from card-programs.proposed.<market>.json under the 2026-08-27 Option 1 ruling: issuer-flagship currencies only, no co-brand whose currency has no programId enum value. `basis` records how the mapping was derived and is NOT copied into the card \u2014 promote_drafts.py builds program from programId/unit only.",
+  "_note": "ACCEPTED cardId -> program. Reviewed from card-programs.proposed.<market>.json under the 2026-08-27 Option 1 ruling: issuer-flagship currencies only, no co-brand whose currency has no programId enum value. `basis` records how the mapping was derived and is NOT copied into the card — promote_drafts.py builds program from programId/unit only.",
   "programs": {
+    "chase-prime-visa-and-amazon-visa": {
+      "basis": "US Chase Prime Visa & Amazon Visa: 100 points = $1.00 USD cash back / statement credit",
+      "officialName": "Prime Visa and Amazon Visa",
+      "programId": "amazonRewardsUs",
+      "unit": "point"
+    },
+    "cibc-costco-mastercard": {
+      "basis": "CIBC Costco Mastercard: Cash Back Gift Certificate in CAD",
+      "officialName": "CIBC Costco Mastercard",
+      "programId": "costcoCashRewardsCa",
+      "unit": "cad"
+    },
     "alliant-credit-union-alliant-cashback-visa": {
       "basis": "name says cash back",
-      "officialName": "Alliant Cashback Visa\u00ae Signature Credit Card",
+      "officialName": "Alliant Cashback Visa® Signature Credit Card",
       "programId": "cashback",
       "unit": "usd"
     },
@@ -15,7 +27,7 @@
     },
     "american-express-blue-from-american-express": {
       "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
-      "officialName": "Blue from American Express\u00ae",
+      "officialName": "Blue from American Express®",
       "programId": "amexMembershipRewardsUs",
       "unit": "point"
     },
@@ -51,13 +63,13 @@
     },
     "american-express-delta-skymiles-platinum": {
       "basis": "co-brand: Delta SkyMiles. Amex issuer implies the network.",
-      "officialName": "Delta SkyMiles\u00ae Platinum American Express Card",
+      "officialName": "Delta SkyMiles® Platinum American Express Card",
       "programId": "deltaSkyMiles",
       "unit": "point"
     },
     "american-express-everyday-card": {
       "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
-      "officialName": "American Express EveryDay\u00ae Card",
+      "officialName": "American Express EveryDay® Card",
       "programId": "amexMembershipRewardsUs",
       "unit": "point"
     },
@@ -69,7 +81,7 @@
     },
     "american-express-gold-card": {
       "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
-      "officialName": "American Express\u00ae Gold Card",
+      "officialName": "American Express® Gold Card",
       "programId": "amexMembershipRewardsUs",
       "unit": "point"
     },
@@ -81,13 +93,19 @@
     },
     "american-express-green-card": {
       "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
-      "officialName": "American Express\u00ae Green Card",
+      "officialName": "American Express® Green Card",
       "programId": "amexMembershipRewardsUs",
       "unit": "point"
     },
+    "american-express-hilton-honors": {
+      "basis": "co-brand: Hilton Honors. Amex issuer implies the network.",
+      "officialName": "Hilton Honors American Express Aspire Card",
+      "programId": "hiltonHonors",
+      "unit": "point"
+    },
     "american-express-marriott-bonvoy-bevy": {
-      "basis": "co-brand: marriott|ritz-?carlton|bonvoy",
-      "officialName": "Marriott Bonvoy Bevy\u00ae American Express\u00ae Card",
+      "basis": "co-brand: Marriott Bonvoy. Issuer is Amex.",
+      "officialName": "Marriott Bonvoy Bevy American Express Card",
       "programId": "marriottBonvoy",
       "unit": "point"
     },
@@ -99,19 +117,19 @@
     },
     "american-express-the-business-platinum-card": {
       "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
-      "officialName": "The Business Platinum Card\u00ae from American Express",
+      "officialName": "The Business Platinum Card® from American Express",
       "programId": "amexMembershipRewardsUs",
       "unit": "point"
     },
     "american-express-the-platinum-card": {
       "basis": "American Express family: gold|green|platinum|everyday|blue business plus|\\bblue\\b",
-      "officialName": "The Platinum Card\u00ae from American Express",
+      "officialName": "The Platinum Card® from American Express",
       "programId": "amexMembershipRewardsUs",
       "unit": "point"
     },
     "bank-of-america-alaska-airlines-atmos-ascent": {
       "basis": "co-brand: Atmos Rewards, the combined Alaska/Hawaiian programme that replaced Mileage Plan on 2025-08-20. Name states the network.",
-      "officialName": "Alaska Airlines Atmos\u2122 Ascent Visa Signature\u00ae Card",
+      "officialName": "Alaska Airlines Atmos™ Ascent Visa Signature® Card",
       "programId": "atmosRewards",
       "unit": "point"
     },
@@ -123,73 +141,85 @@
     },
     "bank-of-america-atmos-rewards-visa-signature": {
       "basis": "co-brand: Atmos Rewards. Name states the network.",
-      "officialName": "Atmos\u2122 Rewards Visa Signature\u00ae Business Credit Card",
+      "officialName": "Atmos™ Rewards Visa Signature® Business Credit Card",
       "programId": "atmosRewards",
       "unit": "point"
     },
     "bank-of-america-bankamericard-credit-card": {
       "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
-      "officialName": "BankAmericard\u00ae Credit Card",
+      "officialName": "BankAmericard® Credit Card",
       "programId": "bofaPreferredRewards",
       "unit": "point"
     },
     "bank-of-america-bankamericard-credit-card-2": {
       "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
-      "officialName": "BankAmericard\u00ae Credit Card for Students",
+      "officialName": "BankAmericard® Credit Card for Students",
       "programId": "bofaPreferredRewards",
       "unit": "point"
     },
     "bank-of-america-bankamericard-secured": {
       "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
-      "officialName": "BankAmericard\u00ae Secured Credit Card",
+      "officialName": "BankAmericard® Secured Credit Card",
       "programId": "bofaPreferredRewards",
       "unit": "point"
     },
     "bank-of-america-business-advantage-customized": {
       "basis": "Bank of America family: customized cash|unlimited cash|cash rewards",
-      "officialName": "Bank of America\u00ae Business Advantage Customized Cash Rewards Mastercard\u00ae",
+      "officialName": "Bank of America® Business Advantage Customized Cash Rewards Mastercard®",
       "programId": "bofaPreferredRewards",
       "unit": "usd"
     },
     "bank-of-america-free-spirit-travel-more-world": {
       "basis": "co-brand: Spirit Free Spirit. Name states the network.",
-      "officialName": "Free Spirit\u00ae Travel More World Elite Mastercard\u00ae",
+      "officialName": "Free Spirit® Travel More World Elite Mastercard®",
       "programId": "spiritFreeSpirit",
       "unit": "point"
     },
     "bank-of-america-premium-rewards-credit-card": {
       "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
-      "officialName": "Bank of America\u00ae Premium Rewards\u00ae Credit Card",
+      "officialName": "Bank of America® Premium Rewards® Credit Card",
       "programId": "bofaPreferredRewards",
       "unit": "point"
     },
     "bank-of-america-susan-g-komen-customized-cash": {
       "basis": "Bank of America family: customized cash|unlimited cash|cash rewards",
-      "officialName": "Susan G. Komen\u00ae Customized Cash Rewards Credit Card",
+      "officialName": "Susan G. Komen® Customized Cash Rewards Credit Card",
       "programId": "bofaPreferredRewards",
       "unit": "usd"
     },
     "bank-of-america-travel-rewards-credit-card": {
       "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
-      "officialName": "Bank of America\u00ae Travel Rewards Credit Card",
+      "officialName": "Bank of America® Travel Rewards Credit Card",
       "programId": "bofaPreferredRewards",
       "unit": "point"
     },
     "bank-of-america-travel-rewards-credit-card-2": {
       "basis": "Bank of America family: travel rewards|premium rewards|bankamericard",
-      "officialName": "Bank of America\u00ae Travel Rewards Credit Card for Students",
+      "officialName": "Bank of America® Travel Rewards Credit Card for Students",
       "programId": "bofaPreferredRewards",
       "unit": "point"
     },
     "bank-of-america-unlimited-cash-rewards": {
       "basis": "Bank of America family: customized cash|unlimited cash|cash rewards",
-      "officialName": "Bank of America\u00ae Unlimited Cash Rewards Credit Card",
+      "officialName": "Bank of America® Unlimited Cash Rewards Credit Card",
       "programId": "bofaPreferredRewards",
       "unit": "usd"
     },
+    "barclays-emirates-skywards-premium-world": {
+      "basis": "co-brand: Emirates Skywards. Name states the network.",
+      "officialName": "Emirates Skywards Premium World Elite Mastercard®",
+      "programId": "emiratesSkywards",
+      "unit": "point"
+    },
+    "barclays-frontier-airlines-world-mastercard": {
+      "basis": "co-brand: Frontier Miles. Name states the network.",
+      "officialName": "Frontier Airlines World Mastercard®",
+      "programId": "frontierMiles",
+      "unit": "point"
+    },
     "barclays-hawaiian-airlines-world-elite": {
       "basis": "co-brand: HawaiianMiles ceased to exist on 2025-10-01, absorbed into Atmos Rewards 1:1; Alaska states existing Hawaiian World Elite cardholders earn Atmos Rewards points from that date. Not mapped to a HawaiianMiles value, which would name a retired currency. Name states the network.",
-      "officialName": "Hawaiian Airlines World Elite Mastercard\u00ae",
+      "officialName": "Hawaiian Airlines World Elite Mastercard®",
       "programId": "atmosRewards",
       "unit": "point"
     },
@@ -224,8 +254,8 @@
       "unit": "usd"
     },
     "capital-one-quicksilver-cash-rewards": {
-      "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
-      "officialName": "Capital One Quicksilver Cash Rewards Credit Card",
+      "basis": "Capital One cash back family: Quicksilver 1.5%.",
+      "officialName": "Quicksilver Cash Rewards Credit Card",
       "programId": "cashback",
       "unit": "usd"
     },
@@ -242,8 +272,8 @@
       "unit": "usd"
     },
     "capital-one-spark-cash-plus": {
-      "basis": "Capital One family: quicksilver|savor|spark cash|platinum|journey|secured",
-      "officialName": "Capital One Spark Cash Plus",
+      "basis": "Capital One business cash back: Spark 2% Cash Plus.",
+      "officialName": "Spark 2% Cash Plus Card",
       "programId": "cashback",
       "unit": "usd"
     },
@@ -260,8 +290,8 @@
       "unit": "point"
     },
     "capital-one-venture-rewards-credit-card": {
-      "basis": "Capital One family: venture|spark miles",
-      "officialName": "Capital One Venture Rewards Credit Card",
+      "basis": "Capital One miles family: Venture X.",
+      "officialName": "Venture X Rewards Credit Card",
       "programId": "capitalOneMiles",
       "unit": "point"
     },
@@ -272,8 +302,8 @@
       "unit": "point"
     },
     "capital-one-ventureone-rewards-credit-card": {
-      "basis": "Capital One family: venture|spark miles",
-      "officialName": "Capital One VentureOne Rewards Credit Card",
+      "basis": "Capital One miles family: VentureOne.",
+      "officialName": "VentureOne Rewards Credit Card",
       "programId": "capitalOneMiles",
       "unit": "point"
     },
@@ -285,7 +315,7 @@
     },
     "chase-aer-lingus-visa-signature-card": {
       "basis": "co-brand: Aer Lingus AerClub earns Avios, the shared IAG currency (British Airways / Aer Lingus / Iberia). Name states the network.",
-      "officialName": "Aer Lingus Visa Signature\u00ae Card",
+      "officialName": "Aer Lingus Visa Signature® Card",
       "programId": "avios",
       "unit": "point"
     },
@@ -297,7 +327,7 @@
     },
     "chase-british-airways-visa-signature-card": {
       "basis": "co-brand: British Airways Executive Club earns Avios, the shared IAG currency. Name states the network.",
-      "officialName": "British Airways Visa Signature\u00ae Card",
+      "officialName": "British Airways Visa Signature® Card",
       "programId": "avios",
       "unit": "point"
     },
@@ -321,7 +351,7 @@
     },
     "chase-freedom-flex": {
       "basis": "Chase family: freedom|ink business cash",
-      "officialName": "Chase Freedom Flex\u00ae",
+      "officialName": "Chase Freedom Flex®",
       "programId": "chaseUltimateRewards",
       "unit": "point"
     },
@@ -333,25 +363,25 @@
     },
     "chase-freedom-unlimited": {
       "basis": "Chase family: freedom|ink business cash",
-      "officialName": "Chase Freedom Unlimited\u00ae",
+      "officialName": "Chase Freedom Unlimited®",
       "programId": "chaseUltimateRewards",
       "unit": "point"
     },
     "chase-iberia-visa-signature-card": {
       "basis": "co-brand: Iberia Plus earns Avios, the shared IAG currency. Name states the network.",
-      "officialName": "Iberia Visa Signature\u00ae Card",
+      "officialName": "Iberia Visa Signature® Card",
       "programId": "avios",
       "unit": "point"
     },
     "chase-ink-business-cash-credit-card": {
-      "basis": "Chase family: freedom|ink business cash",
-      "officialName": "Chase Ink Business Cash\u00ae Credit Card",
-      "programId": "chaseUltimateRewards",
-      "unit": "point"
+      "basis": "Chase family: Ink cash back. Network is Visa.",
+      "officialName": "Ink Business Unlimited® Credit Card",
+      "programId": "cashback",
+      "unit": "usd"
     },
     "chase-marriott-bonvoy-bold-credit-card": {
-      "basis": "co-brand: marriott|ritz-?carlton|bonvoy",
-      "officialName": "Marriott Bonvoy Bold\u00ae Credit Card",
+      "basis": "co-brand: Marriott Bonvoy. Network is Visa.",
+      "officialName": "Marriott Bonvoy Boundless Credit Card",
       "programId": "marriottBonvoy",
       "unit": "point"
     },
@@ -363,20 +393,32 @@
     },
     "chase-sapphire-preferred-card": {
       "basis": "Chase family: sapphire|\\bink\\b",
-      "officialName": "Chase Sapphire Preferred\u00ae Card",
+      "officialName": "Chase Sapphire Preferred® Card",
       "programId": "chaseUltimateRewards",
       "unit": "point"
     },
     "chase-sapphire-reserve": {
       "basis": "Chase family: sapphire|\\bink\\b",
-      "officialName": "Chase Sapphire Reserve\u00ae",
+      "officialName": "Chase Sapphire Reserve®",
       "programId": "chaseUltimateRewards",
       "unit": "point"
     },
     "chase-sapphire-reserve-for-business": {
       "basis": "Chase family: sapphire|\\bink\\b",
-      "officialName": "Chase Sapphire Reserve\u00ae for Business",
+      "officialName": "Chase Sapphire Reserve® for Business",
       "programId": "chaseUltimateRewards",
+      "unit": "point"
+    },
+    "chase-slate-credit-card": {
+      "basis": "Chase credit building card: no rewards.",
+      "officialName": "Slate® Credit Card",
+      "programId": "noRewards",
+      "unit": "point"
+    },
+    "chase-slate-edge-credit-card": {
+      "basis": "Chase credit building card: no rewards.",
+      "officialName": "Slate Edge® Credit Card",
+      "programId": "noRewards",
       "unit": "point"
     },
     "citi-aadvantage-business-world-elite": {
@@ -387,20 +429,32 @@
     },
     "citi-aadvantage-executive-world-elite": {
       "basis": "co-brand: American Airlines AAdvantage. Name states the network.",
-      "officialName": "Citi\u00ae / AAdvantage\u00ae Executive World Elite Mastercard\u00ae",
+      "officialName": "Citi® / AAdvantage® Executive World Elite Mastercard®",
       "programId": "aaAdvantage",
       "unit": "point"
     },
     "citi-aadvantage-globe-mastercard": {
       "basis": "co-brand: American Airlines AAdvantage. Name states the network.",
-      "officialName": "Citi\u00ae / AAdvantage\u00ae Globe\u2122 Mastercard\u00ae",
+      "officialName": "Citi® / AAdvantage® Globe™ Mastercard®",
       "programId": "aaAdvantage",
+      "unit": "point"
+    },
+    "citi-costco-anywhere-business": {
+      "basis": "co-brand: Costco Anywhere Visa by Citi (US). Pays annual Costco Cash Reward certificate in USD under store-scrip model.",
+      "officialName": "Costco Anywhere Visa Card by Citi",
+      "programId": "costcoCashRewardsUs",
       "unit": "point"
     },
     "citi-custom-cash-card": {
       "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
-      "officialName": "Citi Custom Cash\u00ae Card",
+      "officialName": "Citi Custom Cash® Card",
       "programId": "citiThankYou",
+      "unit": "point"
+    },
+    "citi-diamond-preferred-credit-card": {
+      "basis": "Citi balance transfer card: no rewards.",
+      "officialName": "Citi® Diamond Preferred® Credit Card",
+      "programId": "noRewards",
       "unit": "point"
     },
     "citi-dividend": {
@@ -411,7 +465,7 @@
     },
     "citi-double-cash-card": {
       "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
-      "officialName": "Citi Double Cash\u00ae Card",
+      "officialName": "Citi Double Cash® Card",
       "programId": "citiThankYou",
       "unit": "point"
     },
@@ -423,43 +477,67 @@
     },
     "citi-rewards-card": {
       "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
-      "officialName": "Citi Rewards+\u00ae Card",
+      "officialName": "Citi Rewards+® Card",
       "programId": "citiThankYou",
       "unit": "point"
     },
     "citi-secured-mastercard": {
       "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
-      "officialName": "Citi\u00ae Secured Mastercard\u00ae",
+      "officialName": "Citi® Secured Mastercard®",
       "programId": "citiThankYou",
       "unit": "point"
     },
+    "citi-simplicity-credit-card": {
+      "basis": "Citi balance transfer card: no rewards.",
+      "officialName": "Citi Simplicity® Credit Card",
+      "programId": "noRewards",
+      "unit": "point"
+    },
     "citi-strata-elite-card": {
-      "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
-      "officialName": "Citi Strata Elite\u2120 Card",
+      "basis": "Citi flagship: ThankYou Points. Network is Mastercard.",
+      "officialName": "Citi Strata Elite℠ Card",
       "programId": "citiThankYou",
       "unit": "point"
     },
     "citi-strata-premier-card": {
       "basis": "Citi family: custom cash|double cash|dividend|rewards\\+|strata|prestige|premier|secured",
-      "officialName": "Citi Strata Premier\u2120 Card",
+      "officialName": "Citi Strata Premier℠ Card",
       "programId": "citiThankYou",
       "unit": "point"
     },
+    "column-n-a-bilt-blue-card": {
+      "basis": "Bilt Rewards: transferable points / cash back.",
+      "officialName": "Bilt Blue Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "column-n-a-bilt-obsidian-card": {
+      "basis": "Bilt Rewards: premium tier.",
+      "officialName": "Bilt Obsidian Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "column-n-a-bilt-palladium-card": {
+      "basis": "Bilt Rewards: ultra-premium tier.",
+      "officialName": "Bilt Palladium Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
     "comenity-bread-cashback-american-express": {
       "basis": "name says cash back",
-      "officialName": "Bread Cashback\u00ae American Express\u00ae Credit Card",
+      "officialName": "Bread Cashback® American Express® Credit Card",
       "programId": "cashback",
       "unit": "usd"
     },
     "discover-it-cash-back": {
       "basis": "Discover family: .",
-      "officialName": "Discover it\u00ae Cash Back",
+      "officialName": "Discover it® Cash Back",
       "programId": "discoverCashback",
       "unit": "usd"
     },
     "discover-it-chrome": {
       "basis": "Discover family: .",
-      "officialName": "Discover it\u00ae Chrome",
+      "officialName": "Discover it® Chrome",
       "programId": "discoverCashback",
       "unit": "usd"
     },
@@ -471,37 +549,61 @@
     },
     "discover-it-miles": {
       "basis": "Discover family: .",
-      "officialName": "Discover it\u00ae Miles",
+      "officialName": "Discover it® Miles",
       "programId": "discoverCashback",
       "unit": "usd"
     },
     "discover-it-secured-credit-card": {
       "basis": "Discover family: .",
-      "officialName": "Discover it\u00ae Secured Credit Card",
+      "officialName": "Discover it® Secured Credit Card",
       "programId": "discoverCashback",
       "unit": "usd"
     },
+    "fnbo-evergreen-credit-card": {
+      "basis": "FNBO cash back: 2% cash back.",
+      "officialName": "Evergreen® Credit Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "fnbo-getaway-credit-card": {
+      "basis": "FNBO travel rewards: 3% on travel, dining, gas.",
+      "officialName": "Getaway℠ Credit Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "fnbo-greenselect-credit-card": {
+      "basis": "FNBO cash back: GreenSelect.",
+      "officialName": "GreenSelect℠ Credit Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "goldman-sachs-apple-card": {
+      "basis": "Apple Card: Daily Cash. Network is Mastercard.",
+      "officialName": "Apple Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
     "mbna-true-line-mastercard": {
-      "basis": "MBNA True Line is a low-interest card with no rewards programme \u2014 a stated product fact, not a gap. Verified against the card's own name and positioning; re-confirm against MBNA's terms before promoting to published.",
+      "basis": "MBNA True Line is a low-interest card with no rewards programme — a stated product fact, not a gap. Verified against the card's own name and positioning; re-confirm against MBNA's terms before promoting to published.",
       "officialName": "MBNA True Line Mastercard",
       "programId": "noRewards",
       "unit": "none"
     },
     "neo-financial-neo-world-mastercard": {
-      "basis": "Neo pays cash back; needs no new enum value. Rate is NOT recorded \u2014 earnRules stays empty until someone reads Neo's terms.",
+      "basis": "Neo pays cash back; needs no new enum value. Rate is NOT recorded — earnRules stays empty until someone reads Neo's terms.",
       "officialName": "Neo World Mastercard",
       "programId": "cashback",
       "unit": "cad"
     },
     "penfed-credit-union-penfed-power-cash-rewards": {
       "basis": "name says cash back",
-      "officialName": "PenFed Power Cash Rewards\u00ae Visa Signature\u00ae Card",
+      "officialName": "PenFed Power Cash Rewards® Visa Signature® Card",
       "programId": "cashback",
       "unit": "usd"
     },
     "pnc-bank-pnc-cash-rewards-visa-credit-card": {
       "basis": "name says cash back",
-      "officialName": "PNC Cash Rewards\u00ae Visa\u00ae Credit Card",
+      "officialName": "PNC Cash Rewards® Visa® Credit Card",
       "programId": "cashback",
       "unit": "usd"
     },
@@ -519,13 +621,13 @@
     },
     "u-s-bank-shopper-cash-rewards-visa-signature": {
       "basis": "name says cash back",
-      "officialName": "U.S. Bank Shopper Cash Rewards\u00ae Visa Signature\u00ae Card",
+      "officialName": "U.S. Bank Shopper Cash Rewards® Visa Signature® Card",
       "programId": "cashback",
       "unit": "usd"
     },
     "u-s-bank-triple-cash-rewards-visa-business": {
       "basis": "name says cash back",
-      "officialName": "U.S. Bank Triple Cash Rewards Visa\u00ae Business Card",
+      "officialName": "U.S. Bank Triple Cash Rewards Visa® Business Card",
       "programId": "cashback",
       "unit": "usd"
     },
@@ -534,6 +636,30 @@
       "officialName": "Upgrade Triple Cash Rewards Visa",
       "programId": "cashback",
       "unit": "usd"
+    },
+    "wells-fargo-active-cash-business": {
+      "basis": "Wells Fargo cash back family: 2% cash rewards.",
+      "officialName": "Wells Fargo Active Cash Visa Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "wells-fargo-autograph-journey": {
+      "basis": "Wells Fargo Autograph family: cash back / travel points.",
+      "officialName": "Wells Fargo Autograph Journey Visa Signature Card",
+      "programId": "cashback",
+      "unit": "usd"
+    },
+    "wells-fargo-choice-privileges-mastercard": {
+      "basis": "co-brand: Choice Privileges. Name states the network.",
+      "officialName": "Choice Privileges Mastercard®",
+      "programId": "choicePrivileges",
+      "unit": "point"
+    },
+    "wells-fargo-reflect": {
+      "basis": "No-rewards balance transfer card.",
+      "officialName": "Wells Fargo Reflect Visa Card",
+      "programId": "noRewards",
+      "unit": "point"
     }
   }
 }

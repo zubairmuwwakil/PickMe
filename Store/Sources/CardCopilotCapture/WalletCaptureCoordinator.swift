@@ -4,6 +4,18 @@ public protocol WalletCaptureUploading: Sendable {
     func upload(_ event: WalletCaptureEvent) async -> WalletUploadResult
 }
 
+/// The outcome of a connection probe. The failure reason contains only local precondition or
+/// transport/HTTP information; it never includes the installation token or a server response body.
+public struct WalletCaptureConnectionTestResult: Sendable, Equatable {
+    public let isConnected: Bool
+    public let failureReason: String?
+
+    public init(isConnected: Bool, failureReason: String? = nil) {
+        self.isConnected = isConnected
+        self.failureReason = failureReason
+    }
+}
+
 public struct WalletCaptureHTTPUploader: WalletCaptureUploading, @unchecked Sendable {
     private let baseURL: URL
     private let endpoint: URL
@@ -17,13 +29,27 @@ public struct WalletCaptureHTTPUploader: WalletCaptureUploading, @unchecked Send
     }
 
     public func testConnection() async -> Bool {
+        await testConnectionResult().isConnected
+    }
+
+    public func testConnectionResult() async -> WalletCaptureConnectionTestResult {
         do {
             var request = URLRequest(url: baseURL.appendingPathComponent("api/v1/wallet-installations/test"))
             request.httpMethod = "POST"
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (_, response) = try await session.data(for: request)
-            return (response as? HTTPURLResponse).map { 200..<300 ~= $0.statusCode } == true
-        } catch { return false }
+            guard let response = response as? HTTPURLResponse else {
+                return .init(isConnected: false, failureReason: "The server returned an invalid response.")
+            }
+            guard 200..<300 ~= response.statusCode else {
+                return .init(isConnected: false, failureReason: "The server rejected the installation credential (HTTP \(response.statusCode)).")
+            }
+            return .init(isConnected: true)
+        } catch let error as URLError {
+            return .init(isConnected: false, failureReason: "The network request failed (\(error.code.rawValue): \(error.localizedDescription)).")
+        } catch {
+            return .init(isConnected: false, failureReason: "The request failed: \(error.localizedDescription)")
+        }
     }
 
     public func revokeInstallation() async -> Bool {

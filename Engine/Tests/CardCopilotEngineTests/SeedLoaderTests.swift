@@ -7,7 +7,7 @@ final class SeedLoaderTests: XCTestCase {
         // Every supported product, not just the seed owner's wallet (one corpus, 2026-08-24).
         // Counted as PUBLISHED rather than total since catalogue 2.2 added US drafts: a bare
         // total would move on every import and stop asserting anything about the corpus.
-        XCTAssertEqual(catalogue.cards.filter(\.isPublished).count, 41)
+        XCTAssertEqual(catalogue.cards.filter(\.isPublished).count, 49)
         XCTAssertFalse(catalogue.cards.allSatisfy(\.isPublished), "expected drafts in 2.2+")
         let cobalt = try XCTUnwrap(catalogue.cards.first { $0.cardId == "amex-cobalt" })
         XCTAssertEqual(ReportingCurrency.toReporting(cobalt.fee.annual), 191.88, accuracy: 0.005)
@@ -83,7 +83,7 @@ final class SeedLoaderTests: XCTestCase {
 extension SeedLoaderTests {
     func testLoadsProgramDefaults() throws {
         let programs = try SeedLoader.loadPrograms()
-        XCTAssertEqual(programs.programsVersion, "1.2")   // 1.2 adds the noRewards valuation
+        XCTAssertEqual(programs.programsVersion, "1.4")
         guard case .cashback(let cash) = try XCTUnwrap(programs.defaults["cashback"])
         else { return XCTFail("expected .cashback") }
         XCTAssertEqual(cash.cadPerDollar, 1.0)

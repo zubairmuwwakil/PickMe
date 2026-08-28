@@ -7,7 +7,7 @@ struct CaptureStatusView: View {
     let boundAccountLabel: String?
     let canAssignUnassigned: Bool
     let onRetry: () async -> Void
-    let onTestConnection: () async -> Bool
+    let onTestConnection: () async -> WalletCaptureConnectionTestResult
     let onAssignUnassigned: () async throws -> Void
     let onDeleteUnassigned: () async throws -> Void
     let onDisable: (_ deleteUnsent: Bool) async throws -> Void
@@ -236,8 +236,12 @@ struct CaptureStatusView: View {
     }
     private func testConnection() async {
         isWorking = true; defer { isWorking = false }
-        if await onTestConnection() { actionMessage = "Connection tested — waiting for your first Wallet tap." }
-        else { actionMessage = "The secure connection test failed. Reconnect the installation and try again." }
+        let result = await onTestConnection()
+        if result.isConnected {
+            actionMessage = "Connection tested — waiting for your first Wallet tap."
+        } else {
+            actionMessage = "The secure connection test failed. \(result.failureReason ?? "Reconnect the installation and try again.")"
+        }
         await refresh()
     }
     private func assignUnassigned() async {
