@@ -8,6 +8,15 @@ enum class Warning(val rawValue: String) {
     @SerialName("drawerCard") DRAWER_CARD("drawerCard"),
     @SerialName("unresolvedOwnerState") UNRESOLVED_OWNER_STATE("unresolvedOwnerState"),
     @SerialName("networkNotAccepted") NETWORK_NOT_ACCEPTED("networkNotAccepted"),
+
+    /**
+     * A closed-loop card at a merchant it is not accepted by — or at a purchase whose
+     * merchant could not be resolved at all. Its own case rather than reusing
+     * [NETWORK_NOT_ACCEPTED]: "this card only works at Kohl's" and "Visa isn't accepted
+     * here" are different facts, and warnings are frozen into the append-only prediction
+     * log, so a borrowed one is a wrong record that can never be corrected.
+     */
+    @SerialName("merchantNotAccepted") MERCHANT_NOT_ACCEPTED("merchantNotAccepted"),
     @SerialName("capNearlyExhausted") CAP_NEARLY_EXHAUSTED("capNearlyExhausted"),
     @SerialName("negativeNetValue") NEGATIVE_NET_VALUE("negativeNetValue"),
     @SerialName("fxAllowanceAssumed") FX_ALLOWANCE_ASSUMED("fxAllowanceAssumed"),

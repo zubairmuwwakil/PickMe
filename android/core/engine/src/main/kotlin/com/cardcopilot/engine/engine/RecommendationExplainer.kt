@@ -70,6 +70,12 @@ class RecommendationExplainer(catalogue: Catalogue) {
             Warning.CAP_NEARLY_EXHAUSTED -> "Category cap nearly used up — the winner may flip soon."
             Warning.NEGATIVE_NET_VALUE -> "This card would LOSE money here after fees."
             Warning.NETWORK_NOT_ACCEPTED -> "Card network not accepted at this merchant."
+            // Excluded-only, like PRODUCT_WITHDRAWN and DRAFT_PRODUCT below: a card the
+            // merchant does not accept is never the winner, so this never travels with a
+            // Recommendation. Worded as a fact about where the card works rather than an
+            // instruction, because the only action available is the pick already named.
+            Warning.MERCHANT_NOT_ACCEPTED ->
+                "This is a store card and only works at its own merchant."
             Warning.UNRESOLVED_OWNER_STATE -> "Card skipped — account state not set up yet."
             Warning.FX_ALLOWANCE_ASSUMED -> "Assumed within this card's monthly FX-free allowance."
             Warning.HYPOTHETICAL_SELECTION -> "Assumes this is one of your selected 2% categories — check your selections."

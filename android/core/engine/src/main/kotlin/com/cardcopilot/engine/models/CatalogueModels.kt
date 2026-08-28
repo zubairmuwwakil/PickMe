@@ -18,15 +18,48 @@ import kotlinx.serialization.json.double
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
+/**
+ * The payment network a card runs on. `PRIVATE_LABEL` means it runs on NONE — a store card
+ * accepted only by its own merchant. It is never a member of a purchase's `acceptedNetworks`
+ * (see [PurchaseContext]'s default), so a private-label card that forgot to declare [acceptance]
+ * fails closed: excluded everywhere rather than recommended everywhere.
+ *
+ * [rawValue] is a constructor property rather than `name.lowercase()` — the same shape [Warning]
+ * already uses. The derivation was correct only while every case was a single word: it would
+ * render `PRIVATE_LABEL` as "private_label" where Swift's `rawValue` is "privateLabel", and that
+ * string reaches the owner through `CandidateScore.exclusionReason`.
+ */
 @Serializable
-enum class Network {
-    @SerialName("amex") AMEX,
-    @SerialName("visa") VISA,
-    @SerialName("mastercard") MASTERCARD,
-    @SerialName("discover") DISCOVER;
-
-    val rawValue: String get() = name.lowercase()
+enum class Network(val rawValue: String) {
+    @SerialName("amex") AMEX("amex"),
+    @SerialName("visa") VISA("visa"),
+    @SerialName("mastercard") MASTERCARD("mastercard"),
+    @SerialName("discover") DISCOVER("discover"),
+    @SerialName("privateLabel") PRIVATE_LABEL("privateLabel")
 }
+
+/**
+ * How a card is accepted. Absent on a [CardProduct] means [OPEN_LOOP] — which is every card in
+ * the catalogue as of card-contracts@2.4, so no existing record changes a byte. The case exists
+ * in code as that coalescing default; the schema deliberately refuses to let data spell it out,
+ * because an open-loop record would have to carry a `merchants` list [Scorer] never reads.
+ */
+@Serializable
+enum class AcceptanceScope(val rawValue: String) {
+    @SerialName("openLoop") OPEN_LOOP("openLoop"),
+    @SerialName("closedLoop") CLOSED_LOOP("closedLoop")
+}
+
+/**
+ * A closed-loop card's acceptance list, in the same lowercase kebab-case merchant tokens
+ * `RuleMatcher` matches `merchantInclude` against — a token that cannot match is a card that can
+ * never be picked. Mirrors Swift's `Acceptance`.
+ */
+@Serializable
+data class Acceptance(
+    val scope: AcceptanceScope,
+    val merchants: List<String>
+)
 
 /**
  * The country a card product is sold in. NOT, by itself, an eligibility claim beyond "this is the
@@ -288,6 +321,12 @@ data class CardProduct(
      */
     val billingCurrency: Currency = Currency.CAD,
     val network: Network,
+    /**
+     * Absent for every open-loop card, which is all of them today — so this decodes a pre-2.5
+     * catalogue unchanged. [Scorer] switches on it: open-loop guards on [network], closed-loop
+     * guards on the purchase's `merchantBrand`.
+     */
+    val acceptance: Acceptance? = null,
     val kind: CardKind,
     /** Absent decodes as [CardStatus.PUBLISHED]. */
     val status: CardStatus? = null,

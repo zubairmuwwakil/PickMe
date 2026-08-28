@@ -1,5 +1,6 @@
 package com.cardcopilot.engine.engine
 
+import com.cardcopilot.engine.models.AcceptanceScope
 import com.cardcopilot.engine.models.CandidateScore
 import com.cardcopilot.engine.models.CapMeasure
 import com.cardcopilot.engine.models.CardProduct
@@ -75,8 +76,32 @@ object Scorer {
             return excludedScore(Warning.DRAFT_PRODUCT, "draft catalogue record, not yet issuer-verified")
         }
 
-        if (!purchase.acceptedNetworks.contains(card.network)) {
-            return excludedScore(Warning.NETWORK_NOT_ACCEPTED, "${card.network.rawValue} not accepted")
+        // Two acceptance mechanisms, not one. An open-loop card is accepted because the merchant
+        // takes its network; a closed-loop card is accepted because the merchant IS its issuer's
+        // store. Forcing the second through a network check is what made private-label cards
+        // unrepresentable without guessing `network`, which rule 3 forbids — and the guess is not
+        // harmless: a Kohl's card recorded as visa is recommended at a gas station and declined at
+        // the till. Absent `acceptance` coalesces to OPEN_LOOP, so every pre-2.5 card takes the
+        // identical path it always did. Mirrors the Swift twin.
+        when (card.acceptance?.scope ?: AcceptanceScope.OPEN_LOOP) {
+            AcceptanceScope.OPEN_LOOP ->
+                if (!purchase.acceptedNetworks.contains(card.network)) {
+                    return excludedScore(
+                        Warning.NETWORK_NOT_ACCEPTED,
+                        "${card.network.rawValue} not accepted"
+                    )
+                }
+            AcceptanceScope.CLOSED_LOOP -> {
+                // Unresolved merchantBrand excludes rather than admits. These cards are only ever
+                // as good as brand resolution, and silence beats recommending one that is declined.
+                val merchants = card.acceptance?.merchants ?: emptyList()
+                if (purchase.merchantBrand == null || !merchants.contains(purchase.merchantBrand)) {
+                    return excludedScore(
+                        Warning.MERCHANT_NOT_ACCEPTED,
+                        "accepted only at ${merchants.joinToString(", ")}"
+                    )
+                }
+            }
         }
 
         val (rule: EarnRule, capabilityGaps: List<String>) =
