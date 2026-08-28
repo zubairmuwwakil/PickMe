@@ -1,1060 +1,45 @@
 [
   {
-    "cardId": "american-express-amazon-business",
-    "officialName": "Amazon Business American Express Card",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-old-blue-cash-card",
-    "officialName": "American Express Old Blue Cash Card",
-    "issuer": "American Express",
-    "reason": "conflicting-annual-fee",
-    "detail": "sources disagree: [0, 95]"
-  },
-  {
-    "cardId": "american-express-delta-blue",
-    "officialName": "Amex Delta Blue",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-morgan-stanley-blue",
-    "officialName": "Amex Morgan Stanley Blue",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-delta-skymiles-gold-business",
-    "officialName": "Delta SkyMiles Gold Business",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-delta-skymiles-platinum",
-    "officialName": "Delta SkyMiles\u00ae Platinum American Express Card",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-hilton-honors",
-    "officialName": "Hilton Honors American Express Aspire Card",
-    "issuer": "American Express",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "american-express-marriott-bonvoy-bevy",
-    "officialName": "Marriott Bonvoy Bevy\u00ae American Express\u00ae Card",
-    "issuer": "American Express",
-    "reason": "conflicting-annual-fee",
-    "detail": "sources disagree: [125, 250, 650]"
-  },
-  {
-    "cardId": "bank-of-america-alaska-airlines-atmos-ascent",
-    "officialName": "Alaska Airlines Atmos\u2122 Ascent Visa Signature\u00ae Card",
-    "issuer": "Bank of America",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "bank-of-america-atmos-rewards-visa-signature",
-    "officialName": "Atmos\u2122 Rewards Visa Signature\u00ae Business Credit Card",
-    "issuer": "Bank of America",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "bank-of-america-premium-rewards-credit-card",
-    "officialName": "Bank of America\u00ae Premium Rewards\u00ae Credit Card",
-    "issuer": "Bank of America",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "bank-of-america-travel-rewards-credit-card",
-    "officialName": "Bank of America\u00ae Travel Rewards Credit Card",
-    "issuer": "Bank of America",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "bank-of-america-travel-rewards-credit-card-2",
-    "officialName": "Bank of America\u00ae Travel Rewards Credit Card for Students",
-    "issuer": "Bank of America",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "bank-of-america-unlimited-cash-rewards",
-    "officialName": "Bank of America\u00ae Unlimited Cash Rewards Credit Card",
-    "issuer": "Bank of America",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "bank-of-america-free-spirit-travel-more-world",
-    "officialName": "Free Spirit\u00ae Travel More World Elite Mastercard\u00ae",
-    "issuer": "Bank of America",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "bank-of-america-royal-one-plus-visa-signature",
-    "officialName": "Royal ONE Plus\u2122 Visa Signature\u00ae Credit Card",
-    "issuer": "Bank of America",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-aadvantage-aviator-silver",
-    "officialName": "AAdvantage Aviator Silver",
-    "issuer": "Barclays",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "barclays-aarp-essential-rewards-mastercard",
-    "officialName": "AARP\u00ae Essential Rewards Mastercard\u00ae from Barclays",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-athleta-rewards-mastercard",
-    "officialName": "Athleta Rewards Mastercard\u00ae",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-banana-republic-rewards-mastercard",
-    "officialName": "Banana Republic Rewards Mastercard\u00ae",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-carnival-world-mastercard",
-    "officialName": "Carnival\u00ae World Mastercard\u00ae",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-celebrity-cruises-visa-signature",
-    "officialName": "Celebrity Cruises Visa Signature\u00ae Card",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-emirates-skywards-premium-world",
-    "officialName": "Emirates Skywards Premium World Elite Mastercard\u00ae",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-frontier-airlines-world-mastercard",
-    "officialName": "Frontier Airlines World Mastercard\u00ae",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-gap-good-rewards-mastercard",
-    "officialName": "Gap Good Rewards Mastercard\u00ae",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-harley-davidson-credit-card",
-    "officialName": "Harley-Davidson Credit Card",
-    "issuer": "Barclays",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "barclays-hawaiian-airlines-world-elite",
-    "officialName": "Hawaiian Airlines World Elite Mastercard\u00ae",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-jetblue-business-card",
-    "officialName": "JetBlue Business Card",
-    "issuer": "Barclays",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "barclays-jetblue-card",
-    "officialName": "JetBlue Card",
-    "issuer": "Barclays",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "barclays-jetblue-plus-card",
-    "officialName": "JetBlue Plus Card",
-    "issuer": "Barclays",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "barclays-jetblue-premier-card",
-    "officialName": "JetBlue Premier Card",
-    "issuer": "Barclays",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "barclays-luxury-card-mastercard-black-card",
-    "officialName": "Luxury Card Mastercard\u00ae Black Card\u2122",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-luxury-card-mastercard-gold-card",
-    "officialName": "Luxury Card Mastercard\u00ae Gold Card\u2122",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-luxury-card-mastercard-titanium-card",
-    "officialName": "Luxury Card Mastercard\u00ae Titanium Card\u2122",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-old-navy-navyist-rewards-mastercard",
-    "officialName": "Old Navy Navyist Rewards Mastercard\u00ae",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-royal-caribbean-visa-signature-card",
-    "officialName": "Royal Caribbean Visa Signature\u00ae Card",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-uber-visa-card",
-    "officialName": "Uber Visa Card",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-uber-visa-card-legacy",
-    "officialName": "Uber Visa Card (Legacy)",
-    "issuer": "Barclays",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "barclays-wyndham-earner-business",
-    "officialName": "Wyndham Earner Business",
-    "issuer": "Barclays",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "barclays-wyndham-rewards-earner-premier-card",
-    "officialName": "Wyndham Rewards Earner Premier Card",
-    "issuer": "Barclays",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "bread-financial-bed-bath-beyond-mastercard",
-    "officialName": "Bed Bath & Beyond Mastercard\u00ae",
-    "issuer": "Bread Financial",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "bread-financial-bread-rewards",
-    "officialName": "Bread Rewards\u2122 American Express\u00ae Credit Card",
-    "issuer": "Bread Financial",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "bread-financial-kayak-credit-card",
-    "officialName": "KAYAK Credit Card",
-    "issuer": "Bread Financial",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "bread-financial-ulta-beauty-mastercard",
-    "officialName": "Ulta Beauty Mastercard\u00ae",
-    "issuer": "Bread Financial",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "capital-one-journey-student-credit-card",
-    "officialName": "Capital One Journey Student Credit Card",
-    "issuer": "Capital One",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "capital-one-quicksilver-cash-rewards",
-    "officialName": "Capital One Quicksilver Cash Rewards Credit Card",
-    "issuer": "Capital One",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "capital-one-spark-cash-plus",
-    "officialName": "Capital One Spark Cash Plus",
-    "issuer": "Capital One",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "capital-one-spark-cash-select-for-excellent",
-    "officialName": "Capital One Spark Cash Select for Excellent Credit",
-    "issuer": "Capital One",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "capital-one-venture-business",
-    "officialName": "Capital One Venture Business",
-    "issuer": "Capital One",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "capital-one-venture-rewards-credit-card",
-    "officialName": "Capital One Venture Rewards Credit Card",
-    "issuer": "Capital One",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "capital-one-ventureone-business",
-    "officialName": "Capital One VentureOne Business",
-    "issuer": "Capital One",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "capital-one-ventureone-rewards-credit-card",
-    "officialName": "Capital One VentureOne Rewards Credit Card",
-    "issuer": "Capital One",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "capital-one-kohl-s-charge-card",
-    "officialName": "Kohl's Charge Card",
-    "issuer": "Capital One",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-aer-lingus-visa-signature-card",
-    "officialName": "Aer Lingus Visa Signature\u00ae Card",
-    "issuer": "Chase",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "chase-amazon-visa",
-    "officialName": "Amazon Visa",
-    "issuer": "Chase",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "chase-british-airways-visa-signature-card",
-    "officialName": "British Airways Visa Signature\u00ae Card",
-    "issuer": "Chase",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
     "cardId": "chase-aeroplan-card",
-    "officialName": "Chase Aeroplan Card",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-disney-visa-card",
-    "officialName": "Chase Disney Visa Card",
-    "issuer": "Chase",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "chase-freedom-flex",
-    "officialName": "Chase Freedom Flex\u00ae",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-freedom-rise-credit-card",
-    "officialName": "Chase Freedom Rise Credit Card",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-freedom-unlimited",
-    "officialName": "Chase Freedom Unlimited\u00ae",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-hyatt",
-    "officialName": "Chase Hyatt",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-ihg-premier",
-    "officialName": "Chase IHG Premier",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-ink-business-cash-credit-card",
-    "officialName": "Chase Ink Business Cash\u00ae Credit Card",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-ritz-carlton-credit-card",
-    "officialName": "Chase Ritz-Carlton Credit Card",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-sapphire-preferred-card",
-    "officialName": "Chase Sapphire Preferred\u00ae Card",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-sapphire-reserve",
-    "officialName": "Chase Sapphire Reserve\u00ae",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-sapphire-reserve-for-business",
-    "officialName": "Chase Sapphire Reserve\u00ae for Business",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-southwest-priority",
-    "officialName": "Chase Southwest Priority",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-disney-inspire-visa-card",
-    "officialName": "Disney Inspire Visa Card",
-    "issuer": "Chase",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "chase-disney-premier-visa",
-    "officialName": "Disney Premier Visa",
-    "issuer": "Chase",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "chase-doordash-rewards-mastercard",
-    "officialName": "DoorDash Rewards Mastercard\u00ae",
-    "issuer": "Chase",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "chase-iberia-visa-signature-card",
-    "officialName": "Iberia Visa Signature\u00ae Card",
-    "issuer": "Chase",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "chase-ihg-one-rewards-premier-business",
-    "officialName": "IHG One Rewards Premier Business Credit Card",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-jpmorgan-reserve-card",
-    "officialName": "JPMorgan Reserve Card",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-marriott-bonvoy-bold-credit-card",
-    "officialName": "Marriott Bonvoy Bold\u00ae Credit Card",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-prime-visa",
-    "officialName": "Prime Visa",
-    "issuer": "Chase",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "chase-southwest-performance-business",
-    "officialName": "Southwest Performance Business",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-southwest-rapid-rewards-plus",
-    "officialName": "Southwest Rapid Rewards\u00ae Plus Credit Card",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-united-club-business-card",
-    "officialName": "United Club\u2120 Business Card",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-united-quest-card",
-    "officialName": "United Quest Card",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-united-explorer-card",
-    "officialName": "United\u2120 Explorer Card",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-united-gateway-card",
-    "officialName": "United\u2120 Gateway Card",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "chase-world-of-hyatt-business-credit-card",
-    "officialName": "World of Hyatt Business Credit Card",
-    "issuer": "Chase",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "citi-aadvantage-platinum-select",
-    "officialName": "AAdvantage Platinum Select",
-    "issuer": "Citi",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "citi-american-airlines-aadvantage-mileup-card",
-    "officialName": "American Airlines AAdvantage\u00ae MileUp\u00ae Card",
-    "issuer": "Citi",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "citi-custom-cash-card",
-    "officialName": "Citi Custom Cash\u00ae Card",
-    "issuer": "Citi",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "citi-dividend",
-    "officialName": "Citi Dividend",
-    "issuer": "Citi",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "citi-double-cash-card",
-    "officialName": "Citi Double Cash\u00ae Card",
-    "issuer": "Citi",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "citi-prestige",
-    "officialName": "Citi Prestige",
-    "issuer": "Citi",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "citi-rewards-card",
-    "officialName": "Citi Rewards+\u00ae Card",
-    "issuer": "Citi",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "citi-strata-elite-card",
-    "officialName": "Citi Strata Elite\u2120 Card",
-    "issuer": "Citi",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "citi-strata-premier-card",
-    "officialName": "Citi Strata Premier\u2120 Card",
-    "issuer": "Citi",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "citi-aadvantage-executive-world-elite",
-    "officialName": "Citi\u00ae / AAdvantage\u00ae Executive World Elite Mastercard\u00ae",
-    "issuer": "Citi",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "citi-aadvantage-globe-mastercard",
-    "officialName": "Citi\u00ae / AAdvantage\u00ae Globe\u2122 Mastercard\u00ae",
-    "issuer": "Citi",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "citi-costco-anywhere-business",
-    "officialName": "Costco Anywhere Business",
-    "issuer": "Citi",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "elan-financial-services-fidelity-rewards-visa",
-    "officialName": "Fidelity Rewards Visa Signature Card",
-    "issuer": "Fidelity Investments / Elan Financial Services",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "first-electronic-bank-bilt-blue-card",
-    "officialName": "Bilt Blue Card",
-    "issuer": "First Electronic Bank",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "first-electronic-bank-bilt-obsidian-card",
-    "officialName": "Bilt Obsidian Card",
-    "issuer": "First Electronic Bank",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "first-electronic-bank-bilt-palladium-card",
-    "officialName": "Bilt Palladium Card",
-    "issuer": "First Electronic Bank",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "officialName": "Aeroplan Card",
+    "issuer": "JPMorgan Chase",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "goldman-sachs-apple-card",
     "officialName": "Apple Card",
-    "issuer": "Goldman Sachs",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "goldman-sachs-my-gm-rewards-card-mastercard",
-    "officialName": "My GM Rewards Card Mastercard\u00ae",
-    "issuer": "Goldman Sachs",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "hsbc-elite-credit-card",
-    "officialName": "HSBC Elite Credit Card",
-    "issuer": "HSBC",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "hsbc-premier-credit-card",
-    "officialName": "HSBC Premier Credit Card",
-    "issuer": "HSBC",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "navy-federal-credit-union-navy-federal",
-    "officialName": "Navy Federal cashRewards PLUS\u00ae Credit Card",
-    "issuer": "Navy Federal Credit Union",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "navy-federal-credit-union-navy-federal-2",
-    "officialName": "Navy Federal cashRewards\u00ae Credit Card",
-    "issuer": "Navy Federal Credit Union",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "navy-federal-credit-union-navy-federal-3",
-    "officialName": "Navy Federal Flagship Rewards\u00ae Credit Card",
-    "issuer": "Navy Federal Credit Union",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "navy-federal-credit-union-navy-federal-go",
-    "officialName": "Navy Federal GO REWARDS\u00ae Credit Card",
-    "issuer": "Navy Federal Credit Union",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "navy-federal-credit-union-navy-federal-more",
-    "officialName": "Navy Federal More Rewards American Express\u00ae Card",
-    "issuer": "Navy Federal Credit Union",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "pnc-bank-pnc-core-visa-credit-card",
-    "officialName": "PNC Core Visa\u00ae Credit Card",
-    "issuer": "PNC Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "pnc-bank-pnc-points-visa-credit-card",
-    "officialName": "PNC Points Visa\u00ae Credit Card",
-    "issuer": "PNC Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "penfed-credit-union-penfed-gold-visa-card",
-    "officialName": "PenFed Gold Visa\u00ae Card",
-    "issuer": "PenFed Credit Union",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "penfed-credit-union-penfed-pathfinder-rewards",
-    "officialName": "PenFed Pathfinder\u00ae Rewards Visa Signature\u00ae Card",
-    "issuer": "PenFed Credit Union",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "petal-1-visa",
-    "officialName": "Petal 1 Visa",
-    "issuer": "Petal",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "petal-2-visa",
-    "officialName": "Petal 2 Visa",
-    "issuer": "Petal",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "robinhood-gold-card",
-    "officialName": "Robinhood Gold Card",
-    "issuer": "Robinhood Credit",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "robinhood-platinum-card",
-    "officialName": "Robinhood Platinum Card",
-    "issuer": "Robinhood Credit",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "sofi-credit-card-unlimited-2",
-    "officialName": "SoFi Credit Card (Unlimited 2%)",
-    "issuer": "SoFi / First Bank",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "synchrony-amazon-prime-store-card",
-    "officialName": "Amazon Prime Store Card",
-    "issuer": "Synchrony",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "synchrony-carecredit-rewards-mastercard",
-    "officialName": "CareCredit Rewards Mastercard\u00ae",
-    "issuer": "Synchrony",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "synchrony-cathay-world-elite-mastercard",
-    "officialName": "Cathay World Elite Mastercard",
-    "issuer": "Synchrony",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "synchrony-mywalgreens-mastercard",
-    "officialName": "myWalgreens Mastercard",
-    "issuer": "Synchrony",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "synchrony-paypal-cashback-mastercard",
-    "officialName": "PayPal Cashback Mastercard\u00ae",
-    "issuer": "Synchrony",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "synchrony-sam-s-club-mastercard",
-    "officialName": "Sam's Club\u00ae Mastercard\u00ae",
-    "issuer": "Synchrony",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "synchrony-sears-mastercard",
-    "officialName": "Sears Mastercard\u00ae",
-    "issuer": "Synchrony",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "synchrony-venmo-credit-card",
-    "officialName": "Venmo Credit Card",
-    "issuer": "Synchrony",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "synchrony-verizon-visa-card",
-    "officialName": "Verizon Visa\u00ae Card",
-    "issuer": "Synchrony",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "td-bank-usa-td-business-solutions-credit-card",
-    "officialName": "TD Business Solutions Credit Card",
-    "issuer": "TD Bank",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "td-bank-usa-td-cash-credit-card",
-    "officialName": "TD Cash Credit Card",
-    "issuer": "TD Bank",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "td-bank-usa-td-double-up-credit-card",
-    "officialName": "TD Double Up Credit Card",
-    "issuer": "TD Bank",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "td-bank-usa-td-first-class-visa-signature",
-    "officialName": "TD First Class Visa Signature\u00ae Credit Card",
-    "issuer": "TD Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "u-s-bank-altitude-connect-business",
-    "officialName": "Altitude Connect Business",
-    "issuer": "U.S. Bank",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "u-s-bank-h-d-visa-signature-credit-card",
-    "officialName": "H-D Visa Signature Credit Card",
-    "issuer": "U.S. Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "u-s-bank-state-farm-cash-medallion",
-    "officialName": "State Farm Cash Medallion",
-    "issuer": "U.S. Bank",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "u-s-bank-altitude-go-visa-signature-card",
-    "officialName": "U.S. Bank Altitude\u00ae Go Visa Signature\u00ae Card",
-    "issuer": "U.S. Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "u-s-bank-altitude-reserve-visa-infinite-card",
-    "officialName": "U.S. Bank Altitude\u00ae Reserve Visa Infinite\u00ae Card",
-    "issuer": "U.S. Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "u-s-bank-business-leverage-visa-signature",
-    "officialName": "U.S. Bank Business Leverage\u00ae Visa Signature\u00ae Card",
-    "issuer": "U.S. Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "u-s-bank-cash-visa-signature-card",
-    "officialName": "U.S. Bank Cash+\u2122 Visa Signature\u00ae Card",
-    "issuer": "U.S. Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "u-s-bank-smartly-visa-signature-card",
-    "officialName": "U.S. Bank Smartly\u2122 Visa Signature\u00ae Card",
-    "issuer": "U.S. Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "u-s-bank-visa-platinum-card",
-    "officialName": "U.S. Bank Visa\u00ae Platinum Card",
-    "issuer": "U.S. Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "wells-fargo-active-cash-business",
-    "officialName": "Active Cash Business",
-    "issuer": "Wells Fargo",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "wells-fargo-choice-privileges-mastercard",
-    "officialName": "Choice Privileges Mastercard\u00ae",
-    "issuer": "Wells Fargo",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "wells-fargo-one-key-card",
-    "officialName": "One Key Card",
-    "issuer": "Wells Fargo",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "wells-fargo-attune-world-elite-mastercard",
-    "officialName": "Wells Fargo Attune World Elite Mastercard\u00ae",
-    "issuer": "Wells Fargo",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "wells-fargo-autograph-journey",
-    "officialName": "Wells Fargo Autograph Journey",
-    "issuer": "Wells Fargo",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "wells-fargo-autograph-visa-signature-card",
-    "officialName": "Wells Fargo Autograph Visa Signature\u00ae Card",
-    "issuer": "Wells Fargo",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "wells-fargo-reflect",
-    "officialName": "Wells Fargo Reflect",
-    "issuer": "Wells Fargo",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "issuer": "Goldman Sachs Bank USA",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "column-n-a-bilt-blue-card",
     "officialName": "Bilt Blue Card",
     "issuer": "Column N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "column-n-a-bilt-obsidian-card",
     "officialName": "Bilt Obsidian Card",
     "issuer": "Column N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "column-n-a-bilt-palladium-card",
     "officialName": "Bilt Palladium Card",
     "issuer": "Column N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
-    "cardId": "bank-of-america-atmos-rewards-summit-visa",
-    "officialName": "Atmos Rewards Summit Visa Infinite Credit Card",
-    "issuer": "Bank of America",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
+    "cardId": "citi-costco-anywhere-business",
+    "officialName": "Costco Anywhere Visa Card by Citi",
+    "issuer": "Citi",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "capital-one-bj-s-one-mastercard",
@@ -1064,9 +49,37 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "u-s-bank-kroger-rewards-world-elite",
-    "officialName": "Kroger Rewards World Elite Mastercard",
-    "issuer": "U.S. Bank",
+    "cardId": "barclays-jetblue-card",
+    "officialName": "JetBlue Card",
+    "issuer": "Barclays",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "barclays-jetblue-plus-card",
+    "officialName": "JetBlue Plus Card",
+    "issuer": "Barclays",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "barclays-jetblue-premier-card",
+    "officialName": "JetBlue Premier Card",
+    "issuer": "Barclays",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "barclays-jetblue-business-card",
+    "officialName": "JetBlue Business Card",
+    "issuer": "Barclays",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "synchrony-paypal-cashback-mastercard",
+    "officialName": "PayPal Cashback Mastercard",
+    "issuer": "Synchrony",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
   },
@@ -1078,6 +91,13 @@
     "detail": "add cardId -> network in card-networks.json"
   },
   {
+    "cardId": "synchrony-sam-s-club-mastercard",
+    "officialName": "Sam's Club Mastercard",
+    "issuer": "Synchrony",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
     "cardId": "td-bank-usa-target-circle-credit-card-target",
     "officialName": "Target Circle Credit Card / Target Mastercard",
     "issuer": "TD Bank USA, N.A.",
@@ -1085,9 +105,58 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "citi-aadvantage-business-world-elite",
-    "officialName": "Citi / AAdvantage Business World Elite Mastercard",
-    "issuer": "Citi",
+    "cardId": "chase-world-of-hyatt-business-credit-card",
+    "officialName": "World of Hyatt Credit Card",
+    "issuer": "JPMorgan Chase",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "chase-southwest-rapid-rewards-plus",
+    "officialName": "Southwest Rapid Rewards Plus Credit Card",
+    "issuer": "JPMorgan Chase",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "chase-united-explorer-card",
+    "officialName": "United Explorer Card",
+    "issuer": "JPMorgan Chase",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "chase-united-quest-card",
+    "officialName": "United Quest Card",
+    "issuer": "JPMorgan Chase",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "chase-united-gateway-card",
+    "officialName": "United Gateway Card",
+    "issuer": "JPMorgan Chase",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "chase-united-club-business-card",
+    "officialName": "United Club Card",
+    "issuer": "JPMorgan Chase",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "chase-united-club-business-card",
+    "officialName": "United Business Card",
+    "issuer": "JPMorgan Chase",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "chase-ihg-one-rewards-premier-business",
+    "officialName": "IHG One Rewards Traveler Credit Card",
+    "issuer": "JPMorgan Chase",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
   },
@@ -1095,8 +164,8 @@
     "cardId": "chase-instacart-mastercard",
     "officialName": "Instacart Mastercard",
     "issuer": "JPMorgan Chase",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
+    "reason": "unclassifiedCategory",
+    "detail": "cc-offers category: GROCERY_REWARDS — no routing rule; needs issuer research"
   },
   {
     "cardId": "synchrony-venmo-visa-signature-credit-card",
@@ -1109,22 +178,50 @@
     "cardId": "chase-prime-visa-and-amazon-visa",
     "officialName": "Prime Visa and Amazon Visa",
     "issuer": "JPMorgan Chase",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
-    "cardId": "synchrony-amazon-secured-card-and-prime",
-    "officialName": "Amazon Secured Card and Prime Secured Card",
+    "cardId": "synchrony-amazon-prime-store-card",
+    "officialName": "Amazon Store Card and Prime Store Card",
     "issuer": "Synchrony",
     "reason": "unknown-network",
     "detail": "add cardId -> network in card-networks.json"
   },
   {
-    "cardId": "discover-nhl-discover-it-credit-card",
-    "officialName": "NHL Discover it Credit Card",
-    "issuer": "Discover Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
+    "cardId": "chase-marriott-bonvoy-bold-credit-card",
+    "officialName": "Marriott Bonvoy Boundless Credit Card",
+    "issuer": "JPMorgan Chase",
+    "reason": "unknown-network",
+    "detail": "add cardId -> network in card-networks.json"
+  },
+  {
+    "cardId": "american-express-marriott-bonvoy-bevy",
+    "officialName": "Marriott Bonvoy Bevy American Express Card",
+    "issuer": "American Express",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
+    "cardId": "american-express-hilton-honors",
+    "officialName": "Hilton Honors American Express Aspire Card",
+    "issuer": "American Express",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
+    "cardId": "wells-fargo-active-cash-business",
+    "officialName": "Wells Fargo Active Cash Visa Card",
+    "issuer": "Wells Fargo Bank, N.A.",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
+    "cardId": "wells-fargo-autograph-journey",
+    "officialName": "Wells Fargo Autograph Journey Visa Signature Card",
+    "issuer": "Wells Fargo Bank, N.A.",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "wells-fargo-autograph-visa-card",
@@ -1132,6 +229,41 @@
     "issuer": "Wells Fargo Bank, N.A.",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "wells-fargo-reflect",
+    "officialName": "Wells Fargo Reflect Visa Card",
+    "issuer": "Wells Fargo Bank, N.A.",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
+    "cardId": "wells-fargo-attune-world-elite-mastercard",
+    "officialName": "Wells Fargo Attune World Elite Mastercard",
+    "issuer": "Wells Fargo Bank, N.A.",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "wells-fargo-one-key-card",
+    "officialName": "One Key Mastercard",
+    "issuer": "Wells Fargo Bank, N.A.",
+    "reason": "unclassifiedCategory",
+    "detail": "cc-offers category: TRAVEL_MARKETPLACE_REWARDS — no routing rule; needs issuer research"
+  },
+  {
+    "cardId": "wells-fargo-choice-privileges-mastercard",
+    "officialName": "Choice Privileges Mastercard",
+    "issuer": "Wells Fargo Bank, N.A.",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
+    "cardId": "wells-fargo-active-cash-business",
+    "officialName": "Wells Fargo Signify Business Cash Mastercard",
+    "issuer": "Wells Fargo Bank, N.A.",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "first-electronic-bank-alibaba-com-business",
@@ -1172,33 +304,26 @@
     "cardId": "bank-of-america-bankamericard-credit-card",
     "officialName": "BankAmericard\u00ae Credit Card",
     "issuer": "Bank of America, N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "bank-of-america-bankamericard-credit-card-2",
     "officialName": "BankAmericard\u00ae Credit Card for Students",
     "issuer": "Bank of America, N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "bank-of-america-bankamericard-secured",
     "officialName": "BankAmericard\u00ae Secured Credit Card",
     "issuer": "Bank of America, N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
-    "cardId": "bank-of-america-susan-g-komen-customized-cash",
-    "officialName": "Susan G. Komen\u00ae Customized Cash Rewards Credit Card",
-    "issuer": "Bank of America",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
-  },
-  {
-    "cardId": "bank-of-america-allways-rewards-visa-card",
-    "officialName": "Allways Rewards Visa\u00ae Card",
+    "cardId": "bank-of-america-royal-one-plus-visa-signature",
+    "officialName": "Royal ONE\u2122 Visa Signature\u00ae Credit Card",
     "issuer": "Bank of America",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
@@ -1218,6 +343,20 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
+    "cardId": "barclays-emirates-skywards-premium-world",
+    "officialName": "Emirates Skywards Premium World Elite Mastercard\u00ae",
+    "issuer": "Barclays Bank Delaware",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
+    "cardId": "barclays-aarp-essential-rewards-mastercard",
+    "officialName": "AARP\u00ae Essential Rewards Mastercard\u00ae from Barclays",
+    "issuer": "Barclays Bank Delaware",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
     "cardId": "barclays-miles-more-world-elite-mastercard",
     "officialName": "Miles & More\u00ae World Elite Mastercard\u00ae",
     "issuer": "Barclays Bank Delaware",
@@ -1227,6 +366,20 @@
   {
     "cardId": "barclays-gap-encore-mastercard",
     "officialName": "Gap Encore Mastercard\u00ae",
+    "issuer": "Barclays Bank Delaware",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "barclays-carnival-world-mastercard",
+    "officialName": "Carnival\u00ae World Mastercard\u00ae",
+    "issuer": "Barclays Bank Delaware",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "barclays-banana-republic-rewards-mastercard",
+    "officialName": "Banana Republic Encore Mastercard\u00ae",
     "issuer": "Barclays Bank Delaware",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
@@ -1249,8 +402,8 @@
     "cardId": "barclays-xbox-mastercard",
     "officialName": "Xbox Mastercard",
     "issuer": "Barclays Bank Delaware",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
+    "reason": "unclassifiedCategory",
+    "detail": "cc-offers category: GAMING_REWARDS — no routing rule; needs issuer research"
   },
   {
     "cardId": "barclays-rci-elite-rewards-world-mastercard",
@@ -1258,6 +411,13 @@
     "issuer": "Barclays Bank Delaware",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "barclays-wyndham-earner-business",
+    "officialName": "Wyndham Rewards Earner\u00ae Business Card",
+    "issuer": "Barclays Bank Delaware",
+    "reason": "unknown-network",
+    "detail": "add cardId -> network in card-networks.json"
   },
   {
     "cardId": "barclays-old-navy-encore-mastercard",
@@ -1302,22 +462,15 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "comenity-bread-rewards-american-express",
-    "officialName": "Bread Rewards\u2122 American Express\u00ae Credit Card",
-    "issuer": "Comenity Bank",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
     "cardId": "capital-one-platinum-from-capital-one",
     "officialName": "Platinum from Capital One",
     "issuer": "Capital One, N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
-    "cardId": "capital-one-ventureone-rewards-for-good",
-    "officialName": "VentureOne Rewards for Good Credit",
+    "cardId": "capital-one-quicksilver-cash-rewards",
+    "officialName": "Quicksilver Cash Rewards Credit Card",
     "issuer": "Capital One, N.A.",
     "reason": "unknown-network",
     "detail": "add cardId -> network in card-networks.json"
@@ -1326,29 +479,43 @@
     "cardId": "capital-one-savorone-rewards-from-capital-one",
     "officialName": "SavorOne Rewards from Capital One",
     "issuer": "Capital One, N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "capital-one-savor-rewards-for-students",
     "officialName": "Savor Rewards for Students",
     "issuer": "Capital One, N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "capital-one-platinum-secured-credit-card",
     "officialName": "Platinum Secured Credit Card from Capital One",
     "issuer": "Capital One, N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "capital-one-t-mobile-visa",
     "officialName": "T-Mobile Visa\u00ae",
     "issuer": "Capital One, N.A.",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
+    "reason": "unclassifiedCategory",
+    "detail": "cc-offers category: TELECOM_REWARDS — no routing rule; needs issuer research"
+  },
+  {
+    "cardId": "capital-one-spark-cash-plus",
+    "officialName": "Spark 2% Cash Plus Card",
+    "issuer": "Capital One, N.A.",
+    "reason": "unknown-network",
+    "detail": "add cardId -> network in card-networks.json"
+  },
+  {
+    "cardId": "capital-one-spark-cash-select-for-excellent",
+    "officialName": "Spark 1.5% Cash Select Credit Card",
+    "issuer": "Capital One, N.A.",
+    "reason": "unknown-network",
+    "detail": "add cardId -> network in card-networks.json"
   },
   {
     "cardId": "capital-one-spark-1-classic-credit-card",
@@ -1365,67 +532,123 @@
     "detail": "add cardId -> network in card-networks.json"
   },
   {
+    "cardId": "citi-double-cash-card",
+    "officialName": "Citi Double Cash\u00ae Card",
+    "issuer": "Citibank, N.A.",
+    "reason": "collides-with-published",
+    "detail": "cardId already published; needs a human"
+  },
+  {
     "cardId": "citi-diamond-preferred-credit-card",
     "officialName": "Citi\u00ae Diamond Preferred\u00ae Credit Card",
     "issuer": "Citibank, N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "citi-simplicity-credit-card",
     "officialName": "Citi Simplicity\u00ae Credit Card",
     "issuer": "Citibank, N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "citi-at-t-points-plus-card-from-citi",
     "officialName": "AT&T Points Plus\u00ae Card from Citi",
     "issuer": "Citibank, N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
   },
   {
     "cardId": "fnbo-evergreen-credit-card",
     "officialName": "Evergreen\u00ae Credit Card",
     "issuer": "FNBO",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "fnbo-getaway-credit-card",
     "officialName": "Getaway\u2120 Credit Card",
     "issuer": "FNBO",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "fnbo-greenselect-credit-card",
     "officialName": "GreenSelect\u2120 Credit Card",
     "issuer": "FNBO",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "fnbo-evergreen-business-edition-credit-card",
     "officialName": "Evergreen\u00ae Business Edition\u00ae Credit Card",
     "issuer": "FNBO",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "chase-sapphire-reserve",
+    "officialName": "Chase Sapphire Reserve\u00ae Credit Card",
+    "issuer": "JPMorgan Chase Bank, N.A.",
+    "reason": "collides-with-published",
+    "detail": "cardId already published; needs a human"
+  },
+  {
+    "cardId": "chase-sapphire-preferred-card",
+    "officialName": "Chase Sapphire Preferred\u00ae Credit Card",
+    "issuer": "JPMorgan Chase Bank, N.A.",
+    "reason": "collides-with-published",
+    "detail": "cardId already published; needs a human"
+  },
+  {
+    "cardId": "chase-freedom-unlimited",
+    "officialName": "Chase Freedom Unlimited\u00ae Credit Card",
+    "issuer": "JPMorgan Chase Bank, N.A.",
+    "reason": "collides-with-published",
+    "detail": "cardId already published; needs a human"
+  },
+  {
+    "cardId": "chase-freedom-flex",
+    "officialName": "Chase Freedom Flex\u00ae Credit Card",
+    "issuer": "JPMorgan Chase Bank, N.A.",
+    "reason": "collides-with-published",
+    "detail": "cardId already published; needs a human"
+  },
+  {
+    "cardId": "chase-freedom-rise-credit-card",
+    "officialName": "Chase Freedom Rise\u00ae Credit Card",
+    "issuer": "JPMorgan Chase Bank, N.A.",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "chase-slate-credit-card",
     "officialName": "Slate\u00ae Credit Card",
     "issuer": "JPMorgan Chase Bank, N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "chase-slate-edge-credit-card",
     "officialName": "Slate Edge\u00ae Credit Card",
     "issuer": "JPMorgan Chase Bank, N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
+    "cardId": "chase-ink-business-cash-credit-card",
+    "officialName": "Ink Business Unlimited\u00ae Credit Card",
+    "issuer": "JPMorgan Chase Bank, N.A.",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
+    "cardId": "chase-sapphire-reserve-for-business",
+    "officialName": "Sapphire Reserve for Business\u2120 Credit Card",
+    "issuer": "JPMorgan Chase Bank, N.A.",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "u-s-bank-shield-visa-card",
@@ -1442,8 +665,8 @@
     "detail": "add cardId -> program in card-programs.json"
   },
   {
-    "cardId": "u-s-bank-cash-secured-visa-card",
-    "officialName": "U.S. Bank Cash+\u00ae Secured Visa\u00ae Card",
+    "cardId": "u-s-bank-altitude-go-visa-signature-card",
+    "officialName": "U.S. Bank Altitude\u00ae Go Secured Visa\u00ae Card",
     "issuer": "U.S. Bank National Association",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
@@ -1451,20 +674,6 @@
   {
     "cardId": "u-s-bank-secured-visa-card",
     "officialName": "U.S. Bank Secured Visa\u00ae Card",
-    "issuer": "U.S. Bank National Association",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "u-s-bank-business-shield-visa-card",
-    "officialName": "U.S. Bank Business Shield\u2122 Visa\u00ae Card",
-    "issuer": "U.S. Bank National Association",
-    "reason": "unknown-program",
-    "detail": "add cardId -> program in card-programs.json"
-  },
-  {
-    "cardId": "u-s-bank-business-altitude-power-visa",
-    "officialName": "U.S. Bank Business Altitude\u00ae Power Visa Signature\u00ae Card",
     "issuer": "U.S. Bank National Association",
     "reason": "unknown-program",
     "detail": "add cardId -> program in card-programs.json"
@@ -1561,6 +770,13 @@
     "detail": "add cardId -> network in card-networks.json"
   },
   {
+    "cardId": "synchrony-carecredit-rewards-mastercard",
+    "officialName": "CareCredit Rewards Mastercard\u00ae",
+    "issuer": "Synchrony Bank",
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
     "cardId": "alliant-credit-union-alliant-visa-platinum",
     "officialName": "Alliant Visa\u00ae Platinum Credit Card",
     "issuer": "Alliant Credit Union",
@@ -1571,43 +787,43 @@
     "cardId": "bmo-bank-n-a-bmo-cash-back-credit-card",
     "officialName": "BMO Cash Back Credit Card",
     "issuer": "BMO Bank N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   },
   {
     "cardId": "bmo-bank-n-a-bmo-platinum-credit-card",
     "officialName": "BMO Platinum Credit Card",
     "issuer": "BMO Bank N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
   },
   {
     "cardId": "bmo-bank-n-a-bmo-platinum-rewards-credit-card",
     "officialName": "BMO Platinum Rewards Credit Card",
     "issuer": "BMO Bank N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
   },
   {
     "cardId": "bmo-bank-n-a-bmo-premium-rewards-credit-card",
     "officialName": "BMO Premium Rewards Credit Card",
     "issuer": "BMO Bank N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
   },
   {
     "cardId": "bmo-bank-n-a-bmo-escape-credit-card",
     "officialName": "BMO Escape Credit Card",
     "issuer": "BMO Bank N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
   },
   {
     "cardId": "bmo-bank-n-a-bmo-boost-secured-credit-card",
     "officialName": "BMO Boost Secured Credit Card",
     "issuer": "BMO Bank N.A.",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
   },
   {
     "cardId": "comenity-aaa-daily-advantage-visa-signature",
@@ -1641,7 +857,42 @@
     "cardId": "webbank-gemini-credit-card",
     "officialName": "Gemini Credit Card",
     "issuer": "WebBank",
-    "reason": "unknown-network",
-    "detail": "add cardId -> network in card-networks.json"
+    "reason": "unknown-program",
+    "detail": "add cardId -> program in card-programs.json"
+  },
+  {
+    "cardId": "barclays-frontier-airlines-world-mastercard",
+    "officialName": "Frontier Airlines World Mastercard\u00ae",
+    "issuer": "Barclays Bank Delaware",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
+    "cardId": "american-express-delta-skymiles-gold-business",
+    "officialName": "Delta SkyMiles\u00ae Gold Business American Express Card",
+    "issuer": "American Express",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
+    "cardId": "american-express-delta-skymiles-platinum",
+    "officialName": "Delta SkyMiles\u00ae Platinum American Express Card",
+    "issuer": "American Express",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
+    "cardId": "bank-of-america-alaska-airlines-atmos-ascent",
+    "officialName": "Alaska Airlines Atmos\u2122 Ascent Visa Signature\u00ae Card",
+    "issuer": "Bank of America",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
+  },
+  {
+    "cardId": "bank-of-america-atmos-rewards-visa-signature",
+    "officialName": "Atmos\u2122 Rewards Visa Signature\u00ae Business Credit Card",
+    "issuer": "Bank of America",
+    "reason": "already-draft",
+    "detail": "already present as a draft"
   }
 ]

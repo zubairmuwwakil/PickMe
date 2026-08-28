@@ -178,20 +178,6 @@
       ],
       "proposedProgramId": "ihgOneRewards"
     },
-    "costcoCashRewards": {
-      "currency": "Costco Cash Rewards",
-      "cards": 2,
-      "landableIfAdded": 1,
-      "examples": [
-        "Costco Anywhere Business",
-        "CIBC Costco Mastercard"
-      ],
-      "cardIds": [
-        "citi-costco-anywhere-business",
-        "cibc-costco-mastercard"
-      ],
-      "proposedProgramId": "costcoCashRewards"
-    },
     "hiltonHonors": {
       "currency": "Hilton Honors",
       "cards": 1,
@@ -278,52 +264,6 @@
     }
   },
   "deferredNotOneCurrency": {
-    "Store-specific rewards": {
-      "currency": "Store-specific rewards",
-      "cards": 12,
-      "landableIfAdded": 10,
-      "examples": [
-        "Athleta Encore Mastercard\u00ae",
-        "Athleta Rewards Mastercard\u00ae",
-        "Banana Republic Rewards Mastercard\u00ae"
-      ],
-      "cardIds": [
-        "barclays-athleta-encore-mastercard",
-        "barclays-athleta-rewards-mastercard",
-        "barclays-banana-republic-rewards-mastercard",
-        "barclays-gap-encore-mastercard",
-        "barclays-gap-good-rewards-mastercard",
-        "capital-one-bj-s-one-mastercard",
-        "capital-one-kohl-s-charge-card",
-        "synchrony-mywalgreens-mastercard",
-        "synchrony-sam-s-club-mastercard",
-        "synchrony-sears-mastercard",
-        "td-bank-usa-nordstrom-credit-card",
-        "td-bank-usa-target-circle-credit-card-target"
-      ]
-    },
-    "Brand-specific rewards": {
-      "currency": "Brand-specific rewards",
-      "cards": 10,
-      "landableIfAdded": 5,
-      "examples": [
-        "Amex Morgan Stanley Blue",
-        "AARP\u00ae Essential Rewards Mastercard\u00ae from Barclays",
-        "Harley-Davidson Credit Card"
-      ],
-      "cardIds": [
-        "american-express-morgan-stanley-blue",
-        "barclays-aarp-essential-rewards-mastercard",
-        "barclays-harley-davidson-credit-card",
-        "discover-nhl-discover-it-credit-card",
-        "robinhood-gold-card",
-        "robinhood-platinum-card",
-        "sofi-credit-card-unlimited-2",
-        "synchrony-carecredit-credit-card",
-        "synchrony-carecredit-rewards-mastercard",
-        "synchrony-verizon-visa-card"
-      ]
-    },
     "Amazon Rewards (US) \u2014 distinct from the CA amazonRewards entry": {
       "currency": "Amazon Rewards (US) \u2014 distinct from the CA amazonRewards entry",
       "cards": 5,
