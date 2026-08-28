@@ -2,11 +2,11 @@ package com.cardcopilot.engine
 
 import com.cardcopilot.engine.engine.RuleMatcher
 import com.cardcopilot.engine.models.CardState
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 /**
  * Kotlin twin of `OwnerConditionRegistryTests`. Both engines must agree exactly, or the shared
