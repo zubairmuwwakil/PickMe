@@ -1,6 +1,32 @@
 import Foundation
 
-public enum Network: String, Codable, Sendable { case amex, visa, mastercard, discover }
+/// The payment network a card runs on. `privateLabel` means it runs on NONE — a store card
+/// accepted only by its own merchant. It is never a member of a purchase's `acceptedNetworks`
+/// (see `PurchaseContext`'s default), so a `privateLabel` card that forgot to declare
+/// `acceptance` fails closed: excluded everywhere rather than recommended everywhere. The
+/// schema's if/then invariant makes that unreachable; this makes it harmless if it ever were.
+public enum Network: String, Codable, Sendable {
+    case amex, visa, mastercard, discover, privateLabel
+}
+
+/// How a card is accepted. Absent on a `CardProduct` means `openLoop` — which is every card in
+/// the catalogue as of card-contracts@2.4, so no existing record changes a byte. The case exists
+/// in code as that coalescing default; the schema deliberately refuses to let data spell it out,
+/// because an `openLoop` record would have to carry a `merchants` list `Scorer` never reads.
+public enum AcceptanceScope: String, Codable, Sendable { case openLoop, closedLoop }
+
+/// A closed-loop card's acceptance list, in the same lowercase kebab-case merchant tokens
+/// `RuleMatcher` matches `merchantInclude` against — and pinned by the same integrity test, since
+/// a token that cannot match is a card that can never be picked.
+public struct Acceptance: Codable, Equatable, Sendable {
+    public var scope: AcceptanceScope
+    public var merchants: [String]
+
+    public init(scope: AcceptanceScope, merchants: [String]) {
+        self.scope = scope
+        self.merchants = merchants
+    }
+}
 public enum CardKind: String, Codable, Sendable { case credit, charge, prepaid }
 public enum RuleStatus: String, Codable, Sendable { case current, announced }
 public enum SourceType: String, Codable, Sendable { case issuerConfirmed, ownerObserved, inferred }
@@ -261,6 +287,10 @@ public struct CardProduct: Codable, Equatable, Identifiable, Sendable {
     /// own field rather than derived from `market`.
     public var billingCurrency: Currency
     public var network: Network
+    /// Absent for every open-loop card, which is all of them today — so this decodes a pre-2.5
+    /// catalogue unchanged, exactly as `credits` and `lifecycleStatus` do. `Scorer` switches on
+    /// it: `openLoop` guards on `network`, `closedLoop` guards on `purchase.merchantBrand`.
+    public var acceptance: Acceptance?
     public var kind: CardKind
     /// Absent decodes as `.published` — see `CardStatus`.
     public var status: CardStatus?
@@ -302,7 +332,8 @@ public struct CardProduct: Codable, Equatable, Identifiable, Sendable {
     public var isPublished: Bool { (status ?? .published) == .published }
 
     public init(cardId: String, officialName: String, issuer: String, market: Market = .ca,
-                billingCurrency: Currency = .cad, network: Network, kind: CardKind,
+                billingCurrency: Currency = .cad, network: Network,
+                acceptance: Acceptance? = nil, kind: CardKind,
                 status: CardStatus? = nil, eligibility: Eligibility? = nil, fee: Fee,
                 program: Program, fxRules: [FxRule], earnRules: [EarnRule], caps: [Cap],
                 perTransactionRewardVisibility: String, lastVerifiedAt: String,
@@ -314,6 +345,7 @@ public struct CardProduct: Codable, Equatable, Identifiable, Sendable {
         self.market = market
         self.billingCurrency = billingCurrency
         self.network = network
+        self.acceptance = acceptance
         self.kind = kind
         self.status = status
         self.eligibility = eligibility

@@ -67,6 +67,11 @@ public struct RecommendationExplainer {
         case .capNearlyExhausted: return "Category cap nearly used up — the winner may flip soon."
         case .negativeNetValue: return "This card would LOSE money here after fees."
         case .networkNotAccepted: return "Card network not accepted at this merchant."
+        // Excluded-only, like .productWithdrawn and .draftProduct below: a card the
+        // merchant does not accept is never the winner, so this never travels with a
+        // Recommendation. Worded as a fact about where the card works rather than an
+        // instruction, because the only action available is the pick already named.
+        case .merchantNotAccepted: return "This is a store card and only works at its own merchant."
         case .unresolvedOwnerState: return "Card skipped — account state not set up yet."
         case .fxAllowanceAssumed: return "Assumed within this card's monthly FX-free allowance."
         case .hypotheticalSelection: return "Assumes this is one of your selected 2% categories — check your selections."

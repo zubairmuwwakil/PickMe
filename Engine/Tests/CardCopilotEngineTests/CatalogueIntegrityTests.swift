@@ -200,9 +200,15 @@ final class CatalogueIntegrityTests: XCTestCase {
                 let tokens = (rule.predicate.merchantInclude ?? []) + (rule.predicate.merchantExclude ?? [])
                 offenders += tokens.filter { !isValidToken($0) }.map { "\(card.cardId)/\(rule.ruleId): \($0)" }
             }
+            // Acceptance merchants have the identical failure mode one level up: a token
+            // `merchantBrand` can never equal is not a rule that quietly drops out of scoring,
+            // it is a closed-loop card that can never be picked anywhere.
+            offenders += (card.acceptance?.merchants ?? [])
+                .filter { !isValidToken($0) }
+                .map { "\(card.cardId)/acceptance: \($0)" }
         }
         XCTAssertEqual(offenders, [],
-            "merchantInclude/merchantExclude token(s) not lowercase kebab-case, so RuleMatcher's "
+            "merchantInclude/merchantExclude/acceptance token(s) not lowercase kebab-case, so the "
           + "exact-match predicate can never be satisfied by an app-produced brand (all lowercase "
           + "kebab-case: \"costco\", \"canadian-tire\").")
     }

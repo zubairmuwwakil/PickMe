@@ -2,6 +2,12 @@ import Foundation
 
 public enum Warning: String, Codable, Equatable, Sendable {
     case drawerCard, unresolvedOwnerState, networkNotAccepted,
+         /// A closed-loop card at a merchant it is not accepted by — or at a purchase whose
+         /// merchant could not be resolved at all. Its own case rather than reusing
+         /// `networkNotAccepted`: "this card only works at Kohl's" and "Visa isn't accepted
+         /// here" are different facts, and warnings are frozen into the append-only prediction
+         /// log, so a borrowed one is a wrong record that can never be corrected.
+         merchantNotAccepted,
          capNearlyExhausted, negativeNetValue, fxAllowanceAssumed, hypotheticalSelection,
          /// This card's rewards program has no valuation. The card cannot be scored at all —
          /// distinct from being scored and losing.
@@ -81,8 +87,28 @@ public enum Scorer {
             return excludedScore(.draftProduct, "draft catalogue record, not yet issuer-verified")
         }
 
-        guard purchase.acceptedNetworks.contains(card.network) else {
-            return excludedScore(.networkNotAccepted, "\(card.network.rawValue) not accepted")
+        // Two acceptance mechanisms, not one. An open-loop card is accepted because the merchant
+        // takes its network; a closed-loop card is accepted because the merchant IS its issuer's
+        // store. Forcing the second through a network check is what made private-label cards
+        // unrepresentable without guessing `network`, which rule 3 forbids — and the guess is not
+        // harmless: a Kohl's card recorded as `visa` is recommended at a gas station and declined
+        // at the till.
+        //
+        // Absent `acceptance` coalesces to `.openLoop`, so every pre-2.5 card takes the identical
+        // path it always did.
+        switch card.acceptance?.scope ?? .openLoop {
+        case .openLoop:
+            guard purchase.acceptedNetworks.contains(card.network) else {
+                return excludedScore(.networkNotAccepted, "\(card.network.rawValue) not accepted")
+            }
+        case .closedLoop:
+            // Unresolved `merchantBrand` excludes rather than admits. These cards are only ever as
+            // good as brand resolution, and silence beats recommending a card that gets declined.
+            let merchants = card.acceptance?.merchants ?? []
+            guard let brand = purchase.merchantBrand, merchants.contains(brand) else {
+                return excludedScore(.merchantNotAccepted,
+                                     "accepted only at \(merchants.joined(separator: ", "))")
+            }
         }
 
         let rule: EarnRule
