@@ -47,6 +47,9 @@
           "$ref": "#/$defs/ctMoney"
         },
         {
+          "$ref": "#/$defs/merchantCredit"
+        },
+        {
           "$ref": "#/$defs/cro"
         },
         {
@@ -155,6 +158,53 @@
         "usabilityFactorApplied": {
           "type": "boolean",
           "description": "Whether to apply optionalUsabilityFactor. False values the scrip at face — a deliberate owner choice, not a default."
+        },
+        "basis": {
+          "$ref": "#/$defs/basis"
+        }
+      }
+    },
+    "merchantCredit": {
+      "type": "object",
+      "required": [
+        "model",
+        "cadPerUnit",
+        "optionalUsabilityFactor",
+        "usabilityFactorApplied",
+        "merchantScope",
+        "basis"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "properties": {
+        "model": {
+          "const": "merchantCredit"
+        },
+        "cadPerUnit": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Face value of one unit, in the card's billing currency. An ISSUER FACT — the published conversion the programme states, never a forecast. A brand that publishes no conversion has no honest value here and its cards stay in the research queue."
+        },
+        "optionalUsabilityFactor": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "description": "PER BRAND, and load-bearing. A dollar locked to one merchant is not a dollar, and how much less depends entirely on which merchant: a Sam's Club dollar (weekly groceries) is not a Harley-Davidson dollar (a motorcycle every few years). One shared factor across brands would value one brand's credit as another's — the collapse the 2026-08-27 Option 1 ruling refused."
+        },
+        "usabilityFactorApplied": {
+          "type": "boolean",
+          "description": "Whether Scorer applies the factor. False values the credit at face."
+        },
+        "merchantScope": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          "description": "Where the credit spends, in the same lowercase kebab-case tokens RuleMatcher matches merchantInclude on. Disclosure, not dispatch — Scorer never reads it."
         },
         "basis": {
           "$ref": "#/$defs/basis"
