@@ -113,19 +113,43 @@ licence for Section 1 to be cheap.
 
 ## Section 2 — `merchantCredit`, one programId per brand
 
-### Generalize, do not duplicate
+### Add alongside, do not fold
 
-`ctMoney`'s arithmetic is merchant-locked credit:
+**Amended 2026-08-27 after reading the encode side and the Kotlin serializer.**
+The original design folded `ctMoney` into `merchantCredit` as a legacy spelling,
+on the claim that the engine would get smaller. The three implementations do not
+support that claim:
 
-    case .ctMoney(let v):
-        return units * v.cadPerUnit * (v.usabilityFactorApplied ? v.optionalUsabilityFactor : 1)
+- **Swift** hand-writes its coder, so decoding two spellings into one case is
+  trivial — but `ProgramValuation.swift:59` also *encodes*, and a merged case
+  must pick one spelling on the way out. `testCtMoneyRoundTrips` and
+  `testModernShapeRoundTripsLosslessly` pin this. Staying lossless would require
+  the merged payload to carry which spelling it arrived as: a provenance field
+  existing purely to preserve bytes.
+- **Kotlin** is a `@Serializable sealed class` with `classDiscriminator = "model"`
+  and one `@SerialName` per subclass. kotlinx.serialization maps exactly one name
+  to one class; two spellings need a hand-written
+  `JsonContentPolymorphicSerializer`, in the language with the fewest tests (46).
+- **TypeScript** is a union plus a hand-written normalizer, and would be fine
+  either way.
 
-`merchantCredit` becomes the model; **`ctMoney` decodes into it as a legacy
-spelling**. One engine case, two JSON keys. The engine gets smaller, not larger.
+So folding trades one enum case for a provenance field plus a custom Kotlin
+serializer, and puts the published 2.4 bytes at risk. **`merchantCredit` is
+therefore a NEW model declared alongside `ctMoney`, which is left entirely
+alone.** The cost is one duplicated line of arithmetic in each of the three
+`Scorer`s:
 
-`contracts/programs.json` bytes for the existing `ctMoney` entry are
-**untouched** — 2.4 is published, and rule 6 forbids a published release id
-describing two byte-sets.
+    units * cadPerUnit * (usabilityFactorApplied ? optionalUsabilityFactor : 1)
+
+Deduplicating behaviour is nearly always right; deduplicating a **wire format**
+is not the same operation. `ctMoney` and `merchantCredit` are the same
+arithmetic under different published names, and a name already shipped inside a
+digest-pinned release is a fact about the world, not an implementation detail to
+normalize away. The repo already knows this — `CroValuation.redemptionModel`
+carries its name for exactly this reason.
+
+No existing test is reworked, and `contracts/programs.json`'s `ctMoney` entry
+keeps its bytes.
 
 ### Shape
 
