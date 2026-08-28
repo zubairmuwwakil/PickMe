@@ -4511,6 +4511,556 @@
         }
       }
     },
+    "%@ · %@ %lld/yr" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · %@ %lld/année"
+          }
+        }
+      }
+    },
+    "%@ · No annual fee" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · Sans frais annuels"
+          }
+        }
+      }
+    },
+    "%lld ASK" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld À RÉPONDRE"
+          }
+        }
+      }
+    },
+    "%lld unanswered question" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld question sans réponse"
+          }
+        }
+      }
+    },
+    "Add a card" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter une carte"
+          }
+        }
+      }
+    },
+    "Add your cards" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutez vos cartes"
+          }
+        }
+      }
+    },
+    "Adds this card to your wallet" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoute cette carte à votre portefeuille"
+          }
+        }
+      }
+    },
+    "Already in your wallet" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déjà dans votre portefeuille"
+          }
+        }
+      }
+    },
+    "Answer 1 question about %@" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répondez à 1 question sur %@"
+          }
+        }
+      }
+    },
+    "Canada" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Canada"
+          }
+        }
+      }
+    },
+    "Choose a default card" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez une carte par défaut"
+          }
+        }
+      }
+    },
+    "DEFAULT" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PAR DÉFAUT"
+          }
+        }
+      }
+    },
+    "Finish setting up · %lld of %lld" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminez la configuration · %1$lld sur %2$lld"
+          }
+        }
+      }
+    },
+    "I'm not sure" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je ne suis pas certain"
+          }
+        }
+      }
+    },
+    "Market" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marché"
+          }
+        }
+      }
+    },
+    "No cards found for \"%@\"" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune carte ne correspond à « %@ »"
+          }
+        }
+      }
+    },
+    "No cards yet" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune carte pour le moment"
+          }
+        }
+      }
+    },
+    "Not added" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non ajoutée"
+          }
+        }
+      }
+    },
+    "Opens the item that needs an answer" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvre l’élément nécessitant une réponse"
+          }
+        }
+      }
+    },
+    "PickMe only recommends cards you add here." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PickMe ne recommande que les cartes que vous ajoutez ici."
+          }
+        }
+      }
+    },
+    "PickMe only recommends cards you add." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PickMe ne recommande que les cartes que vous ajoutez."
+          }
+        }
+      }
+    },
+    "Preferences" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préférences"
+          }
+        }
+      }
+    },
+    "Remove from wallet" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer du portefeuille"
+          }
+        }
+      }
+    },
+    "Removed %@" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ retirée"
+          }
+        }
+      }
+    },
+    "Request sent. Thank you." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demande envoyée. Merci."
+          }
+        }
+      }
+    },
+    "Saved on this iPhone. Sign in from Settings to send it." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrée sur cet iPhone. Connectez-vous dans Réglages pour l’envoyer."
+          }
+        }
+      }
+    },
+    "Search cards" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher des cartes"
+          }
+        }
+      }
+    },
+    "Showing cards from" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les cartes de"
+          }
+        }
+      }
+    },
+    "Start using PickMe" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencer à utiliser PickMe"
+          }
+        }
+      }
+    },
+    "United States" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "États-Unis"
+          }
+        }
+      }
+    },
+    "Used when no card is clearly better." : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisée lorsqu’aucune carte n’est clairement meilleure."
+          }
+        }
+      }
+    },
+    "Your cards" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos cartes"
+          }
+        }
+      }
+    },
+    "ownerCondition.amazonEligiblePrimeLinked.detail" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amazon.ca et Whole Foods rapportent 2,5x tant que Prime est associé, et 1,5x sinon."
+          }
+        }
+      }
+    },
+    "ownerCondition.amazonEligiblePrimeLinked.prompt" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un abonnement Amazon Prime actif est-il associé à cette carte?"
+          }
+        }
+      }
+    },
+    "ownerCondition.cryptoLevelUpProActive.detail" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La récompense CRO de 3 % s’applique seulement lorsque Level Up Pro est actif."
+          }
+        }
+      }
+    },
+    "ownerCondition.cryptoLevelUpProActive.prompt" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre forfait Level Up Pro est-il actif?"
+          }
+        }
+      }
+    },
+    "ownerCondition.rogersEligibleServiceLinked.detail" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La récompense supérieure de 2 % exige un service admissible sur le même compte."
+          }
+        }
+      }
+    },
+    "ownerCondition.rogersEligibleServiceLinked.prompt" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un service admissible de Rogers, Fido, Shaw, Comwave ou Sportsnet+ est-il associé à votre compte?"
+          }
+        }
+      }
+    },
+    "ownerCondition.tangerineCategorySelected.detail" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tangerine verse 2 % sur les catégories sélectionnées dans votre compte. Laissez-les toutes non sélectionnées si vous n’êtes pas certain."
+          }
+        }
+      }
+    },
+    "Both" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les deux"
+          }
+        }
+      }
+    },
+    "Drug Store" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pharmacie"
+          }
+        }
+      }
+    },
+    "E-Games" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeux en ligne"
+          }
+        }
+      }
+    },
+    "Entertainment" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Divertissement"
+          }
+        }
+      }
+    },
+    "Fitness and Sports Clubs" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conditionnement physique et clubs sportifs"
+          }
+        }
+      }
+    },
+    "Foreign Currency Spend" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dépenses en devise étrangère"
+          }
+        }
+      }
+    },
+    "Furniture" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meubles"
+          }
+        }
+      }
+    },
+    "Gas" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Essence"
+          }
+        }
+      }
+    },
+    "Grocery" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épicerie"
+          }
+        }
+      }
+    },
+    "Home Improvement" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rénovation résidentielle"
+          }
+        }
+      }
+    },
+    "Hotel-Motel" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hôtel-motel"
+          }
+        }
+      }
+    },
+    "Public Transportation and Parking" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transport en commun et stationnement"
+          }
+        }
+      }
+    },
+    "Recurring Bill Payments" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paiements de factures récurrents"
+          }
+        }
+      }
+    },
+    "Restaurants" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurants"
+          }
+        }
+      }
+    },
+    "Undo" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        }
+      }
+    },
+    "US" : {
+      "localizations" : {
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "É.-U."
+          }
+        }
+      }
+    },
     "Your prediction log, your confirmations, and saved merchant locations are stored only on this iPhone — they were never uploaded, so deleting your account does not touch them. Choose what happens to them." : {
       "comment" : "human review before public launch",
       "localizations" : {
