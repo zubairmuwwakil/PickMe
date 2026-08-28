@@ -22,14 +22,14 @@ enum WalletConditions {
     /// translation pass, with no contract release in between.
     static func prompt(for id: String) -> String {
         let fallback = condition(id)?.prompt ?? id
-        return String(localized: String.LocalizationValue("ownerCondition.\(id).prompt"),
-                      defaultValue: String.LocalizationValue(fallback))
+        return Bundle.main.localizedString(forKey: "ownerCondition.\(id).prompt",
+                                           value: fallback, table: nil)
     }
 
     static func detail(for id: String) -> String? {
         guard let fallback = condition(id)?.detail else { return nil }
-        return String(localized: String.LocalizationValue("ownerCondition.\(id).detail"),
-                      defaultValue: String.LocalizationValue(fallback))
+        return Bundle.main.localizedString(forKey: "ownerCondition.\(id).detail",
+                                           value: fallback, table: nil)
     }
 
     /// Conditions on owned cards with no answer recorded. Drives the checklist banner and the
