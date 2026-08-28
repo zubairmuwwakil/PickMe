@@ -56,6 +56,7 @@ final class CopilotEnvironment {
     private let modelContext: ModelContext
     private let sync: SyncCoordinator
     private let ambient: AmbientLocationService
+    private var walletWriteTask: Task<Void, Never>?
 
     init(modelContext: ModelContext, sync: SyncCoordinator, ambient: AmbientLocationService) {
         self.modelContext = modelContext
@@ -231,7 +232,8 @@ extension CopilotEnvironment {
     /// Applies a wallet the owner just built. Failures here are alerts, not navigation — the
     /// owner stays on the setup screen (Design Decision 3) rather than losing their edits to a
     /// full-screen error.
-    func saveWalletSetup(_ setup: WalletSetup, session: CopilotSession, router: CheckoutRouter) async {
+    func saveWalletSetup(_ setup: WalletSetup, session: CopilotSession, router: CheckoutRouter,
+                         popsOnSave: Bool = true) async {
         guard let graph else { return }
         let owner = walletIsFirstRun
             ? OwnerStateBuilder.firstRun(setup: setup, catalogue: graph.catalogue)
@@ -269,7 +271,7 @@ extension CopilotEnvironment {
         rebuild(ownerState: owner)
         session.refresh(using: self.graph!)
         walletIsFirstRun = false
-        if router.path.last == .walletSetup { router.pop() }
+        if popsOnSave && router.path.last == .walletSetup { router.pop() }
 
         // Setup remains usable offline. The durable outbox retries on every sync until the server
         // has the exact wallet needed to evaluate Wallet Capture feedback.
@@ -281,6 +283,24 @@ extension CopilotEnvironment {
             try await sync.flushQueuedOwnerState(forUserID: userID, using: client)
         } catch {
             sync.saveSyncFailure(error, forUserID: userID)
+        }
+    }
+
+    /// Applies a wallet edit immediately to local state, then debounces the durable save and
+    /// server upload. Local-first is deliberate: the device copy is the checkout source of truth
+    /// while offline, and a person who toggles three things in four seconds should produce one
+    /// upload, not three.
+    func applyWalletEdit(_ setup: WalletSetup, session: CopilotSession, router: CheckoutRouter) {
+        guard let graph else { return }
+        let owner = OwnerStateBuilder.apply(setup, to: graph.ownerState, catalogue: graph.catalogue)
+        rebuild(ownerState: owner)
+        session.refresh(using: self.graph!)
+
+        walletWriteTask?.cancel()
+        walletWriteTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled, let self else { return }
+            await self.saveWalletSetup(setup, session: session, router: router, popsOnSave: false)
         }
     }
 

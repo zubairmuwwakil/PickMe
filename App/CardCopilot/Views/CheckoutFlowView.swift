@@ -293,15 +293,19 @@ struct CheckoutFlowView: View {
                          },
                          onDone: { router.pop() })
         case .walletSetup:
-            if let graph = environment.graph, let seedOwnerState = environment.seedOwnerState {
-                WalletSetupView(catalogue: graph.catalogue, seed: seedOwnerState,
-                                existing: environment.walletIsFirstRun ? nil : graph.ownerState,
-                                isFirstRun: environment.walletIsFirstRun,
-                                onSave: { setup in
-                                    await environment.saveWalletSetup(setup, session: session, router: router)
-                                },
-                                onRequestCard: { request in await environment.requestCard(request) },
-                                onDone: { router.pop() })
+            if let graph = environment.graph {
+                WalletEditorView(
+                    catalogue: graph.catalogue,
+                    existing: environment.walletIsFirstRun ? nil : graph.ownerState,
+                    isFirstRun: environment.walletIsFirstRun,
+                    onChange: { setup in
+                        environment.applyWalletEdit(setup, session: session, router: router)
+                    },
+                    onCommitFirstRun: { setup in
+                        await environment.saveWalletSetup(setup, session: session, router: router)
+                    },
+                    onRequestCard: { request in await environment.requestCard(request) },
+                    onDone: { router.pop() })
             }
         case .ambientSetup:
             AmbientLocationExplainerView(
