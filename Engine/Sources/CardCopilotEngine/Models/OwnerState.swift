@@ -125,6 +125,39 @@ public struct CtMoneyValuation: Codable, Equatable, Sendable {
     }
 }
 
+/// Merchant-locked store credit — a Gap Inc. point, a Sam's Cash dollar, a cruise line's onboard
+/// credit. Face value times an optional usability discount, on the same stated ground as CT
+/// Money: a dollar that spends only in one retailer's stores is not a dollar.
+///
+/// Declared ALONGSIDE `CtMoneyValuation` rather than replacing it. The arithmetic is identical,
+/// but `ctMoney` is a published model name inside a digest-pinned release, and a name that has
+/// shipped is a fact about the world rather than an implementation detail to normalize away.
+/// Deduplicating behaviour is nearly always right; deduplicating a wire format is a different
+/// operation, and this one would cost a spelling-provenance field here and a hand-written
+/// polymorphic serializer in Kotlin.
+///
+/// `merchantScope` names where the credit spends, in the same lowercase kebab-case tokens
+/// `RuleMatcher` matches `merchantInclude` on. It is disclosure, not dispatch — `Scorer` does not
+/// read it — but a valuation that says "worth 80 cents" without saying "and only at Gap" is not
+/// a disclosure an owner can check.
+public struct MerchantCreditValuation: Codable, Equatable, Sendable {
+    public var cadPerUnit: Double
+    public var optionalUsabilityFactor: Double
+    public var usabilityFactorApplied: Bool
+    public var merchantScope: [String]
+    public var basis: String?
+
+    public init(cadPerUnit: Double, optionalUsabilityFactor: Double,
+                usabilityFactorApplied: Bool, merchantScope: [String],
+                basis: String? = nil) {
+        self.cadPerUnit = cadPerUnit
+        self.optionalUsabilityFactor = optionalUsabilityFactor
+        self.usabilityFactorApplied = usabilityFactorApplied
+        self.merchantScope = merchantScope
+        self.basis = basis
+    }
+}
+
 public struct CroValuation: Codable, Equatable, Sendable {
     /// How CRO converts to CAD — not the `ProgramValuation` discriminator, which is a separate
     /// key at the same JSON level. Named `model` until 2026-08-20; renamed to free that key.

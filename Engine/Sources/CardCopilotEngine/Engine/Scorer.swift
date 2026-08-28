@@ -223,6 +223,8 @@ public enum Scorer {
             return units * cents(v) / 100
         case .ctMoney(let v):
             return units * v.cadPerUnit * (v.usabilityFactorApplied ? v.optionalUsabilityFactor : 1)
+        case .merchantCredit(let v):
+            return units * v.cadPerUnit * (v.usabilityFactorApplied ? v.optionalUsabilityFactor : 1)
         case .cro(let v):
             return units * (state.croHandling == "autoSell"
                             ? v.faceValueFactorIfAutoSold : v.defaultHeldRiskFactor)

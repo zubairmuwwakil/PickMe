@@ -110,6 +110,7 @@ extension SeedLoaderTests {
             case .points(let v):   basis = v.basis
             case .cashback(let v): basis = v.basis
             case .ctMoney(let v):  basis = v.basis
+            case .merchantCredit(let v): basis = v.basis
             case .cro(let v):      basis = v.basis
             case .noRewards(let v): basis = v.basis
             }

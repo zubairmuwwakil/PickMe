@@ -15,6 +15,9 @@ public enum ProgramValuation: Equatable, Sendable {
     case points(PointValuation)
     case cashback(CashBackValuation)
     case ctMoney(CtMoneyValuation)
+    /// Merchant-locked store credit. Same arithmetic as `ctMoney`, deliberately a separate case —
+    /// see `MerchantCreditValuation` for why a shipped wire-format name is not deduplicated.
+    case merchantCredit(MerchantCreditValuation)
     case cro(CroValuation)
     /// A card with no rewards programme at all — MBNA True Line, Capital One Guaranteed Secured.
     ///
@@ -42,6 +45,7 @@ extension ProgramValuation: Codable {
         case "points":   self = .points(try PointValuation(from: decoder))
         case "cashback": self = .cashback(try CashBackValuation(from: decoder))
         case "ctMoney":  self = .ctMoney(try CtMoneyValuation(from: decoder))
+        case "merchantCredit": self = .merchantCredit(try MerchantCreditValuation(from: decoder))
         case "cro":      self = .cro(try CroValuation(from: decoder))
         case "noRewards": self = .noRewards(try NoRewardsValuation(from: decoder))
         case let other:
@@ -57,6 +61,7 @@ extension ProgramValuation: Codable {
         case .points(let v):   try keyed.encode("points", forKey: .model);   try v.encode(to: encoder)
         case .cashback(let v): try keyed.encode("cashback", forKey: .model); try v.encode(to: encoder)
         case .ctMoney(let v):  try keyed.encode("ctMoney", forKey: .model);  try v.encode(to: encoder)
+        case .merchantCredit(let v): try keyed.encode("merchantCredit", forKey: .model); try v.encode(to: encoder)
         case .cro(let v):      try keyed.encode("cro", forKey: .model);      try v.encode(to: encoder)
         case .noRewards(let v): try keyed.encode("noRewards", forKey: .model); try v.encode(to: encoder)
         }
