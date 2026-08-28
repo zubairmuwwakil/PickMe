@@ -159,11 +159,11 @@ struct WalletEditorView: View {
                 Text("United States").tag(Market.us)
             }
             DisclosureGroup("Advanced switch threshold") {
-                Stepper("At least \(setup.switchThreshold.minAdvantagePercentagePoints, specifier: \"%.1f\") percentage points better",
+                Stepper("At least \(setup.switchThreshold.minAdvantagePercentagePoints, specifier: "%.1f") percentage points better",
                         value: Binding(get: { setup.switchThreshold.minAdvantagePercentagePoints },
                                        set: { setup.switchThreshold.minAdvantagePercentagePoints = $0; commit() }),
                         in: 0...10, step: 0.1)
-                Stepper("At least $\(setup.switchThreshold.minAdvantageCad, specifier: \"%.2f\") more",
+                Stepper("At least $\(setup.switchThreshold.minAdvantageCad, specifier: "%.2f") more",
                         value: Binding(get: { setup.switchThreshold.minAdvantageCad },
                                        set: { setup.switchThreshold.minAdvantageCad = $0; commit() }),
                         in: 0...20, step: 0.05)
