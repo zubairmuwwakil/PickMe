@@ -91,14 +91,22 @@ public enum RuleMatcher {
         return missing.isEmpty ? nil : missing
     }
 
+    /// Owner conditions resolve from `CardState.resolvedFlags`, keyed by the catalogue's own ids,
+    /// so declaring a new one in `contracts/owner-conditions.json` needs no code here at all.
+    ///
+    /// Tangerine keeps an explicit case: `selectedCategories` is structural state that specific
+    /// engine logic reads (`matchesOwnerSelection`), not a yes/no answer (spec §3.2).
+    ///
+    /// Fails closed on anything unanswered — an absent key is "not asked", never "no". This used
+    /// to be a switch over three hardcoded names with `default: return false`, which is how
+    /// `amazonEligiblePrimeLinked` shipped in the catalogue and never fired in any build.
     static func conditionsResolveTrue(_ conditions: [String]?, state: CardState) -> Bool {
         guard let conditions else { return true }
+        let flags = state.resolvedFlags
         return conditions.allSatisfy { condition in
             switch condition {
-            case "rogersEligibleServiceLinked": return state.rogersEligibleServiceLinked == true
-            case "cryptoLevelUpProActive": return state.cryptoLevelUpProActive == true
             case "tangerineCategorySelected": return state.selectedCategories != nil
-            default: return false
+            default: return flags[condition] ?? false
             }
         }
     }

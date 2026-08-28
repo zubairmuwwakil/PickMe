@@ -92,15 +92,35 @@ final class FixtureHarnessTests: XCTestCase {
                     if let v = override.state.croHandling { merged.croHandling = v }
                     if let v = override.state.rogersEligibleServiceLinked { merged.rogersEligibleServiceLinked = v }
                     if let v = override.state.selectedCategories { merged.selectedCategories = v }
+                    // Owner-condition answers keyed by condition id, merged over any legacy named
+                    // field above. Kotlin twin: FixtureHarnessTest.kt's `override.flags` branch.
+                    if let v = override.state.flags {
+                        merged.flags = (merged.flags ?? [:]).merging(v) { _, new in new }
+                    }
                     for field in override.unsetFields ?? [] {
                         switch field {
                         case "capProgress": merged.capProgress = nil
-                        case "cryptoLevelUpProActive": merged.cryptoLevelUpProActive = nil
                         case "croHandling": merged.croHandling = nil
-                        case "rogersEligibleServiceLinked": merged.rogersEligibleServiceLinked = nil
                         case "selectedCategories": merged.selectedCategories = nil
                         case "treatAsAllSelected": merged.treatAsAllSelected = nil
-                        default: XCTFail("\(ctx): unknown unsetFields entry '\(field)'")
+                        // An owner condition now has TWO representations — the legacy named
+                        // property and `flags` — and "unresolved" means neither is set. Clearing
+                        // only the named one would leave a fixture claiming to test fail-closed
+                        // while `resolvedFlags` still answered the question.
+                        case "cryptoLevelUpProActive", "rogersEligibleServiceLinked":
+                            merged.flags?[field] = nil
+                            if merged.flags?.isEmpty == true { merged.flags = nil }
+                            if field == "cryptoLevelUpProActive" { merged.cryptoLevelUpProActive = nil }
+                            if field == "rogersEligibleServiceLinked" { merged.rogersEligibleServiceLinked = nil }
+                        default:
+                            // A condition id declared in the registry is unsettable by name even
+                            // if no fixture uses it yet; anything else is a typo worth failing on.
+                            if SeedLoader.ownerConditions[field] != nil {
+                                merged.flags?[field] = nil
+                                if merged.flags?.isEmpty == true { merged.flags = nil }
+                            } else {
+                                XCTFail("\(ctx): unknown unsetFields entry '\(field)'")
+                            }
                         }
                     }
                     state.cardStates[cardId] = merged

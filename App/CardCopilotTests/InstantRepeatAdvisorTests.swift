@@ -15,7 +15,7 @@ final class InstantRepeatAdvisorTests: XCTestCase {
             switchThreshold: SwitchThreshold(minAdvantagePercentagePoints: 0.5, minAdvantageCad: 0.50, semantics: "either"),
             valuationsCad: Valuations(programs: programs.defaults)
         )
-        let ownerState = OwnerStateBuilder.make(setup: setup, catalogue: catalogue)
+        let ownerState = OwnerStateBuilder.firstRun(setup: setup, catalogue: catalogue)
         let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
 
         let noFrills = StoredMerchant(name: "No Frills", identifier: "preindex:no frills", poiCategoryRaw: "FoodMarket", latitude: 0, longitude: 0)
@@ -46,7 +46,7 @@ final class InstantRepeatAdvisorTests: XCTestCase {
             switchThreshold: SwitchThreshold(minAdvantagePercentagePoints: 0.5, minAdvantageCad: 0.50, semantics: "either"),
             valuationsCad: Valuations(programs: programs.defaults)
         )
-        let ownerState = OwnerStateBuilder.make(setup: setup, catalogue: catalogue)
+        let ownerState = OwnerStateBuilder.firstRun(setup: setup, catalogue: catalogue)
         let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
 
         let metro = StoredMerchant(name: "Metro", identifier: "preindex:metro", poiCategoryRaw: "FoodMarket", latitude: 0, longitude: 0)
@@ -77,7 +77,7 @@ final class InstantRepeatAdvisorTests: XCTestCase {
             switchThreshold: SwitchThreshold(minAdvantagePercentagePoints: 0.5, minAdvantageCad: 0.50, semantics: "either"),
             valuationsCad: Valuations(programs: programs.defaults)
         )
-        let ownerState = OwnerStateBuilder.make(setup: setup, catalogue: catalogue)
+        let ownerState = OwnerStateBuilder.firstRun(setup: setup, catalogue: catalogue)
         let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
 
         let costco = StoredMerchant(name: "Costco Wholesale", identifier: "preindex:costco wholesale", poiCategoryRaw: "Store", latitude: 0, longitude: 0)
@@ -106,7 +106,7 @@ final class InstantRepeatAdvisorTests: XCTestCase {
             switchThreshold: SwitchThreshold(minAdvantagePercentagePoints: 0.5, minAdvantageCad: 0.50, semantics: "either"),
             valuationsCad: Valuations(programs: programs.defaults)
         )
-        let ownerState = OwnerStateBuilder.make(setup: setup, catalogue: catalogue)
+        let ownerState = OwnerStateBuilder.firstRun(setup: setup, catalogue: catalogue)
         let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
 
         let metro = StoredMerchant(name: "Metro", identifier: "preindex:metro", poiCategoryRaw: "FoodMarket", latitude: 0, longitude: 0)

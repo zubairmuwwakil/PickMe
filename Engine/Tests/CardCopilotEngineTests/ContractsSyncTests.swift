@@ -48,6 +48,11 @@ final class ContractsSyncTests: XCTestCase {
                          engineRelativePath: "Sources/CardCopilotEngine/Resources/programs.json")
     }
 
+    func testOwnerConditionsMatchContract() throws {
+        try assertSynced(contractsRelativePath: "owner-conditions.json",
+                         engineRelativePath: "Sources/CardCopilotEngine/Resources/owner-conditions.json")
+    }
+
     func testEngineFixturesMatchesContract() throws {
         try assertSynced(contractsRelativePath: "engine-fixtures.json",
                          engineRelativePath: "Tests/CardCopilotEngineTests/Fixtures/engine-fixtures.json")

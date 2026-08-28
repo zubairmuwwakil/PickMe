@@ -39,6 +39,7 @@ PAIRS = [
     ("card-catalogue.json", "card-catalogue.schema.json"),
     ("benefits-catalogue.json", "benefits-catalogue.schema.json"),
     ("candidate-catalogue.json", "candidate-catalogue.schema.json"),
+    ("owner-conditions.json", "owner-conditions.schema.json"),
 ]
 
 

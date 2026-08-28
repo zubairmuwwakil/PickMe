@@ -198,13 +198,13 @@ struct WalletSetupView: View {
             if setup.ownedCardIds.contains("rogers-red-we") {
                 Section("Rogers Red World Elite") {
                     Text("The higher 2% rate requires an eligible Rogers, Fido, Shaw, Comwave, or Sportsnet+ service linked to your account.")
-                    triStatePicker("Is an eligible service linked?", value: binding(\.rogersEligibleServiceLinked))
+                    triStatePicker("Is an eligible service linked?", value: binding(cardId: "rogers-red-we", conditionId: "rogersEligibleServiceLinked"))
                 }
             }
             if setup.ownedCardIds.contains("cryptocom-royal-indigo") {
                 Section("Crypto.com Royal Indigo") {
                     Text("The 3% CRO reward applies only while your Level Up Pro plan is active.")
-                    triStatePicker("Is Level Up Pro active?", value: binding(\.cryptoLevelUpProActive))
+                    triStatePicker("Is Level Up Pro active?", value: binding(cardId: "cryptocom-royal-indigo", conditionId: "cryptoLevelUpProActive"))
                 }
             }
             if setup.ownedCardIds.contains("tangerine-moneyback-world") {
@@ -264,8 +264,17 @@ struct WalletSetupView: View {
 
     private func normalizeDefault() { if !setup.ownedCardIds.contains(setup.defaultCardId) { setup.defaultCardId = setup.ownedCardIds.first ?? "" } }
 
-    private func binding(_ keyPath: WritableKeyPath<WalletSetup, Bool?>) -> Binding<String> {
-        Binding(get: { setup[keyPath: keyPath].map { $0 ? "yes" : "no" } ?? "unknown" }, set: { setup[keyPath: keyPath] = $0 == "unknown" ? nil : $0 == "yes" })
+    /// Bridges this screen's two hardcoded questions onto `WalletSetup.conditionAnswers`, which
+    /// replaced the named per-condition booleans. Deliberately minimal — this whole view is
+    /// replaced by `WalletEditorView`, where conditions come from the catalogue instead.
+    private func binding(cardId: String, conditionId: String) -> Binding<String> {
+        Binding(
+            get: { setup.conditionAnswers[cardId]?[conditionId].map { $0 ? "yes" : "no" } ?? "unknown" },
+            set: { answer in
+                var answers = setup.conditionAnswers[cardId] ?? [:]
+                answers[conditionId] = answer == "unknown" ? nil : (answer == "yes")
+                setup.conditionAnswers[cardId] = answers.isEmpty ? nil : answers
+            })
     }
 
     private func triStatePicker(_ title: String, value: Binding<String>) -> some View {

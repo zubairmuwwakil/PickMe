@@ -53,6 +53,24 @@ public enum SeedLoader {
         try load("programs")
     }
 
+    /// The owner-condition registry: every `ownerConditions` id the catalogue may reference, how
+    /// it is answered, and the English source prompt to ask it with.
+    ///
+    /// Adding a condition to the catalogue without an entry here leaves a rate the owner can never
+    /// unlock — `CatalogueIntegrityTests` and the CI gate refuse it.
+    public static func loadOwnerConditions() throws -> OwnerConditionRegistry {
+        try load("owner-conditions")
+    }
+
+    /// Decoded once and reused. Traps rather than falling back to `[:]`, for the same reason
+    /// `programValuationDefaults` does: an empty fallback would make every condition unanswerable
+    /// and every conditional rate silently unreachable, which is the exact failure this registry
+    /// exists to prevent.
+    public static let ownerConditions: [String: OwnerCondition] = {
+        do { return try loadOwnerConditions().conditions }
+        catch { preconditionFailure("contracts/owner-conditions.json is unreadable: \(error)") }
+    }()
+
     /// Which published contract release this build shipped.
     ///
     /// Deliberately does NOT verify that the bundled bytes hash to `digest`. That check belongs

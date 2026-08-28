@@ -48,13 +48,45 @@ public struct CardState: Codable, Equatable, Sendable {
     public var treatAsAllSelected: Bool?
     public var thirdCategoryUnlocked: Bool?
     public var nextChangeEffectiveDate: String?
-    public var rogersEligibleServiceLinked: Bool?
     public var rogersAccountAnniversaryMonth: Int?
     public var feeWaiverActive: Bool?
-    public var cryptoLevelUpProActive: Bool?
     public var croHandling: String?   // "autoSell" | "hold" | nil (unresolved)
 
+    /// Boolean owner-condition answers, keyed by the catalogue's `ownerConditions` id.
+    ///
+    /// An ABSENT key is unresolved and `RuleMatcher` fails closed on it; `false` is a real answer
+    /// meaning "no". The two are not interchangeable — they buy the owner different rates, and a
+    /// UI needs to know which cards still owe an answer.
+    ///
+    /// Replaces the named per-card booleans below, so a new yes/no condition is an entry in
+    /// `contracts/owner-conditions.json` and nothing else. Four conditions shipped against three
+    /// hardcoded `RuleMatcher` cases before this existed, and the fourth
+    /// (`amazonEligiblePrimeLinked`) was unanswerable in every build.
+    public var flags: [String: Bool]?
+
+    /// LEGACY, retained for one release. Never read by the engine — `resolvedFlags` folds them in,
+    /// and `OwnerStateBuilder.mirroringLegacyFlags` writes them back out so a consumer predating
+    /// `flags` still sees an answer. MoneyTalks stores owner state and has not been audited for
+    /// which keys it reads; carrying two for a release is cheaper than guessing wrong. Delete both
+    /// — and the mirroring — once that audit is done.
+    public var rogersEligibleServiceLinked: Bool?
+    public var cryptoLevelUpProActive: Bool?
+
     public init() {}
+
+    /// `flags` with the legacy named booleans folded in. `flags` wins on conflict: it is the newer
+    /// field, so a state written by a newer build and read here must not be clobbered by a stale
+    /// mirror.
+    ///
+    /// Every read path goes through this rather than `flags` directly, which is what makes the
+    /// migration invisible — an owner state written by any prior build resolves identically.
+    public var resolvedFlags: [String: Bool] {
+        var merged: [String: Bool] = [:]
+        if let value = rogersEligibleServiceLinked { merged["rogersEligibleServiceLinked"] = value }
+        if let value = cryptoLevelUpProActive { merged["cryptoLevelUpProActive"] = value }
+        if let flags { merged.merge(flags) { _, newer in newer } }
+        return merged
+    }
 }
 
 /// All four valuation models carry an optional `basis`: the string that tells the owner where a

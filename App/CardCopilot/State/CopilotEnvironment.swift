@@ -215,7 +215,7 @@ extension CopilotEnvironment {
                 let emptySetup = WalletSetup(ownedCardIds: [], defaultCardId: "",
                                              switchThreshold: OwnerStateBuilder.defaultSwitchThreshold,
                                              valuationsCad: graph.ownerState.valuationsCad)
-                let empty = OwnerStateBuilder.make(setup: emptySetup, catalogue: graph.catalogue)
+                let empty = OwnerStateBuilder.firstRun(setup: emptySetup, catalogue: graph.catalogue)
                 rebuild(ownerState: empty)
                 session.refresh(using: self.graph!)
                 walletIsFirstRun = true
@@ -233,7 +233,9 @@ extension CopilotEnvironment {
     /// full-screen error.
     func saveWalletSetup(_ setup: WalletSetup, session: CopilotSession, router: CheckoutRouter) async {
         guard let graph else { return }
-        let owner = OwnerStateBuilder.make(setup: setup, catalogue: graph.catalogue)
+        let owner = walletIsFirstRun
+            ? OwnerStateBuilder.firstRun(setup: setup, catalogue: graph.catalogue)
+            : OwnerStateBuilder.apply(setup, to: graph.ownerState, catalogue: graph.catalogue)
         do {
             let signedInUserID = Clerk.shared.user?.id
             let outcome = try WalletSetupPersistence(

@@ -17,15 +17,21 @@ final class CatalogueIntegrityTests: XCTestCase {
     /// has to be an argued exception rather than a quiet one.
     static let knownUnvaluedPrograms: Set<String> = []
 
-    /// Owner conditions declared in the catalogue with no case in RuleMatcher.
-    /// Each fails closed silently. Deleted when CardState.flags lands (spec §3.2).
-    static let knownUnhandledConditions: Set<String> = ["amazonEligiblePrimeLinked"]
+    /// Owner conditions declared in the catalogue that nothing can answer.
+    ///
+    /// EMPTY since 2026-08-28 (card-contracts@2.8): conditions resolve from `CardState.flags`
+    /// against `contracts/owner-conditions.json`, so the registry — not a Swift switch — is the
+    /// gate, and `testEveryOwnerConditionHasAHandler` below reads it directly.
+    /// `amazonEligiblePrimeLinked` sat here from the day it shipped, which meant
+    /// `amazon-ca-prime-2_5x` could not fire in any build. It is now answerable.
+    ///
+    /// Keep this empty. An entry means shipping a card whose rate the owner cannot unlock.
+    static let knownUnhandledConditions: Set<String> = []
 
-    /// Mirrors RuleMatcher.conditionsResolveTrue's switch. Kept here rather than made internal
-    /// so the test fails when the switch and this list drift, which is the point.
-    static let handledConditions: Set<String> = [
-        "rogersEligibleServiceLinked", "cryptoLevelUpProActive", "tangerineCategorySelected",
-    ]
+    /// Conditions the engine resolves STRUCTURALLY rather than from `flags`. Mirrors the one
+    /// remaining explicit case in `RuleMatcher.conditionsResolveTrue`, kept here rather than made
+    /// internal so the test fails when the two drift — which is the point.
+    static let structuralConditions: Set<String> = ["tangerineCategorySelected"]
 
     /// Mirrors CapWindow.anchorMonth's switch.
     static let resolvableAnchors: Set<String> = [
@@ -107,14 +113,31 @@ final class CatalogueIntegrityTests: XCTestCase {
           + "Likely a typo — the valuation will never be used.")
     }
 
+    /// Data may not outrun code. Every condition the catalogue references must be DECLARED in the
+    /// registry, because that — not a Swift switch — is now what lets a consumer ask the question.
+    /// A condition nobody can ask fails closed forever, which is a rate the owner silently loses.
     func testEveryOwnerConditionHasAHandler() throws {
+        let registry = try SeedLoader.loadOwnerConditions().conditions
         let declared = Set(try allCards().flatMap { $0.earnRules.compactMap(\.ownerConditions).flatMap { $0 } })
         let unhandled = declared
-            .subtracting(Self.handledConditions)
+            .subtracting(registry.keys)
             .subtracting(Self.knownUnhandledConditions)
         XCTAssertTrue(unhandled.isEmpty,
-            "ownerCondition(s) with no handler in RuleMatcher: \(unhandled.sorted()). "
-          + "These fail closed silently.")
+            "ownerCondition(s) absent from contracts/owner-conditions.json: \(unhandled.sorted()). "
+          + "Nothing can ask these, so they fail closed silently.")
+    }
+
+    /// The registry's own invariant: a `categorySelection` condition needs engine logic to
+    /// resolve it, so declaring one the engine does not structurally handle is a silent no-op.
+    /// `boolean` conditions need nothing — that is the whole point of `flags`.
+    func testCategorySelectionConditionsAreStructurallyHandled() throws {
+        let registry = try SeedLoader.loadOwnerConditions().conditions
+        let unhandled = registry
+            .filter { $0.value.answerKind == .categorySelection }
+            .map(\.key)
+            .filter { !Self.structuralConditions.contains($0) }
+        XCTAssertEqual(unhandled.sorted(), [],
+            "categorySelection condition(s) with no case in RuleMatcher: \(unhandled.sorted())")
     }
 
     func testEveryCapAnchorIsResolvable() throws {
@@ -131,7 +154,9 @@ final class CatalogueIntegrityTests: XCTestCase {
     /// reviewed act rather than a quiet regression.
     func testKnownGapListsDoNotGrow() {
         XCTAssertLessThanOrEqual(Self.knownUnvaluedPrograms.count, 0)
-        XCTAssertLessThanOrEqual(Self.knownUnhandledConditions.count, 1)
+        // Ratcheted 1 -> 0 for card-contracts@2.8: amazonEligiblePrimeLinked became answerable
+        // when conditions moved into contracts/owner-conditions.json + CardState.flags.
+        XCTAssertLessThanOrEqual(Self.knownUnhandledConditions.count, 0)
         XCTAssertLessThanOrEqual(Self.knownUnresolvableAnchors.count, 2)
     }
 

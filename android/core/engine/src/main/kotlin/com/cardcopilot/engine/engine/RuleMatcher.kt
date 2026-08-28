@@ -118,14 +118,25 @@ object RuleMatcher {
         return missing.ifEmpty { null }
     }
 
+    /**
+     * Twin of Swift's `RuleMatcher.conditionsResolveTrue`. Owner conditions resolve from
+     * [CardState.resolvedFlags], keyed by the catalogue's own ids, so declaring a new one in
+     * contracts/owner-conditions.json needs no code here at all.
+     *
+     * Tangerine keeps an explicit case: `selectedCategories` is structural state that specific
+     * engine logic reads, not a yes/no answer.
+     *
+     * Fails closed on anything unanswered — an absent key is "not asked", never "no". This used to
+     * be a `when` over three hardcoded names with `else -> false`, which is how
+     * `amazonEligiblePrimeLinked` shipped in the catalogue and never fired in any build.
+     */
     fun conditionsResolveTrue(conditions: List<String>?, state: CardState): Boolean {
         if (conditions == null) return true
+        val flags = state.resolvedFlags
         return conditions.all { condition ->
             when (condition) {
-                "rogersEligibleServiceLinked" -> state.rogersEligibleServiceLinked == true
-                "cryptoLevelUpProActive" -> state.cryptoLevelUpProActive == true
                 "tangerineCategorySelected" -> state.selectedCategories != null
-                else -> false
+                else -> flags[condition] ?: false
             }
         }
     }

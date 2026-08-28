@@ -50,6 +50,8 @@ class FixtureHarnessTest {
             val feeWaiverActive: Boolean? = null,
             val cryptoLevelUpProActive: Boolean? = null,
             val croHandling: String? = null,
+            /** Owner-condition answers keyed by condition id. Merged over any legacy named field. */
+            val flags: Map<String, Boolean>? = null,
             val unsetFields: List<String>? = null
         )
 
@@ -123,15 +125,32 @@ class FixtureHarnessTest {
                     if (override.croHandling != null) merged = merged.copy(croHandling = override.croHandling)
                     if (override.rogersEligibleServiceLinked != null) merged = merged.copy(rogersEligibleServiceLinked = override.rogersEligibleServiceLinked)
                     if (override.selectedCategories != null) merged = merged.copy(selectedCategories = override.selectedCategories)
+                    if (override.flags != null) {
+                        merged = merged.copy(flags = (merged.flags ?: emptyMap()) + override.flags)
+                    }
 
                     for (field in override.unsetFields ?: emptyList()) {
                         merged = when (field) {
                             "capProgress" -> merged.copy(capProgress = null)
-                            "cryptoLevelUpProActive" -> merged.copy(cryptoLevelUpProActive = null)
                             "croHandling" -> merged.copy(croHandling = null)
-                            "rogersEligibleServiceLinked" -> merged.copy(rogersEligibleServiceLinked = null)
                             "selectedCategories" -> merged.copy(selectedCategories = null)
                             "treatAsAllSelected" -> merged.copy(treatAsAllSelected = null)
+                            // An owner condition now has TWO representations — the legacy named
+                            // property and `flags` — and "unresolved" means neither is set.
+                            // Clearing only the named one would leave a fixture claiming to test
+                            // fail-closed while resolvedFlags still answered the question.
+                            // Swift twin: FixtureHarnessTests.swift's unsetFields switch.
+                            "cryptoLevelUpProActive" -> merged.copy(
+                                cryptoLevelUpProActive = null,
+                                flags = (merged.flags ?: emptyMap()).minus(field).ifEmpty { null }
+                            )
+                            "rogersEligibleServiceLinked" -> merged.copy(
+                                rogersEligibleServiceLinked = null,
+                                flags = (merged.flags ?: emptyMap()).minus(field).ifEmpty { null }
+                            )
+                            "amazonEligiblePrimeLinked" -> merged.copy(
+                                flags = (merged.flags ?: emptyMap()).minus(field).ifEmpty { null }
+                            )
                             else -> throw AssertionError("$ctx: unknown unsetFields entry '$field'")
                         }
                     }

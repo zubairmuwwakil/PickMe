@@ -70,12 +70,39 @@ data class CardState(
     val treatAsAllSelected: Boolean? = null,
     val thirdCategoryUnlocked: Boolean? = null,
     val nextChangeEffectiveDate: String? = null,
-    val rogersEligibleServiceLinked: Boolean? = null,
     val rogersAccountAnniversaryMonth: Int? = null,
     val feeWaiverActive: Boolean? = null,
-    val cryptoLevelUpProActive: Boolean? = null,
-    val croHandling: String? = null // "autoSell" | "hold" | null
-)
+    val croHandling: String? = null, // "autoSell" | "hold" | null
+    /**
+     * Boolean owner-condition answers keyed by the catalogue's `ownerConditions` id.
+     *
+     * An ABSENT key is unresolved and [RuleMatcher.conditionsResolveTrue] fails closed on it;
+     * `false` is a real answer meaning "no". Swift twin: `CardState.flags` in
+     * Engine/Sources/CardCopilotEngine/Models/OwnerState.swift.
+     */
+    val flags: Map<String, Boolean>? = null,
+    /**
+     * LEGACY, retained for one release. Never read directly — [resolvedFlags] folds them in, so a
+     * wallet written by a pre-2.8 build resolves identically. MoneyTalks stores owner state and
+     * has not been audited for which keys it reads.
+     */
+    val rogersEligibleServiceLinked: Boolean? = null,
+    val cryptoLevelUpProActive: Boolean? = null
+) {
+    /**
+     * [flags] with the legacy named booleans folded in; [flags] wins on conflict because it is the
+     * newer field. Every read path goes through this rather than [flags] directly, which is what
+     * makes the migration invisible.
+     */
+    val resolvedFlags: Map<String, Boolean>
+        get() {
+            val merged = LinkedHashMap<String, Boolean>()
+            rogersEligibleServiceLinked?.let { merged["rogersEligibleServiceLinked"] = it }
+            cryptoLevelUpProActive?.let { merged["cryptoLevelUpProActive"] = it }
+            flags?.let { merged.putAll(it) }
+            return merged
+        }
+}
 
 /**
  * Reward-currency valuations, keyed by the catalogue's `programId`.

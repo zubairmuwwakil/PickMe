@@ -25,3 +25,6 @@ local.properties
 /catalogue-pipeline/raw/ca/clearfin/pages/
 /catalogue-pipeline/raw/ca/clearfin/clearfin-extracted-*.json
 catalogue-pipeline/.raw-cache/
+
+# Brainstorming visual companion (local only)
+.superpowers/

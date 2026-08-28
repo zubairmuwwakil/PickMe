@@ -2,6 +2,41 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-28 — card-catalogue 2.8, owner-conditions 1.0 & fixtures 1.3: owner conditions become data
+
+**Additive throughout.** No card record's bytes change; `card-catalogue.json` moves only its
+`catalogueVersion` string, and `engine-fixtures.json` only its `fixturesVersion`. All 28 existing
+fixture expectations are untouched.
+
+- **New `owner-conditions.json` + schema, both in the release digest.** Declares every
+  `ownerConditions` id: how it is answered (`boolean` → `CardState.flags`, `categorySelection` →
+  Tangerine's structural selection machinery), and the English source prompt to ask it with.
+- **Deliberately a sidecar registry, not spec §3.2's inline `[{conditionId, prompt}]` shape.**
+  `EarnRule.ownerConditions` is a published array of strings inside a content-addressed release
+  with four vendored copies across two repos; changing its element type is a MAJOR bump for no
+  behavioural gain. `programs.json` solved the identical open-set-modelled-as-closed problem for
+  valuations one section earlier in the same spec, and this follows that precedent. The rule's
+  `[String]` array is unchanged.
+- **`amazonEligiblePrimeLinked` is answerable for the first time.** It shipped in the catalogue
+  with no `RuleMatcher` case, so `amazon-ca-prime-2_5x` fell to `default: return false` and could
+  not fire in any build that ever existed. `CatalogueIntegrityTests.knownUnhandledConditions` is
+  now **empty** and its ratchet is set to zero. Owners of that card who confirm a linked Prime
+  membership will begin earning 2.5x at Amazon.ca and Whole Foods instead of 1.5x — a behaviour
+  change, and an intended one.
+- **`CardState.flags: [String: Bool]?`** carries answers by condition id in both engines. An absent
+  key is unresolved and still fails closed; `false` is a real "no". The named
+  `rogersEligibleServiceLinked` / `cryptoLevelUpProActive` properties are **retained and mirrored**
+  for one release: MoneyTalks stores owner state and has not been audited for which keys it reads.
+  Legacy states decode unchanged, `flags` wins on conflict, and every read goes through
+  `resolvedFlags`. Removing the named properties is a follow-up gated on that audit.
+- **`FILES` in `release-catalogue.sh` gained two entries** (`owner-conditions.json`,
+  `schema/owner-conditions.schema.json`). **MoneyTalks' `FILES` list in `scripts/sync-contracts.sh`
+  must be updated to match**, or its `contracts.test.ts` digest check fails against
+  `card-contracts@2.8`. That is a cross-repo change this release cannot make for itself.
+- Prompts are English **source** strings, not display strings. Consumers resolve
+  `ownerCondition.<id>.prompt` from their own catalogue and fall back to the registry, so a new
+  condition ships askable immediately and picks up translations without a contract release.
+
 ## 2026-08-27 — card-catalogue 2.7 & programs 1.5: merchantCredit, closed-loop acceptance, and a schema in the digest
 
 Two new mechanisms and one long-standing schema gap. **Additive throughout — no card

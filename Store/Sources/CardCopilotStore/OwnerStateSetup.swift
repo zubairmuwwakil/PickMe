@@ -1,52 +1,89 @@
 import Foundation
 import CardCopilotEngine
 
-/// Inputs collected by the wallet setup flow. `nil` answers are intentional: the engine treats
-/// them as unresolved and does not award the conditional bonus.
+/// The editable projection of an owner's wallet: what a person *answers*, never what the system
+/// *observes*. Cap progress, carry and account anchors are observations and live only in
+/// `OwnerState` — which is exactly why `apply` folds this into an existing state rather than
+/// constructing a new one from it.
+///
+/// `nil` answers are intentional: the engine treats them as unresolved and does not award the
+/// conditional bonus.
 public struct WalletSetup: Equatable, Sendable {
     public var ownedCardIds: [String]
     public var defaultCardId: String
-    public var rogersEligibleServiceLinked: Bool?
-    public var cryptoLevelUpProActive: Bool?
+    /// Boolean owner-condition answers, keyed cardId → conditionId. An absent key is UNANSWERED,
+    /// which `RuleMatcher` fails closed on. Never default a missing answer to `false`: "no" and
+    /// "not asked" buy the owner different rates and must stay distinguishable.
+    public var conditionAnswers: [String: [String: Bool]]
     public var tangerineSelectedCategories: [String]?
     public var switchThreshold: SwitchThreshold
     public var valuationsCad: Valuations
+    /// The owner's residency. Nil means unresolved; `OwnerState.resolvedMarket` defaults to `.ca`.
+    /// Present here so an edit round-trips it — the previous builder dropped it, silently
+    /// resetting every owner to Canada on save.
+    public var market: Market?
 
     public init(ownedCardIds: [String], defaultCardId: String,
-                rogersEligibleServiceLinked: Bool? = nil,
-                cryptoLevelUpProActive: Bool? = nil,
+                conditionAnswers: [String: [String: Bool]] = [:],
                 tangerineSelectedCategories: [String]? = nil,
                 switchThreshold: SwitchThreshold,
-                valuationsCad: Valuations) {
+                valuationsCad: Valuations,
+                market: Market? = nil) {
         self.ownedCardIds = ownedCardIds
         self.defaultCardId = defaultCardId
-        self.rogersEligibleServiceLinked = rogersEligibleServiceLinked
-        self.cryptoLevelUpProActive = cryptoLevelUpProActive
+        self.conditionAnswers = conditionAnswers
         self.tangerineSelectedCategories = tangerineSelectedCategories
         self.switchThreshold = switchThreshold
         self.valuationsCad = valuationsCad
+        self.market = market
     }
 }
 
 /// Pure OwnerState construction belongs in Store, at the boundary between setup answers and the
-/// engine. This deliberately starts each cap at zero rather than inheriting the bundled owner's
-/// cap progress or account details.
+/// engine.
+///
+/// The two entry points below exist because the single previous one (`make`) could not tell a
+/// first run from an edit. It was a *constructor* — a pure function from setup answers to a brand
+/// new `OwnerState` — so everything `WalletSetup` cannot express was structurally guaranteed to be
+/// lost on every save: cap progress, carry, market. That is not a missing line, it is the shape of
+/// the function, which is why the fix is two functions rather than a patch to one.
 public enum OwnerStateBuilder {
     public static let defaultSwitchThreshold = SwitchThreshold(minAdvantagePercentagePoints: 0.5,
                                                                minAdvantageCad: 0.25,
                                                                semantics: "both")
 
     public static func setup(from ownerState: OwnerState) -> WalletSetup {
-        WalletSetup(ownedCardIds: ownerState.ownedCardIds,
-                    defaultCardId: ownerState.defaultCardId,
-                    rogersEligibleServiceLinked: ownerState.cardStates["rogers-red-we"]?.rogersEligibleServiceLinked,
-                    cryptoLevelUpProActive: ownerState.cardStates["cryptocom-royal-indigo"]?.cryptoLevelUpProActive,
-                    tangerineSelectedCategories: ownerState.cardStates["tangerine-moneyback-world"]?.selectedCategories,
-                    switchThreshold: ownerState.switchThreshold,
-                    valuationsCad: ownerState.valuationsCad)
+        var answers: [String: [String: Bool]] = [:]
+        for (cardId, state) in ownerState.cardStates {
+            let flags = state.resolvedFlags
+            if !flags.isEmpty { answers[cardId] = flags }
+        }
+        return WalletSetup(
+            ownedCardIds: ownerState.ownedCardIds,
+            defaultCardId: ownerState.defaultCardId,
+            conditionAnswers: answers,
+            tangerineSelectedCategories:
+                ownerState.cardStates["tangerine-moneyback-world"]?.selectedCategories,
+            switchThreshold: ownerState.switchThreshold,
+            valuationsCad: ownerState.valuationsCad,
+            market: ownerState.market.flatMap(Market.init(rawValue:)))
     }
 
-    public static func make(setup: WalletSetup, catalogue: Catalogue, version: String = "wallet-setup-1") -> OwnerState {
+    /// A wallet built from nothing. Caps start at zero and carry is empty because there is no
+    /// history yet — the documented intent of the old `make`, now stated in its name so it can
+    /// never be reached from an edit by accident.
+    public static func firstRun(setup: WalletSetup, catalogue: Catalogue,
+                                version: String = "wallet-setup-1") -> OwnerState {
+        apply(setup, to: nil, catalogue: catalogue, version: version)
+    }
+
+    /// Fold setup answers INTO an existing wallet. Everything `WalletSetup` cannot express — cap
+    /// progress, carry, account anchors, market — is carried across untouched.
+    ///
+    /// `existing == nil` is first run and reproduces the old `make` exactly.
+    public static func apply(_ setup: WalletSetup, to existing: OwnerState?,
+                             catalogue: Catalogue,
+                             version: String = "wallet-setup-1") -> OwnerState {
         let availableIDs = Set(catalogue.cards.map(\.cardId))
         let owned = Array(NSOrderedSet(array: setup.ownedCardIds))
             .compactMap { $0 as? String }
@@ -55,25 +92,54 @@ public enum OwnerStateBuilder {
         var cardStates: [String: CardState] = [:]
 
         for card in catalogue.cards where owned.contains(card.cardId) {
-            var state = CardState()
+            // Start from what is already known about this card. A card the owner already held
+            // keeps its observations; a newly added one starts clean, which is correct.
+            var state = existing?.cardStates[card.cardId] ?? CardState()
+
             let capIDs = card.caps.map(\.capId)
-            if !capIDs.isEmpty { state.capProgress = Dictionary(uniqueKeysWithValues: capIDs.map { ($0, 0) }) }
-            switch card.cardId {
-            case "rogers-red-we": state.rogersEligibleServiceLinked = setup.rogersEligibleServiceLinked
-            case "cryptocom-royal-indigo": state.cryptoLevelUpProActive = setup.cryptoLevelUpProActive
-            case "tangerine-moneyback-world":
+            if !capIDs.isEmpty {
+                var progress = state.capProgress ?? [:]
+                // Fill only caps with no figure yet. A cap added to the catalogue since the last
+                // save appears at zero; one already tracked keeps its number.
+                for capID in capIDs where progress[capID] == nil { progress[capID] = 0 }
+                state.capProgress = progress
+            }
+
+            let answers = setup.conditionAnswers[card.cardId] ?? [:]
+            state.flags = answers.isEmpty ? nil : answers
+
+            if card.cardId == "tangerine-moneyback-world" {
                 state.selectedCategories = setup.tangerineSelectedCategories?.isEmpty == false
                     ? setup.tangerineSelectedCategories : nil
-            default: break
             }
-            cardStates[card.cardId] = state
+
+            cardStates[card.cardId] = mirroringLegacyFlags(state)
         }
 
-        return OwnerState(ownerStateVersion: version, ownedCardIds: owned, defaultCardId: defaultCardId,
-                          switchThreshold: setup.switchThreshold, carry: Carry(drawerCards: []),
-                          cardStates: cardStates, valuationsCad: setup.valuationsCad)
+        return OwnerState(ownerStateVersion: existing?.ownerStateVersion ?? version,
+                          ownedCardIds: owned,
+                          defaultCardId: defaultCardId,
+                          switchThreshold: setup.switchThreshold,
+                          carry: existing?.carry ?? Carry(drawerCards: []),
+                          cardStates: cardStates,
+                          valuationsCad: setup.valuationsCad,
+                          market: setup.market?.rawValue ?? existing?.market)
+    }
+
+    /// Copies the two legacy named booleans back out of `flags`, so an owner state written by
+    /// this build stays fully readable by a consumer that predates `flags`. MoneyTalks stores
+    /// owner state and has not been audited for which keys it reads. Delete this — and the two
+    /// `CardState` properties it writes — once that audit is done.
+    static func mirroringLegacyFlags(_ state: CardState) -> CardState {
+        var mirrored = state
+        mirrored.rogersEligibleServiceLinked = state.flags?["rogersEligibleServiceLinked"]
+        mirrored.cryptoLevelUpProActive = state.flags?["cryptoLevelUpProActive"]
+        return mirrored
     }
 }
+
+// The Phase 0 shim that stood in for `CardState.flags` / `resolvedFlags` is gone: both are real
+// stored/computed members of `CardState` as of card-contracts@2.8.
 
 /// The device copy is the checkout source of truth while offline. A server copy is updated when
 /// the user is signed in, but failed network work never replaces this usable local wallet.

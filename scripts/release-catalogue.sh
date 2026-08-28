@@ -47,6 +47,11 @@ FILES=(
   # the pack carries its own packVersion and changes on a different cadence — see
   # the note in MoneyTalks' src/lib/contracts/contracts.test.ts.
   "schema/programs.schema.json"
+  # Added for 2.8. The registry decides which owner conditions a consumer can ASK
+  # about, so a consumer pinning this release must get the same set of questions
+  # the engine gates on — that is exactly what the digest is for.
+  "owner-conditions.json"
+  "schema/owner-conditions.schema.json"
 )
 
 sha256_of() {

@@ -16,6 +16,8 @@ cp "$root/contracts/benefits-catalogue.json" \
    "$root/Engine/Sources/CardCopilotEngine/Resources/benefits-catalogue.json"
 cp "$root/contracts/programs.json" \
    "$root/Engine/Sources/CardCopilotEngine/Resources/programs.json"
+cp "$root/contracts/owner-conditions.json" \
+   "$root/Engine/Sources/CardCopilotEngine/Resources/owner-conditions.json"
 cp "$root/contracts/owner-state.json" \
    "$root/Engine/Sources/CardCopilotEngine/Resources/owner-state.json"
 cp "$root/contracts/RELEASE.json" \
