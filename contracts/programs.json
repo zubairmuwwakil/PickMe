@@ -1,5 +1,5 @@
 {
-  "programsVersion": "1.4",
+  "programsVersion": "1.5",
   "_provenance": "Defaults are DISCLOSED ASSUMPTIONS, not issuer facts. Each basis names its source and says what it assumes. Owner state overrides any entry per programId; see docs/plans/2026-08-20-catalogue-scalability-program-design.md §3.1.",
   "_method": "One rule, applied uniformly, so the numbers mean the same thing on every card. centsPerPoint is the best POSTED FIXED conversion the program publishes — a rate, never a forecast of what a redemption might be worth. floorCentsPerPoint is the rate obtainable with nothing but the card: an unconditional statement credit or cash-out, no qualifying purchase and no second account. It is OMITTED where the program has no cash redemption at all, because Scorer falls back to centsPerPoint and a fabricated floor would pass an assumption off as a guarantee. aspirationalCentsPerPoint carries a published benchmark ONLY where the benchmark exceeds the ranked value; it is a ceiling for disclosing upside breakevens and is never used for ranking. Every programId the catalogue declares is valued here, so CatalogueIntegrityTests.knownUnvaluedPrograms is empty and its ratchet is set to zero.",
   "defaults": {

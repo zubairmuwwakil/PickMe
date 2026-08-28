@@ -83,7 +83,7 @@ final class SeedLoaderTests: XCTestCase {
 extension SeedLoaderTests {
     func testLoadsProgramDefaults() throws {
         let programs = try SeedLoader.loadPrograms()
-        XCTAssertEqual(programs.programsVersion, "1.4")
+        XCTAssertEqual(programs.programsVersion, "1.5")
         guard case .cashback(let cash) = try XCTUnwrap(programs.defaults["cashback"])
         else { return XCTFail("expected .cashback") }
         XCTAssertEqual(cash.cadPerDollar, 1.0)

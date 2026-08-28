@@ -2,6 +2,54 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-27 — card-catalogue 2.7 & programs 1.5: merchantCredit, closed-loop acceptance, and a schema in the digest
+
+Two new mechanisms and one long-standing schema gap. **Additive throughout — no card
+declares either mechanism yet, so every one of the 133 card records keeps its bytes and no
+card's score changes.** The only edit to `card-catalogue.json` in this release is its
+`catalogueVersion` string; `programs.json` likewise moves only its `programsVersion`.
+
+- **`merchantCredit` — a valuation model for merchant-locked store credit.** Added to
+  `programs.schema.json` *alongside* `ctMoney`, deliberately not folded into it: `ctMoney` is a
+  published wire-format name inside a digest-pinned release, and a published name is a fact
+  rather than an implementation detail. The arithmetic is the same today
+  (`cadPerUnit` × optional usability factor); the models are separate because their *identities*
+  are. `merchantCredit` additionally carries `merchantScope`, which is disclosure only —
+  `Scorer` never dispatches on it. No programme declares `merchantCredit` yet: a brand needs a
+  published face value read from the issuer's own site (D3) before it can, and
+  `CatalogueIntegrityTests.testEveryProgramDefaultKeyIsARealCatalogueProgramId` refuses a
+  valuation no card declares. Enum value, valuation and cards land together, per brand, once
+  that research exists.
+- **`noRewards` — the schema variant that had been missing since 2.4.** `programs.json` has
+  carried a `noRewards` valuation since 2.4 while its own schema had no variant for it, so the
+  file did not validate against the schema shipped beside it. Nothing checked, which is why the
+  drift shipped and survived two releases. Closed here, along with the gate that would have
+  caught it: `ProgramsSchemaTests` now validates `programs.json` against
+  `programs.schema.json` on every run.
+- **`privateLabel` and the `acceptance` object — a card accepted by a merchant, not by a
+  network.** `card-catalogue.schema.json` gains the `privateLabel` network value and an optional
+  `acceptance` object (`{ scope: "openLoop" | "closedLoop", merchants: [...] }`), plus an
+  `if/then` invariant tying `privateLabel` to `closedLoop`. A closed-loop card is guarded on
+  `merchantBrand` where an open-loop card is guarded on `network`, and a merchant refusal raises
+  the new `merchantNotAccepted` warning rather than reusing `networkNotAccepted` — a store card
+  declined at a gas station was never a network problem. An unknown merchant excludes the card:
+  silence beats recommending a card that gets declined at the till. 0 of 133 cards declare
+  `privateLabel` or an `acceptance` object today.
+- **`schema/programs.schema.json` joins the release digest.** It had never been in
+  `RELEASE.json`'s file list, so a change to it moved no digest and no consumer could detect it
+  — a real hole in a release whose entire content *is* a schema change. `merchant-pack.schema.json`
+  stays out on purpose: the pack carries its own `packVersion` and changes on a different cadence.
+  Consumers must vendor `schema/programs.schema.json` from 2.7 onward.
+
+**On the version number.** `card-contracts@2.5` and `@2.6` were stamped locally but never
+published; the last release on GitHub is `@2.4`. Rather than reuse either id for different
+bytes — a published id must never describe two byte-sets — this work takes the next free
+number. **2.7 is therefore the first published release since 2.4 and carries 2.5's and 2.6's
+content as well**: the co-brand reward currencies, the resolved annual fees, the eight promoted
+US cards and the minted drafts described in the two entries below.
+
+Verified at 2.7: Swift 296 tests green, Kotlin 58 green, `check-id-permanence.sh` green.
+
 ## 2026-08-27 — card-catalogue 2.6 & programs 1.4: high-ROI US catalogue and scoring expansion
 
 - **Prompt 2 Architectural Rulings**:

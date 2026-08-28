@@ -40,6 +40,13 @@ FILES=(
   "schema/card-catalogue.schema.json"
   "schema/benefits-catalogue.schema.json"
   "schema/engine-fixtures.schema.json"
+  # programs.json shipped in the digest from the start; its schema did not, so a
+  # change to the schema alone moved no digest and no consumer could detect it.
+  # Added for 2.7, the first release whose whole point is a schema change
+  # (merchantCredit, noRewards). merchant-pack.schema.json stays OUT on purpose:
+  # the pack carries its own packVersion and changes on a different cadence — see
+  # the note in MoneyTalks' src/lib/contracts/contracts.test.ts.
+  "schema/programs.schema.json"
 )
 
 sha256_of() {
