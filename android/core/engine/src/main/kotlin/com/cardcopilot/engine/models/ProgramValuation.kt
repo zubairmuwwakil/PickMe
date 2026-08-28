@@ -56,6 +56,29 @@ data class CtMoneyValuation(
 ) : ProgramValuation()
 
 /**
+ * Merchant-locked store credit — a Gap Inc. point, a Sam's Cash dollar, a cruise line's onboard
+ * credit. Face value times an optional usability discount, on the same stated ground as CT
+ * Money: a dollar that spends only in one retailer's stores is not a dollar.
+ *
+ * Declared ALONGSIDE [CtMoneyValuation], not replacing it. The arithmetic is identical, but
+ * `ctMoney` is a published model name inside a digest-pinned release. Accepting two names for
+ * one class here would need a hand-written JsonContentPolymorphicSerializer, because
+ * `classDiscriminator` maps exactly one [SerialName] per subclass. See the Swift twin.
+ *
+ * [merchantScope] is disclosure, not dispatch — `Scorer` never reads it.
+ */
+@Serializable
+@SerialName("merchantCredit")
+data class MerchantCreditValuation(
+    val cadPerUnit: Double,
+    val optionalUsabilityFactor: Double,
+    val usabilityFactorApplied: Boolean,
+    val merchantScope: List<String>,
+    /** Where the number came from and which parts of it are assumptions. See the Swift twin. */
+    val basis: String? = null
+) : ProgramValuation()
+
+/**
  * A card with no rewards programme at all — MBNA True Line, Capital One Guaranteed Secured.
  *
  * Carries only its disclosure, because there is no number to configure: zero is not an assumption

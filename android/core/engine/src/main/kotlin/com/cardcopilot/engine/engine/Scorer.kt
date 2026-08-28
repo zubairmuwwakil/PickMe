@@ -10,6 +10,7 @@ import com.cardcopilot.engine.models.EarnRule
 import com.cardcopilot.engine.models.CashBackValuation
 import com.cardcopilot.engine.models.CroValuation
 import com.cardcopilot.engine.models.CtMoneyValuation
+import com.cardcopilot.engine.models.MerchantCreditValuation
 import com.cardcopilot.engine.models.NoRewardsValuation
 import com.cardcopilot.engine.models.OwnerState
 import com.cardcopilot.engine.models.PointValuation
@@ -234,6 +235,9 @@ object Scorer {
             null -> null
             is PointValuation -> units * cents(valuation) / 100.0
             is CtMoneyValuation ->
+                units * valuation.cadPerUnit *
+                    (if (valuation.usabilityFactorApplied) valuation.optionalUsabilityFactor else 1.0)
+            is MerchantCreditValuation ->
                 units * valuation.cadPerUnit *
                     (if (valuation.usabilityFactorApplied) valuation.optionalUsabilityFactor else 1.0)
             is CroValuation -> units * (
