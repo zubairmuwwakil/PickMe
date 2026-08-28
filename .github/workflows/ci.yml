@@ -113,7 +113,11 @@ jobs:
 
       - uses: android-actions/setup-android@v4
         with:
-          packages: 'platforms;android-37 build-tools;36.0.0'
+          # The platform package is 'android-37.0', not 'android-37' — sdkmanager publishes
+          # API 37 with a point release in the id, and the bare name resolves to nothing:
+          # `Failed to find package 'platforms;android-37'`, sdkmanager exit 1, job dead
+          # before Gradle runs. `sdkmanager --list` is the authority on these ids.
+          packages: 'platforms;android-37.0 build-tools;36.0.0'
           log-accepted-android-sdk-licenses: false
 
       - name: Test store and assemble debug APK
