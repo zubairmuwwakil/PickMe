@@ -310,23 +310,3 @@ struct WalletSetupView: View {
         )
     }
 }
-
-private extension TangerineMoneyBackCategory {
-    var setupLabel: LocalizedStringKey {
-        switch self {
-        case .grocery: "Grocery"
-        case .dining: "Restaurants"
-        case .gasStation: "Gas"
-        case .entertainment: "Entertainment"
-        case .furniture: "Furniture"
-        case .lodging: "Hotel-Motel"
-        case .drugStore: "Drug Store"
-        case .recurring: "Recurring Bill Payments"
-        case .homeImprovement: "Home Improvement"
-        case .transit: "Public Transportation and Parking"
-        case .eGames: "E-Games"
-        case .fitness: "Fitness and Sports Clubs"
-        case .foreignCurrency: "Foreign Currency Spend"
-        }
-    }
-}
