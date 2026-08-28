@@ -20,7 +20,14 @@ command -v gh >/dev/null 2>&1 || { echo "check-id-permanence: gh CLI not found" 
 
 release="${1:-}"
 if [ -z "$release" ]; then
-  release="$(gh release list --repo "$REPO" --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null || true)"
+  # Must be the newest *card-contracts* release, not the newest release outright. This repo also
+  # publishes raw-snapshots@<date> tags, whose only asset is a licensed source tarball with no
+  # card-catalogue.json in it — and on 2026-08-27 one of those became the latest release, so the
+  # bare `--limit 1` here picked it, the download below failed, and this gate went red on main
+  # for a reason that had nothing to do with card ids. Filter by tag prefix instead; gh lists
+  # newest first, so the first match is the one to compare against.
+  release="$(gh release list --repo "$REPO" --limit 100 --json tagName \
+    -q '[.[].tagName | select(startswith("card-contracts@"))][0]' 2>/dev/null || true)"
 fi
 
 if [ -z "$release" ]; then
