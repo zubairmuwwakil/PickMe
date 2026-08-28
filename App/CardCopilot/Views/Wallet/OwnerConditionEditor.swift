@@ -58,7 +58,7 @@ struct OwnerConditionEditor: View {
             if let condition = WalletConditions.condition(id) {
                 switch condition.answerKind {
                 case .boolean: booleanRow(id, condition)
-                case .categorySelection: categoryRows(condition)
+                case .categorySelection: categoryRows(id, condition)
                 }
             }
         }
@@ -91,9 +91,9 @@ struct OwnerConditionEditor: View {
     }
 
     @ViewBuilder
-    private func categoryRows(_ condition: OwnerCondition) -> some View {
+    private func categoryRows(_ id: String, _ condition: OwnerCondition) -> some View {
         let limit = condition.maxSelections ?? 3
-        if let detail = condition.detail {
+        if let detail = WalletConditions.detail(for: id) {
             Text(detail).font(.footnote).foregroundStyle(.secondary)
         }
         ForEach(TangerineMoneyBackCategory.allCases, id: \.rawValue) { category in
