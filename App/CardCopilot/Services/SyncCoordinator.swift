@@ -80,9 +80,43 @@ public final class SyncCoordinator {
         isSyncing = true
         defer { isSyncing = false }
 
+        let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+        return await performSync(ownerState: ownerState, catalogue: catalogue,
+                                 userID: userID, client: client)
+    }
+
+    /// The sync body, with account gating already resolved by the caller.
+    ///
+    /// Split out from `syncCapsSilently` because the guards above read `Clerk.shared`, which a
+    /// test cannot populate — so the property this method exists to hold, that one job's failure
+    /// never cancels the others, was unreachable by any test. It is the property that matters
+    /// most here and the one that was silently violated.
+    func performSync(
+        ownerState: OwnerState,
+        catalogue: Catalogue,
+        userID: String,
+        client: MoneyTalksAPIClient
+    ) async -> OwnerStateSyncResult? {
         do {
-            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
-            try await flushQueuedOwnerState(forUserID: userID, using: client)
+            var warnings: [String] = []
+
+            // Each durable queue is an INDEPENDENT job. A refused owner state must not cancel
+            // caps, feedback, card requests or wallet captures — but it did, because this call
+            // sat unguarded at the top of the do-block while the card-request flush below was
+            // wrapped. card-contracts@2.8 turned that asymmetry into a total sync outage: the
+            // hub's strict cardState schema 400'd every payload carrying the new
+            // CardState.flags, and a 400 is not a status a client retries out of, so the outage
+            // recurred on every attempt rather than clearing itself.
+            //
+            // The entry is deliberately left queued. A 4xx here is frequently the SERVER's bug —
+            // this one was — and discarding the payload would destroy precisely the wallets a
+            // server-side fix goes on to recover.
+            do {
+                try await flushQueuedOwnerState(forUserID: userID, using: client)
+            } catch {
+                warnings.append("Your wallet could not be uploaded yet.")
+            }
+
             let result = try await OwnerStateSyncService(client: client).sync(ownerState: ownerState, catalogue: catalogue)
 
             walletFeedback = result.feedback
@@ -94,7 +128,6 @@ public final class SyncCoordinator {
             lastSyncedAt = result.lastSyncedAt
             syncMetadataStore.save(lastSyncedAt: result.lastSyncedAt, forUserID: userID)
 
-            var warnings: [String] = []
             if result.installationRefreshError != nil {
                 warnings.append("Connected Wallet tokens could not be refreshed.")
             }
