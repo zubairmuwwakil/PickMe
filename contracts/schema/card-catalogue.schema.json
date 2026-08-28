@@ -201,9 +201,13 @@
             "amex",
             "visa",
             "mastercard",
-            "discover"
+            "discover",
+            "privateLabel"
           ],
-          "description": "Network enum. A purchase's acceptedNetworks must contain this or Scorer excludes the card outright (Warning.networkNotAccepted). `discover` added for the US catalogue; no CA card in this catalogue uses it yet."
+          "description": "Network enum. A purchase's acceptedNetworks must contain this or Scorer excludes the card outright (Warning.networkNotAccepted). `discover` added for the US catalogue; no CA card in this catalogue uses it yet. `privateLabel` means the card runs on NO network \u2014 a store card accepted only by its own merchant. It is never a member of a purchase's acceptedNetworks, so Scorer would exclude such a card everywhere; the paired `acceptance` object is what makes it scoreable, and the allOf below makes the pair inseparable."
+        },
+        "acceptance": {
+          "$ref": "#/$defs/acceptance"
         },
         "kind": {
           "enum": [
@@ -300,6 +304,111 @@
           "type": "string",
           "format": "date",
           "description": "Optional. The date the product stopped being available \u2014 card-level, distinct from earnRule.effectiveTo, which closes one rule's window. Scoring is dated, not boolean: Scorer excludes a withdrawn card only for an asOf after this date, so a historical query still scores the card exactly as it scored at the time. A withdrawn card without this date is excluded on every date."
+        }
+      },
+      "allOf": [
+        {
+          "$comment": "privateLabel implies closed-loop acceptance. A card that runs on no network and does not also say where it IS accepted is excluded everywhere by Scorer \u2014 a safe failure, but a useless record. Each `if` carries its own `required`, without which the `if` is vacuously true for a card that omits the key and the clause enforces nothing.",
+          "if": {
+            "properties": {
+              "network": {
+                "const": "privateLabel"
+              }
+            },
+            "required": [
+              "network"
+            ]
+          },
+          "then": {
+            "required": [
+              "acceptance"
+            ],
+            "properties": {
+              "acceptance": {
+                "properties": {
+                  "scope": {
+                    "const": "closedLoop"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$comment": "And the converse: closed-loop acceptance implies privateLabel. Declared on a real network it would be a restriction Scorer's openLoop branch silently ignores \u2014 a record that states a limit the engine does not enforce.",
+          "if": {
+            "properties": {
+              "acceptance": {
+                "properties": {
+                  "scope": {
+                    "const": "closedLoop"
+                  }
+                },
+                "required": [
+                  "scope"
+                ]
+              }
+            },
+            "required": [
+              "acceptance"
+            ]
+          },
+          "then": {
+            "properties": {
+              "network": {
+                "const": "privateLabel"
+              }
+            }
+          }
+        },
+        {
+          "$comment": "acceptance is never spelled openLoop. Absence already means openLoop \u2014 Scorer coalesces \u2014 and an explicit openLoop record would be forced to carry a merchants array that no code path reads, i.e. a stated restriction that is not one. AcceptanceScope keeps the case in Swift and Kotlin as that coalescing default; data may not use it. Together with the two clauses above this reads as one biconditional: network privateLabel <-> acceptance present <-> scope closedLoop.",
+          "if": {
+            "required": [
+              "acceptance"
+            ]
+          },
+          "then": {
+            "properties": {
+              "acceptance": {
+                "properties": {
+                  "scope": {
+                    "const": "closedLoop"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "acceptance": {
+      "type": "object",
+      "description": "How this card is accepted. ABSENT means openLoop, which is every card up to card-contracts@2.4 \u2014 so a pre-2.5 catalogue validates unchanged and no existing record moves a byte. Scorer switches on it: openLoop guards on network, closedLoop guards on the purchase's merchantBrand, and an unresolved merchantBrand excludes rather than admits, because silence beats recommending a card that is declined at the till.",
+      "required": [
+        "scope",
+        "merchants"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "properties": {
+        "scope": {
+          "enum": [
+            "openLoop",
+            "closedLoop"
+          ],
+          "description": "Mirrors Swift/Kotlin AcceptanceScope. Data may only ever say `closedLoop` \u2014 see cardProduct.allOf for why openLoop is unspellable here despite being a legal enum value in code."
+        },
+        "merchants": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          "description": "Lowercase kebab-case merchant tokens \u2014 the same convention RuleMatcher matches merchantInclude against, pinned by CatalogueIntegrityTests.testMerchantBrandTokensAreLowercaseKebabCase. A token that cannot match is a card that can never be picked anywhere."
         }
       }
     },
