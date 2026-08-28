@@ -1,7 +1,10 @@
 package com.cardcopilot.engine
 
 import com.cardcopilot.engine.engine.RuleMatcher
+import com.cardcopilot.engine.engine.RuleResolution
+import com.cardcopilot.engine.loading.SeedLoader
 import com.cardcopilot.engine.models.CardState
+import com.cardcopilot.engine.models.PurchaseContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -23,6 +26,30 @@ class OwnerConditionTest {
     @Test
     fun `unanswered condition fails closed`() {
         assertFalse(RuleMatcher.conditionsResolveTrue(listOf("amazonEligiblePrimeLinked"), CardState()))
+    }
+
+    @Test
+    fun `amazon prime unanswered falls to non-prime rule`() {
+        val card = requireNotNull(SeedLoader.loadCatalogue().cards
+            .firstOrNull { it.cardId == "amazon-ca-rewards-mastercard" })
+        val purchase = PurchaseContext(
+            amountCad = 100.0,
+            category = "other",
+            merchantBrand = "amazon-ca",
+            channel = "online"
+        )
+        val resolution = RuleMatcher.resolve(
+            card,
+            purchase,
+            SeedLoader.loadOwnerState(),
+            "2026-08-20"
+        ) as? RuleResolution.Applied
+
+        assertEquals(
+            "amazon-ca-nonprime-1_5x",
+            resolution?.rule?.ruleId,
+            "unanswered Prime must fail closed without suppressing the 1.5x fallback"
+        )
     }
 
     @Test

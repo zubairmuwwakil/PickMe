@@ -62,6 +62,14 @@ final class RuleMatcherTests: XCTestCase {
         XCTAssertEqual(rule.ruleId, "rogers-base-1_5", "unresolved condition must not enable the 2% rule")
     }
 
+    func testAmazonPrimeUnansweredFallsToNonPrimeRule() {
+        let p = PurchaseContext(amountCad: 100, category: "other",
+                                merchantBrand: "amazon-ca", channel: "online")
+        XCTAssertEqual(appliedRuleId("amazon-ca-rewards-mastercard", p),
+                       "amazon-ca-nonprime-1_5x",
+                       "unanswered Prime must fail closed without suppressing the 1.5x fallback")
+    }
+
     func testCryptoExcludedWhenPlanInactive() {
         let p = PurchaseContext(amountCad: 100, category: "other")
         guard case .cardExcluded = RuleMatcher.resolve(card: card("cryptocom-royal-indigo"),
@@ -140,8 +148,9 @@ final class RuleMatcherTests: XCTestCase {
     /// merchantInclude had zero coverage before this — the display-cased catalogue tokens that
     /// could never match (see CatalogueIntegrityTests.testMerchantBrandTokensAreLowercaseKebabCase)
     /// went unnoticed for exactly that reason. Exercises RuleMatcher.matches directly, since every
-    /// merchantInclude rule presently in the catalogue is gated off live scoring by scoredInV1 or
-    /// requires and so unreachable via RuleMatcher.resolve.
+    /// merchantInclude rules were gated off live scoring when this regression was added; keeping
+    /// the predicate-level pin makes token matching failures local instead of looking like an
+    /// Amazon owner-condition regression.
     func testMerchantIncludeMatchesListedBrand() {
         var predicate = Predicate()
         predicate.merchantInclude = ["sobeys", "safeway"]

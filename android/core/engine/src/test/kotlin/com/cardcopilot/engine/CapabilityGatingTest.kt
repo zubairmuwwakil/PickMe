@@ -280,9 +280,7 @@ class CapabilityGatingTest {
     @Test
     fun noRuleIsDisabledWithoutAMachineReadableReason() {
         val allowed = setOf(
-            "scotia-gold-gas-transit-3x", // spec §9.1 — blocker unconfirmed
-            "amazon-ca-prime-2_5x", // unblocked by CardState.flags, next plan
-            "amazon-ca-nonprime-1_5x"
+            "scotia-gold-gas-transit-3x" // spec §9.1 — blocker unconfirmed
         )
         val bare = SeedLoader.loadCatalogue().cards
             .flatMap { it.earnRules }

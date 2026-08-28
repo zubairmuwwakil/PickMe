@@ -2,6 +2,31 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-28 — card-catalogue 2.10 & fixtures 1.5: Amazon's Prime ladder becomes payable
+
+**Intentional behaviour activation.** `amazonEligiblePrimeLinked` became answerable in 2.8, but
+both Amazon.ca merchant rules retained `scoredInV1: false`; 2.9 correctly pinned that two-gate
+state rather than pretending the advertised earn had gone live. This release removes the second
+gate now that both engines resolve the owner condition from `CardState.flags`. The Amazon card's
+published rule bytes therefore change deliberately: eligible Amazon.ca and Whole Foods purchases
+score at 2.5x with linked Prime and 1.5x otherwise. **MINOR, 2.9 → 2.10.**
+
+- Fixtures move 1.4 → 1.5 and 31 → 32 cases. The 2.9 transitional
+  `amazon-prime-flag-answered-but-rule-unscored-100` case is superseded by the pair it said it was
+  written to become once the gate lifted:
+  - `amazon-prime-linked-fires-2_5x`: 250 points × the posted 1.0¢ = $2.50, beating the
+    Wealthsimple default's $2.00 by $0.50 / 0.50pp and clearing both switch floors exactly.
+  - `amazon-prime-unanswered-fails-closed`: no flag skips 2.5x; the Amazon card earns 150 points ×
+    1.0¢ = $1.50 on its non-Prime rule, while the realistic all-network wallet remains on
+    Wealthsimple at $2.00 with Cobalt second at $1.80. If 2.5x guessed true, the winner flips.
+- The first 28 fixture expectations remain byte-for-byte unchanged. The two 2.9 Rogers flag cases
+  are also unchanged.
+- Swift and Kotlin add a card-level `RuleMatcher.resolve` assertion for the fact the whole-wallet
+  fixture cannot expose in `winnerRule`: unanswered Prime resolves the Amazon card itself to
+  `amazon-ca-nonprime-1_5x`, not its 1x base.
+- The fixture purchases retain Amazon.ca's real all-network acceptance. They do not manufacture a
+  Mastercard-only checkout merely to force the 1.5x card into the winner slot.
+
 ## 2026-08-28 — card-catalogue 2.9 & fixtures 1.4: the flags representation gets tested
 
 **Additive throughout.** No card record's bytes change, no existing fixture expectation changes,

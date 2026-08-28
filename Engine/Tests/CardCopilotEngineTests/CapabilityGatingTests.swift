@@ -172,9 +172,6 @@ extension CapabilityGatingTests {
     func testNoRuleIsDisabledWithoutAMachineReadableReason() throws {
         let allowed: Set<String> = [
             "scotia-gold-gas-transit-3x",      // spec §9.1 — blocker unconfirmed
-            "amazon-ca-prime-2_5x",            // unblocked by CardState.flags, next plan
-            "amazon-ca-nonprime-1_5x",
-
         ]
         let allRules: [EarnRule] = try SeedLoader.loadCatalogue().cards.flatMap(\.earnRules)
         let undeclared: [EarnRule] = allRules.filter { rule in
