@@ -71,7 +71,7 @@ final class FixtureHarnessTests: XCTestCase {
                                                   withExtension: "json",
                                                   subdirectory: "Fixtures"))
         let file = try JSONDecoder().decode(FixtureFile.self, from: Data(contentsOf: url))
-        XCTAssertEqual(file.cases.count, 28)
+        XCTAssertEqual(file.cases.count, 31)
         XCTAssertEqual(Set(file.cases.map(\.caseId)).count, file.cases.count, "duplicate caseId")
 
         let catalogue = try SeedLoader.loadCatalogue()

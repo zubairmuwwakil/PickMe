@@ -40,6 +40,16 @@ PAIRS = [
     ("benefits-catalogue.json", "benefits-catalogue.schema.json"),
     ("candidate-catalogue.json", "candidate-catalogue.schema.json"),
     ("owner-conditions.json", "owner-conditions.schema.json"),
+    # engine-fixtures shipped a schema inside the release digest that nothing ever ran. It is
+    # the only thing standing between a typo'd override key and a fixture that silently asserts
+    # against the UNMODIFIED base owner state, because cardStateOverride is
+    # additionalProperties:false.
+    #
+    # programs.json is NOT here yet: programs.schema.json $refs
+    # card-catalogue.schema.json#/$defs/programId, and resolving a cross-file $ref needs a
+    # jsonschema `referencing` registry this script does not build. That schema is also in the
+    # digest and also unrun.
+    ("engine-fixtures.json", "engine-fixtures.schema.json"),
 ]
 
 

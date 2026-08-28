@@ -2,6 +2,52 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-28 — card-catalogue 2.9 & fixtures 1.4: the flags representation gets tested
+
+**Additive throughout.** No card record's bytes change, no existing fixture expectation changes,
+and the schema only gains an optional property. `card-catalogue.json` moves only its
+`catalogueVersion` string — required, because `RELEASE.json` digests the whole file set and a
+published release id must never describe two different sets of bytes. **MINOR, 2.8 → 2.9.**
+
+- **Three new fixture cases, 28 → 31, the first to exercise `CardState.flags` at all.** 2.8 shipped
+  `flags`, wired both fixture harnesses to accept a `flags` override, and then added no case that
+  used one. All four CI jobs were green on a representation nothing executed.
+  - `flags-beat-stale-legacy-mirror-300` pins the **precedence rule**, which until now lived only
+    in a doc comment: the base owner state resolves `rogersEligibleServiceLinked` to `false`, the
+    override sets only `flags`, and `resolvedFlags` must let the newer dictionary overwrite the
+    stale mirror. Reverse the merge order and the case lands on $4.50 instead of $6.00. Every
+    migration off the legacy properties depends on that direction holding.
+  - `flags-explicit-false-fails-closed-300` pins that `false` and absent are **one state at the
+    engine boundary** — `flags[condition] ?? false`. Its expectations are byte-identical to
+    `owner-condition-unresolved-rogers-300` from a different input, which is the assertion: an
+    implementation testing key presence rather than value passes every other case in the file and
+    pays the owner 2% for answering "no".
+  - `amazon-prime-flag-answered-but-rule-unscored-100` — see the correction below.
+- **CORRECTION to the 2.8 entry.** It claimed owners with a linked Prime membership "will begin
+  earning 2.5x at Amazon.ca and Whole Foods instead of 1.5x — a behaviour change, and an intended
+  one". **That did not happen and cannot.** `amazon-ca-prime-2_5x` and `amazon-ca-nonprime-1_5x`
+  both still carry `scoredInV1: false`, and `RuleMatcher.isScheduleLive` drops a rule on that flag
+  *before* `conditionsResolveTrue` is ever consulted. 2.8 made the condition **answerable**; it did
+  not make it **payable**, and there are two gates in series. The new fixture pins the real
+  behaviour and is written to flip — decisively, to a $2.50 win over the default's $2.00 — the day
+  `scoredInV1` is lifted. Lifting it is a behaviour change owed a decision, not a tidy-up.
+- **`engine-fixtures.schema.json` is now actually run.** It shipped inside the release digest and
+  nothing ever validated against it, so its `cardStateOverride: additionalProperties: false` — the
+  one thing standing between a typo'd override key and a fixture that silently asserts against the
+  *unmodified* base owner state — had never fired. Added to `validate-catalogue-schema.py`'s pairs
+  and verified to reject an unknown key. The schema gains an optional `flags` object; its keys are
+  deliberately unconstrained, because the closed list lives in `owner-conditions.json` and
+  duplicating it would make declaring a condition a two-file edit again.
+- **`programs.schema.json` is still unrun**, for the same reason and one more: it `$ref`s
+  `card-catalogue.schema.json#/$defs/programId`, and resolving a cross-file `$ref` needs a
+  `referencing` registry the script does not build. Recorded here rather than fixed.
+- Fixture harness case-count ratchets moved 28 → 31 in both languages.
+- **MoneyTalks is NOT re-vendored by this release and must not be until its TS twin learns
+  `flags`.** `src/engine/cards-twin/RuleMatcher.ts` still switches on hardcoded condition names and
+  has no `resolvedFlags`; its fixture harness field-copies specific override keys and would ignore
+  a `flags` override entirely, scoring the three new cases against the unmodified base state. The
+  hub stays on `card-contracts@2.8`, where it is correct, until that lands.
+
 ## 2026-08-28 — card-catalogue 2.8, owner-conditions 1.0 & fixtures 1.3: owner conditions become data
 
 **Additive throughout.** No card record's bytes change; `card-catalogue.json` moves only its
