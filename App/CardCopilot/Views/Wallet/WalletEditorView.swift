@@ -130,6 +130,7 @@ struct WalletEditorView: View {
             HStack(spacing: 12) {
                 CardArtView(cardId: card.cardId, officialName: card.officialName, isHero: false)
                     .frame(width: 52)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(card.officialName)
                         .font(.subheadline.weight(.medium))

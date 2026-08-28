@@ -2548,7 +2548,7 @@ Done button can no longer discard work because there is no staged copy to discar
 **Files:**
 - Modify: `App/CardCopilot/Localizable.xcstrings`
 
-- [ ] **Step 1: Build to populate the string catalogue**
+- [x] **Step 1: Build to populate the string catalogue**
 
 ```bash
 SIM_UDID=$(xcrun simctl list devices available | grep -m1 -o "[0-9A-F-]\{36\}")
@@ -2570,11 +2570,11 @@ for k in sorted(new): print(' ', k)
 "
 ```
 
-- [ ] **Step 2: Add fr-CA translations**
+- [x] **Step 2: Add fr-CA translations**
 
 Every new key needs an `fr-CA` localization. The app ships en + fr-CA across 612 strings; a Canadian product must not ask French-Canadian users an English question. Add each `ownerCondition.<id>.prompt` and `.detail` key explicitly — those fall back to English registry text if absent, so a missing translation is silent rather than a build error.
 
-- [ ] **Step 3: Real-device or simulator pass**
+- [x] **Step 3: Real-device or simulator pass**
 
 Verify by hand, in both light and dark:
 
