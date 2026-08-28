@@ -48,6 +48,9 @@
         },
         {
           "$ref": "#/$defs/cro"
+        },
+        {
+          "$ref": "#/$defs/noRewards"
         }
       ]
     },
@@ -157,6 +160,26 @@
           "$ref": "#/$defs/basis"
         }
       }
+    },
+    "noRewards": {
+      "type": "object",
+      "required": [
+        "model",
+        "basis"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "properties": {
+        "model": {
+          "const": "noRewards"
+        },
+        "basis": {
+          "$ref": "#/$defs/basis"
+        }
+      },
+      "description": "A card with no rewards programme at all. Carries no number because there is nothing to configure: Scorer.valueCad answers 0.0 and the card is SCORED, ranking last on merit. Distinct from a MISSING valuation, which answers nil and excludes the card entirely — \"we do not know what this is worth\" must never rank as \"worth nothing\"."
     },
     "cro": {
       "title": "cro — a crypto reward whose CAD value is fixed only on sale",
