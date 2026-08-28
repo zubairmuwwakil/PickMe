@@ -1,0 +1,5 @@
+// Single source of truth for every shipping bundle.
+// Increase APP_BUILD_NUMBER for each App Store Connect upload.
+// Change APP_MARKETING_VERSION only when creating a new public release.
+APP_MARKETING_VERSION = 2.0.0
+APP_BUILD_NUMBER = 2
