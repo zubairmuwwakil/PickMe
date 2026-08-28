@@ -30,6 +30,10 @@ public struct WalletCaptureSettingsStore: @unchecked Sendable {
     public func setEnabled(_ enabled: Bool) {
         var value = load(); value.isEnabled = enabled; save(value)
     }
+    public func markConnectionPending(boundUserID: String) {
+        var value = load(); value.isEnabled = true; value.boundUserID = boundUserID
+        value.connectionVerifiedAt = nil; save(value)
+    }
     public func markConnectionVerified(boundUserID: String, at: Date = Date()) {
         var value = load(); value.isEnabled = true; value.boundUserID = boundUserID
         value.connectionVerifiedAt = at; save(value)
@@ -113,5 +117,23 @@ public enum WalletCaptureAccountRouting: Sendable, Equatable {
         guard let credentialBoundUserID else { return .unassigned }
         guard let signedInUserID else { return .boundAccount }
         return signedInUserID == credentialBoundUserID ? .boundAccount : .unassigned
+    }
+}
+
+public struct WalletCaptureDeliveryDecision: Sendable, Equatable {
+    public let accountRouting: WalletCaptureAccountRouting
+    public let canUpload: Bool
+
+    public static func decide(credentialBoundUserID: String?,
+                              connection: WalletCaptureConnectionState,
+                              signedInUserID: String?) -> Self {
+        let routing = WalletCaptureAccountRouting.decide(
+            credentialBoundUserID: credentialBoundUserID,
+            signedInUserID: signedInUserID)
+        let isVerified = credentialBoundUserID.map {
+            connection.connectionVerifiedAt != nil && connection.boundUserID == $0
+        } ?? false
+        return .init(accountRouting: routing,
+                     canUpload: routing == .boundAccount && isVerified)
     }
 }

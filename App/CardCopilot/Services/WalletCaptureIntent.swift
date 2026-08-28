@@ -53,15 +53,13 @@ struct WalletCaptureIntent: AppIntent {
         let diagnostics = try? WalletCaptureDiagnosticsStore(root: root)
         let credential = WalletCaptureCredentialStore().load()
         let connection = WalletCaptureSettingsStore().load()
-        let credentialIsValidated = credential.map {
-            connection.connectionVerifiedAt != nil && connection.boundUserID == $0.boundUserID
-        } ?? false
-        let usableCredential = credentialIsValidated ? credential : nil
         let signedInUserID = await MainActor.run { Clerk.shared.user?.id }
-        let routing = WalletCaptureAccountRouting.decide(credentialBoundUserID: usableCredential?.boundUserID,
-                                                        signedInUserID: signedInUserID)
-        let accountMismatch = usableCredential != nil && routing == .unassigned
-        let uploader = accountMismatch ? nil : usableCredential.flatMap { credential in
+        let delivery = WalletCaptureDeliveryDecision.decide(
+            credentialBoundUserID: credential?.boundUserID,
+            connection: connection,
+            signedInUserID: signedInUserID)
+        let usableCredential = delivery.canUpload ? credential : nil
+        let uploader = usableCredential.flatMap { credential in
             MoneyTalksConfiguration.apiBaseURL.map { WalletCaptureHTTPUploader(baseURL: $0, token: credential.token) }
         }
         let catalogue = try? SeedLoader.loadCatalogue()
@@ -91,7 +89,7 @@ struct WalletCaptureIntent: AppIntent {
             let event = try await coordinator.capture(
                 input,
                 client: client, locale: .current, timezone: .current,
-                unassigned: routing == .unassigned)
+                unassigned: delivery.accountRouting == .unassigned)
             let diagnostic = try? await diagnostics?.record(eventID: event.eventId)
             if !event.isMeaningful {
                 try? await runLogs?.finish(runID: run.runID, outcome: "mappingIncomplete", event: event,
@@ -110,7 +108,7 @@ struct WalletCaptureIntent: AppIntent {
                                         outcome: diagnostic?.deliveryState == .accepted || diagnostic?.deliveryState == .duplicate
                                             ? "savedAndDelivered" : "savedLocally",
                                         event: event, diagnostic: diagnostic)
-            return .result(dialog: routing == .unassigned
+            return .result(dialog: delivery.accountRouting == .unassigned
                 ? "Purchase saved on this iPhone. Connect Wallet Capture in PickMe to sync it."
                 : "Purchase received and saved securely.")
         } catch {

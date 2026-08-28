@@ -287,6 +287,53 @@ final class WalletCaptureTests: XCTestCase {
         XCTAssertEqual(WalletCaptureAccountRouting.decide(credentialBoundUserID: nil, signedInUserID: "a"), .unassigned)
     }
 
+    func testUnverifiedCredentialKeepsKnownAccountButWaitsToUpload() {
+        let decision = WalletCaptureDeliveryDecision.decide(
+            credentialBoundUserID: "a",
+            connection: .init(isEnabled: true, connectionVerifiedAt: nil, boundUserID: "a"),
+            signedInUserID: "a")
+
+        XCTAssertEqual(decision.accountRouting, .boundAccount)
+        XCTAssertFalse(decision.canUpload)
+    }
+
+    func testVerifiedCredentialUploadsOnlyForItsBoundAccount() {
+        let verified = WalletCaptureConnectionState(
+            isEnabled: true, connectionVerifiedAt: Date(), boundUserID: "a")
+
+        let matching = WalletCaptureDeliveryDecision.decide(
+            credentialBoundUserID: "a", connection: verified, signedInUserID: "a")
+        XCTAssertEqual(matching.accountRouting, .boundAccount)
+        XCTAssertTrue(matching.canUpload)
+
+        let different = WalletCaptureDeliveryDecision.decide(
+            credentialBoundUserID: "a", connection: verified, signedInUserID: "b")
+        XCTAssertEqual(different.accountRouting, .unassigned)
+        XCTAssertFalse(different.canUpload)
+    }
+
+    func testRelinkRequiresAccountChoiceForPreviouslyAssignedCaptures() async throws {
+        let (root, outbox, _) = try makeStores(); defer { try? FileManager.default.removeItem(at: root) }
+        let pending = queued(eventID: "pending")
+        var inflight = queued(eventID: "inflight")
+        inflight.deliveryState = .inflight
+        try await outbox.persist(pending, to: .pending)
+        try await outbox.persist(inflight, to: .inflight)
+
+        try await outbox.requireAccountChoiceForAssignedCaptures()
+
+        let remainingPending = try await outbox.captures(in: .pending)
+        let remainingInflight = try await outbox.captures(in: .inflight)
+        XCTAssertTrue(remainingPending.isEmpty)
+        XCTAssertTrue(remainingInflight.isEmpty)
+        let unassigned = try await outbox.captures(in: .unassigned)
+        XCTAssertEqual(Set(unassigned.map(\.event.eventId)), Set(["pending", "inflight"]))
+        XCTAssertTrue(unassigned.allSatisfy { capture in
+            capture.deliveryState == .pending &&
+                capture.timeline.contains { $0.stage == "accountChoiceRequiredAfterRelink" }
+        })
+    }
+
     func testPaymentMethodEqualToNameIsRemovedButDistinctValueSurvives() async throws {
         let (root, outbox, _) = try makeStores(); defer { try? FileManager.default.removeItem(at: root) }
         let coordinator = WalletCaptureCoordinator(outbox: outbox, uploader: nil)

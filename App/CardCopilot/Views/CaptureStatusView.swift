@@ -245,7 +245,7 @@ struct CaptureStatusView: View {
         await refresh()
     }
     private func assignUnassigned() async {
-        do { try await onAssignUnassigned(); actionMessage = "Saved captures assigned to this account." }
+        do { try await onAssignUnassigned(); actionMessage = "Saved captures assigned to this account and queued for sync." }
         catch { actionMessage = error.localizedDescription }
         await refresh()
     }

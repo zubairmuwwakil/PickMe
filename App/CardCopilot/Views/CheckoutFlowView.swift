@@ -270,7 +270,7 @@ struct CheckoutFlowView: View {
             ValuationSandboxView()
         case .sync:
             SyncCenterView(isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
-                           onSync: { Task { await syncFromUI() } },
+                           onSync: { await syncFromUI() },
                            boundAccountLabel: captureBoundAccountLabel,
                            isCaptureBoundToCurrentAccount:
                                WalletCaptureCredentialStore().load()?.boundUserID == Clerk.shared.user?.id)

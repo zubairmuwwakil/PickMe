@@ -10,7 +10,7 @@ struct SyncCenterView: View {
     @Environment(\.dismiss) private var dismiss
 
     let isSignedIn: Bool
-    let onSync: () -> Void
+    let onSync: () async -> Void
     let boundAccountLabel: String?
     let isCaptureBoundToCurrentAccount: Bool
 
@@ -18,6 +18,7 @@ struct SyncCenterView: View {
     @State private var installationName = "My iPhone"
     @State private var installationWasCreated = false
     @State private var tokenError: String?
+    @State private var connectionNotice: String?
     @State private var isCreatingToken = false
     @State private var isShowingCreateForm = false
     @State private var pendingRevocation: WalletInstallation?
@@ -96,7 +97,7 @@ struct SyncCenterView: View {
                 .font(.headline)
             Text(sync.syncIssue?.message ?? "PickMe could not safely load this account's wallet.")
                 .font(.subheadline).foregroundStyle(.secondary)
-            Button("Retry", action: onSync).buttonStyle(.borderedProminent)
+            Button("Retry") { Task { await onSync() } }.buttonStyle(.borderedProminent)
         }
         .padding(18)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
@@ -121,20 +122,25 @@ struct SyncCenterView: View {
                     .font(.subheadline)
                     .foregroundStyle(syncIssue.kind == .warning ? .orange : .red)
                 }
-                Button(sync.isSyncing ? "Syncing…" : "Sync now", action: onSync).buttonStyle(.borderedProminent).disabled(sync.isSyncing)
+                Button(sync.isSyncing ? "Syncing…" : "Sync now") { Task { await onSync() } }
+                    .buttonStyle(.borderedProminent).disabled(sync.isSyncing)
             }.padding(18).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
             installationSection
             nativeCaptureStatusSection
             if !sync.walletFeedback.isEmpty {
                 feedbackSection
             }
-        }.task { onSync() }
+        }.task { await onSync() }
     }
 
     private var nativeCaptureStatusSection: some View {
         CaptureStatusView(boundAccountLabel: boundAccountLabel,
             canAssignUnassigned: isCaptureBoundToCurrentAccount,
-            onRetry: { onSync() }, onTestConnection: { await sync.testWalletCaptureConnection() },
+            onRetry: { await onSync() }, onTestConnection: {
+                let result = await sync.testWalletCaptureConnection()
+                if result.isConnected { connectionNotice = nil }
+                return result
+            },
             onAssignUnassigned: { try await sync.assignUnassignedCaptures() },
             onDeleteUnassigned: { try await sync.deleteUnassignedCaptures() },
             onDisable: { delete in try await sync.disableWalletCapture(deleteUnsent: delete) },
@@ -255,11 +261,11 @@ struct SyncCenterView: View {
             } else if sync.syncIssue != nil && activeInstallations.isEmpty && !hasLocalCredential {
                 Text("PickMe could not verify whether this account already has a token. Retry sync before creating another one.")
                     .font(.footnote).foregroundStyle(.secondary)
-                Button("Retry token check", action: onSync).buttonStyle(.bordered)
+                Button("Retry token check") { Task { await onSync() } }.buttonStyle(.bordered)
             } else if hasLocalCredential && isCaptureBoundToCurrentAccount && !isShowingCreateForm {
-                Label("Connected securely", systemImage: "checkmark.shield.fill")
-                    .font(.subheadline.weight(.semibold)).foregroundStyle(.green)
-                Text("The write-only installation credential is protected on this iPhone. It is not copied into Shortcuts or displayed on screen.")
+                Label("Connection saved on this iPhone", systemImage: "lock.shield.fill")
+                    .font(.subheadline.weight(.semibold))
+                Text("The write-only installation credential is protected on this iPhone. Verification and delivery status appear below.")
                     .font(.caption).foregroundStyle(.secondary)
                 Link("Open Shortcuts", destination: URL(string: "shortcuts://")!).buttonStyle(.bordered)
                 if !otherActiveInstallations.isEmpty {
@@ -303,17 +309,21 @@ struct SyncCenterView: View {
                 }
             }
             if let tokenError { Text(tokenError).font(.caption).foregroundStyle(.red) }
+            if let connectionNotice { Text(connectionNotice).font(.caption).foregroundStyle(.orange) }
         }.padding(16).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
     }
 
     private func createInstallationToken() async {
-        isCreatingToken = true; tokenError = nil
+        isCreatingToken = true; tokenError = nil; connectionNotice = nil
         defer { isCreatingToken = false }
         do {
-            _ = try await sync.createInstallation(label: installationName)
+            let result = try await sync.createInstallation(label: installationName)
             installationWasCreated = true
             isShowingCreateForm = false
             installationName = "My iPhone"
+            if !result.isConnected {
+                connectionNotice = "Connection saved, but verification failed. \(result.failureReason ?? "Try the secure connection test again.")"
+            }
         }
         catch {
             #if DEBUG

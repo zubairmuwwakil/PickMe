@@ -364,7 +364,7 @@ extension CopilotEnvironment {
         reload(session: session)
     }
 
-    func createInstallation(label: String) async throws -> String {
+    func createInstallation(label: String) async throws -> WalletCaptureConnectionTestResult {
         try await sync.createInstallation(label: label)
     }
 }

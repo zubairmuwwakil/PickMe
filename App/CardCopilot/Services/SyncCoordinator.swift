@@ -141,40 +141,61 @@ public final class SyncCoordinator {
         ownerStateUploadQueue.remove(forUserID: userID)
     }
 
-    public func createInstallation(label: String) async throws -> String {
+    public func createInstallation(label: String) async throws -> WalletCaptureConnectionTestResult {
         guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
               let userID = Clerk.shared.user?.id, readySyncUserID == userID,
               accountOwnerStateStore.activeUserID == userID else {
             throw MoneyTalksAPIError.unavailableConfiguration
         }
+        let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
+            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let outbox = try WalletOutboxStore(root: root)
+        let credentialStore = WalletCaptureCredentialStore()
+        let previous = credentialStore.load()
+        if let previous, previous.boundUserID != userID {
+            // Captures assigned while another account was active need explicit consent before
+            // they can be delivered to this account, even if creating the new connection fails.
+            try await outbox.requireAccountChoiceForAssignedCaptures()
+        }
+
         let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
         let installation = try await client.createWalletInstallation(label: label)
-        guard let token = installation.token else { throw MoneyTalksAPIError.unexpectedResponse(-1) }
-        if let previous = WalletCaptureCredentialStore().load(), previous.installationID != installation.id {
+        guard let token = installation.token else {
+            try? await client.revokeWalletInstallation(id: installation.id)
+            throw MoneyTalksAPIError.unexpectedResponse(-1)
+        }
+        if let previous, previous.installationID != installation.id {
             let revoked = await WalletCaptureHTTPUploader(baseURL: baseURL, token: previous.token).revokeInstallation()
             if !revoked {
                 try? await client.revokeWalletInstallation(id: installation.id)
                 throw MoneyTalksAPIError.unexpectedResponse(409, detail: "The previous Wallet Capture connection could not be safely replaced.")
             }
         }
-        try WalletCaptureCredentialStore().save(.init(token: token,
-                                                      installationID: installation.id,
-                                                      boundUserID: userID))
+        let settings = WalletCaptureSettingsStore()
+        do {
+            try credentialStore.save(.init(token: token,
+                                           installationID: installation.id,
+                                           boundUserID: userID))
+        } catch {
+            // Do not leave a server-side credential active if this iPhone could not retain it.
+            try? await client.revokeWalletInstallation(id: installation.id)
+            credentialStore.remove()
+            settings.clearConnection()
+            throw error
+        }
+        settings.markConnectionPending(boundUserID: userID)
         let captureUploader = WalletCaptureHTTPUploader(baseURL: baseURL, token: token)
-        if await captureUploader.testConnection() {
-            WalletCaptureSettingsStore().markConnectionVerified(boundUserID: userID)
-        }
-        let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
-            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        if let outbox = try? WalletOutboxStore(root: root) {
+        let connectionResult = await captureUploader.testConnectionResult()
+        if connectionResult.isConnected {
+            settings.markConnectionVerified(boundUserID: userID)
             try await outbox.releaseAuthenticationBlocks()
+            await drainWalletCaptures(forUserID: userID)
         }
-        WalletCaptureSettingsStore().setEnabled(true)
-        // The one-time raw token belongs only in Keychain. Do not retain a
-        // second copy in observable UI state for the lifetime of the screen.
+        // The one-time raw token belongs only in Keychain. Return only the safe probe result;
+        // callers have no reason to retain a second copy of the credential in UI state.
         walletInstallations.insert(.init(id: installation.id, label: installation.label,
                                          createdAt: installation.createdAt, revokedAt: installation.revokedAt), at: 0)
-        return token
+        return connectionResult
     }
 
     public func revokeWalletInstallation(id: String) async throws {
@@ -210,7 +231,11 @@ public final class SyncCoordinator {
             diagnostics: diagnostics,
             drainObserver: { summary in await WalletCaptureNotificationCoordinator.publishDrain(summary) },
             isOffline: { WalletCaptureNetworkMonitor.shared.isOffline })
-        await coordinator.drain()
+        let summary = await coordinator.drain()
+        if summary.accepted + summary.duplicates > 0,
+           WalletCaptureSettingsStore().load().connectionVerifiedAt == nil {
+            WalletCaptureSettingsStore().markConnectionVerified(boundUserID: credential.boundUserID)
+        }
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         if let diagnostics, let runLogs = try? WalletCaptureShortcutRunLogStore(documentsDirectory: documents),
            let records = try? await diagnostics.records() {
@@ -232,7 +257,15 @@ public final class SyncCoordinator {
             return .init(isConnected: false, failureReason: "The Inunity server URL is not configured.")
         }
         let result = await WalletCaptureHTTPUploader(baseURL: baseURL, token: credential.token).testConnectionResult()
-        if result.isConnected { WalletCaptureSettingsStore().markConnectionVerified(boundUserID: credential.boundUserID) }
+        if result.isConnected {
+            WalletCaptureSettingsStore().markConnectionVerified(boundUserID: credential.boundUserID)
+            let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
+                ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            if let outbox = try? WalletOutboxStore(root: root) {
+                try? await outbox.releaseAuthenticationBlocks()
+            }
+            await drainWalletCaptures(forUserID: signedInUserID)
+        }
         return result
     }
 
@@ -254,9 +287,6 @@ public final class SyncCoordinator {
             }
         }
         await drainWalletCaptures(forUserID: Clerk.shared.user?.id)
-        if WalletCaptureSettingsStore().load().connectionVerifiedAt == nil {
-            WalletCaptureSettingsStore().markConnectionVerified(boundUserID: signedInUserID)
-        }
     }
 
     public func deleteUnassignedCaptures() async throws {

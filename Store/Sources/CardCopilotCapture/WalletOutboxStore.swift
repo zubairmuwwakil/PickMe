@@ -124,6 +124,20 @@ public actor WalletOutboxStore {
         }
     }
 
+    /// A credential relink to another account must not silently carry captures that were queued
+    /// for the previous account. The owner can explicitly assign or delete them after relinking.
+    public func requireAccountChoiceForAssignedCaptures() throws {
+        for bucket in [WalletOutboxBucket.pending, .inflight] {
+            for var capture in try captures(in: bucket) {
+                capture.deliveryState = .pending
+                capture.nextRetryAt = nil
+                capture.timeline.append(.init(stage: "accountChoiceRequiredAfterRelink"))
+                try persist(capture, to: .unassigned)
+                try FileManager.default.removeItem(at: file(capture.event.eventId, in: bucket))
+            }
+        }
+    }
+
     private func directory(_ bucket: WalletOutboxBucket) -> URL { root.appendingPathComponent(bucket.rawValue, isDirectory: true) }
     private func file(_ id: String, in bucket: WalletOutboxBucket) -> URL { directory(bucket).appendingPathComponent(id + ".json") }
     private func urls(in bucket: WalletOutboxBucket) throws -> [URL] { try FileManager.default.contentsOfDirectory(at: directory(bucket), includingPropertiesForKeys: nil).filter { $0.pathExtension == "json" } }
