@@ -105,7 +105,7 @@
 		9FE3B6D0303617AB00ACCA56 /* CardCopilotWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "CardCopilotWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000003 /* CardCopilot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CardCopilot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000050 /* CardCopilotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CardCopilotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		A3000001 /* Versioning.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Configuration/Versioning.xcconfig; sourceTree = "<group>"; };
+		A3000001 /* Configuration/Versioning.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Configuration/Versioning.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -247,7 +247,7 @@
 		A1000001 = {
 			isa = PBXGroup;
 			children = (
-				A3000001 /* Versioning.xcconfig */,
+				A3000001 /* Configuration/Versioning.xcconfig */,
 				9FE3B6C83036174C00ACCA56 /* CardCopilotWidgetsExtension.entitlements */,
 				9FE3B6B1303616E900ACCA56 /* CardCopilotWidgetsExtensionDebug.entitlements */,
 				A1000004 /* CardCopilot */,
@@ -1306,7 +1306,7 @@
 		};
 		A1000020 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A3000001 /* Versioning.xcconfig */;
+			baseConfigurationReference = A3000001 /* Configuration/Versioning.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;
@@ -1333,7 +1333,7 @@
 		};
 		A1000021 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A3000001 /* Versioning.xcconfig */;
+			baseConfigurationReference = A3000001 /* Configuration/Versioning.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;

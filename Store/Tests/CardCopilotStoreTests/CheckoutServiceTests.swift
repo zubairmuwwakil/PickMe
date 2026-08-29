@@ -145,6 +145,28 @@ final class CheckoutServiceTests: XCTestCase {
 
     // MARK: merchant upsert
 
+    func testMapKitEnrichmentCategorizesAutomaticCaptureWithoutInventingPrediction() throws {
+        let feedback = WalletFeedback(
+            eventId: "wallet-1", capturedAt: Date(), merchantRaw: "Mom's Kitchen (Ajax)",
+            amountMinor: 4743, currency: "CAD", cardRaw: "Cobalt",
+            resolvedCardId: "amex-cobalt", verdict: "unknown", warning: nil,
+            latitude: 43.85, longitude: -79.02)
+        let purchase = try XCTUnwrap(service.ingestAutomaticCaptures(from: [feedback]).first)
+        let poi = merchant("Mom's Kitchen", poi: "MKPOICategoryRestaurant",
+                           id: "mapkit-moms-kitchen")
+        let resolution = try XCTUnwrap(resolveWalletMerchant(
+            capturedName: purchase.displayMerchant, nearbyMerchants: [poi]))
+
+        try service.enrichAutomaticPurchase(purchase, with: resolution)
+
+        XCTAssertNil(purchase.prediction)
+        XCTAssertEqual(purchase.displayCategory, "dining")
+        XCTAssertEqual(purchase.categoryConfidence, .mapKitCategory)
+        XCTAssertEqual(purchase.merchantIdentifier, poi.id)
+        XCTAssertEqual(try service.knownMerchants().first?.poiCategoryRaw,
+                       "MKPOICategoryRestaurant")
+    }
+
     func testRecommendUpsertsMerchantWithoutConfirming() throws {
         _ = try service.recommend(merchant: merchant("Loblaws", poi: "MKPOICategoryFoodMarket",
                                                      id: "poi-loblaws"), amountCad: 20, asOf: asOf)

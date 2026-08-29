@@ -28,7 +28,7 @@ struct YouHubView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 16) {
                 // Section 1: User Profile Header
                 profileCard
 
@@ -42,9 +42,10 @@ struct YouHubView: View {
                 walletAndDataSection
             }
             .padding(.horizontal, 16)
-            .padding(.top, 12)
+            .padding(.top, 4)
             .padding(.bottom, 90) // Inset for floating glass nav
         }
+        .navigationBarTitleDisplayMode(.inline)
         .background(Color(.systemGroupedBackground))
         .confirmationDialog("Sign out of Inunity?", isPresented: $signOutIsPresented, titleVisibility: .visible) {
             Button("Sign Out", role: .destructive) {
@@ -66,7 +67,7 @@ struct YouHubView: View {
     }
 
     private var profileCard: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 14) {
             ZStack {
                 Circle()
                     .fill(
@@ -76,17 +77,17 @@ struct YouHubView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: 54, height: 54)
+                    .frame(width: 48, height: 48)
 
                 Image(systemName: "person.fill")
-                    .font(.system(size: 24, weight: .semibold))
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(.white)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 if isSignedIn {
                     Text(accountEmail ?? "Inunity Account")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
@@ -100,7 +101,7 @@ struct YouHubView: View {
                     }
                 } else {
                     Text("Guest Mode")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
 
                     Text("Offline on-device checkout")
@@ -122,37 +123,37 @@ struct YouHubView: View {
                     Text("Sign In")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 7)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
                         .background(Color.blue, in: Capsule())
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(16)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+                .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 1)
         )
     }
 
     private var syncCard: some View {
         Button { router.push(.sync) } label: {
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(Color.blue.opacity(0.14))
-                        .frame(width: 44, height: 44)
+                        .frame(width: 40, height: 40)
                     Image(systemName: sync.syncIssue == nil ? "checkmark.icloud.fill" : "exclamationmark.icloud.fill")
-                        .font(.system(size: 19, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(sync.syncIssue == nil ? .blue : .orange)
                 }
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text("Sync & Wallet Capture")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
                         .foregroundStyle(.primary)
 
                     if let syncIssue = sync.syncIssue {
@@ -174,15 +175,15 @@ struct YouHubView: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.tertiary)
             }
-            .padding(14)
+            .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Color(.secondarySystemGroupedBackground))
-                    .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+                    .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 1)
             )
         }
         .buttonStyle(.plain)
@@ -190,26 +191,26 @@ struct YouHubView: View {
 
     private var ambientCard: some View {
         Button { router.push(.ambientSetup) } label: {
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(environment.ambientEnabled ? Color.green.opacity(0.14) : Color.gray.opacity(0.14))
-                        .frame(width: 44, height: 44)
+                        .frame(width: 40, height: 40)
                     Image(systemName: environment.ambientEnabled ? "location.circle.fill" : "location.circle")
-                        .font(.system(size: 19, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(environment.ambientEnabled ? .green : .secondary)
                 }
 
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
                         Text("Arrival Alerts")
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
                             .foregroundStyle(.primary)
 
                         Text(environment.ambientEnabled ? "Active" : "Off")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
-                            .padding(.horizontal, 7)
+                            .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(environment.ambientEnabled ? Color(red: 0.13, green: 0.77, blue: 0.37) : Color.gray, in: Capsule())
                     }
@@ -225,27 +226,27 @@ struct YouHubView: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.tertiary)
             }
-            .padding(14)
+            .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Color(.secondarySystemGroupedBackground))
-                    .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+                    .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 1)
             )
         }
         .buttonStyle(.plain)
     }
 
     private var walletAndDataSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("Preferences & Privacy")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .font(.system(size: 17, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
 
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 // Edit Wallet Cards
                 Button { router.push(.walletSetup) } label: {
                     preferenceRow(
@@ -290,9 +291,9 @@ struct YouHubView: View {
         title: LocalizedStringKey,
         subtitle: LocalizedStringKey
     ) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(iconColor.opacity(0.14))
                     .frame(width: 40, height: 40)
                 Image(systemName: icon)
@@ -317,12 +318,12 @@ struct YouHubView: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.tertiary)
         }
-        .padding(14)
+        .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+                .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 1)
         )
     }
 }

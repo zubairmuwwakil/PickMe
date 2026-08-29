@@ -260,6 +260,68 @@ public struct PredictionLog {
         try context.save()
     }
 
+    /// Records an owner-supplied category on a purchase that may not have checkout advice.
+    ///
+    /// Automatic Wallet captures deliberately have no `StoredPrediction`, so rewriting a
+    /// prediction cannot be the only category-edit path. Keep the capture-time category snapshot
+    /// intact and store the owner's later answer as an observation; `displayCategory` already
+    /// prefers that observation, while the original machine evidence remains auditable.
+    public func updateCategory(for purchase: StoredPurchase, to newCategory: String,
+                               correctedAt: Date = Date()) throws {
+        if let prediction = purchase.prediction {
+            try updateCategory(for: prediction, to: newCategory, correctedAt: correctedAt)
+            return
+        }
+
+        let isFirstOwnerCategory = purchase.observation == nil
+        if let observation = purchase.observation {
+            observation.observedCategory = newCategory
+        } else {
+            let observation = StoredObservation(observedCategory: newCategory,
+                                                confirmedAt: correctedAt)
+            context.insert(observation)
+            observation.purchase = purchase
+        }
+        try learnMerchant(from: purchase, category: newCategory,
+                          incrementsConfirmation: isFirstOwnerCategory)
+        try context.save()
+    }
+
+    private func learnMerchant(from purchase: StoredPurchase, category: String,
+                               incrementsConfirmation: Bool) throws {
+        let identifier = purchase.merchantIdentifier
+            ?? purchase.merchantKey
+            ?? merchantActivityKey(name: purchase.displayMerchant, locationIdentifier: nil)
+        let activityKey = merchantActivityKey(name: purchase.displayMerchant,
+                                              locationIdentifier: nil)
+        let merchants = try context.fetch(FetchDescriptor<StoredMerchant>())
+        let existing = merchants.first { merchant in
+            if let identifier, merchant.identifier == identifier { return true }
+            return activityKey != nil
+                && merchantActivityKey(name: merchant.name, locationIdentifier: nil) == activityKey
+        }
+
+        if let existing {
+            if existing.confirmedCategory == category {
+                if incrementsConfirmation { existing.confirmationCount += 1 }
+            } else {
+                existing.confirmedCategory = category
+                existing.confirmationCount = 1
+            }
+            existing.lastSeenAt = purchase.createdAt
+            return
+        }
+
+        context.insert(StoredMerchant(
+            name: purchase.displayMerchant,
+            identifier: identifier,
+            latitude: purchase.merchantLatitude ?? 0,
+            longitude: purchase.merchantLongitude ?? 0,
+            confirmedCategory: category,
+            confirmationCount: 1,
+            lastSeenAt: purchase.createdAt))
+    }
+
     public func allPredictions() throws -> [StoredPrediction] {
         try context.fetch(FetchDescriptor<StoredPrediction>(
             sortBy: [SortDescriptor(\.recordedAt, order: .reverse)]))

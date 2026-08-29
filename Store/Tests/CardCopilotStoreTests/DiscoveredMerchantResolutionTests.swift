@@ -9,6 +9,40 @@ import CardCopilotEngine
 /// `.unknown`, which `AmbientGate` suppresses unconditionally — so discovery could not speak.
 final class DiscoveredMerchantResolutionTests: XCTestCase {
 
+    func testWalletDescriptorResolvesAgainstMatchingNearbyRestaurant() throws {
+        let restaurant = NearbyMerchant(
+            id: "mapkit-moms-kitchen", name: "Mom's Kitchen",
+            poiCategoryRaw: "MKPOICategoryRestaurant",
+            latitude: 43.85, longitude: -79.02, distanceMeters: 24)
+
+        let result = try XCTUnwrap(resolveWalletMerchant(
+            capturedName: "Mom's Kitchen (Ajax)", nearbyMerchants: [restaurant]))
+
+        XCTAssertEqual(result.merchant.id, restaurant.id)
+        XCTAssertEqual(result.prediction.category, "dining")
+        XCTAssertEqual(result.prediction.confidenceSource, .mapKitCategory)
+    }
+
+    func testWalletResolutionRejectsANameMatchThatIsTooFarAway() {
+        let restaurant = NearbyMerchant(
+            id: "far-away", name: "Mom's Kitchen",
+            poiCategoryRaw: "MKPOICategoryRestaurant",
+            latitude: 43.85, longitude: -79.02, distanceMeters: 180)
+
+        XCTAssertNil(resolveWalletMerchant(capturedName: "Mom's Kitchen (Ajax)",
+                                           nearbyMerchants: [restaurant]))
+    }
+
+    func testWalletResolutionRejectsAnAmbiguousPoiCategory() {
+        let store = NearbyMerchant(
+            id: "mapkit-store", name: "Mom's Kitchen",
+            poiCategoryRaw: "MKPOICategoryStore",
+            latitude: 43.85, longitude: -79.02, distanceMeters: 20)
+
+        XCTAssertNil(resolveWalletMerchant(capturedName: "Mom's Kitchen (Ajax)",
+                                           nearbyMerchants: [store]))
+    }
+
     func testAPreIndexedGroceryBrandEarnsTheMiddleTier() {
         let r = resolveDiscoveredMerchant(name: "Sobeys", poiCategoryRaw: nil)
         XCTAssertEqual(r.confidence, .brandMatched)

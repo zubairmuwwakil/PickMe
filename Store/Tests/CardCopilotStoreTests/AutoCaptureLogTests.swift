@@ -41,12 +41,14 @@ final class AutoCaptureLogTests: XCTestCase {
     private func tap(eventId: String = "evt-1", merchant: String = "Tim Hortons",
                      amountMinor: Int? = 419, currency: String? = "CAD",
                      resolvedCardId: String? = "amex-cobalt",
+                     latitude: Double? = nil, longitude: Double? = nil,
                      at capturedAt: Date? = nil) -> WalletFeedback {
         WalletFeedback(eventId: eventId, capturedAt: capturedAt ?? noon,
                       merchantRaw: nil, merchantNormalized: merchant,
                       amountMinor: amountMinor, currency: currency,
                       cardRaw: "American Express Cobalt", resolvedCardId: resolvedCardId,
-                      verdict: "best", warning: nil)
+                      verdict: "best", warning: nil,
+                      latitude: latitude, longitude: longitude)
     }
 
     // MARK: - The core behaviour
@@ -79,6 +81,50 @@ final class AutoCaptureLogTests: XCTestCase {
 
         XCTAssertTrue(second.isEmpty, "the event was already logged")
         XCTAssertEqual(try autoLog.recent().count, 1)
+    }
+
+    func testReSyncBackfillsLocationOnAnOlderPurchaseWithoutLoggingADuplicate() throws {
+        let purchase = try XCTUnwrap(autoLog.ingest(
+            feedback: [tap(eventId: "evt-old")], openPredictions: []).first)
+        XCTAssertNil(purchase.merchantLatitude)
+        XCTAssertNil(purchase.merchantLongitude)
+
+        let second = try autoLog.ingest(
+            feedback: [tap(eventId: "evt-old", latitude: 43.8501, longitude: -79.0202)],
+            openPredictions: [])
+
+        XCTAssertTrue(second.isEmpty, "hydrating an existing event must not create another purchase")
+        XCTAssertEqual(purchase.merchantLatitude, 43.8501)
+        XCTAssertEqual(purchase.merchantLongitude, -79.0202)
+        XCTAssertEqual(try autoLog.recent().count, 1)
+    }
+
+    func testReSyncNeverOverwritesALocationAlreadyStoredOnThePurchase() throws {
+        let purchase = try XCTUnwrap(autoLog.ingest(
+            feedback: [tap(eventId: "evt-1", latitude: 43.85, longitude: -79.02)],
+            openPredictions: []).first)
+
+        _ = try autoLog.ingest(
+            feedback: [tap(eventId: "evt-1", latitude: 45.42, longitude: -75.69)],
+            openPredictions: [])
+
+        XCTAssertEqual(purchase.merchantLatitude, 43.85)
+        XCTAssertEqual(purchase.merchantLongitude, -79.02)
+    }
+
+    func testOwnerCategoryCorrectionTeachesTheNextCaptureAtTheSameLocalMerchant() throws {
+        let first = try XCTUnwrap(autoLog.ingest(
+            feedback: [tap(eventId: "evt-1", merchant: "Mom's Kitchen (Ajax)")],
+            openPredictions: []).first)
+        XCTAssertNil(first.displayCategory)
+
+        try predictionLog.updateCategory(for: first, to: "dining")
+        let second = try XCTUnwrap(autoLog.ingest(
+            feedback: [tap(eventId: "evt-2", merchant: "Mom's Kitchen (Ajax)")],
+            openPredictions: []).first)
+
+        XCTAssertEqual(second.displayCategory, "dining")
+        XCTAssertEqual(second.categoryConfidence, .ownerConfirmedTerminal)
     }
 
     func testATapAcceptedIntoAnExistingCheckoutIsNeverAlsoAutoLoggedLater() throws {

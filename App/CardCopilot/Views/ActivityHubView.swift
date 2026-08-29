@@ -13,7 +13,7 @@ struct ActivityHubView: View {
 
     @State private var selectedCategory: String? = nil
     @State private var isShowingAllPurchases = false
-    @State private var inspectingPurchase: StoredPrediction? = nil
+    @State private var inspectingPurchase: StoredPurchase? = nil
     @State private var isChoosingArrivalScope = false
 
     private struct ArrivalPromptContext {
@@ -85,48 +85,13 @@ struct ActivityHubView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                // Section: Action Queues
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Action Queues")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary)
-
-                    VStack(spacing: 10) {
-                        // Finish Purchases
-                        Button { router.push(.finish) } label: {
-                            queueActionRow(
-                                icon: "square.and.pencil",
-                                iconColor: session.completionQueue.isEmpty ? .green : .blue,
-                                title: session.completionQueue.isEmpty ? "Finish Purchases" : "\(session.completionQueue.count) to Finish",
-                                subtitle: session.completionQueue.isEmpty ? "All purchases have card & cost recorded" : "Add the card tapped and charge amount",
-                                count: session.completionQueue.count,
-                                badgeColor: Color.blue
-                            )
-                        }
-                        .buttonStyle(.plain)
-
-                        // Reconcile Statements
-                        Button { router.push(.reconcile) } label: {
-                            queueActionRow(
-                                icon: "tray.full.fill",
-                                iconColor: session.reconcileQueue.isEmpty ? .green : .orange,
-                                title: session.reconcileQueue.isEmpty ? "Reconcile Queue" : "\(session.reconcileQueue.count) Waiting to Reconcile",
-                                subtitle: session.reconcileQueue.isEmpty ? "All predictions confirmed against statements" : "Match posted issuer rewards to predictions",
-                                count: session.reconcileQueue.count,
-                                badgeColor: Color(red: 0.13, green: 0.77, blue: 0.37)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-
+            VStack(spacing: 16) {
                 // Section: Recent Purchases & Category Intelligence
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Recent Purchases")
-                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .font(.system(size: 17, weight: .bold, design: .rounded))
                                 .foregroundStyle(.primary)
                             if !session.recentPurchaseItems.isEmpty {
                                 Text("\(session.recentPurchaseItems.count) total • \(availableCategories.count) categories")
@@ -159,19 +124,14 @@ struct ActivityHubView: View {
                         }
 
                         // Purchase rows
-                        VStack(spacing: 10) {
+                        VStack(spacing: 8) {
                             ForEach(displayedItems) { item in
-                                if let prediction = item.prediction {
-                                    Button {
-                                        inspectingPurchase = prediction
-                                        openPurchase(prediction)
-                                    } label: {
-                                        purchaseRow(item)
-                                    }
-                                    .buttonStyle(.plain)
-                                } else {
+                                Button {
+                                    inspectingPurchase = item
+                                } label: {
                                     purchaseRow(item)
                                 }
+                                .buttonStyle(.plain)
                             }
                         }
 
@@ -181,11 +141,46 @@ struct ActivityHubView: View {
                     }
                 }
 
+                // Section: Action Queues
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Action Queues")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+
+                    VStack(spacing: 8) {
+                        // Finish Purchases
+                        Button { router.push(.finish) } label: {
+                            queueActionRow(
+                                icon: "square.and.pencil",
+                                iconColor: session.completionQueue.isEmpty ? .green : .blue,
+                                title: session.completionQueue.isEmpty ? "Finish Purchases" : "\(session.completionQueue.count) to Finish",
+                                subtitle: session.completionQueue.isEmpty ? "All purchases have card & cost recorded" : "Add the card tapped and charge amount",
+                                count: session.completionQueue.count,
+                                badgeColor: Color.blue
+                            )
+                        }
+                        .buttonStyle(.plain)
+
+                        // Reconcile Statements
+                        Button { router.push(.reconcile) } label: {
+                            queueActionRow(
+                                icon: "tray.full.fill",
+                                iconColor: session.reconcileQueue.isEmpty ? .green : .orange,
+                                title: session.reconcileQueue.isEmpty ? "Reconcile Queue" : "\(session.reconcileQueue.count) Waiting to Reconcile",
+                                subtitle: session.reconcileQueue.isEmpty ? "All predictions confirmed against statements" : "Match posted issuer rewards to predictions",
+                                count: session.reconcileQueue.count,
+                                badgeColor: Color(red: 0.13, green: 0.77, blue: 0.37)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
                 // Section: Experiment Validation & Scoreboard
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         Text("Experiment Scoreboard")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .font(.system(size: 17, weight: .bold, design: .rounded))
                             .foregroundStyle(.primary)
                         Spacer()
                         Button { router.push(.dashboard) } label: {
@@ -201,9 +196,10 @@ struct ActivityHubView: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.top, 12)
+            .padding(.top, 4)
             .padding(.bottom, 90) // Inset for floating glass nav
         }
+        .navigationBarTitleDisplayMode(.inline)
         .background(Color(.systemGroupedBackground))
         .sheet(isPresented: $isShowingAllPurchases) {
             AllPurchasesSheetView(
@@ -212,16 +208,13 @@ struct ActivityHubView: View {
                 graph: environment.graph,
                 knownMerchants: session.homeMerchants,
                 onSelectPurchase: { item in
-                    guard let prediction = item.prediction else { return }
-                    inspectingPurchase = prediction
-                    openPurchase(prediction)
-                },
-                onUpdateCategory: updateCategory
+                    inspectingPurchase = item
+                }
             )
         }
-        .sheet(item: $inspectingPurchase) { prediction in
+        .sheet(item: $inspectingPurchase) { purchase in
             PurchaseDetailSheetView(
-                prediction: prediction,
+                purchase: purchase,
                 cards: environment.graph?.walletCards ?? [],
                 onFinish: {
                     inspectingPurchase = nil
@@ -231,9 +224,8 @@ struct ActivityHubView: View {
                     inspectingPurchase = nil
                     router.push(.reconcile)
                 },
-                onUpdateCategory: { updatedPrediction, newCategory in
-                    updateCategory(updatedPrediction, newCategory)
-                }
+                onUpdateCategory: updateCategory,
+                onUpdateAmount: updateAmount
             )
         }
         .confirmationDialog(
@@ -268,15 +260,15 @@ struct ActivityHubView: View {
         }
     }
 
-    private func openPurchase(_ prediction: StoredPrediction) {
-        if prediction.purchase?.isComplete == false {
-            router.push(.finish)
+    private func updateCategory(_ purchase: StoredPurchase, _ category: String) {
+        if let graph = environment.graph {
+            session.updateCategory(for: purchase, to: category, using: graph)
         }
     }
 
-    private func updateCategory(_ prediction: StoredPrediction, _ category: String) {
+    private func updateAmount(_ purchase: StoredPurchase, _ amount: Double) {
         if let graph = environment.graph {
-            session.updateCategory(for: prediction, to: category, using: graph)
+            session.recordAmount(amount, for: purchase, using: graph)
         }
     }
 
@@ -291,17 +283,17 @@ struct ActivityHubView: View {
                         selectedCategory = nil
                     }
                 } label: {
-                    HStack(spacing: 6) {
+                    HStack(spacing: 5) {
                         Image(systemName: "square.grid.2x2.fill")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: 11, weight: .semibold))
                         Text("All")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
                         Text("(\(session.recentPurchaseItems.count))")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(selectedCategory == nil ? .white.opacity(0.8) : .secondary)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
                     .background(
                         selectedCategory == nil
                             ? Color.blue
@@ -327,18 +319,18 @@ struct ActivityHubView: View {
                             selectedCategory = isSelected ? nil : category
                         }
                     } label: {
-                        HStack(spacing: 6) {
+                        HStack(spacing: 5) {
                             Image(systemName: meta.icon)
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(isSelected ? .white : meta.color)
                             Text(meta.displayName)
-                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
                             Text("(\(count))")
                                 .font(.system(size: 11, weight: .medium))
                                 .foregroundStyle(isSelected ? .white.opacity(0.85) : .secondary)
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
                         .background(
                             isSelected
                                 ? meta.color
@@ -493,19 +485,19 @@ struct ActivityHubView: View {
         count: Int,
         badgeColor: Color
     ) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(iconColor.opacity(0.14))
-                    .frame(width: 44, height: 44)
+                    .frame(width: 40, height: 40)
                 Image(systemName: icon)
-                    .font(.system(size: 19, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(iconColor)
             }
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
                     .foregroundStyle(.primary)
 
                 Text(subtitle)
@@ -518,23 +510,23 @@ struct ActivityHubView: View {
 
             if count > 0 {
                 Text("\(count)")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
                     .background(badgeColor, in: Capsule())
             }
 
             Image(systemName: "chevron.right")
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.tertiary)
         }
-        .padding(14)
+        .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+                .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 1)
         )
     }
 
@@ -565,9 +557,9 @@ struct ActivityHubView: View {
         .padding(18)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+                .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 1)
         )
     }
 
@@ -580,20 +572,20 @@ struct ActivityHubView: View {
         let actualAmount = item.amountCad
         let estimatedAmount = actualAmount == nil ? item.prediction?.scoredAmountCad : nil
 
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 14) {
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(tint.opacity(0.14))
-                        .frame(width: 44, height: 44)
+                        .frame(width: 40, height: 40)
                     Image(systemName: icon)
-                        .font(.system(size: 19, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(tint)
                 }
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(item.displayMerchant)
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
@@ -617,17 +609,17 @@ struct ActivityHubView: View {
 
                 Spacer()
 
-                VStack(alignment: .trailing, spacing: 4) {
+                VStack(alignment: .trailing, spacing: 3) {
                     if let actualAmount {
                         Text(String(format: "$%.2f", actualAmount))
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
                     } else if let estimatedAmount {
                         Text(String(format: "~$%.2f", estimatedAmount))
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
                             .foregroundStyle(.secondary)
                     } else {
                         Text("—")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
                             .foregroundStyle(.secondary)
                     }
 
@@ -637,7 +629,7 @@ struct ActivityHubView: View {
                         Text("Card tap")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundStyle(.secondary)
-                            .padding(.horizontal, 7)
+                            .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(Color.secondary.opacity(0.12), in: Capsule())
                     }
@@ -652,12 +644,12 @@ struct ActivityHubView: View {
                     .foregroundStyle(.blue)
             }
         }
-        .padding(14)
+        .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+                .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 1)
         )
     }
 
@@ -925,7 +917,6 @@ struct AllPurchasesSheetView: View {
     let graph: DependencyGraph?
     let knownMerchants: [StoredMerchant]
     let onSelectPurchase: (StoredPurchase) -> Void
-    var onUpdateCategory: ((StoredPrediction, String) -> Void)? = nil
 
     @State private var selectedCategory: String? = nil
     @State private var searchQuery: String = ""
@@ -1000,17 +991,13 @@ struct AllPurchasesSheetView: View {
 
                 List {
                     ForEach(filteredPurchases) { item in
-                        if item.prediction != nil {
-                            Button {
-                                dismiss()
-                                onSelectPurchase(item)
-                            } label: {
-                                allPurchasesRow(item)
-                            }
-                            .buttonStyle(.plain)
-                        } else {
+                        Button {
+                            dismiss()
+                            onSelectPurchase(item)
+                        } label: {
                             allPurchasesRow(item)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
                 .listStyle(.insetGrouped)
@@ -1128,29 +1115,49 @@ struct AllPurchasesSheetView: View {
 
 /// Inspection sheet showing the full breakdown, cap context, and 1-tap category correction.
 struct PurchaseDetailSheetView: View {
-    let prediction: StoredPrediction
+    let purchase: StoredPurchase
     let cards: [CardProduct]
     let onFinish: () -> Void
     let onReconcile: () -> Void
-    var onUpdateCategory: ((StoredPrediction, String) -> Void)? = nil
+    let onUpdateCategory: (StoredPurchase, String) -> Void
+    let onUpdateAmount: (StoredPurchase, Double) -> Void
 
     @State private var currentCategory: String
     @State private var isChangingCategory = false
+    @State private var isEnteringAmount = false
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
 
     init(
-        prediction: StoredPrediction,
+        purchase: StoredPurchase,
         cards: [CardProduct],
         onFinish: @escaping () -> Void,
         onReconcile: @escaping () -> Void,
-        onUpdateCategory: ((StoredPrediction, String) -> Void)? = nil
+        onUpdateCategory: @escaping (StoredPurchase, String) -> Void,
+        onUpdateAmount: @escaping (StoredPurchase, Double) -> Void
     ) {
-        self.prediction = prediction
+        self.purchase = purchase
         self.cards = cards
         self.onFinish = onFinish
         self.onReconcile = onReconcile
         self.onUpdateCategory = onUpdateCategory
-        _currentCategory = State(initialValue: prediction.purchase?.observation?.observedCategory ?? prediction.predictedCategory)
+        self.onUpdateAmount = onUpdateAmount
+        _currentCategory = State(initialValue: purchase.displayCategory ?? "other")
+    }
+
+    private var prediction: StoredPrediction? { purchase.prediction }
+
+    private var recommendedCardId: String? {
+        purchase.bestCardId ?? prediction?.winnerCardId
+    }
+
+    private var selectableCategories: [String] {
+        let catalogueCategories = cards.flatMap { card in
+            card.earnRules.flatMap { $0.predicate.categories ?? [] }
+        }
+        return Array(Set(catalogueCategories + ["other"]))
+            .sorted { CategoryVisuals.meta(for: $0).displayName
+                < CategoryVisuals.meta(for: $1).displayName }
     }
 
     var body: some View {
@@ -1170,17 +1177,21 @@ struct PurchaseDetailSheetView: View {
                         }
 
                         VStack(spacing: 4) {
-                            Text(prediction.merchantName.isEmpty ? "Purchase" : prediction.merchantName)
+                            Text(purchase.displayMerchant)
                                 .font(.system(size: 22, weight: .bold, design: .rounded))
                                 .foregroundStyle(.primary)
 
-                            if let amount = prediction.purchase?.amountCad {
+                            if let amount = purchase.amountCad {
                                 Text(String(format: "$%.2f CAD", amount))
                                     .font(.system(size: 28, weight: .bold, design: .rounded))
                                     .foregroundStyle(.primary)
-                            } else if let scored = prediction.scoredAmountCad {
+                            } else if let scored = prediction?.scoredAmountCad {
                                 Text(String(format: "~$%.2f CAD (Estimated)", scored))
                                     .font(.system(size: 20, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text("Amount not recorded")
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
                                     .foregroundStyle(.secondary)
                             }
                         }
@@ -1197,20 +1208,22 @@ struct PurchaseDetailSheetView: View {
                         VStack(spacing: 12) {
                             detailRow(
                                 title: "Card Tapped",
-                                value: cardDisplayName(for: prediction.purchase?.cardUsedId ?? prediction.winnerCardId),
+                                value: purchase.cardUsedId.map { cardDisplayName(for: $0) }
+                                    ?? "Not recorded",
                                 icon: "creditcard.fill",
                                 color: .blue
                             )
-                            Divider()
-                            detailRow(
-                                title: "Recommended Card",
-                                value: cardDisplayName(for: prediction.winnerCardId),
-                                icon: "star.fill",
-                                color: .yellow
-                            )
+                            if let recommendedCardId {
+                                Divider()
+                                detailRow(
+                                    title: "Recommended Card",
+                                    value: cardDisplayName(for: recommendedCardId),
+                                    icon: "star.fill",
+                                    color: .yellow
+                                )
+                            }
                             Divider()
 
-                            // Interactive 1-Tap Category Reclassification Row
                             Button {
                                 isChangingCategory = true
                             } label: {
@@ -1227,9 +1240,11 @@ struct PurchaseDetailSheetView: View {
                                     Spacer()
 
                                     HStack(spacing: 6) {
-                                        Text(meta.displayName)
+                                        Text(purchase.displayCategory == nil
+                                             ? "Add category" : meta.displayName)
                                             .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                            .foregroundStyle(.primary)
+                                            .foregroundStyle(purchase.displayCategory == nil
+                                                             ? .blue : .primary)
                                         Image(systemName: "pencil.circle.fill")
                                             .font(.system(size: 14))
                                             .foregroundStyle(.blue)
@@ -1241,9 +1256,48 @@ struct PurchaseDetailSheetView: View {
                             Divider()
                             detailRow(
                                 title: "Date & Time",
-                                value: (prediction.purchase?.createdAt ?? prediction.recordedAt).formatted(date: .abbreviated, time: .shortened),
+                                value: purchase.createdAt.formatted(date: .abbreviated, time: .shortened),
                                 icon: "clock.fill",
                                 color: .purple
+                            )
+                            Divider()
+                            if let locationURL {
+                                Button { openURL(locationURL) } label: {
+                                    HStack {
+                                        detailRow(
+                                            title: "Location",
+                                            value: "Open in Maps",
+                                            icon: "location.fill",
+                                            color: .blue
+                                        )
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                detailRow(
+                                    title: "Location",
+                                    value: "Not captured",
+                                    icon: "location.slash.fill",
+                                    color: .secondary
+                                )
+                            }
+                            Divider()
+                            detailRow(
+                                title: "Captured Via",
+                                value: activitySourceLabel,
+                                icon: activitySourceIcon,
+                                color: .teal
+                            )
+                            Divider()
+                            detailRow(
+                                title: "Status",
+                                value: statusLabel,
+                                icon: purchase.isComplete
+                                    ? "checkmark.circle.fill" : "exclamationmark.circle.fill",
+                                color: purchase.isComplete ? .green : .orange
                             )
                         }
                         .padding(16)
@@ -1253,8 +1307,20 @@ struct PurchaseDetailSheetView: View {
                         )
                     }
 
+                    if purchase.amountCad == nil {
+                        Button { isEnteringAmount = true } label: {
+                            Label("Add Missing Amount", systemImage: "dollarsign.circle.fill")
+                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.blue, in: RoundedRectangle(cornerRadius: 14,
+                                                                            style: .continuous))
+                                .foregroundStyle(.white)
+                        }
+                    }
+
                     // Advice Headline
-                    if !prediction.headline.isEmpty {
+                    if let prediction, !prediction.headline.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Recommendation Advice")
                                 .font(.system(size: 15, weight: .bold, design: .rounded))
@@ -1279,7 +1345,7 @@ struct PurchaseDetailSheetView: View {
                     }
 
                     // Action buttons if unfinished or unreconciled
-                    if prediction.purchase?.isComplete == false {
+                    if prediction != nil, purchase.missingFacts.contains(.card) {
                         Button(action: onFinish) {
                             Label("Finish This Purchase", systemImage: "pencil.and.list.clipboard")
                                 .font(.system(size: 16, weight: .semibold, design: .rounded))
@@ -1289,7 +1355,8 @@ struct PurchaseDetailSheetView: View {
                                 .foregroundStyle(.white)
                         }
                         .padding(.top, 8)
-                    } else if prediction.purchase?.observation == nil {
+                    } else if prediction != nil, purchase.isComplete,
+                              purchase.observation == nil {
                         Button(action: onReconcile) {
                             Label("Reconcile in Queue", systemImage: "tray.full.fill")
                                 .font(.system(size: 16, weight: .semibold, design: .rounded))
@@ -1316,14 +1383,59 @@ struct PurchaseDetailSheetView: View {
             .sheet(isPresented: $isChangingCategory) {
                 CategoryChangeSheetView(
                     currentCategory: currentCategory,
+                    categories: selectableCategories,
                     onSelectCategory: { newCategory in
                         currentCategory = newCategory
-                        onUpdateCategory?(prediction, newCategory)
+                        onUpdateCategory(purchase, newCategory)
                         isChangingCategory = false
                     }
                 )
             }
+            .sheet(isPresented: $isEnteringAmount) {
+                PurchaseAmountEntrySheetView(
+                    merchantName: purchase.displayMerchant,
+                    onSave: { amount in
+                        onUpdateAmount(purchase, amount)
+                        isEnteringAmount = false
+                    },
+                    onCancel: { isEnteringAmount = false }
+                )
+            }
         }
+    }
+
+    private var locationURL: URL? {
+        guard let latitude = purchase.merchantLatitude,
+              let longitude = purchase.merchantLongitude,
+              latitude != 0 || longitude != 0 else { return nil }
+        var components = URLComponents(string: "https://maps.apple.com/")
+        components?.queryItems = [
+            URLQueryItem(name: "ll", value: "\(latitude),\(longitude)"),
+            URLQueryItem(name: "q", value: purchase.displayMerchant),
+        ]
+        return components?.url
+    }
+
+    private var activitySourceLabel: String {
+        switch purchase.resolvedActivitySource {
+        case .pickMeCheckout: return "PickMe checkout"
+        case .walletCapture: return "Apple Wallet card tap"
+        case .arrivalAlert: return "Arrival alert"
+        }
+    }
+
+    private var activitySourceIcon: String {
+        switch purchase.resolvedActivitySource {
+        case .pickMeCheckout: return "sparkles"
+        case .walletCapture: return "wave.3.right"
+        case .arrivalAlert: return "location.circle.fill"
+        }
+    }
+
+    private var statusLabel: String {
+        if !purchase.isComplete { return "Needs information" }
+        guard prediction != nil else { return "Captured" }
+        return purchase.observation == nil ? "Finished" : "Reconciled"
     }
 
     private func detailRow(title: LocalizedStringKey, value: String, icon: String, color: Color) -> some View {
@@ -1356,22 +1468,76 @@ struct PurchaseDetailSheetView: View {
     }
 }
 
+/// A focused receipt-total editor for purchases whose Wallet capture omitted or could not decode
+/// the amount. This is intentionally smaller than the checkout amount screen: the purchase
+/// already exists and only one missing fact is being supplied.
+struct PurchaseAmountEntrySheetView: View {
+    let merchantName: String
+    let onSave: (Double) -> Void
+    let onCancel: () -> Void
+
+    @State private var amountText = ""
+    @FocusState private var isAmountFocused: Bool
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Purchase") {
+                    LabeledContent("Merchant", value: merchantName)
+                }
+
+                Section {
+                    HStack {
+                        Text("$")
+                            .foregroundStyle(.secondary)
+                        TextField("Amount charged", text: $amountText)
+                            .keyboardType(.decimalPad)
+                            .focused($isAmountFocused)
+                    }
+                } header: {
+                    Text("What did it come to?")
+                } footer: {
+                    Text("Enter the total from your receipt. It will be marked as added manually, not captured from Wallet.")
+                }
+            }
+            .navigationTitle("Add Amount")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onCancel)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        if let amount { onSave(amount) }
+                    }
+                    .disabled(amount == nil)
+                }
+            }
+            .onAppear { isAmountFocused = true }
+        }
+    }
+
+    private var amount: Double? {
+        let cleaned = amountText
+            .replacingOccurrences(of: ",", with: ".")
+            .filter { $0.isNumber || $0 == "." }
+        guard let value = Double(cleaned), value > 0 else { return nil }
+        return value
+    }
+}
+
 /// 1-Tap Category picker modal for fast transaction reclassification.
 struct CategoryChangeSheetView: View {
     let currentCategory: String
+    let categories: [String]
     let onSelectCategory: (String) -> Void
     @Environment(\.dismiss) private var dismiss
-
-    private let standardCategories = [
-        "grocery", "dining", "travel", "gas", "transit",
-        "recurring_bills", "drugstore", "entertainment", "general"
-    ]
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
-                    ForEach(standardCategories, id: \.self) { category in
+                    ForEach(categories, id: \.self) { category in
                         let meta = CategoryVisuals.meta(for: category)
                         let isSelected = category == currentCategory
 

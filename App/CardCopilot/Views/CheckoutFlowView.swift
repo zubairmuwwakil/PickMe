@@ -25,6 +25,7 @@ struct CheckoutFlowView: View {
     @Environment(CheckoutRouter.self) private var router
     @State private var environment: CopilotEnvironment?
     @State private var walletBannerCenter = WalletCaptureBannerCenter.shared
+    @State private var attemptedWalletEnrichmentIDs: Set<String> = []
 
     private var rootTitle: String {
         switch router.selectedTab {
@@ -61,6 +62,7 @@ struct CheckoutFlowView: View {
                     NavigationStack(path: $router.path) {
                         rootContent(environment: environment)
                             .navigationTitle(isAtRoot ? rootTitle : "PickMe")
+                            .navigationBarTitleDisplayMode(.inline)
                             .navigationDestination(for: Destination.self) { destination in
                                 destinationView(destination, environment: environment)
                             }
@@ -100,7 +102,7 @@ struct CheckoutFlowView: View {
             environment.load(session: session)
             _ = WalletCaptureNetworkMonitor.shared
             await sync.drainWalletCaptures()
-            ingestAutomaticCaptures()
+            await ingestAutomaticCaptures()
             if WalletCaptureDeepLinkStore.consume() { router.show(.sync) }
         }
         .task(id: Clerk.shared.user?.id) {
@@ -112,7 +114,7 @@ struct CheckoutFlowView: View {
                 environment?.refreshAmbientDiagnostics()
                 Task {
                     await sync.drainWalletCaptures()
-                    ingestAutomaticCaptures()
+                    await ingestAutomaticCaptures()
                     await autoSyncIfStale()
                 }
             }
@@ -120,7 +122,7 @@ struct CheckoutFlowView: View {
         .onReceive(NotificationCenter.default.publisher(for: .walletCaptureConnectivityRestored)) { _ in
             Task {
                 await sync.drainWalletCaptures()
-                ingestAutomaticCaptures()
+                await ingestAutomaticCaptures()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .openWalletCaptureStatus)) { _ in
@@ -345,7 +347,7 @@ struct CheckoutFlowView: View {
         guard let environment, let graph = environment.graph else { return }
         if let result = await sync.autoSyncIfStale(ownerState: graph.ownerState, catalogue: graph.catalogue) {
             environment.rebuild(ownerState: result.ownerState)
-            ingestAutomaticCaptures()
+            await ingestAutomaticCaptures()
             if let refreshed = environment.graph { session.refresh(using: refreshed) }
         }
     }
@@ -354,22 +356,57 @@ struct CheckoutFlowView: View {
         guard let environment, let graph = environment.graph else { return }
         if let result = await sync.syncCapsSilently(ownerState: graph.ownerState, catalogue: graph.catalogue) {
             environment.rebuild(ownerState: result.ownerState)
-            ingestAutomaticCaptures()
+            await ingestAutomaticCaptures()
             if let refreshed = environment.graph { session.refresh(using: refreshed) }
         }
     }
 
     /// Best-effort by design: automatic logging must never turn an otherwise successful sync
     /// into a blocking screen over something the owner cannot act on.
-    private func ingestAutomaticCaptures() {
+    private func ingestAutomaticCaptures() async {
         guard let graph = environment?.graph else { return }
         do {
             try graph.service.ingestAutomaticCaptures(from: sync.walletFeedback)
+            try await enrichUnknownWalletMerchants(using: graph)
             session.refresh(using: graph)
         } catch {
             #if DEBUG
             print("⚠️ Auto-capture ingest failed: \(error)")
             #endif
+        }
+    }
+
+    /// Uses a capture's optional GPS fix to join an unknown Wallet descriptor to a nearby MapKit
+    /// POI. The pure resolver enforces the confidence threshold; this layer only supplies places
+    /// and persists matches. Failed searches remain retryable, while a completed no-match is not
+    /// repeated again during the same app session.
+    private func enrichUnknownWalletMerchants(using graph: DependencyGraph) async throws {
+        let candidates = try graph.service.autoLoggedPurchases(limit: 100).filter {
+            $0.displayCategory == nil
+                && $0.hasPreciseLocation
+                && $0.walletEventId.map { !attemptedWalletEnrichmentIDs.contains($0) } == true
+        }
+
+        for purchase in candidates {
+            guard let eventID = purchase.walletEventId,
+                  let latitude = purchase.merchantLatitude,
+                  let longitude = purchase.merchantLongitude else { continue }
+            do {
+                let nearby = try await graph.provider.nearby(latitude: latitude,
+                                                             longitude: longitude)
+                if let resolution = resolveWalletMerchant(
+                    capturedName: purchase.displayMerchant,
+                    nearbyMerchants: nearby) {
+                    try graph.service.enrichAutomaticPurchase(purchase, with: resolution)
+                }
+                attemptedWalletEnrichmentIDs.insert(eventID)
+            } catch {
+                // Connectivity and MapKit failures are transient. Leave this id unmarked so the
+                // next activation or sync can retry without surfacing an error over checkout.
+                #if DEBUG
+                print("⚠️ Wallet merchant enrichment failed: \(error)")
+                #endif
+            }
         }
     }
 

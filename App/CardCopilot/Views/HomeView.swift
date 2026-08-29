@@ -14,16 +14,17 @@ struct HomeView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 16) {
                 primaryCheckoutSection
                 instantRepeatsSection
                 ambientDiagnosticsRow
                 valueRecoveredCard
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.top, 4)
             .padding(.bottom, 90)
         }
+        .navigationBarTitleDisplayMode(.inline)
         .background(Color(.systemGroupedBackground))
     }
 
@@ -53,7 +54,7 @@ struct HomeView: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.tertiary)
             }
-            .padding(14)
+            .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
         }

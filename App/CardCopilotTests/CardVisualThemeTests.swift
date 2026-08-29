@@ -4,6 +4,7 @@ import SwiftData
 import CardCopilotEngine
 import CardCopilotStore
 @testable import CardCopilot
+import UIKit
 
 /// Drift-prevention and branding validation test suite for CardVisualTheme and CategoryVisuals.
 ///
@@ -230,3 +231,4 @@ final class CardVisualThemeTests: XCTestCase {
         add(lightAttachment)
     }
 }
+

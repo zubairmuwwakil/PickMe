@@ -369,6 +369,20 @@ final class MissingFactsTests: XCTestCase {
                        "A rewritten category must leave a trace, or a miss reads as a hit.")
     }
 
+    func testUpdateCategoryAddsAnObservationToAutomaticCaptureWithoutInventingAdvice() throws {
+        let purchase = StoredPurchase(merchantLabel: "Mom's Kitchen", walletEventId: "tap-1",
+                                      categoryAtPurchase: nil)
+        context.insert(purchase)
+        try context.save()
+
+        try log.updateCategory(for: purchase, to: "dining")
+
+        XCTAssertNil(purchase.prediction, "owner correction must not fabricate checkout advice")
+        XCTAssertNil(purchase.categoryAtPurchase, "the capture-time snapshot stays unchanged")
+        XCTAssertEqual(purchase.observation?.observedCategory, "dining")
+        XCTAssertEqual(purchase.displayCategory, "dining")
+    }
+
     /// The reason `categoryCorrectedAt` exists, stated as a test.
     ///
     /// After a correction the prediction agrees with the observation, so every field the accuracy

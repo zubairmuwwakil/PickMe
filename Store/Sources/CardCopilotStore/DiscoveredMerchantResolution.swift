@@ -11,6 +11,64 @@ public struct DiscoveredMerchantResolution: Equatable, Sendable {
     public let mcc: Int?
 }
 
+/// A high-confidence join between a Wallet merchant descriptor and a nearby MapKit POI.
+/// Automatic capture may act on this result because both identity and category are settled:
+/// the names strongly agree, the POI is close to the captured coordinate, and MapKit maps it to
+/// one unambiguous engine category.
+public struct WalletMerchantResolution: Equatable, Sendable {
+    public let merchant: NearbyMerchant
+    public let prediction: CategoryPrediction
+
+    public init(merchant: NearbyMerchant, prediction: CategoryPrediction) {
+        self.merchant = merchant
+        self.prediction = prediction
+    }
+}
+
+/// Resolves an otherwise-unknown Wallet descriptor against places surrounding its captured GPS
+/// fix. A loose keyword guess is deliberately insufficient: auto-assignment requires a strong
+/// name overlap, a POI within the capture radius, and a single non-fallback category.
+public func resolveWalletMerchant(capturedName: String,
+                                  nearbyMerchants: [NearbyMerchant],
+                                  maximumDistanceMeters: Double = 150)
+-> WalletMerchantResolution? {
+    let captured = compactMerchantIdentity(capturedName)
+    guard captured.count >= 4 else { return nil }
+
+    let candidates = nearbyMerchants.compactMap { merchant -> WalletMerchantResolution? in
+        guard let distance = merchant.distanceMeters,
+              distance <= maximumDistanceMeters else { return nil }
+        let nearby = compactMerchantIdentity(merchant.name)
+        guard nearby.count >= 4 else { return nil }
+
+        let shorter = captured.count <= nearby.count ? captured : nearby
+        let longer = captured.count <= nearby.count ? nearby : captured
+        let overlap = Double(shorter.count) / Double(longer.count)
+        guard longer.contains(shorter), overlap >= 0.60 else { return nil }
+
+        let prediction = predict(poiCategoryRaw: merchant.poiCategoryRaw,
+                                 merchantName: merchant.name)
+        guard prediction.confidenceSource != .fallback,
+              prediction.category != "other",
+              prediction.candidates.count == 1 else { return nil }
+        return WalletMerchantResolution(merchant: merchant, prediction: prediction)
+    }
+
+    return candidates.min {
+        ($0.merchant.distanceMeters ?? .greatestFiniteMagnitude)
+            < ($1.merchant.distanceMeters ?? .greatestFiniteMagnitude)
+    }
+}
+
+private func compactMerchantIdentity(_ value: String) -> String {
+    value.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+        .unicodeScalars
+        .filter { CharacterSet.alphanumerics.contains($0) }
+        .map(String.init)
+        .joined()
+        .lowercased()
+}
+
 /// Rung 2 of the arrival ladder: a POI the owner has no history with.
 ///
 /// This used to ask `canonicalEngineBrand`, a six-token vocabulary — costco, walmart,

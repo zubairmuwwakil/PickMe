@@ -314,6 +314,40 @@ public struct CheckoutService {
         return purchases
     }
 
+    /// Applies a high-confidence MapKit resolution to an automatic Wallet capture.
+    ///
+    /// The capture remains prediction-free: resolving what the merchant is after payment must not
+    /// fabricate advice the app never gave. Instead this fills the purchase's capture snapshot,
+    /// attaches the exact POI identity, and saves the POI for future name-only captures.
+    public func enrichAutomaticPurchase(_ purchase: StoredPurchase,
+                                        with resolution: WalletMerchantResolution) throws {
+        guard purchase.isAutoLogged, purchase.displayCategory == nil else { return }
+        let prediction = resolution.prediction
+        guard prediction.confidenceSource != .fallback,
+              prediction.category != "other",
+              prediction.candidates.count == 1 else { return }
+
+        let merchant = resolution.merchant
+        purchase.merchantIdentifier = merchant.id
+        purchase.merchantLatitude = merchant.latitude
+        purchase.merchantLongitude = merchant.longitude
+        purchase.merchantKey = merchantActivityKey(name: purchase.displayMerchant,
+                                                   locationIdentifier: merchant.id)
+        purchase.categoryAtPurchase = prediction.category
+        purchase.categoryConfidenceRaw = prediction.confidenceSource.rawValue
+
+        // Retain the Wallet descriptor as the display name so a later name-only capture can join
+        // the learned POI even when the descriptor carries a city or processor suffix.
+        try upsertMerchant(NearbyMerchant(
+            id: merchant.id,
+            name: purchase.displayMerchant,
+            poiCategoryRaw: merchant.poiCategoryRaw,
+            latitude: merchant.latitude,
+            longitude: merchant.longitude,
+            distanceMeters: merchant.distanceMeters))
+        try assessPurchase(purchase, evaluatedAt: purchase.createdAt)
+    }
+
     /// Purchases logged automatically from a Wallet capture with no live checkout behind them —
     /// the "Logged Automatically" section of Activity, distinct from `PredictionLog.recentPurchases`
     /// because these carry no predicted category to grade.

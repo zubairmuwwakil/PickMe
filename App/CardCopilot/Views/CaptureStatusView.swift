@@ -195,6 +195,7 @@ struct CaptureStatusView: View {
                 }.padding(.vertical, 4)
             }
             .navigationTitle("Queued captures")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { showingQueue = false } } }
             .overlay { if records.allSatisfy({ $0.completedAt != nil }) { ContentUnavailableView("No queued captures", systemImage: "checkmark.circle") } }
         }
@@ -327,6 +328,7 @@ private struct DiagnosticReportPreview: View {
                 }
             }
             .navigationTitle("Diagnostic preview")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
     }

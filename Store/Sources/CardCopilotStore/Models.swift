@@ -489,6 +489,10 @@ extension StoredPurchase {
         observation?.observedCategory ?? categoryAtPurchase ?? prediction?.predictedCategory
     }
 
+    public var categoryConfidence: ConfidenceSource? {
+        categoryConfidenceRaw.flatMap(ConfidenceSource.init(rawValue:))
+    }
+
     public var hasPreciseLocation: Bool {
         guard let merchantLatitude, let merchantLongitude else { return false }
         return merchantLatitude != 0 || merchantLongitude != 0

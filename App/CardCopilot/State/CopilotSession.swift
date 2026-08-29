@@ -416,6 +416,33 @@ final class CopilotSession {
         refresh(using: graph)
     }
 
+    /// Corrects either kind of purchase. Automatic captures keep their original machine snapshot
+    /// and receive a separate owner observation; prediction-backed rows retain their existing
+    /// correction stamp and experiment safeguards.
+    func updateCategory(for purchase: StoredPurchase, to newCategory: String,
+                        using graph: DependencyGraph) {
+        do {
+            try graph.service.log.updateCategory(for: purchase, to: newCategory)
+            try graph.service.assessPurchase(purchase)
+            refresh(using: graph)
+        } catch {
+            report(FlowError(error))
+        }
+    }
+
+    /// Fills a missing receipt total from purchase history. Because this happens after capture,
+    /// the amount is explicitly marked as recalled rather than machine-captured.
+    func recordAmount(_ amount: Double, for purchase: StoredPurchase,
+                      using graph: DependencyGraph) {
+        do {
+            try graph.service.log.recordAmount(amount, source: .recalledLater, on: purchase)
+            try graph.service.assessPurchase(purchase)
+            refresh(using: graph)
+        } catch {
+            report(FlowError(error))
+        }
+    }
+
     private func sortedHomeMerchants(_ merchants: [StoredMerchant]) -> [StoredMerchant] {
         guard let cachedLocation, cachedLocation.isRecent else {
             return merchants.sorted { $0.lastSeenAt > $1.lastSeenAt }

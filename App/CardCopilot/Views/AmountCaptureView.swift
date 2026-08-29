@@ -109,6 +109,33 @@ struct AmountCaptureView: View {
                     }
                     .disabled(!isCustomValid)
                 }
+
+                // Quick Sales Tax Addition
+                HStack(spacing: 6) {
+                    Text("Add Tax:")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.secondary)
+
+                    ForEach(SalesTaxHelper.presets.prefix(3), id: \.id) { preset in
+                        Button {
+                            let base = Double(customText.replacingOccurrences(of: "$", with: "").trimmingCharacters(in: .whitespaces)) ?? 0
+                            if base > 0 {
+                                let taxed = SalesTaxHelper.addTax(base: base, ratePct: preset.ratePct)
+                                customText = String(format: "%.2f", taxed)
+                            }
+                        } label: {
+                            Text(preset.shortLabel)
+                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color(.secondarySystemGroupedBackground))
+                                .clipShape(Capsule())
+                                .foregroundStyle(.primary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.top, 2)
             }
             .padding(.horizontal, 16)
 

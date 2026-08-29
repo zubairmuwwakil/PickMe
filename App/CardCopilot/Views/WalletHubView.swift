@@ -11,13 +11,13 @@ struct WalletHubView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 22) {
+            VStack(spacing: 16) {
                 // Section: Visual Wallet Cards
                 if let cards = environment.graph?.walletCards, !cards.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             Text("Your Cards")
-                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .font(.system(size: 17, weight: .bold, design: .rounded))
                                 .foregroundStyle(.primary)
 
                             Spacer()
@@ -38,7 +38,7 @@ struct WalletHubView: View {
 
                         // Horizontal Cards Carousel
                         ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 14) {
+                            HStack(spacing: 12) {
                                 ForEach(cards, id: \.cardId) { card in
                                     VStack(alignment: .leading, spacing: 8) {
                                         CardArtView(cardId: card.cardId, officialName: card.officialName, isHero: true)
@@ -67,18 +67,18 @@ struct WalletHubView: View {
                                     }
                                 }
                             }
-                            .padding(.vertical, 4)
+                            .padding(.vertical, 2)
                         }
                     }
                 }
 
                 // Section: Card Copilot Tools
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 10) {
                     Text("Decision Tools")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
 
-                    VStack(spacing: 10) {
+                    VStack(spacing: 8) {
                         // Which Card?
                         Button { router.push(.categoryPicker) } label: {
                             toolCard(
@@ -134,9 +134,10 @@ struct WalletHubView: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.top, 12)
+            .padding(.top, 4)
             .padding(.bottom, 90) // Inset for floating glass nav
         }
+        .navigationBarTitleDisplayMode(.inline)
         .background(Color(.systemGroupedBackground))
     }
 
@@ -148,27 +149,27 @@ struct WalletHubView: View {
         badge: String?,
         badgeColor: Color
     ) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(iconColor.opacity(0.14))
-                    .frame(width: 44, height: 44)
+                    .frame(width: 40, height: 40)
                 Image(systemName: icon)
-                    .font(.system(size: 19, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(iconColor)
             }
 
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
                     Text(title)
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
                         .foregroundStyle(.primary)
 
                     if let badge {
                         Text(badge)
                             .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
-                            .padding(.horizontal, 7)
+                            .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(badgeColor, in: Capsule())
                     }
@@ -183,15 +184,15 @@ struct WalletHubView: View {
             Spacer()
 
             Image(systemName: "chevron.right")
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.tertiary)
         }
-        .padding(14)
+        .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+                .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 1)
         )
     }
 }
