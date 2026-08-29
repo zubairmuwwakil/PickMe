@@ -14,7 +14,7 @@ user's money before, during, and after every transaction.*
 | `PickMe` | PickMe (iOS) | ALL card-decision semantics: checkout pick, keep/cancel, benefits, valuation | dashboards / deep analytics UI (A5); market data |
 | `return-saas` | Looply (retired) | nothing new — absorbed; live only as a portfolio demo (B1) | any feature work |
 | `marketdata` | MarketLens | asset valuation + investment analytics: OHLCV, indicators, corporate actions, calendar, quality, **and crypto pricing** | the complete financial picture; purchases; cards; user credentials |
-| `MoneyTalks` | **Inunity** — the unifier (E1, named 2026-08-18) | Apple Pay capture, email ingestion, purchase spine, cross-product analytics | card rule semantics (frozen, PickMe owns); market-data ingestion (MarketLens owns) |
+| `MoneyTalks` | **In Unity** — the unifier (E1, named 2026-08-18) | Apple Pay capture, email ingestion, purchase spine, cross-product analytics | card rule semantics (frozen, PickMe owns); market-data ingestion (MarketLens owns) |
 
 Email-derived intelligence was Looply's; it now lives in the hub
 (`src/lib/domain/receipts/`, `src/lib/services/email.ts`). The repo is the husk.
@@ -52,4 +52,5 @@ Conflict outside that: **stop and ask. Do not average them.**
 - Long-form narrative (positioning, not a backlog): `MoneyTalks/docs/ECOSYSTEM-NARRATIVE.md`
 
 *This file is mirrored into all four repos. Edit the canonical copy, then run
-`scripts/sync-ecosystem.sh` from MoneyTalks. A stamp mismatch means stale.*
+`scripts/sync/sync-ecosystem.sh`. Freshness is verified by
+`./scripts/sync/sync-ecosystem.sh --check` and advisory CI.*
