@@ -1,0 +1,97 @@
+{
+  "researchedAt": "2026-08-29",
+  "scope": "Current 27-card wallet in benefits-catalogue.json",
+  "statusPolicy": "issuerPage means an official issuer or underwriter source was located; certificateVerified remains reserved for matching the owner's issued document.",
+  "certificateSourceOverrides": {
+    "wealthsimple-vip": {
+      "sourceUrl": "https://www.cdn.wealthsimple.com/en-ca/pdfs/CHUBB-COI-VIP-060126-EN.pdf",
+      "certificateDate": "2026-06-01",
+      "underwriter": "Chubb Insurance Company of Canada"
+    }
+  },
+  "additionalDocuments": {
+    "amex-platinum": [
+      {"documentId":"amex-platinum-amex-coverage-selector","kind":"productPage","title":"American Express coverage selector","url":"https://www.americanexpress.com/en-ca/insurance/coverage/?linknav=ca_travel_home","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official Amex page linking current card certificates and statutory conditions."}
+    ],
+    "amex-cobalt": [
+      {"documentId":"amex-cobalt-amex-benefits","kind":"productPage","title":"American Express Cobalt Card benefits","url":"https://www.americanexpress.com/ca/en/benefits/cobalt-card/","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official benefits page identifies the certificate and claim portals."}
+    ],
+    "amex-bonvoy": [
+      {"documentId":"amex-bonvoy-amex-benefits","kind":"productPage","title":"Marriott Bonvoy American Express Card benefits","url":"https://www.americanexpress.com/ca/en/membership-benefits/marriott.html","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official benefits page identifies the certificate and claim routes."}
+    ],
+    "mbna-rewards-we": [
+      {"documentId":"mbna-rewards-we-mastercard-benefits","kind":"productPage","title":"MBNA Mastercard cardholder benefits","url":"https://www.mbna.ca/en/credit-cards/mastercard-cardholder-benefits","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official MBNA document index and benefits page."}
+    ],
+    "amazon-ca-rewards-mastercard": [
+      {"documentId":"amazon-ca-rewards-mastercard-mastercard-benefits","kind":"productPage","title":"MBNA Mastercard cardholder benefits","url":"https://www.mbna.ca/en/credit-cards/mastercard-cardholder-benefits","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official MBNA document index and benefits page."}
+    ],
+    "scotia-momentum-vi-plus": [
+      {"documentId":"scotia-momentum-vi-plus-welcome-kit","kind":"welcomeGuide","title":"Scotiabank credit card welcome kits","url":"https://www.scotiabank.com/ca/en/personal/credit-cards/manage-your-credit-card/welcome-kits.html","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official Scotiabank index for welcome kits and insurance certificates."}
+    ],
+    "scotia-passport-visa-infinite-plus": [
+      {"documentId":"scotia-passport-visa-infinite-plus-welcome-kit","kind":"welcomeGuide","title":"Scotiabank Passport Visa Infinite+ welcome kit","url":"https://www.scotiabank.com/ca/en/personal/credit-cards/visa/passport-infinite-card/welcome-kit.html","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official card-specific welcome-kit page."}
+    ],
+    "scotia-gold-amex": [
+      {"documentId":"scotia-gold-amex-welcome-kit","kind":"welcomeGuide","title":"Scotiabank Gold American Express welcome kit","url":"https://www.scotiabank.com/content/dam/scotiabank/canada/common/documents/pdf/SCOTIABANK-GOLD-Amex-Eng-Ekit.pdf","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official Scotiabank welcome-kit PDF."}
+    ],
+    "tangerine-moneyback-world": [
+      {"documentId":"tangerine-moneyback-world-cardholder-agreement","kind":"cardholderAgreement","title":"Tangerine Credit Card Cardholder Agreement","url":"https://www.tangerine.ca/en/legal/credit-card-cardholder-agreement","effectiveDate":"2026-04-22","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official agreement page also links the Money-Back World Mastercard certificate."}
+    ],
+    "rogers-red-we": [
+      {"documentId":"rogers-red-we-legal-index","kind":"productPage","title":"Rogers Bank Mastercard legal documents","url":"https://www.rogersbank.com/en/legal/","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official legal index listing current and historical Rogers Red World Elite certificates."}
+    ],
+    "triangle-we": [
+      {"documentId":"triangle-we-legal-information","kind":"productPage","title":"Triangle legal information and insurance terms","url":"https://triangle.canadiantire.ca/en/legal-information.html","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official page states insurance details are in the welcome-kit certificate and identifies the underwriter."}
+    ],
+    "wealthsimple-vip": [
+      {"documentId":"wealthsimple-vip-insurance-claims","kind":"claimsInstructions","title":"Submit a Wealthsimple credit-card insurance claim","url":"https://help.wealthsimple.com/hc/en-ca/articles/41776504896411-Submit-an-insurance-claim-with-your-Wealthsimple-credit-card","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official instructions identify the in-app certificate location and Crawford claims contact."},
+      {"documentId":"wealthsimple-vip-cardholder-agreements","kind":"cardholderAgreement","title":"Wealthsimple credit-card agreements","url":"https://www.wealthsimple.com/en-ca/legal/credit-card-agreements","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official agreement index for the Visa Infinite Privilege and related cards."}
+    ],
+    "cryptocom-royal-indigo": [
+      {"documentId":"cryptocom-royal-indigo-cardholder-agreement","kind":"cardholderAgreement","title":"Royal Indigo / Jade Green Visa Prepaid Cardholder Agreement","url":"https://crypto.com/document/cad_card_cro_locked_25000","effectiveDate":"2025-08-27","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official Digital Commerce Bank / Crypto.com agreement. No public insurance certificate was located; the card remains benefits-stubbed."}
+    ],
+    "td-aeroplan-visa-infinite": [
+      {"documentId":"td-aeroplan-visa-infinite-benefit-coverages","kind":"certificateOfInsurance","title":"TD Aeroplan Visa Infinite benefit coverages guide","url":"https://www.td.com/content/dam/tdct/document/pdf/12281-2b-ap-infinite-roc-single-f-01-a2-final-en.pdf","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official TD benefit-coverages guide."},
+      {"documentId":"td-aeroplan-visa-infinite-cardholder-agreement","kind":"cardholderAgreement","title":"TD Cardholder Agreement","url":"https://www.td.com/content/dam/tdct/document/pdf/personal-banking/12128-599186-cha-25-a1-en.pdf","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official TD agreement document linked from TD card documentation."}
+    ],
+    "td-first-class-travel-visa-infinite": [
+      {"documentId":"td-first-class-travel-visa-infinite-cardholder-agreement","kind":"cardholderAgreement","title":"TD Cardholder Agreement","url":"https://www.td.com/content/dam/tdct/document/pdf/personal-banking/12128-599186-cha-25-a1-en.pdf","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official TD agreement document linked from TD card documentation."}
+    ],
+    "td-cash-back-visa-infinite": [
+      {"documentId":"td-cash-back-visa-infinite-cardholder-agreement","kind":"cardholderAgreement","title":"TD Cardholder Agreement","url":"https://www.td.com/content/dam/tdct/document/pdf/personal-banking/12128-599186-cha-25-a1-en.pdf","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official TD agreement document linked from TD card documentation."}
+    ],
+    "rbc-avion-visa-infinite": [
+      {"documentId":"rbc-avion-visa-infinite-benefits-guide","kind":"welcomeGuide","title":"RBC Avion Visa Infinite benefits guide","url":"https://www.rbcroyalbank.com/credit-cards/travel/rbc-visa-infinite-avion/rbc-visa-infinite-avion-benefits-guide.pdf","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official RBC benefits guide."},
+      {"documentId":"rbc-avion-visa-infinite-documentation","kind":"productPage","title":"RBC credit-card documentation","url":"https://www.rbcroyalbank.com/credit-cards/cardholders/documentation.html","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official RBC documentation index for agreements, insurance and product summaries."}
+    ],
+    "rbc-ion-plus-visa": [
+      {"documentId":"rbc-ion-plus-visa-benefits-guide","kind":"welcomeGuide","title":"RBC ION+ Visa benefits guide","url":"https://www.rbcroyalbank.com/credit-cards/rewards/rbc-ion-plus-visa/rbc-ion-plus-visa-benefits-guide.pdf","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official RBC benefits guide."},
+      {"documentId":"rbc-ion-plus-visa-documentation","kind":"productPage","title":"RBC credit-card documentation","url":"https://www.rbcroyalbank.com/credit-cards/cardholders/documentation.html","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official RBC documentation index for agreements, insurance and product summaries."}
+    ],
+    "westjet-rbc-world-elite": [
+      {"documentId":"westjet-rbc-world-elite-benefits-guide","kind":"welcomeGuide","title":"WestJet RBC World Elite Mastercard benefits guide","url":"https://www.rbcroyalbank.com/credit-cards/travel/westjet-rbc-world-elite-mastercard/westjet-rbc-world-elite-mastercard-benefits-guide.pdf","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official RBC benefits guide."},
+      {"documentId":"westjet-rbc-world-elite-documentation","kind":"productPage","title":"RBC credit-card documentation","url":"https://www.rbcroyalbank.com/credit-cards/cardholders/documentation.html","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official RBC documentation index for agreements, insurance and product summaries."}
+    ],
+    "cibc-dividend-visa-infinite": [
+      {"documentId":"cibc-dividend-visa-infinite-agreements-index","kind":"productPage","title":"CIBC agreements and insurance","url":"https://www.cibc.com/en/personal-banking/credit-cards/manage/agreements-and-insurance.html","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official CIBC index for insurance certificates, summaries, agreements and terms."}
+    ],
+    "cibc-aventura-visa-infinite": [
+      {"documentId":"cibc-aventura-visa-infinite-card-page","kind":"productPage","title":"CIBC Aventura Visa Infinite card documents","url":"https://www.cibc.com/en/personal-banking/credit-cards/all-credit-cards/aventura-visa-infinite-card.html","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official CIBC card page links the insurance certificate, benefits guide and cardholder agreement."}
+    ],
+    "cibc-aventura-visa": [
+      {"documentId":"cibc-aventura-visa-agreements-index","kind":"productPage","title":"CIBC agreements and insurance","url":"https://www.cibc.com/en/personal-banking/credit-cards/manage/agreements-and-insurance.html","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official CIBC index for insurance certificates, summaries, agreements and terms."}
+    ],
+    "national-bank-world-elite": [
+      {"documentId":"national-bank-world-elite-card-page","kind":"productPage","title":"National Bank World Elite Mastercard","url":"https://www.nbc.ca/personal/mastercard-credit-cards/world-elite.html","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official card page links insurance summaries, certificate and agreement and lists claim contacts."}
+    ],
+    "pc-insiders-world-elite": [
+      {"documentId":"pc-insiders-world-elite-disclosure-summary","kind":"cardholderAgreement","title":"PC Financial Mastercard application disclosure summary","url":"https://www.pcfinancial.ca/docs/default-source/legal-stuff/pcmc_disclosure_summary_en.pdf","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official PC Financial disclosure document; the public product page says the insurance certificate is supplied in the welcome kit."}
+    ],
+    "bmo-eclipse-visa-infinite": [
+      {"documentId":"bmo-eclipse-visa-infinite-forms-index","kind":"productPage","title":"BMO credit-card forms and benefits","url":"https://www.bmo.com/en-ca/main/personal/card-forms/","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official BMO index for cardholder agreements, benefit guides and insurance certificates."}
+    ],
+    "bmo-ascend-world-elite": [
+      {"documentId":"bmo-ascend-world-elite-forms-index","kind":"productPage","title":"BMO credit-card forms and benefits","url":"https://www.bmo.com/en-ca/main/personal/card-forms/","verificationStatus":"issuerPage","lastVerifiedAt":"2026-08-29","notes":"Official BMO index for cardholder agreements, benefit guides and insurance certificates."}
+    ]
+  }
+}

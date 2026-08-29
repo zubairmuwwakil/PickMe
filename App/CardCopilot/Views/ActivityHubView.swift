@@ -14,6 +14,10 @@ struct ActivityHubView: View {
     @State private var selectedCategory: String? = nil
     @State private var isShowingAllPurchases = false
     @State private var inspectingPurchase: StoredPurchase? = nil
+    @State private var quickAmountPurchase: StoredPurchase? = nil
+    @State private var quickCategoryPurchase: StoredPurchase? = nil
+    @State private var quickCardPurchase: StoredPurchase? = nil
+    @State private var quickDeletePurchase: StoredPurchase? = nil
     @State private var isChoosingArrivalScope = false
 
     private struct ArrivalPromptContext {
@@ -42,15 +46,103 @@ struct ActivityHubView: View {
         return session.recentPurchaseItems
     }
 
-    private var displayedItems: [StoredPurchase] {
-        if selectedCategory != nil {
-            return filteredItems
-        }
-        return Array(session.recentPurchaseItems.prefix(5))
-    }
-
     private var filteredCheckoutPurchases: [StoredPrediction] {
         filteredItems.compactMap(\.prediction)
+    }
+
+    // MARK: - Robust Date Grouping
+
+    private struct PurchaseSection: Identifiable {
+        let id: String
+        let title: String
+        let items: [StoredPurchase]
+    }
+
+    private var purchaseSections: [PurchaseSection] {
+        let sorted = Array(filteredItems.sorted { $0.createdAt > $1.createdAt }.prefix(5))
+        let calendar = Calendar.current
+        var sections: [PurchaseSection] = []
+
+        let todayItems = sorted.filter { calendar.isDateInToday($0.createdAt) }
+        if !todayItems.isEmpty {
+            sections.append(PurchaseSection(id: "today", title: "Today", items: todayItems))
+        }
+
+        let yesterdayItems = sorted.filter { calendar.isDateInYesterday($0.createdAt) }
+        if !yesterdayItems.isEmpty {
+            sections.append(PurchaseSection(id: "yesterday", title: "Yesterday", items: yesterdayItems))
+        }
+
+        let thisWeekItems = sorted.filter { item in
+            !calendar.isDateInToday(item.createdAt)
+            && !calendar.isDateInYesterday(item.createdAt)
+            && (calendar.dateComponents([.day], from: item.createdAt, to: Date()).day ?? 99) < 7
+            && (calendar.dateComponents([.day], from: item.createdAt, to: Date()).day ?? -1) >= 0
+        }
+        if !thisWeekItems.isEmpty {
+            sections.append(PurchaseSection(id: "thisWeek", title: "This Week", items: thisWeekItems))
+        }
+
+        let earlierItems = sorted.filter { item in
+            !calendar.isDateInToday(item.createdAt)
+            && !calendar.isDateInYesterday(item.createdAt)
+            && ((calendar.dateComponents([.day], from: item.createdAt, to: Date()).day ?? 99) >= 7
+                || (calendar.dateComponents([.day], from: item.createdAt, to: Date()).day ?? 0) < 0)
+        }
+        if !earlierItems.isEmpty {
+            sections.append(PurchaseSection(id: "earlier", title: "Earlier", items: earlierItems))
+        }
+
+        // Fallback: if all items failed specific date buckets, group all into one
+        if sections.isEmpty && !sorted.isEmpty {
+            sections.append(PurchaseSection(id: "all", title: "Recent Activity", items: sorted))
+        }
+
+        return sections
+    }
+
+    // MARK: - Overview Pulse Stats
+
+    private var totalSpendAmount: Double {
+        filteredItems.reduce(0.0) { sum, item in
+            sum + (item.amountCad ?? item.prediction?.scoredAmountCad ?? 0)
+        }
+    }
+
+    private var optimalStats: (optimalCount: Int, evaluatedCount: Int, percent: Int, totalAdvantageCad: Double) {
+        guard let graph = environment.graph else { return (0, 0, 100, 0) }
+        var optimal = 0
+        var evaluated = 0
+        var advantageSum: Double = 0
+
+        for item in filteredItems {
+            let assessment = PurchaseActivityEvaluator.cardAssessment(
+                for: item,
+                graph: graph,
+                knownMerchants: session.homeMerchants,
+                walletFeedback: walletFeedback(for: item)
+            )
+            switch assessment {
+            case .best:
+                optimal += 1
+                evaluated += 1
+            case .better(_, let advantageCad):
+                evaluated += 1
+                if let advantageCad { advantageSum += advantageCad }
+            case .unavailable:
+                break
+            }
+        }
+        let pct = evaluated > 0 ? Int((Double(optimal) / Double(evaluated)) * 100) : 100
+        return (optimal, evaluated, pct, advantageSum)
+    }
+
+    private var selectableCategories: [String] {
+        let catalogueCategories = (environment.graph?.walletCards ?? []).flatMap { card in
+            card.earnRules.flatMap { $0.predicate.categories ?? [] }
+        }
+        return Array(Set(catalogueCategories + ["other"]))
+            .sorted { CategoryVisuals.meta(for: $0).displayName < CategoryVisuals.meta(for: $1).displayName }
     }
 
     /// Ask once after the first repeat (two separate visit days), while the exact branch is still
@@ -86,129 +178,61 @@ struct ActivityHubView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                // Section: Recent Purchases & Category Intelligence
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Recent Purchases")
-                                .font(.system(size: 17, weight: .bold, design: .rounded))
-                                .foregroundStyle(.primary)
-                            if !session.recentPurchaseItems.isEmpty {
-                                Text("\(session.recentPurchaseItems.count) total • \(availableCategories.count) categories")
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        Spacer()
-                        if session.recentPurchaseItems.count > 5 {
-                            Button {
-                                isShowingAllPurchases = true
-                            } label: {
-                                Text("See All (\(session.recentPurchaseItems.count))")
-                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(.blue)
-                            }
-                        }
-                    }
+                // 1. Activity Pulse Hero Card
+                activityPulseHeroCard
 
-                    if session.recentPurchaseItems.isEmpty {
-                        emptyPurchasesCard
-                    } else {
-                        // Horizontal Category Filter Pills
-                        categoryFilterBar
+                // 2. Smart Action Queues Banner (Finish & Reconcile)
+                actionQueuesBanner
 
-                        // Category Insight & Cap Card (when filtering or aggregate)
-                        if let selectedCategory, !filteredCheckoutPurchases.isEmpty {
-                            categoryInsightCard(category: selectedCategory,
-                                                purchases: filteredCheckoutPurchases)
-                        }
-
-                        // Purchase rows
-                        VStack(spacing: 8) {
-                            ForEach(displayedItems) { item in
-                                Button {
-                                    inspectingPurchase = item
-                                } label: {
-                                    purchaseRow(item)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-
-                        if let prompt = arrivalPromptContext {
-                            arrivalAlertPrompt(for: prompt)
-                        }
-                    }
+                // 3. Category Filter Capsules
+                if !availableCategories.isEmpty {
+                    categoryFilterBar
                 }
 
-                // Section: Action Queues
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Action Queues")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary)
-
-                    VStack(spacing: 8) {
-                        // Finish Purchases
-                        Button { router.push(.finish) } label: {
-                            queueActionRow(
-                                icon: "square.and.pencil",
-                                iconColor: session.completionQueue.isEmpty ? .green : .blue,
-                                title: session.completionQueue.isEmpty ? "Finish Purchases" : "\(session.completionQueue.count) to Finish",
-                                subtitle: session.completionQueue.isEmpty ? "All purchases have card & cost recorded" : "Add the card tapped and charge amount",
-                                count: session.completionQueue.count,
-                                badgeColor: Color.blue
-                            )
-                        }
-                        .buttonStyle(.plain)
-
-                        // Reconcile Statements
-                        Button { router.push(.reconcile) } label: {
-                            queueActionRow(
-                                icon: "tray.full.fill",
-                                iconColor: session.reconcileQueue.isEmpty ? .green : .orange,
-                                title: session.reconcileQueue.isEmpty ? "Reconcile Queue" : "\(session.reconcileQueue.count) Waiting to Reconcile",
-                                subtitle: session.reconcileQueue.isEmpty ? "All predictions confirmed against statements" : "Match posted issuer rewards to predictions",
-                                count: session.reconcileQueue.count,
-                                badgeColor: Color(red: 0.13, green: 0.77, blue: 0.37)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                    }
+                // 4. Category Insight & Spend Cap Card (when a category is selected)
+                if let selectedCategory, !filteredCheckoutPurchases.isEmpty {
+                    categoryInsightCard(category: selectedCategory,
+                                        purchases: filteredCheckoutPurchases)
                 }
 
-                // Section: Experiment Validation & Scoreboard
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack {
-                        Text("Experiment Scoreboard")
-                            .font(.system(size: 17, weight: .bold, design: .rounded))
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Button { router.push(.dashboard) } label: {
-                            Text("Full Breakdown")
-                                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                                .foregroundStyle(.blue)
-                        }
-                    }
+                // 5. Purchases Feed Header & Date Grouped List
+                purchasesFeedSection
 
-                    if let metrics = session.metrics {
-                        experimentOverviewCard(metrics: metrics)
-                    }
+                // 6. Arrival Alert Prompt
+                if let prompt = arrivalPromptContext {
+                    arrivalAlertPrompt(for: prompt)
                 }
+
+                // 7. Experiment Validation & Scoreboard
+                experimentScoreboardSection
             }
             .padding(.horizontal, 16)
-            .padding(.top, 4)
+            .padding(.top, 6)
             .padding(.bottom, 90) // Inset for floating glass nav
         }
         .navigationBarTitleDisplayMode(.inline)
         .background(Color(.systemGroupedBackground))
+        .task {
+            refreshHistoryAndCaptures()
+        }
+        .onAppear {
+            refreshHistoryAndCaptures()
+        }
+        .onChange(of: sync.walletFeedback) { _, _ in
+            refreshHistoryAndCaptures()
+        }
         .sheet(isPresented: $isShowingAllPurchases) {
             AllPurchasesSheetView(
                 purchases: session.recentPurchaseItems,
                 cards: environment.graph?.walletCards ?? [],
                 graph: environment.graph,
                 knownMerchants: session.homeMerchants,
+                initialCategory: selectedCategory,
                 onSelectPurchase: { item in
                     inspectingPurchase = item
+                },
+                onQuickAmount: { item in
+                    quickAmountPurchase = item
                 }
             )
         }
@@ -216,6 +240,7 @@ struct ActivityHubView: View {
             PurchaseDetailSheetView(
                 purchase: purchase,
                 cards: environment.graph?.walletCards ?? [],
+                graph: environment.graph,
                 onFinish: {
                     inspectingPurchase = nil
                     router.push(.finish)
@@ -225,8 +250,56 @@ struct ActivityHubView: View {
                     router.push(.reconcile)
                 },
                 onUpdateCategory: updateCategory,
-                onUpdateAmount: updateAmount
+                onUpdateAmount: updateAmount,
+                onUpdateCard: updateCard,
+                onDeletePurchase: deletePurchase
             )
+        }
+        .sheet(item: $quickAmountPurchase) { purchase in
+            PurchaseAmountEntrySheetView(
+                merchantName: purchase.displayMerchant,
+                initialAmount: purchase.amountCad,
+                onSave: { amount in
+                    updateAmount(purchase, amount)
+                    quickAmountPurchase = nil
+                },
+                onCancel: { quickAmountPurchase = nil }
+            )
+        }
+        .sheet(item: $quickCategoryPurchase) { purchase in
+            CategoryChangeSheetView(
+                currentCategory: category(for: purchase) ?? "other",
+                categories: selectableCategories,
+                onSelectCategory: { newCategory in
+                    updateCategory(purchase, newCategory)
+                    quickCategoryPurchase = nil
+                }
+            )
+        }
+        .sheet(item: $quickCardPurchase) { purchase in
+            CardChangeSheetView(
+                currentCardId: purchase.cardUsedId,
+                cards: environment.graph?.walletCards ?? [],
+                onSelectCard: { newCardId in
+                    updateCard(purchase, newCardId)
+                    quickCardPurchase = nil
+                }
+            )
+        }
+        .confirmationDialog(
+            "Delete this purchase?",
+            isPresented: Binding(get: { quickDeletePurchase != nil }, set: { if !$0 { quickDeletePurchase = nil } }),
+            titleVisibility: .visible
+        ) {
+            if let target = quickDeletePurchase {
+                Button("Delete Purchase", role: .destructive) {
+                    deletePurchase(target)
+                    quickDeletePurchase = nil
+                }
+            }
+            Button("Cancel", role: .cancel) { quickDeletePurchase = nil }
+        } message: {
+            Text("This removes the record from your purchase history.")
         }
         .confirmationDialog(
             arrivalPromptContext.map { "Arrival alerts for \($0.merchantName)" }
@@ -260,25 +333,272 @@ struct ActivityHubView: View {
         }
     }
 
-    private func updateCategory(_ purchase: StoredPurchase, _ category: String) {
-        if let graph = environment.graph {
-            session.updateCategory(for: purchase, to: category, using: graph)
+    private func refreshHistoryAndCaptures() {
+        guard let graph = environment.graph else { return }
+        try? graph.service.ingestAutomaticCaptures(from: sync.walletFeedback)
+        session.refresh(using: graph)
+    }
+
+    // MARK: - 1. Activity Pulse Hero Card
+
+    private var activityPulseHeroCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center) {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.blue)
+                    Text("ACTIVITY PULSE")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .tracking(0.9)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                if let selectedCategory {
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                            self.selectedCategory = nil
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("Filtered: \(CategoryVisuals.meta(for: selectedCategory).displayName)")
+                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 12))
+                        }
+                        .foregroundStyle(.blue)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.blue.opacity(0.1), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                } else if !session.recentPurchaseItems.isEmpty {
+                    Text("\(session.recentPurchaseItems.count) purchases")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color(.tertiarySystemFill), in: Capsule())
+                }
+            }
+
+            // Main Spend Metric
+            VStack(alignment: .leading, spacing: 3) {
+                Text(String(format: "$%.2f", totalSpendAmount))
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .contentTransition(.numericText())
+
+                Text(selectedCategory != nil
+                     ? "\(CategoryVisuals.meta(for: selectedCategory!).displayName) tracked spend"
+                     : "Total tracked spending in PickMe")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+
+            Divider()
+
+            // Sub-metrics (Optimization Score & Value Impact)
+            HStack(spacing: 12) {
+                // Optimization Rate Pill
+                HStack(spacing: 7) {
+                    ZStack {
+                        Circle()
+                            .stroke(Color.green.opacity(0.2), lineWidth: 3)
+                            .frame(width: 24, height: 24)
+                        Circle()
+                            .trim(from: 0, to: CGFloat(Double(optimalStats.percent) / 100.0))
+                            .stroke(Color.green, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                            .frame(width: 24, height: 24)
+                            .rotationEffect(.degrees(-90))
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(.green)
+                    }
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("\(optimalStats.percent)% Optimal")
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .foregroundStyle(.primary)
+                        Text("\(optimalStats.optimalCount)/\(max(optimalStats.evaluatedCount, 1)) best card used")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                // Rewards Opportunity / Advantage
+                HStack(spacing: 7) {
+                    ZStack {
+                        Circle()
+                            .fill(optimalStats.totalAdvantageCad > 0 ? Color.orange.opacity(0.15) : Color.blue.opacity(0.12))
+                            .frame(width: 24, height: 24)
+                        Image(systemName: optimalStats.totalAdvantageCad > 0 ? "arrow.up.right" : "sparkle")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(optimalStats.totalAdvantageCad > 0 ? .orange : .blue)
+                    }
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        if optimalStats.totalAdvantageCad > 0 {
+                            Text(String(format: "+$%.2f", optimalStats.totalAdvantageCad))
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundStyle(.orange)
+                            Text("Better card potential")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text("\(availableCategories.count) Categories")
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundStyle(.primary)
+                            Text("Active merchant diversity")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
+        )
+    }
+
+    // MARK: - 2. Smart Action Queues Banner
+
+    @ViewBuilder
+    private var actionQueuesBanner: some View {
+        let finishCount = session.completionQueue.count
+        let reconcileCount = session.reconcileQueue.count
+        let totalActions = finishCount + reconcileCount
+
+        if totalActions > 0 {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    HStack(spacing: 5) {
+                        Image(systemName: "bell.badge.fill")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(.blue)
+                        Text("ACTION REQUIRED")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .tracking(0.8)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Text("\(totalActions) pending")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2.5)
+                        .background(Color.blue, in: Capsule())
+                }
+
+                HStack(spacing: 10) {
+                    if finishCount > 0 {
+                        Button {
+                            router.push(.finish)
+                        } label: {
+                            HStack(spacing: 8) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.blue.opacity(0.16))
+                                        .frame(width: 32, height: 32)
+                                    Image(systemName: "square.and.pencil")
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundStyle(.blue)
+                                }
+
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text("\(finishCount) to Finish")
+                                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                                        .foregroundStyle(.primary)
+                                    Text("Add card or amount")
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(10)
+                            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    if reconcileCount > 0 {
+                        Button {
+                            router.push(.reconcile)
+                        } label: {
+                            HStack(spacing: 8) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color(red: 0.13, green: 0.77, blue: 0.37).opacity(0.16))
+                                        .frame(width: 32, height: 32)
+                                    Image(systemName: "tray.full.fill")
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundStyle(Color(red: 0.13, green: 0.77, blue: 0.37))
+                                }
+
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text("\(reconcileCount) to Reconcile")
+                                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                                        .foregroundStyle(.primary)
+                                    Text("Confirm statement")
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(10)
+                            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.blue.opacity(0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(Color.blue.opacity(0.18), lineWidth: 1)
+                    )
+            )
         }
     }
 
-    private func updateAmount(_ purchase: StoredPurchase, _ amount: Double) {
-        if let graph = environment.graph {
-            session.recordAmount(amount, for: purchase, using: graph)
-        }
-    }
-
-    // MARK: - Category Filter Bar
+    // MARK: - 3. Category Filter Capsules
 
     private var categoryFilterBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 // "All" Pill
                 Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
                         selectedCategory = nil
                     }
@@ -288,9 +608,11 @@ struct ActivityHubView: View {
                             .font(.system(size: 11, weight: .semibold))
                         Text("All")
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        Text("(\(session.recentPurchaseItems.count))")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(selectedCategory == nil ? .white.opacity(0.8) : .secondary)
+                        Text("\(session.recentPurchaseItems.count)")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1.5)
+                            .background(selectedCategory == nil ? Color.white.opacity(0.25) : Color(.tertiarySystemFill), in: Capsule())
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
@@ -303,7 +625,7 @@ struct ActivityHubView: View {
                     .foregroundStyle(selectedCategory == nil ? .white : .primary)
                     .overlay(
                         Capsule()
-                            .strokeBorder(selectedCategory == nil ? Color.clear : Color.black.opacity(0.06), lineWidth: 1)
+                            .strokeBorder(selectedCategory == nil ? Color.clear : Color.primary.opacity(0.06), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
@@ -315,6 +637,7 @@ struct ActivityHubView: View {
                     let isSelected = selectedCategory == category
 
                     Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
                             selectedCategory = isSelected ? nil : category
                         }
@@ -325,9 +648,11 @@ struct ActivityHubView: View {
                                 .foregroundStyle(isSelected ? .white : meta.color)
                             Text(meta.displayName)
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
-                            Text("(\(count))")
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(isSelected ? .white.opacity(0.85) : .secondary)
+                            Text("\(count)")
+                                .font(.system(size: 10, weight: .bold, design: .rounded))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1.5)
+                                .background(isSelected ? Color.white.opacity(0.25) : Color(.tertiarySystemFill), in: Capsule())
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
@@ -340,7 +665,7 @@ struct ActivityHubView: View {
                         .foregroundStyle(isSelected ? .white : .primary)
                         .overlay(
                             Capsule()
-                                .strokeBorder(isSelected ? Color.clear : Color.black.opacity(0.06), lineWidth: 1)
+                                .strokeBorder(isSelected ? Color.clear : Color.primary.opacity(0.06), lineWidth: 1)
                         )
                     }
                     .buttonStyle(.plain)
@@ -350,7 +675,7 @@ struct ActivityHubView: View {
         }
     }
 
-    // MARK: - Category Insight & Cap Card
+    // MARK: - 4. Category Insight & Spend Cap Card
 
     private func categoryInsightCard(category: String, purchases: [StoredPrediction]) -> some View {
         let meta = CategoryVisuals.meta(for: category)
@@ -371,14 +696,14 @@ struct ActivityHubView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(meta.color.opacity(0.18))
-                        .frame(width: 36, height: 36)
+                        .frame(width: 38, height: 38)
                     Image(systemName: meta.icon)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(meta.color)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(meta.displayName.uppercased()) SPEND INTELLIGENCE")
+                    Text("\(meta.displayName.uppercased()) INTELLIGENCE")
                         .font(.system(size: 10, weight: .bold, design: .rounded))
                         .tracking(0.8)
                         .foregroundStyle(meta.color)
@@ -390,6 +715,7 @@ struct ActivityHubView: View {
                 Spacer()
 
                 Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     withAnimation { selectedCategory = nil }
                 } label: {
                     Image(systemName: "xmark.circle.fill")
@@ -402,8 +728,8 @@ struct ActivityHubView: View {
             Divider()
 
             HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("OPTIMAL PICK RATE")
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("OPTIMAL CARD ACCURACY")
                         .font(.system(size: 10, weight: .semibold, design: .rounded))
                         .foregroundStyle(.secondary)
                     HStack(spacing: 4) {
@@ -418,8 +744,8 @@ struct ActivityHubView: View {
 
                 Spacer()
 
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("TRANSACTIONS")
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text("PURCHASES")
                         .font(.system(size: 10, weight: .semibold, design: .rounded))
                         .foregroundStyle(.secondary)
                     Text("\(purchases.count) logged")
@@ -477,91 +803,198 @@ struct ActivityHubView: View {
         return nil
     }
 
-    private func queueActionRow(
-        icon: String,
-        iconColor: Color,
-        title: LocalizedStringKey,
-        subtitle: LocalizedStringKey,
-        count: Int,
-        badgeColor: Color
-    ) -> some View {
-        HStack(spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(iconColor.opacity(0.14))
-                    .frame(width: 40, height: 40)
-                Image(systemName: icon)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(iconColor)
+    // MARK: - 5. Purchases Feed Header & List
+
+    private var purchasesFeedSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Header Row
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(selectedCategory == nil ? "Recent Purchases" : "\(CategoryVisuals.meta(for: selectedCategory!).displayName) Purchases")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+
+                    if !filteredItems.isEmpty {
+                        Text("\(filteredItems.count) total · Chronological feed")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                if filteredItems.count > 5 {
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        isShowingAllPurchases = true
+                    } label: {
+                        HStack(spacing: 3) {
+                            Text("See All (\(filteredItems.count))")
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 10, weight: .bold))
+                        }
+                        .foregroundStyle(.blue)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.blue.opacity(0.08), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
             }
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
+            if filteredItems.isEmpty {
+                emptyPurchasesCard
+            } else {
+                // Grouped Date Sections
+                VStack(spacing: 14) {
+                    ForEach(purchaseSections) { section in
+                        VStack(alignment: .leading, spacing: 8) {
+                            // Section Date Header
+                            HStack {
+                                Text(section.title)
+                                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                                    .foregroundStyle(.secondary)
 
-                Text(subtitle)
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
+                                Spacer()
+
+                                let subtotal = section.items.reduce(0.0) { sum, item in
+                                    sum + (item.amountCad ?? item.prediction?.scoredAmountCad ?? 0)
+                                }
+                                if subtotal > 0 {
+                                    Text(String(format: "$%.2f", subtotal))
+                                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .padding(.horizontal, 4)
+
+                            // Purchases inside this date section
+                            VStack(spacing: 8) {
+                                ForEach(section.items) { item in
+                                    Button {
+                                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                        inspectingPurchase = item
+                                    } label: {
+                                        purchaseRow(item)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .contextMenu {
+                                        Button {
+                                            inspectingPurchase = item
+                                        } label: {
+                                            Label("View Details", systemImage: "info.circle")
+                                        }
+
+                                        Button {
+                                            quickAmountPurchase = item
+                                        } label: {
+                                            Label(item.amountCad == nil ? "Add Amount" : "Edit Amount", systemImage: "dollarsign.circle")
+                                        }
+
+                                        Button {
+                                            quickCardPurchase = item
+                                        } label: {
+                                            Label("Change Card Tapped", systemImage: "creditcard")
+                                        }
+
+                                        Button {
+                                            quickCategoryPurchase = item
+                                        } label: {
+                                            Label("Reclassify Category", systemImage: "tag")
+                                        }
+
+                                        Divider()
+
+                                        Button(role: .destructive) {
+                                            quickDeletePurchase = item
+                                        } label: {
+                                            Label("Delete Purchase", systemImage: "trash")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if filteredItems.count > 5 {
+                        Button {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            isShowingAllPurchases = true
+                        } label: {
+                            HStack(spacing: 6) {
+                                Text("View All \(filteredItems.count) Purchases")
+                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                Image(systemName: "arrow.right")
+                                    .font(.system(size: 11, weight: .bold))
+                            }
+                            .foregroundStyle(.blue)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(Color(.secondarySystemGroupedBackground))
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 2)
+                    }
+                }
             }
-
-            Spacer()
-
-            if count > 0 {
-                Text("\(count)")
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(badgeColor, in: Capsule())
-            }
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.tertiary)
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 1)
-        )
     }
 
     private var emptyPurchasesCard: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 14) {
             ZStack {
                 Circle()
                     .fill(Color.blue.opacity(0.10))
-                    .frame(width: 54, height: 54)
+                    .frame(width: 58, height: 58)
                 Image(systemName: "bag.badge.plus")
-                    .font(.system(size: 24, weight: .semibold))
+                    .font(.system(size: 26, weight: .semibold))
                     .foregroundStyle(.blue)
             }
-            .padding(.top, 4)
+            .padding(.top, 6)
 
-            VStack(spacing: 4) {
-                Text("No Purchases Logged Yet")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+            VStack(spacing: 5) {
+                Text(selectedCategory != nil ? "No \(selectedCategory!) Purchases" : "No Purchases Logged Yet")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
 
-                Text("Pick a card in PickMe or capture a card tap, and every logged purchase will appear here.")
-                    .font(.system(size: 12, weight: .regular))
+                Text(selectedCategory != nil
+                     ? "Try selecting another category or clear the filter to view all purchases."
+                     : "Pick a card in PickMe or capture a card tap, and every logged purchase will appear here.")
+                    .font(.system(size: 13, weight: .regular))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
             }
+
+            if selectedCategory != nil {
+                Button {
+                    withAnimation { selectedCategory = nil }
+                } label: {
+                    Text("Clear Filter")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.blue)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(Color.blue.opacity(0.1), in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 2)
+            }
         }
-        .padding(18)
+        .padding(20)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 1)
+                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 1)
         )
     }
+
+    // MARK: - Purchase Row Component
 
     private func purchaseRow(_ item: StoredPurchase) -> some View {
         let category = category(for: item)
@@ -572,55 +1005,94 @@ struct ActivityHubView: View {
         let actualAmount = item.amountCad
         let estimatedAmount = actualAmount == nil ? item.prediction?.scoredAmountCad : nil
 
-        return VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 12) {
+        return VStack(alignment: .leading, spacing: 10) {
+            // Main row top: Avatar + Merchant & Card + Amount
+            HStack(alignment: .top, spacing: 12) {
+                // Category Avatar
                 ZStack {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(tint.opacity(0.14))
-                        .frame(width: 40, height: 40)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(tint.opacity(0.15))
+                        .frame(width: 42, height: 42)
                     Image(systemName: icon)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(tint)
                 }
 
-                VStack(alignment: .leading, spacing: 2) {
+                // Title + Subtitle
+                VStack(alignment: .leading, spacing: 4) {
                     Text(item.displayMerchant)
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
-                    HStack(spacing: 4) {
-                        Text(cardId.map { cardDisplayName(for: $0) } ?? "Card not recorded")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                        if let category {
-                            Text("•").font(.system(size: 10)).foregroundStyle(.tertiary)
-                            Text(CategoryVisuals.meta(for: category).displayName)
-                                .font(.system(size: 12))
+                    HStack(spacing: 5) {
+                        // Mini Card Chip
+                        if let cardId {
+                            HStack(spacing: 3) {
+                                Image(systemName: "creditcard.fill")
+                                    .font(.system(size: 8))
+                                Text(cardDisplayName(for: cardId))
+                                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            }
+                            .foregroundStyle(.primary.opacity(0.85))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        } else {
+                            Text("Card not recorded")
+                                .font(.system(size: 11, weight: .medium))
                                 .foregroundStyle(.secondary)
                         }
-                        Text("•").font(.system(size: 10)).foregroundStyle(.tertiary)
+
+                        if let category {
+                            Text("•").font(.system(size: 9)).foregroundStyle(.tertiary)
+                            Text(CategoryVisuals.meta(for: category).displayName)
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+
+                        Text("•").font(.system(size: 9)).foregroundStyle(.tertiary)
                         Text(CategoryVisuals.relativeTime(from: item.createdAt))
-                            .font(.system(size: 12))
+                            .font(.system(size: 11))
                             .foregroundStyle(.tertiary)
                     }
                 }
 
                 Spacer()
 
-                VStack(alignment: .trailing, spacing: 3) {
+                // Amount Display & Tag
+                VStack(alignment: .trailing, spacing: 4) {
                     if let actualAmount {
                         Text(String(format: "$%.2f", actualAmount))
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundStyle(.primary)
                     } else if let estimatedAmount {
                         Text(String(format: "~$%.2f", estimatedAmount))
                             .font(.system(size: 15, weight: .bold, design: .rounded))
                             .foregroundStyle(.secondary)
                     } else {
-                        Text("—")
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(.secondary)
+                        HStack(spacing: 5) {
+                            Text("—")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .foregroundStyle(.secondary)
+                            Button {
+                                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                                quickAmountPurchase = item
+                            } label: {
+                                HStack(spacing: 2) {
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 8, weight: .bold))
+                                    Text("Amount")
+                                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                                }
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(Color.blue.opacity(0.12), in: Capsule())
+                                .foregroundStyle(.blue)
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
 
                     if let prediction = item.prediction {
@@ -636,20 +1108,26 @@ struct ActivityHubView: View {
                 }
             }
 
+            // Bottom Assessment & Source Line
             cardAssessmentLine(for: item)
 
             if environment.ambientEnabled && isFrequented(item) {
-                Label("Arrival alerts prioritize this merchant", systemImage: "location.circle.fill")
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.blue)
+                HStack(spacing: 5) {
+                    Image(systemName: "location.circle.fill")
+                        .font(.system(size: 11))
+                    Text("Arrival alerts prioritize this store")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                }
+                .foregroundStyle(.blue)
+                .padding(.top, 2)
             }
         }
-        .padding(12)
+        .padding(13)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 1)
+                .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 1)
         )
     }
 
@@ -658,33 +1136,26 @@ struct ActivityHubView: View {
         if let observation = prediction.purchase?.observation {
             if observation.wasCorrect {
                 Text("Reconciled")
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
                     .foregroundStyle(.green)
-                    .padding(.horizontal, 7)
+                    .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(Color.green.opacity(0.12), in: Capsule())
             } else {
                 Text(observation.missClass?.rawValue ?? "Mismatch")
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
                     .foregroundStyle(.orange)
-                    .padding(.horizontal, 7)
+                    .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(Color.orange.opacity(0.12), in: Capsule())
             }
         } else if prediction.purchase?.isComplete == true {
             Text("Finished")
-                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .font(.system(size: 9, weight: .bold, design: .rounded))
                 .foregroundStyle(.blue)
-                .padding(.horizontal, 7)
+                .padding(.horizontal, 6)
                 .padding(.vertical, 2)
                 .background(Color.blue.opacity(0.12), in: Capsule())
-        } else {
-            Text("Needs Info")
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-                .foregroundStyle(.orange)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 2)
-                .background(Color.orange.opacity(0.12), in: Capsule())
         }
     }
 
@@ -694,27 +1165,77 @@ struct ActivityHubView: View {
             let assessment = PurchaseActivityEvaluator.cardAssessment(
                 for: item, graph: graph, knownMerchants: session.homeMerchants,
                 walletFeedback: walletFeedback(for: item))
+
             HStack(spacing: 6) {
                 switch assessment {
                 case .best:
-                    Label("Best card used", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 11))
+                        Text("Best card used")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                    }
+                    .foregroundStyle(.green)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2.5)
+                    .background(Color.green.opacity(0.12), in: Capsule())
+
                 case .better(let cardId, let advantageCad):
-                    Label {
-                        Text(betterCardText(cardId: cardId, advantageCad: advantageCad))
-                    } icon: {
+                    HStack(spacing: 4) {
                         Image(systemName: "arrow.up.right.circle.fill")
+                            .font(.system(size: 11))
+                        Text(betterCardText(cardId: cardId, advantageCad: advantageCad))
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
                     }
                     .foregroundStyle(.orange)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2.5)
+                    .background(Color.orange.opacity(0.12), in: Capsule())
+
                 case .unavailable(let reason):
-                    Label(reason, systemImage: "questionmark.circle")
+                    if item.amountCad == nil {
+                        Button {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            quickAmountPurchase = item
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "questionmark.circle")
+                                    .font(.system(size: 11))
+                                Text("Add the amount to compare cards")
+                                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            }
+                            .foregroundStyle(.blue)
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        HStack(spacing: 4) {
+                            Image(systemName: "questionmark.circle")
+                                .font(.system(size: 11))
+                            Text(reason)
+                                .font(.system(size: 11, weight: .medium, design: .rounded))
+                        }
                         .foregroundStyle(.secondary)
+                    }
                 }
+
                 Spacer()
-                Text(itemSourceLabel(item))
-                    .foregroundStyle(.tertiary)
+
+                HStack(spacing: 3) {
+                    sourceIcon(for: item.resolvedActivitySource)
+                        .font(.system(size: 9))
+                    Text(itemSourceLabel(item))
+                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                }
+                .foregroundStyle(.tertiary)
             }
-            .font(.system(size: 11, weight: .semibold, design: .rounded))
+        }
+    }
+
+    private func sourceIcon(for source: PurchaseActivitySource) -> Image {
+        switch source {
+        case .pickMeCheckout: return Image(systemName: "sparkles")
+        case .walletCapture: return Image(systemName: "creditcard")
+        case .arrivalAlert: return Image(systemName: "location.circle")
         }
     }
 
@@ -750,28 +1271,49 @@ struct ActivityHubView: View {
         return MerchantPatronageStore().isFrequented(merchantKey: key)
     }
 
+    // MARK: - 6. Arrival Alert Prompt
+
     private func arrivalAlertPrompt(for prompt: ArrivalPromptContext) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: "location.circle.fill")
-                .font(.system(size: 26))
-                .foregroundStyle(.blue)
+            ZStack {
+                Circle()
+                    .fill(Color.blue.opacity(0.15))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "location.circle.fill")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(.blue)
+            }
+
             VStack(alignment: .leading, spacing: 3) {
-                Text("Shop at \(prompt.merchantName) often?")
+                Text("Frequent Store: \(prompt.merchantName)")
                     .font(.system(size: 14, weight: .bold, design: .rounded))
                 Text(prompt.supportsChain
-                     ? "Choose any branch, this location only, or let PickMe keep learning."
-                     : "Add this exact location, or let PickMe keep learning.")
-                    .font(.system(size: 12))
+                     ? "Enable automatic arrival card alerts for all branches or this branch only."
+                     : "Enable automatic arrival card alerts for this location.")
+                    .font(.system(size: 11, weight: .regular))
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
+
             Spacer()
-            Button("Choose") { isChoosingArrivalScope = true }
-                .font(.system(size: 12, weight: .bold, design: .rounded))
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
+
+            Button("Configure") {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                isChoosingArrivalScope = true
+            }
+            .font(.system(size: 12, weight: .bold, design: .rounded))
+            .buttonStyle(.borderedProminent)
+            .controlSize(.small)
         }
         .padding(14)
-        .background(Color.blue.opacity(0.09), in: RoundedRectangle(cornerRadius: 16))
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.blue.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(Color.blue.opacity(0.2), lineWidth: 1)
+                )
+        )
     }
 
     private func saveArrivalPreference(_ scope: ArrivalAlertScope,
@@ -797,8 +1339,68 @@ struct ActivityHubView: View {
         return cardId
     }
 
+    private func updateCategory(_ purchase: StoredPurchase, _ category: String) {
+        if let graph = environment.graph {
+            session.updateCategory(for: purchase, to: category, using: graph)
+        }
+    }
+
+    private func updateAmount(_ purchase: StoredPurchase, _ amount: Double) {
+        if let graph = environment.graph {
+            session.recordAmount(amount, for: purchase, using: graph)
+        }
+    }
+
+    private func updateCard(_ purchase: StoredPurchase, _ cardId: String) {
+        if let graph = environment.graph {
+            session.recordCard(cardId, for: purchase, using: graph)
+        }
+    }
+
+    private func deletePurchase(_ purchase: StoredPurchase) {
+        if let graph = environment.graph {
+            session.deletePurchase(purchase, using: graph)
+        }
+    }
+
+    // MARK: - 7. Experiment Validation & Scoreboard Section
+
+    private var experimentScoreboardSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                HStack(spacing: 5) {
+                    Image(systemName: "chart.bar.xaxis")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.blue)
+                    Text("EXPERIMENT VALIDATION")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .tracking(0.8)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Button {
+                    router.push(.dashboard)
+                } label: {
+                    HStack(spacing: 2) {
+                        Text("Full Breakdown")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .foregroundStyle(.blue)
+                }
+            }
+
+            if let metrics = session.metrics {
+                experimentOverviewCard(metrics: metrics)
+            }
+        }
+    }
+
     private func experimentOverviewCard(metrics: ExperimentMetrics) -> some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             progressHeader(metrics: metrics)
             ProgressView(value: Double(min(metrics.progressToTarget, metrics.targetCheckouts)), total: Double(metrics.targetCheckouts))
                 .tint(.blue)
@@ -820,18 +1422,18 @@ struct ActivityHubView: View {
         let percent = Int((progress / target) * 100)
 
         return HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("VALIDATION PROGRESS")
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
+            VStack(alignment: .leading, spacing: 3) {
+                Text("CHECKOUT TARGET")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
                     .tracking(0.8)
                     .foregroundStyle(.secondary)
 
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text("\(metrics.progressToTarget)")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
                     Text("/ \(metrics.targetCheckouts) checkouts")
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -840,12 +1442,12 @@ struct ActivityHubView: View {
 
             ZStack {
                 Circle()
-                    .stroke(Color.gray.opacity(0.15), lineWidth: 5)
-                    .frame(width: 48, height: 48)
+                    .stroke(Color.gray.opacity(0.15), lineWidth: 4.5)
+                    .frame(width: 44, height: 44)
                 Circle()
                     .trim(from: 0, to: CGFloat(min(progress / target, 1.0)))
-                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 5, lineCap: .round))
-                    .frame(width: 48, height: 48)
+                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 4.5, lineCap: .round))
+                    .frame(width: 44, height: 44)
                     .rotationEffect(.degrees(-90))
                 Text("\(percent)%")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
@@ -877,38 +1479,40 @@ struct ActivityHubView: View {
         target: String,
         isMet: Bool
     ) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 5) {
             HStack {
                 Text(title)
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(.secondary)
                 Spacer()
                 if isMet {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(.green)
                 }
             }
 
             if let rate {
                 Text("\(Int(round(rate * 100)))%")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundStyle(isMet ? .green : .primary)
             } else {
                 Text("—")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundStyle(.secondary)
             }
 
             Text("Target: \(target)")
-                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .font(.system(size: 10, weight: .medium, design: .rounded))
                 .foregroundStyle(.tertiary)
         }
-        .padding(12)
+        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }
+
+// MARK: - All Purchases Archive Sheet
 
 /// Sheet presenting the complete list of all recent purchases with Category Filtering and Search.
 struct AllPurchasesSheetView: View {
@@ -916,12 +1520,33 @@ struct AllPurchasesSheetView: View {
     let cards: [CardProduct]
     let graph: DependencyGraph?
     let knownMerchants: [StoredMerchant]
+    var initialCategory: String? = nil
     let onSelectPurchase: (StoredPurchase) -> Void
+    var onQuickAmount: ((StoredPurchase) -> Void)? = nil
 
-    @State private var selectedCategory: String? = nil
+    @State private var selectedCategory: String?
     @State private var searchQuery: String = ""
     @Environment(\.dismiss) private var dismiss
     @Environment(SyncCoordinator.self) private var sync
+
+    init(
+        purchases: [StoredPurchase],
+        cards: [CardProduct],
+        graph: DependencyGraph?,
+        knownMerchants: [StoredMerchant],
+        initialCategory: String? = nil,
+        onSelectPurchase: @escaping (StoredPurchase) -> Void,
+        onQuickAmount: ((StoredPurchase) -> Void)? = nil
+    ) {
+        self.purchases = purchases
+        self.cards = cards
+        self.graph = graph
+        self.knownMerchants = knownMerchants
+        self.initialCategory = initialCategory
+        self._selectedCategory = State(initialValue: initialCategory)
+        self.onSelectPurchase = onSelectPurchase
+        self.onQuickAmount = onQuickAmount
+    }
 
     private var availableCategories: [String] {
         let cats = purchases.compactMap(category)
@@ -939,7 +1564,14 @@ struct AllPurchasesSheetView: View {
             let matchesSearch = searchQuery.isEmpty
                 || item.displayMerchant.localizedCaseInsensitiveContains(searchQuery)
                 || (itemCategory?.localizedCaseInsensitiveContains(searchQuery) ?? false)
+                || (item.cardUsedId.map { cardDisplayName(for: $0).localizedCaseInsensitiveContains(searchQuery) } ?? false)
             return matchesCategory && matchesSearch
+        }
+    }
+
+    private var totalFilteredSpend: Double {
+        filteredPurchases.reduce(0.0) { sum, item in
+            sum + (item.amountCad ?? item.prediction?.scoredAmountCad ?? 0)
         }
     }
 
@@ -951,6 +1583,7 @@ struct AllPurchasesSheetView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             Button {
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
                                 withAnimation { selectedCategory = nil }
                             } label: {
                                 Text("All (\(purchases.count))")
@@ -966,6 +1599,7 @@ struct AllPurchasesSheetView: View {
                                 let meta = CategoryVisuals.meta(for: category)
                                 let isSelected = selectedCategory == category
                                 Button {
+                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
                                     withAnimation { selectedCategory = isSelected ? nil : category }
                                 } label: {
                                     HStack(spacing: 5) {
@@ -984,10 +1618,26 @@ struct AllPurchasesSheetView: View {
                             }
                         }
                         .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
+                        .padding(.vertical, 8)
                     }
                     .background(Color(.systemGroupedBackground))
                 }
+
+                // Summary bar
+                HStack {
+                    Text("\(filteredPurchases.count) transactions")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    Text(String(format: "$%.2f Total", totalFilteredSpend))
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+                .background(Color(.systemGroupedBackground))
 
                 List {
                     ForEach(filteredPurchases) { item in
@@ -1002,7 +1652,7 @@ struct AllPurchasesSheetView: View {
                 }
                 .listStyle(.insetGrouped)
             }
-            .searchable(text: $searchQuery, prompt: "Search merchants or categories")
+            .searchable(text: $searchQuery, prompt: "Search merchants, cards, or categories")
             .navigationTitle("Purchase History")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -1039,7 +1689,7 @@ struct AllPurchasesSheetView: View {
 
                 HStack(spacing: 4) {
                     Text(cardId.map { cardDisplayName(for: $0) } ?? "Card not recorded")
-                        .font(.system(size: 12))
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.secondary)
 
                     if let category {
@@ -1066,6 +1716,10 @@ struct AllPurchasesSheetView: View {
                     Text(String(format: "$%.2f", amount))
                         .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
+                } else {
+                    Text("—")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
                 }
 
                 if let graph {
@@ -1083,12 +1737,15 @@ struct AllPurchasesSheetView: View {
         switch assessment {
         case .best:
             Label("Best card", systemImage: "checkmark.circle.fill")
+                .font(.system(size: 10, weight: .bold, design: .rounded))
                 .foregroundStyle(.green)
         case .better(let cardId, _):
             Text("Better: \(cardDisplayName(for: cardId))")
+                .font(.system(size: 10, weight: .bold, design: .rounded))
                 .foregroundStyle(.orange)
         case .unavailable:
             Text("Not compared")
+                .font(.system(size: 10, weight: .medium, design: .rounded))
                 .foregroundStyle(.secondary)
         }
     }
@@ -1110,480 +1767,5 @@ struct AllPurchasesSheetView: View {
             return product.officialName
         }
         return cardId
-    }
-}
-
-/// Inspection sheet showing the full breakdown, cap context, and 1-tap category correction.
-struct PurchaseDetailSheetView: View {
-    let purchase: StoredPurchase
-    let cards: [CardProduct]
-    let onFinish: () -> Void
-    let onReconcile: () -> Void
-    let onUpdateCategory: (StoredPurchase, String) -> Void
-    let onUpdateAmount: (StoredPurchase, Double) -> Void
-
-    @State private var currentCategory: String
-    @State private var isChangingCategory = false
-    @State private var isEnteringAmount = false
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
-
-    init(
-        purchase: StoredPurchase,
-        cards: [CardProduct],
-        onFinish: @escaping () -> Void,
-        onReconcile: @escaping () -> Void,
-        onUpdateCategory: @escaping (StoredPurchase, String) -> Void,
-        onUpdateAmount: @escaping (StoredPurchase, Double) -> Void
-    ) {
-        self.purchase = purchase
-        self.cards = cards
-        self.onFinish = onFinish
-        self.onReconcile = onReconcile
-        self.onUpdateCategory = onUpdateCategory
-        self.onUpdateAmount = onUpdateAmount
-        _currentCategory = State(initialValue: purchase.displayCategory ?? "other")
-    }
-
-    private var prediction: StoredPrediction? { purchase.prediction }
-
-    private var recommendedCardId: String? {
-        purchase.bestCardId ?? prediction?.winnerCardId
-    }
-
-    private var selectableCategories: [String] {
-        let catalogueCategories = cards.flatMap { card in
-            card.earnRules.flatMap { $0.predicate.categories ?? [] }
-        }
-        return Array(Set(catalogueCategories + ["other"]))
-            .sorted { CategoryVisuals.meta(for: $0).displayName
-                < CategoryVisuals.meta(for: $1).displayName }
-    }
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Header card
-                    let meta = CategoryVisuals.meta(for: currentCategory)
-                    VStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(meta.color.opacity(0.14))
-                                .frame(width: 64, height: 64)
-                            Image(systemName: meta.icon)
-                                .font(.system(size: 28, weight: .semibold))
-                                .foregroundStyle(meta.color)
-                        }
-
-                        VStack(spacing: 4) {
-                            Text(purchase.displayMerchant)
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
-                                .foregroundStyle(.primary)
-
-                            if let amount = purchase.amountCad {
-                                Text(String(format: "$%.2f CAD", amount))
-                                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                                    .foregroundStyle(.primary)
-                            } else if let scored = prediction?.scoredAmountCad {
-                                Text(String(format: "~$%.2f CAD (Estimated)", scored))
-                                    .font(.system(size: 20, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(.secondary)
-                            } else {
-                                Text("Amount not recorded")
-                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    .padding(.top, 8)
-
-                    // Details Section
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("Transaction Details")
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 4)
-
-                        VStack(spacing: 12) {
-                            detailRow(
-                                title: "Card Tapped",
-                                value: purchase.cardUsedId.map { cardDisplayName(for: $0) }
-                                    ?? "Not recorded",
-                                icon: "creditcard.fill",
-                                color: .blue
-                            )
-                            if let recommendedCardId {
-                                Divider()
-                                detailRow(
-                                    title: "Recommended Card",
-                                    value: cardDisplayName(for: recommendedCardId),
-                                    icon: "star.fill",
-                                    color: .yellow
-                                )
-                            }
-                            Divider()
-
-                            Button {
-                                isChangingCategory = true
-                            } label: {
-                                HStack {
-                                    Image(systemName: "tag.fill")
-                                        .font(.system(size: 15))
-                                        .foregroundStyle(meta.color)
-                                        .frame(width: 24)
-
-                                    Text("Category")
-                                        .font(.system(size: 14, weight: .regular))
-                                        .foregroundStyle(.secondary)
-
-                                    Spacer()
-
-                                    HStack(spacing: 6) {
-                                        Text(purchase.displayCategory == nil
-                                             ? "Add category" : meta.displayName)
-                                            .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                            .foregroundStyle(purchase.displayCategory == nil
-                                                             ? .blue : .primary)
-                                        Image(systemName: "pencil.circle.fill")
-                                            .font(.system(size: 14))
-                                            .foregroundStyle(.blue)
-                                    }
-                                }
-                            }
-                            .buttonStyle(.plain)
-
-                            Divider()
-                            detailRow(
-                                title: "Date & Time",
-                                value: purchase.createdAt.formatted(date: .abbreviated, time: .shortened),
-                                icon: "clock.fill",
-                                color: .purple
-                            )
-                            Divider()
-                            if let locationURL {
-                                Button { openURL(locationURL) } label: {
-                                    HStack {
-                                        detailRow(
-                                            title: "Location",
-                                            value: "Open in Maps",
-                                            icon: "location.fill",
-                                            color: .blue
-                                        )
-                                        Image(systemName: "chevron.right")
-                                            .font(.system(size: 11, weight: .semibold))
-                                            .foregroundStyle(.tertiary)
-                                    }
-                                }
-                                .buttonStyle(.plain)
-                            } else {
-                                detailRow(
-                                    title: "Location",
-                                    value: "Not captured",
-                                    icon: "location.slash.fill",
-                                    color: .secondary
-                                )
-                            }
-                            Divider()
-                            detailRow(
-                                title: "Captured Via",
-                                value: activitySourceLabel,
-                                icon: activitySourceIcon,
-                                color: .teal
-                            )
-                            Divider()
-                            detailRow(
-                                title: "Status",
-                                value: statusLabel,
-                                icon: purchase.isComplete
-                                    ? "checkmark.circle.fill" : "exclamationmark.circle.fill",
-                                color: purchase.isComplete ? .green : .orange
-                            )
-                        }
-                        .padding(16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(Color(.secondarySystemGroupedBackground))
-                        )
-                    }
-
-                    if purchase.amountCad == nil {
-                        Button { isEnteringAmount = true } label: {
-                            Label("Add Missing Amount", systemImage: "dollarsign.circle.fill")
-                                .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(Color.blue, in: RoundedRectangle(cornerRadius: 14,
-                                                                            style: .continuous))
-                                .foregroundStyle(.white)
-                        }
-                    }
-
-                    // Advice Headline
-                    if let prediction, !prediction.headline.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Recommendation Advice")
-                                .font(.system(size: 15, weight: .bold, design: .rounded))
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 4)
-
-                            HStack(spacing: 12) {
-                                Image(systemName: "lightbulb.fill")
-                                    .font(.system(size: 20))
-                                    .foregroundStyle(.yellow)
-                                Text(prediction.headline)
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundStyle(.primary)
-                            }
-                            .padding(16)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(Color(.secondarySystemGroupedBackground))
-                            )
-                        }
-                    }
-
-                    // Action buttons if unfinished or unreconciled
-                    if prediction != nil, purchase.missingFacts.contains(.card) {
-                        Button(action: onFinish) {
-                            Label("Finish This Purchase", systemImage: "pencil.and.list.clipboard")
-                                .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(Color.blue, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                                .foregroundStyle(.white)
-                        }
-                        .padding(.top, 8)
-                    } else if prediction != nil, purchase.isComplete,
-                              purchase.observation == nil {
-                        Button(action: onReconcile) {
-                            Label("Reconcile in Queue", systemImage: "tray.full.fill")
-                                .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(Color.orange, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                                .foregroundStyle(.white)
-                        }
-                        .padding(.top, 8)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Purchase Details")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                        .font(.headline)
-                }
-            }
-            .sheet(isPresented: $isChangingCategory) {
-                CategoryChangeSheetView(
-                    currentCategory: currentCategory,
-                    categories: selectableCategories,
-                    onSelectCategory: { newCategory in
-                        currentCategory = newCategory
-                        onUpdateCategory(purchase, newCategory)
-                        isChangingCategory = false
-                    }
-                )
-            }
-            .sheet(isPresented: $isEnteringAmount) {
-                PurchaseAmountEntrySheetView(
-                    merchantName: purchase.displayMerchant,
-                    onSave: { amount in
-                        onUpdateAmount(purchase, amount)
-                        isEnteringAmount = false
-                    },
-                    onCancel: { isEnteringAmount = false }
-                )
-            }
-        }
-    }
-
-    private var locationURL: URL? {
-        guard let latitude = purchase.merchantLatitude,
-              let longitude = purchase.merchantLongitude,
-              latitude != 0 || longitude != 0 else { return nil }
-        var components = URLComponents(string: "https://maps.apple.com/")
-        components?.queryItems = [
-            URLQueryItem(name: "ll", value: "\(latitude),\(longitude)"),
-            URLQueryItem(name: "q", value: purchase.displayMerchant),
-        ]
-        return components?.url
-    }
-
-    private var activitySourceLabel: String {
-        switch purchase.resolvedActivitySource {
-        case .pickMeCheckout: return "PickMe checkout"
-        case .walletCapture: return "Apple Wallet card tap"
-        case .arrivalAlert: return "Arrival alert"
-        }
-    }
-
-    private var activitySourceIcon: String {
-        switch purchase.resolvedActivitySource {
-        case .pickMeCheckout: return "sparkles"
-        case .walletCapture: return "wave.3.right"
-        case .arrivalAlert: return "location.circle.fill"
-        }
-    }
-
-    private var statusLabel: String {
-        if !purchase.isComplete { return "Needs information" }
-        guard prediction != nil else { return "Captured" }
-        return purchase.observation == nil ? "Finished" : "Reconciled"
-    }
-
-    private func detailRow(title: LocalizedStringKey, value: String, icon: String, color: Color) -> some View {
-        HStack {
-            Image(systemName: icon)
-                .font(.system(size: 15))
-                .foregroundStyle(color)
-                .frame(width: 24)
-
-            Text(title)
-                .font(.system(size: 14, weight: .regular))
-                .foregroundStyle(.secondary)
-
-            Spacer()
-
-            Text(value)
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                .foregroundStyle(.primary)
-        }
-    }
-
-    private func cardDisplayName(for cardId: String) -> String {
-        if let style = CardVisualTheme.styles[cardId] {
-            return style.shortName
-        }
-        if let product = cards.first(where: { $0.cardId == cardId }) {
-            return product.officialName
-        }
-        return cardId
-    }
-}
-
-/// A focused receipt-total editor for purchases whose Wallet capture omitted or could not decode
-/// the amount. This is intentionally smaller than the checkout amount screen: the purchase
-/// already exists and only one missing fact is being supplied.
-struct PurchaseAmountEntrySheetView: View {
-    let merchantName: String
-    let onSave: (Double) -> Void
-    let onCancel: () -> Void
-
-    @State private var amountText = ""
-    @FocusState private var isAmountFocused: Bool
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Purchase") {
-                    LabeledContent("Merchant", value: merchantName)
-                }
-
-                Section {
-                    HStack {
-                        Text("$")
-                            .foregroundStyle(.secondary)
-                        TextField("Amount charged", text: $amountText)
-                            .keyboardType(.decimalPad)
-                            .focused($isAmountFocused)
-                    }
-                } header: {
-                    Text("What did it come to?")
-                } footer: {
-                    Text("Enter the total from your receipt. It will be marked as added manually, not captured from Wallet.")
-                }
-            }
-            .navigationTitle("Add Amount")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: onCancel)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        if let amount { onSave(amount) }
-                    }
-                    .disabled(amount == nil)
-                }
-            }
-            .onAppear { isAmountFocused = true }
-        }
-    }
-
-    private var amount: Double? {
-        let cleaned = amountText
-            .replacingOccurrences(of: ",", with: ".")
-            .filter { $0.isNumber || $0 == "." }
-        guard let value = Double(cleaned), value > 0 else { return nil }
-        return value
-    }
-}
-
-/// 1-Tap Category picker modal for fast transaction reclassification.
-struct CategoryChangeSheetView: View {
-    let currentCategory: String
-    let categories: [String]
-    let onSelectCategory: (String) -> Void
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
-                    ForEach(categories, id: \.self) { category in
-                        let meta = CategoryVisuals.meta(for: category)
-                        let isSelected = category == currentCategory
-
-                        Button {
-                            onSelectCategory(category)
-                        } label: {
-                            VStack(spacing: 8) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(meta.color.opacity(isSelected ? 0.25 : 0.12))
-                                        .frame(width: 48, height: 48)
-                                    Image(systemName: meta.icon)
-                                        .font(.system(size: 20, weight: .semibold))
-                                        .foregroundStyle(meta.color)
-                                }
-
-                                Text(meta.displayName)
-                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(.primary)
-                                    .multilineTextAlignment(.center)
-                            }
-                            .padding(.vertical, 14)
-                            .padding(.horizontal, 8)
-                            .frame(maxWidth: .infinity)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color(.secondarySystemGroupedBackground))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                            .strokeBorder(isSelected ? meta.color : Color.clear, lineWidth: 2)
-                                    )
-                            )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(16)
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Reclassify Category")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
-        }
     }
 }

@@ -7,10 +7,10 @@
     "—" : {
 
     },
-    "·" : {
+    "!" : {
 
     },
-    "(%lld)" : {
+    "·" : {
 
     },
     "/ %lld checkouts" : {
@@ -22,6 +22,9 @@
           }
         }
       }
+    },
+    "%@" : {
+
     },
     "%@ – %@" : {
       "localizations" : {
@@ -87,6 +90,16 @@
         }
       }
     },
+    "%@ · Top earn rate for %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · Top earn rate for %2$@"
+          }
+        }
+      }
+    },
     "%@ ($%lld)" : {
       "localizations" : {
         "en" : {
@@ -145,7 +158,11 @@
         }
       }
     },
+    "%@ Certificate" : {
+
+    },
     "%@ equals or beats all other cards on every line below." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -155,7 +172,13 @@
         }
       }
     },
-    "%@ SPEND INTELLIGENCE" : {
+    "%@ INTELLIGENCE" : {
+
+    },
+    "%@ Purchases" : {
+
+    },
+    "%@ tracked spend" : {
 
     },
     "%@: %.2f¢ / point" : {
@@ -225,6 +248,9 @@
         }
       }
     },
+    "%lld arrival alerts fired in last 7 days" : {
+
+    },
     "%lld arrivals · %lld evaluated" : {
       "localizations" : {
         "en" : {
@@ -246,7 +272,27 @@
         }
       }
     },
+    "%lld card%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld card%2$@"
+          }
+        }
+      }
+    },
+    "%lld cards" : {
+
+    },
+    "%lld categories" : {
+
+    },
+    "%lld Categories" : {
+
+    },
     "%lld certificate benefits" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -256,12 +302,12 @@
         }
       }
     },
-    "%lld fired · %lld suppressed (last 7d)" : {
+    "%lld fired · %lld suppressed (7d)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$lld fired · %2$lld suppressed (last 7d)"
+            "value" : "%1$lld fired · %2$lld suppressed (7d)"
           }
         }
       }
@@ -272,6 +318,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld cartes vérifiées par l’émetteur · valeur à partir de la 2e année"
+          }
+        }
+      }
+    },
+    "%lld listed benefit%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld listed benefit%2$@"
           }
         }
       }
@@ -289,6 +345,16 @@
         }
       }
     },
+    "%lld of %lld Cards Covered" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld Cards Covered"
+          }
+        }
+      }
+    },
     "%lld of %lld checks used all 20 places" : {
       "localizations" : {
         "en" : {
@@ -299,6 +365,9 @@
         }
       }
     },
+    "%lld pending" : {
+
+    },
     "%lld predictions waiting" : {
       "localizations" : {
         "fr-CA" : {
@@ -308,6 +377,9 @@
           }
         }
       }
+    },
+    "%lld purchases" : {
+
     },
     "%lld purchases to finish" : {
       "localizations" : {
@@ -322,15 +394,17 @@
     "%lld to Finish" : {
 
     },
-    "%lld total • %lld categories" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld total • %2$lld categories"
-          }
-        }
-      }
+    "%lld to Reconcile" : {
+
+    },
+    "%lld to review" : {
+
+    },
+    "%lld total · Chronological feed" : {
+
+    },
+    "%lld transactions" : {
+
     },
     "%lld unanswered question" : {
       "extractionState" : "stale",
@@ -343,8 +417,18 @@
         }
       }
     },
-    "%lld Waiting to Reconcile" : {
+    "%lld verified" : {
 
+    },
+    "%lld/%lld best card used" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld best card used"
+          }
+        }
+      }
     },
     "%lld/30 confirmed" : {
       "localizations" : {
@@ -365,6 +449,9 @@
           }
         }
       }
+    },
+    "%lld%% Optimal" : {
+
     },
     "•" : {
       "localizations" : {
@@ -388,6 +475,12 @@
       }
     },
     "•••• %@" : {
+
+    },
+    "•••• 8808" : {
+
+    },
+    "≈ $%@ return" : {
 
     },
     "$" : {
@@ -440,6 +533,9 @@
         }
       }
     },
+    "1-Tap Check" : {
+
+    },
     "1. Allow notifications so a background Wallet tap can confirm it was saved." : {
 
     },
@@ -452,10 +548,10 @@
     "10/26" : {
 
     },
-    "90-day purchase security & extended manufacturer warranty" : {
+    "99+" : {
 
     },
-    "99+" : {
+    "100% on-device matching · Zero location tracking" : {
 
     },
     "3739  876543  31001" : {
@@ -527,10 +623,28 @@
         }
       }
     },
-    "Action Queues" : {
+    "Account & Settings" : {
+
+    },
+    "Account Details" : {
+
+    },
+    "Account ID" : {
+
+    },
+    "ACTION REQUIRED" : {
 
     },
     "Active" : {
+
+    },
+    "Active merchant diversity" : {
+
+    },
+    "ACTIVITY PULSE" : {
+
+    },
+    "Add" : {
 
     },
     "Add a card" : {
@@ -553,22 +667,16 @@
     "Add Card" : {
 
     },
-    "Add Missing Amount" : {
+    "Add card or amount" : {
 
     },
-    "Add new cards, change default checkout card, or configure spend caps" : {
+    "Add Purchase Amount" : {
 
     },
     "Add Tax:" : {
 
     },
-    "Add the card tapped and charge amount" : {
-
-    },
-    "Add the card you tapped and what it cost" : {
-
-    },
-    "Add this exact location, or let PickMe keep learning." : {
+    "Add the amount to compare cards" : {
 
     },
     "Add your cards" : {
@@ -581,7 +689,13 @@
         }
       }
     },
+    "Add your credit and charge cards to unlock instant 1-tap checkout picks, margin audits, and custom point valuations." : {
+
+    },
     "Add your first card" : {
+
+    },
+    "Add Your First Card" : {
 
     },
     "Adds this card to your wallet" : {
@@ -594,9 +708,6 @@
           }
         }
       }
-    },
-    "Adjust redemption value per point for MR, Aeroplan, Scene+ & Avion" : {
-
     },
     "Advanced switch threshold" : {
       "extractionState" : "stale",
@@ -631,6 +742,9 @@
     "All (%lld)" : {
 
     },
+    "All Categories" : {
+
+    },
     "All Caught Up!" : {
       "localizations" : {
         "fr-CA" : {
@@ -640,15 +754,6 @@
           }
         }
       }
-    },
-    "All predictions confirmed against statements" : {
-
-    },
-    "All predictions matched to statements" : {
-
-    },
-    "All purchases have card & cost recorded" : {
-
     },
     "Allow notifications" : {
 
@@ -1044,9 +1149,6 @@
         }
       }
     },
-    "Amount not recorded" : {
-
-    },
     "Amount Scored" : {
       "localizations" : {
         "fr-CA" : {
@@ -1105,6 +1207,9 @@
         }
       }
     },
+    "Are you sure you want to remove %@ from your active wallet?" : {
+
+    },
     "Arrival alerts" : {
       "localizations" : {
         "fr-CA" : {
@@ -1127,7 +1232,10 @@
     "Arrival alerts for %@" : {
 
     },
-    "Arrival alerts prioritize this merchant" : {
+    "Arrival alerts prioritize this store" : {
+
+    },
+    "Arrival Detection" : {
 
     },
     "At least %.1f percentage points better" : {
@@ -1155,6 +1263,12 @@
     "Attempts" : {
 
     },
+    "Audit" : {
+
+    },
+    "Automatic store arrival notifications" : {
+
+    },
     "Awaiting Evidence" : {
       "localizations" : {
         "fr-CA" : {
@@ -1177,6 +1291,9 @@
           }
         }
       }
+    },
+    "Backed by official issuer certificates (Chubb, Belair, Allianz, Desjardins)." : {
+
     },
     "Bank or Issuer (e.g. Scotiabank, Chase)" : {
 
@@ -1210,7 +1327,17 @@
     "Best card used" : {
 
     },
+    "BEST CASH/POINTS" : {
+
+    },
+    "Best on both!" : {
+
+    },
+    "BEST PROTECTION" : {
+
+    },
     "Best Reward Return" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -1223,10 +1350,14 @@
     "Better card available" : {
 
     },
+    "Better card potential" : {
+
+    },
     "Better: %@" : {
 
     },
     "Big purchase or trip" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -1235,9 +1366,6 @@
           }
         }
       }
-    },
-    "Big Purchase or Trip Lens" : {
-
     },
     "Both" : {
       "localizations" : {
@@ -1259,6 +1387,12 @@
           }
         }
       }
+    },
+    "Browse Canadian & US cards" : {
+
+    },
+    "CAD" : {
+
     },
     "Calculate" : {
       "localizations" : {
@@ -1296,16 +1430,30 @@
         }
       }
     },
+    "Cap: $%lld/%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cap: $%1$lld/%2$@"
+          }
+        }
+      }
+    },
     "Capture is disabled" : {
 
     },
     "Captured" : {
 
     },
+    "Captured automatically during arrival geofence alerts or live checkouts." : {
+
+    },
     "Captured Via" : {
 
     },
     "Car Rental" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -1326,6 +1474,7 @@
       }
     },
     "Card benefits" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -1338,10 +1487,10 @@
     "Card Benefits Library" : {
 
     },
-    "Card Benefits Reference" : {
+    "Card Condition" : {
 
     },
-    "Card Condition" : {
+    "Card Details & Multipliers" : {
 
     },
     "Card name" : {
@@ -1358,10 +1507,13 @@
     "Card Name (e.g. Passport Visa Infinite)" : {
 
     },
-    "Card tap" : {
+    "Card not recorded" : {
 
     },
-    "Card Tapped" : {
+    "CARD OPTIMIZATION" : {
+
+    },
+    "Card tap" : {
 
     },
     "Card Used" : {
@@ -1385,6 +1537,9 @@
       }
     },
     "CARDHOLDER NAME" : {
+
+    },
+    "Cards & Multipliers" : {
 
     },
     "Cards Covering For Each Other" : {
@@ -1425,10 +1580,22 @@
     "Category Accuracy" : {
 
     },
-    "Category accuracy & arithmetic correctness" : {
+    "Category Condition" : {
 
     },
-    "Category Condition" : {
+    "Certificate confirms no listed coverage" : {
+
+    },
+    "Certificate date" : {
+
+    },
+    "Certificate Date" : {
+
+    },
+    "Certificate Protection Benefits" : {
+
+    },
+    "Certificate Provenance" : {
 
     },
     "Certificate Trade-Off" : {
@@ -1440,6 +1607,18 @@
           }
         }
       }
+    },
+    "CERTIFICATE-BACKED PROTECTION" : {
+
+    },
+    "Certificates, coverage limits, and issuer sources" : {
+
+    },
+    "Change" : {
+
+    },
+    "Change Card Tapped" : {
+
     },
     "Change your cards, account conditions, default card, switch threshold, or point values." : {
       "localizations" : {
@@ -1467,6 +1646,9 @@
         }
       }
     },
+    "CHECKOUT TARGET" : {
+
+    },
     "Checkout works without an account. Sign in only to sync cap usage and capture feedback." : {
       "localizations" : {
         "fr-CA" : {
@@ -1477,7 +1659,7 @@
         }
       }
     },
-    "Choose" : {
+    "Chip's Tip" : {
 
     },
     "Choose a default card" : {
@@ -1489,9 +1671,6 @@
           }
         }
       }
-    },
-    "Choose any branch, this location only, or let PickMe keep learning." : {
-
     },
     "Choose every card in your wallet. PickMe only recommends cards you select." : {
       "extractionState" : "stale",
@@ -1535,6 +1714,9 @@
     "Choose whether PickMe should recognize every branch or only this exact store." : {
 
     },
+    "Claims are adjudicated directly by the issuer's underwriter according to cardholder certificate terms." : {
+
+    },
     "Classification" : {
       "localizations" : {
         "fr-CA" : {
@@ -1545,7 +1727,10 @@
         }
       }
     },
-    "Clear predictions, confirmations and cached locations" : {
+    "Clear Filter" : {
+
+    },
+    "Clear predictions, confirmations & cached places" : {
 
     },
     "Coded As" : {
@@ -1558,9 +1743,6 @@
         }
       }
     },
-    "Collision damage waiver coverage terms and deductible rules" : {
-
-    },
     "common.done" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -1572,10 +1754,16 @@
         }
       }
     },
-    "Compare certificate-backed coverage before booking flights, renting cars, or buying expensive electronics." : {
+    "Compare earn rates per category across your wallet" : {
 
     },
-    "Compare insurance, CDW & extended warranty" : {
+    "Compare insurance and warranty coverage across your wallet before making major bookings or purchases." : {
+
+    },
+    "Compare specific limit lines below (e.g. medical limits vs delay payout)." : {
+
+    },
+    "Compare Wallet" : {
 
     },
     "Conditions (per certificate)" : {
@@ -1588,7 +1776,19 @@
         }
       }
     },
-    "Configure cards, Tangerine categories, and default preferences" : {
+    "Configuration & Rules" : {
+
+    },
+    "Configure" : {
+
+    },
+    "Configure cards, Tangerine categories & defaults" : {
+
+    },
+    "Configure Conditions" : {
+
+    },
+    "Configure default checkout card, spend caps, and custom condition rules" : {
 
     },
     "Configure specific stores and merchants where this card should always be used." : {
@@ -1604,7 +1804,11 @@
         }
       }
     },
+    "Confirm statement" : {
+
+    },
     "Confirmed No Coverage" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -1673,6 +1877,7 @@
       }
     },
     "Coverage" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -1683,6 +1888,9 @@
       }
     },
     "Coverage (Last 7 Days)" : {
+
+    },
+    "COVERAGE SUMMARY" : {
 
     },
     "Create installation token" : {
@@ -1770,10 +1978,25 @@
         }
       }
     },
+    "Danger Zone" : {
+
+    },
     "Date & Time" : {
 
     },
+    "days" : {
+
+    },
+    "Decision Strategy" : {
+
+    },
     "Decision Tools" : {
+
+    },
+    "Declared Purchase" : {
+
+    },
+    "Default" : {
 
     },
     "DEFAULT" : {
@@ -1797,6 +2020,12 @@
           }
         }
       }
+    },
+    "Default Payment Card" : {
+
+    },
+    "Default: %@" : {
+
     },
     "Default: 0.5 percentage points and $0.25 more — both conditions must be met." : {
       "extractionState" : "stale",
@@ -1834,6 +2063,12 @@
         }
       }
     },
+    "Delete Inunity Account" : {
+
+    },
+    "Delete Purchase" : {
+
+    },
     "Delete submitted report now" : {
 
     },
@@ -1841,6 +2076,9 @@
 
     },
     "Delete this local capture?" : {
+
+    },
+    "Delete this purchase?" : {
 
     },
     "Delete unsent purchases and disable" : {
@@ -1879,6 +2117,9 @@
         }
       }
     },
+    "Deletes your Inunity cloud account, saved remote cards, and server sync history. Your on-device data remains intact unless you choose to erase it." : {
+
+    },
     "Deleting…" : {
       "localizations" : {
         "fr-CA" : {
@@ -1898,6 +2139,9 @@
     "Disable Wallet Capture" : {
 
     },
+    "Documents" : {
+
+    },
     "Dominant Protection Card" : {
       "localizations" : {
         "fr-CA" : {
@@ -1907,6 +2151,9 @@
           }
         }
       }
+    },
+    "Dominates coverage" : {
+
     },
     "Don't alert for this merchant" : {
 
@@ -1947,7 +2194,11 @@
         }
       }
     },
+    "Earn Multipliers" : {
+
+    },
     "Earn rewards and certificate protections are evaluated separately — the highest earning card may not offer the best insurance coverage." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -1968,6 +2219,7 @@
       }
     },
     "Earns ≈ $%@ back on $%lld" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1986,7 +2238,7 @@
     "Edit" : {
 
     },
-    "Edit Cards & Account Setup" : {
+    "Edit Amount" : {
 
     },
     "Edit cards and rewards" : {
@@ -2013,6 +2265,9 @@
     "Edit Wallet" : {
 
     },
+    "Effective %@" : {
+
+    },
     "Electronics / Tech" : {
       "localizations" : {
         "fr-CA" : {
@@ -2023,7 +2278,7 @@
         }
       }
     },
-    "Emergency medical, trip cancellation, delay & baggage protection" : {
+    "Email" : {
 
     },
     "Enable arrival alerts" : {
@@ -2036,7 +2291,16 @@
         }
       }
     },
-    "Enter the total from your receipt. It will be marked as added manually, not captured from Wallet." : {
+    "Enable automatic arrival card alerts for all branches or this branch only." : {
+
+    },
+    "Enable automatic arrival card alerts for this location." : {
+
+    },
+    "Enter the total from your receipt or bank app." : {
+
+    },
+    "Enter transaction details to simulate limits and compare rewards against insurance coverage." : {
 
     },
     "Entering amounts feeds your value-recovered scoreboard. Skip anytime." : {
@@ -2050,6 +2314,9 @@
       }
     },
     "Entertainment" : {
+
+    },
+    "Equals or beats every other card on all displayed coverage lines." : {
 
     },
     "Erase History" : {
@@ -2123,6 +2390,12 @@
         }
       }
     },
+    "Estimated · Tap to enter exact amount" : {
+
+    },
+    "Estimated Amount" : {
+
+    },
     "ESTIMATED RETURN" : {
       "localizations" : {
         "fr-CA" : {
@@ -2144,9 +2417,6 @@
       }
     },
     "Event" : {
-
-    },
-    "Every purchase has its card and amount" : {
 
     },
     "Every purchase has the card you used and what it cost." : {
@@ -2213,6 +2483,7 @@
       }
     },
     "Experiment Progress" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -2232,7 +2503,7 @@
         }
       }
     },
-    "Experiment Scoreboard" : {
+    "EXPERIMENT VALIDATION" : {
 
     },
     "Expires %@" : {
@@ -2251,6 +2522,9 @@
     "Filled in below. Change anything that looks wrong — an edited figure is recorded as your own, not as the capture's." : {
 
     },
+    "Filtered: %@" : {
+
+    },
     "Find Nearby Merchant" : {
       "localizations" : {
         "fr-CA" : {
@@ -2261,7 +2535,11 @@
         }
       }
     },
+    "Find or search a merchant once, and Chip will build 1-tap checkout tiles here with live CAD returns." : {
+
+    },
     "Find or search a merchant once, then this list gives you instant 1-tap checkout advice." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -2301,9 +2579,6 @@
         }
       }
     },
-    "Finish Purchases" : {
-
-    },
     "Finish setting up · %lld of %lld" : {
       "localizations" : {
         "fr-CA" : {
@@ -2336,10 +2611,10 @@
         }
       }
     },
-    "Flight & Travel Delay" : {
+    "Foreign Currency Spend" : {
 
     },
-    "Foreign Currency Spend" : {
+    "Frequent Store: %@" : {
 
     },
     "From your Apple Wallet" : {
@@ -2354,9 +2629,6 @@
           }
         }
       }
-    },
-    "Full Benefits Library" : {
-
     },
     "Full Breakdown" : {
 
@@ -2402,6 +2674,12 @@
     "Guest Mode" : {
 
     },
+    "Haptic Feedback" : {
+
+    },
+    "Hide" : {
+
+    },
     "Home Improvement" : {
 
     },
@@ -2417,9 +2695,6 @@
           }
         }
       }
-    },
-    "How on-device data and optional cloud sync are handled" : {
-
     },
     "I'm not sure" : {
       "localizations" : {
@@ -2505,6 +2780,12 @@
     "Included by your choice" : {
 
     },
+    "Included Statement Credits" : {
+
+    },
+    "Inspect" : {
+
+    },
     "Installation name" : {
       "localizations" : {
         "fr-CA" : {
@@ -2514,6 +2795,12 @@
           }
         }
       }
+    },
+    "Instant 1-tap GPS checkout advice" : {
+
+    },
+    "Instant Matrix" : {
+
     },
     "Instant Repeats" : {
       "localizations" : {
@@ -2525,7 +2812,10 @@
         }
       }
     },
-    "Insurance & Verified Benefits" : {
+    "INTELLIGENCE & AUTOMATION" : {
+
+    },
+    "Inunity Cloud Active" : {
 
     },
     "Inunity owns purchase history; PickMe saves each Wallet tap locally before syncing it." : {
@@ -2589,6 +2879,9 @@
         }
       }
     },
+    "Jurisdiction" : {
+
+    },
     "Keep learning automatically" : {
 
     },
@@ -2623,6 +2916,9 @@
         }
       }
     },
+    "Keep, cancel, or optimize annual fee ROI" : {
+
+    },
     "Kept. Checkout keeps working offline with your history intact." : {
       "comment" : "human review before public launch",
       "localizations" : {
@@ -2634,7 +2930,11 @@
         }
       }
     },
+    "Know what your cards protect." : {
+
+    },
     "Last 7 days: %lld fired · %lld suppressed" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2669,6 +2969,9 @@
         }
       }
     },
+    "Last Synced" : {
+
+    },
     "Last synced %@" : {
       "localizations" : {
         "fr-CA" : {
@@ -2682,7 +2985,16 @@
     "Last synced: %@" : {
 
     },
+    "Last verified" : {
+
+    },
+    "Last Verified" : {
+
+    },
     "Learned merchants" : {
+
+    },
+    "Learned Merchants" : {
 
     },
     "learned-merchants.empty" : {
@@ -2762,13 +3074,19 @@
         }
       }
     },
+    "Live" : {
+
+    },
     "Live evaluation using your active cards and customized point valuations." : {
+
+    },
+    "Loading protection data…" : {
 
     },
     "Loading this account's wallet" : {
 
     },
-    "Location" : {
+    "LOCATION & MERCHANT" : {
 
     },
     "Location allowed (%@)" : {
@@ -2785,7 +3103,11 @@
         }
       }
     },
+    "Location Not Captured" : {
+
+    },
     "Location off — tap to retry" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -2794,6 +3116,9 @@
           }
         }
       }
+    },
+    "Location off — tap to retry access" : {
+
     },
     "Log $%lld on %@" : {
       "localizations" : {
@@ -2805,10 +3130,13 @@
         }
       }
     },
-    "Manage in iOS Settings" : {
+    "Manage cards & optimize reward rules" : {
 
     },
-    "Manage Wallet Cards" : {
+    "Manage Cards & Spend Rules" : {
+
+    },
+    "Manage in iOS Settings" : {
 
     },
     "marginal" : {
@@ -2820,9 +3148,6 @@
           }
         }
       }
-    },
-    "Marginal value audit: what to keep, cancel, or optimize" : {
-
     },
     "Market" : {
       "localizations" : {
@@ -2844,12 +3169,6 @@
         }
       }
     },
-    "Match posted issuer rewards to predictions" : {
-
-    },
-    "Match posted rewards against predictions" : {
-
-    },
     "Matched" : {
       "localizations" : {
         "fr-CA" : {
@@ -2860,7 +3179,13 @@
         }
       }
     },
+    "Matching Benefits" : {
+
+    },
     "Math Correctness" : {
+
+    },
+    "Maximized rewards on this purchase" : {
 
     },
     "Meets Target" : {
@@ -2915,7 +3240,13 @@
         }
       }
     },
+    "Model Calibration Progress" : {
+
+    },
     "Monitoring arrival at up to 20 saved merchants." : {
+
+    },
+    "MR, Aeroplan, Scene+ & Avion redemption rates" : {
 
     },
     "My card isn't listed" : {
@@ -2936,6 +3267,7 @@
 
     },
     "Nearby" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -2945,7 +3277,7 @@
         }
       }
     },
-    "Needs Info" : {
+    "Nearby Places" : {
 
     },
     "net / yr" : {
@@ -2968,6 +3300,9 @@
         }
       }
     },
+    "Never" : {
+
+    },
     "No" : {
       "localizations" : {
         "fr-CA" : {
@@ -2978,10 +3313,14 @@
         }
       }
     },
+    "No %@ Purchases" : {
+
+    },
     "No account required to use PickMe. You can sign in anytime from Settings." : {
 
     },
     "No Applicable Coverage" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -2990,6 +3329,9 @@
           }
         }
       }
+    },
+    "No Applicable Coverage in Wallet" : {
+
     },
     "No card conditions" : {
       "extractionState" : "stale",
@@ -3008,6 +3350,9 @@
     "No cards in wallet" : {
 
     },
+    "No Cards in Wallet" : {
+
+    },
     "No cards yet" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3020,6 +3365,7 @@
       }
     },
     "No coverage" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3028,6 +3374,9 @@
           }
         }
       }
+    },
+    "No coverage found yet" : {
+
     },
     "No coverage found yet — unverified. The certificate pass will settle it." : {
       "localizations" : {
@@ -3038,6 +3387,18 @@
           }
         }
       }
+    },
+    "No listed coverage" : {
+
+    },
+    "No Listed Coverage" : {
+
+    },
+    "No matching benefits" : {
+
+    },
+    "No matching benefits found" : {
+
     },
     "No misses recorded so far across all confirmed checkouts." : {
       "localizations" : {
@@ -3066,6 +3427,7 @@
 
     },
     "No relevant insurance coverage found in your wallet for this category." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3076,6 +3438,7 @@
       }
     },
     "No repeats yet" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3085,10 +3448,17 @@
         }
       }
     },
+    "No Repeats Yet" : {
+
+    },
     "No results for \"%@\"" : {
 
     },
+    "No single card dominates every line" : {
+
+    },
     "No single card dominates every line — compare coverage limits below to decide." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3108,7 +3478,13 @@
         }
       }
     },
+    "No wallet cards have policy data for this scenario category." : {
+
+    },
     "No Wallet fields arrived. The trigger was retained for review; check the automation mappings in PickMe." : {
+
+    },
+    "None" : {
 
     },
     "None — Correct" : {
@@ -3200,6 +3576,7 @@
 
     },
     "Off" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3209,7 +3586,7 @@
         }
       }
     },
-    "Offline on-device checkout" : {
+    "Official insurance policy certificate for %@" : {
 
     },
     "Old server connections found" : {
@@ -3237,6 +3614,7 @@
       }
     },
     "One-tap GPS check at checkout" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3263,6 +3641,21 @@
     "Only this location" : {
 
     },
+    "Open certificate source" : {
+
+    },
+    "Open comparison lens for %@" : {
+
+    },
+    "Open document" : {
+
+    },
+    "Open in Maps" : {
+
+    },
+    "Open Official Certificate PDF" : {
+
+    },
     "Open PickMe at checkout or specify a store like Costco, Tim Hortons, or Groceries." : {
 
     },
@@ -3282,10 +3675,17 @@
         }
       }
     },
-    "OPTIMAL PICK RATE" : {
+    "OPTIMAL CARD" : {
+
+    },
+    "OPTIMAL CARD ACCURACY" : {
+
+    },
+    "Optional" : {
 
     },
     "Optional ($)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3415,6 +3815,9 @@
         }
       }
     },
+    "Patronage memory & arrival confidence" : {
+
+    },
     "Pay with" : {
 
     },
@@ -3442,6 +3845,7 @@
 
     },
     "Pick a category, see the card" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3488,6 +3892,9 @@
     "PickMe could not verify whether this account already has a token. Retry sync before creating another one." : {
 
     },
+    "PickMe for iOS · Version 1.0 (Build 42)" : {
+
+    },
     "PickMe is actively monitoring when you arrive at your saved merchants to suggest the best card before you pay." : {
 
     },
@@ -3516,6 +3923,7 @@
       }
     },
     "Planned Amount" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3550,6 +3958,9 @@
         }
       }
     },
+    "Point valuations, thresholds & return formulas" : {
+
+    },
     "Points don't have a fixed face value — their return depends on how you redeem them (e.g. transfer to airlines vs statement credits). Adjust the sliders below to see which card wins at each valuation." : {
 
     },
@@ -3563,6 +3974,9 @@
           }
         }
       }
+    },
+    "Policies verified against official issuer certificates" : {
+
     },
     "Predicted Category" : {
       "localizations" : {
@@ -3585,10 +3999,16 @@
         }
       }
     },
-    "Preferences & Privacy" : {
+    "PREFERENCES" : {
 
     },
     "Prepare diagnostic report" : {
+
+    },
+    "PRIVACY & LOCAL DATA" : {
+
+    },
+    "Privacy Architecture" : {
 
     },
     "Privacy Policy" : {
@@ -3601,7 +4021,13 @@
         }
       }
     },
-    "PROTECTION & PERKS" : {
+    "Private by Design · On-Device Intelligence" : {
+
+    },
+    "Private on-device checkout active" : {
+
+    },
+    "Protection & Perks" : {
 
     },
     "Protection Verdict" : {
@@ -3617,10 +4043,11 @@
     "Public Transportation and Parking" : {
 
     },
-    "Purchase" : {
+    "Purchase Amount" : {
 
     },
     "Purchase Context" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3639,9 +4066,6 @@
     "Purchase History" : {
 
     },
-    "Purchase Protection & Warranty" : {
-
-    },
     "Purchase received and saved securely." : {
 
     },
@@ -3649,6 +4073,7 @@
 
     },
     "Purchase Type" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3658,10 +4083,16 @@
         }
       }
     },
+    "PURCHASES" : {
+
+    },
     "Queued captures" : {
 
     },
     "Queued purchases are never discarded without your choice." : {
+
+    },
+    "Quick Category Peek" : {
 
     },
     "QUICK PRESETS" : {
@@ -3685,6 +4116,7 @@
       }
     },
     "Recent" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3707,13 +4139,13 @@
         }
       }
     },
+    "Recent Places" : {
+
+    },
     "Recent Purchases" : {
 
     },
     "Reclassify Category" : {
-
-    },
-    "Recommendation Advice" : {
 
     },
     "Recommended" : {
@@ -3746,10 +4178,7 @@
         }
       }
     },
-    "Reconcile in Queue" : {
-
-    },
-    "Reconcile Queue" : {
+    "Reconcile in Statement Queue" : {
 
     },
     "Reconciled" : {
@@ -3772,6 +4201,9 @@
     "Redacted by default" : {
 
     },
+    "Reference" : {
+
+    },
     "Relink this iPhone" : {
 
     },
@@ -3781,7 +4213,13 @@
     "Relink Wallet Capture to the signed-in account before assigning these captures." : {
 
     },
+    "Remove" : {
+
+    },
     "Remove Card" : {
+
+    },
+    "Remove Card?" : {
 
     },
     "Remove from wallet" : {
@@ -3794,6 +4232,9 @@
           }
         }
       }
+    },
+    "Remove from Wallet" : {
+
     },
     "Removed %@" : {
       "localizations" : {
@@ -3808,7 +4249,10 @@
     "Removing this card will deactivate it for future transactions." : {
 
     },
-    "Rental Car CDW" : {
+    "Rental Car" : {
+
+    },
+    "Rental Length" : {
 
     },
     "Replace the old Dictionary + Run Wallet Capture V2 actions only after the first native capture succeeds." : {
@@ -3888,6 +4332,9 @@
     "Reward Currency Valuations" : {
 
     },
+    "Reward vs. Insurance Strategy" : {
+
+    },
     "REWARDS EARNED" : {
       "localizations" : {
         "fr-CA" : {
@@ -3935,6 +4382,9 @@
           }
         }
       }
+    },
+    "Save Amount" : {
+
     },
     "Save changes" : {
       "extractionState" : "stale",
@@ -3985,6 +4435,12 @@
     "Saves a Wallet transaction locally, then securely syncs it to Inunity." : {
 
     },
+    "Scenario" : {
+
+    },
+    "Scenario Details" : {
+
+    },
     "Search" : {
       "localizations" : {
         "fr-CA" : {
@@ -3995,7 +4451,7 @@
         }
       }
     },
-    "Search all verified card certificates, lounge passes, and perks" : {
+    "Search All Card Benefits" : {
 
     },
     "Search cards" : {
@@ -4009,7 +4465,13 @@
         }
       }
     },
+    "Search cards or benefits" : {
+
+    },
     "Search cards or issuers" : {
+
+    },
+    "Search categories" : {
 
     },
     "Search different merchant…" : {
@@ -4022,7 +4484,11 @@
         }
       }
     },
+    "Search merchant (e.g. Costco, Loblaws, Tim Hortons)" : {
+
+    },
     "Search merchant (e.g. Costco, Loblaws)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4032,13 +4498,19 @@
         }
       }
     },
-    "Search merchants or categories" : {
+    "Search merchants, cards, or categories" : {
+
+    },
+    "Search perks, insurance, or cards…" : {
 
     },
     "See All (%lld)" : {
 
     },
-    "Select any category to see which card in your wallet earns highest" : {
+    "Select Card" : {
+
+    },
+    "Select which card you tapped at checkout. PickMe will update reward calculations accordingly." : {
 
     },
     "Select your location" : {
@@ -4050,6 +4522,9 @@
           }
         }
       }
+    },
+    "Selected by default when cards earn equally" : {
+
     },
     "Selecting the exact merchant helps PickMe determine the precise MCC and terminal rules." : {
       "localizations" : {
@@ -4095,10 +4570,11 @@
         }
       }
     },
-    "Set up automatic on-device store arrival alerts" : {
+    "Set up automatic on-device arrival alerts" : {
 
     },
     "Set up on-device arrival detection" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4129,7 +4605,16 @@
         }
       }
     },
-    "Shop at %@ often?" : {
+    "Setup" : {
+
+    },
+    "Share" : {
+
+    },
+    "Share Policy Link" : {
+
+    },
+    "Share Transaction" : {
 
     },
     "Showing cards from" : {
@@ -4142,6 +4627,9 @@
           }
         }
       }
+    },
+    "Showing the existing certificate source. Add more documents to this card in the catalogue to expand this list." : {
+
     },
     "Sign In" : {
 
@@ -4172,6 +4660,9 @@
           }
         }
       }
+    },
+    "Sign in to sync cap limits across your devices and enable automated Apple Wallet Shortcuts capture." : {
+
     },
     "Sign Out" : {
       "localizations" : {
@@ -4222,6 +4713,9 @@
         }
       }
     },
+    "SMART ADVICE" : {
+
+    },
     "Something went wrong" : {
       "localizations" : {
         "fr-CA" : {
@@ -4231,6 +4725,9 @@
           }
         }
       }
+    },
+    "Source document for %@" : {
+
     },
     "Specific Merchant Rules" : {
 
@@ -4258,6 +4755,9 @@
     "SPEND PROFILE: YOUR REAL SPEND (PERSONALIZED)" : {
 
     },
+    "Spend Rules & Condition Triggers" : {
+
+    },
     "Start over" : {
       "localizations" : {
         "fr-CA" : {
@@ -4277,6 +4777,9 @@
           }
         }
       }
+    },
+    "Start with a scenario" : {
+
     },
     "State" : {
 
@@ -4359,6 +4862,9 @@
         }
       }
     },
+    "Sync Engine" : {
+
+    },
     "Sync now" : {
       "localizations" : {
         "fr-CA" : {
@@ -4369,6 +4875,9 @@
         }
       }
     },
+    "Sync Now" : {
+
+    },
     "Sync setup required" : {
       "localizations" : {
         "fr-CA" : {
@@ -4378,6 +4887,9 @@
           }
         }
       }
+    },
+    "Sync Status" : {
+
     },
     "Sync wallet state and cap progress across devices" : {
 
@@ -4391,6 +4903,9 @@
           }
         }
       }
+    },
+    "Tactile response on recommendations & taps" : {
+
     },
     "Tangerine 2% Categories (Pick up to 3)" : {
 
@@ -4406,7 +4921,13 @@
         }
       }
     },
+    "Tap to set as your primary card" : {
+
+    },
     "Tapped" : {
+
+    },
+    "Tapped a different card?" : {
 
     },
     "Target Reached" : {
@@ -4561,9 +5082,6 @@
     "This card will be prioritized for Travel and bonus reward categories." : {
 
     },
-    "This deletes your on-device prediction log, confirmations, and merchant locations. It cannot be undone." : {
-
-    },
     "This iPhone" : {
       "localizations" : {
         "fr-CA" : {
@@ -4606,6 +5124,9 @@
         }
       }
     },
+    "This permanently deletes your prediction log, purchase confirmations, and cached merchant locations from this iPhone. Your account and cloud sync are unaffected." : {
+
+    },
     "This permanently logs your statement observation and trains the local Merchant Truth Graph for next time." : {
       "localizations" : {
         "fr-CA" : {
@@ -4615,6 +5136,12 @@
           }
         }
       }
+    },
+    "This removes the record from your purchase history." : {
+
+    },
+    "This removes the record from your purchase history. Reconcile calculations will update accordingly." : {
+
     },
     "This removes the unsent capture and its local diagnostic evidence." : {
 
@@ -4632,6 +5159,9 @@
     "Timeline" : {
 
     },
+    "Tip: For low-risk purchases, maximize rewards. For high-stakes flights, rentals, or devices, choose the strongest insurance policy." : {
+
+    },
     "To turn off arrival alerts or change location permissions, visit iPhone Settings." : {
 
     },
@@ -4645,10 +5175,13 @@
         }
       }
     },
-    "Transaction Details" : {
+    "TOTAL CHARGE (CAD)" : {
 
     },
-    "TRANSACTIONS" : {
+    "Total tracked spending in PickMe" : {
+
+    },
+    "TRANSACTION DETAILS" : {
 
     },
     "Trip / Vacation" : {
@@ -4661,7 +5194,16 @@
         }
       }
     },
-    "Trip & Purchase Lens" : {
+    "Trip Length" : {
+
+    },
+    "Try a card name, benefit, or another category." : {
+
+    },
+    "Try searching for terms like 'delay', 'rental', 'warranty', 'theft', or 'medical'." : {
+
+    },
+    "Try selecting another category or clear the filter to view all purchases." : {
 
     },
     "under %@" : {
@@ -4673,6 +5215,9 @@
           }
         }
       }
+    },
+    "Underwriter" : {
+
     },
     "Undo" : {
       "localizations" : {
@@ -4696,6 +5241,7 @@
       }
     },
     "Unknown — unverified" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4704,6 +5250,12 @@
           }
         }
       }
+    },
+    "Unlimited earn" : {
+
+    },
+    "UNRECORDED" : {
+
     },
     "Unverified" : {
       "localizations" : {
@@ -4746,9 +5298,6 @@
         }
       }
     },
-    "VALIDATION PROGRESS" : {
-
-    },
     "Validation target: 30 physical Canadian checkouts" : {
       "localizations" : {
         "fr-CA" : {
@@ -4762,6 +5311,9 @@
     "Valuation Sandbox" : {
 
     },
+    "Valuations" : {
+
+    },
     "VALUE RECOVERED" : {
       "localizations" : {
         "fr-CA" : {
@@ -4771,6 +5323,9 @@
           }
         }
       }
+    },
+    "Vehicle Value" : {
+
     },
     "Verdicts personalized to %lld recorded checkouts on this device, annualized to %@/yr. Unobserved categories blended from Canadian baseline." : {
       "localizations" : {
@@ -4785,7 +5340,10 @@
     "Verdicts run against %@/yr Canadian spend profile. Switch profiles to test if verdicts hold under your spending style." : {
 
     },
-    "Verified certificate coverage per card" : {
+    "Verification" : {
+
+    },
+    "View Details" : {
 
     },
     "View full card breakdown" : {
@@ -4832,7 +5390,11 @@
         }
       }
     },
+    "WALLET & REWARDS" : {
+
+    },
     "Wallet & Tools" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4846,6 +5408,12 @@
 
     },
     "Wallet Capture status" : {
+
+    },
+    "Wallet Cards" : {
+
+    },
+    "WALLET COVERAGE RADAR" : {
 
     },
     "Wallet Health" : {
@@ -4871,6 +5439,9 @@
           }
         }
       }
+    },
+    "Wallet Superpowers" : {
+
     },
     "WALLET, OPTIMALLY USED" : {
       "localizations" : {
@@ -4956,9 +5527,6 @@
         }
       }
     },
-    "What to keep, cancel, or add — marginal, not gross" : {
-
-    },
     "What you actually paid" : {
       "localizations" : {
         "fr-CA" : {
@@ -4968,9 +5536,6 @@
           }
         }
       }
-    },
-    "What-If sensitivity for MR, Aeroplan, Scene+, Avion" : {
-
     },
     "What-If Sensitivity Sandbox" : {
 
@@ -4994,6 +5559,9 @@
           }
         }
       }
+    },
+    "Which card are you tapping today?" : {
+
     },
     "Which card did you tap?" : {
       "localizations" : {

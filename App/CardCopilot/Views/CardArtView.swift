@@ -49,9 +49,14 @@ struct CardArtView: View {
     var rewardHeadline: String? = nil
     var effectiveReturnText: String? = nil
     var isHero: Bool = true
+    var cleanArtwork: Bool = false
 
     private var style: CardVisualTheme.CardStyle {
         CardVisualTheme.style(for: cardId)
+    }
+
+    private var hasLocalPhoto: Bool {
+        UIImage(named: cardId) != nil
     }
 
     var body: some View {
@@ -68,7 +73,7 @@ struct CardArtView: View {
             // Layer 1: gradient background (always present)
             gradientBackground
 
-            // Layer 2: real card photo from Cloudflare R2 (fills the card)
+            // Layer 2: real card photo from Assets / Cloudflare R2 (fills the card)
             CardPhotoView(
                 cardId: cardId,
                 cornerRadius: 18,
@@ -76,20 +81,90 @@ struct CardArtView: View {
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // Layer 3: subtle bottom gradient scrim so text stays legible
+            // Layer 3: specular gloss highlight
             LinearGradient(
-                colors: [Color.black.opacity(0.55), Color.clear],
-                startPoint: .bottom,
-                endPoint: .center
+                colors: [
+                    Color.white.opacity(0.18),
+                    Color.clear,
+                    Color.black.opacity(cleanArtwork ? 0.08 : 0.25)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
             )
 
-            // Layer 4: card text overlay
-            heroTextOverlay
-                .padding(18)
+            // Layer 4: card text overlay (hidden if cleanArtwork and photo is present, or styled cleanly)
+            if !cleanArtwork {
+                // subtle bottom gradient scrim so text stays legible
+                LinearGradient(
+                    colors: [Color.black.opacity(0.55), Color.clear],
+                    startPoint: .bottom,
+                    endPoint: .center
+                )
+
+                heroTextOverlay
+                    .padding(18)
+            } else if !hasLocalPhoto {
+                // When cleanArtwork is requested but no photo exists, show a sleek procedural luxury layout
+                proceduralHeroOverlay
+                    .padding(16)
+            }
         }
         .aspectRatio(physicalCardAspectRatio, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .shadow(color: style.gradientColors.first?.opacity(0.35) ?? Color.black.opacity(0.2), radius: 16, x: 0, y: 8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.45),
+                            Color.white.opacity(0.10)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+        .shadow(color: style.gradientColors.first?.opacity(0.28) ?? Color.black.opacity(0.18), radius: 14, x: 0, y: 7)
+    }
+
+    private var proceduralHeroOverlay: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top) {
+                Text(style.issuer.uppercased())
+                    .font(.system(size: 10, weight: .black, design: .rounded))
+                    .tracking(1.0)
+                    .foregroundStyle(style.textColor.opacity(0.85))
+                Spacer()
+                Image(systemName: "wave.3.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(style.textColor.opacity(0.8))
+            }
+
+            emvChipView
+                .padding(.top, 10)
+
+            Spacer()
+
+            Text(officialName)
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .foregroundStyle(style.textColor)
+                .lineLimit(2)
+                .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
+
+            Spacer()
+
+            HStack {
+                Text(style.network.rawValue)
+                    .font(.system(size: 9, weight: .black, design: .rounded))
+                    .tracking(0.8)
+                    .foregroundStyle(style.textColor.opacity(0.85))
+                Spacer()
+                Text("•••• 8808")
+                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(style.textColor.opacity(0.85))
+            }
+        }
     }
 
     private var heroTextOverlay: some View {

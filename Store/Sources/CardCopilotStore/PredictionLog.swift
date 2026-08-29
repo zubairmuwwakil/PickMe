@@ -195,6 +195,19 @@ public struct PredictionLog {
         try context.save()
     }
 
+    public func recordCard(_ cardUsedId: String, source: CaptureSource,
+                           on purchase: StoredPurchase, at date: Date = Date()) throws {
+        purchase.cardUsedId = cardUsedId
+        purchase.cardSourceRaw = source.rawValue
+        refreshCompletion(purchase, at: date)
+        try context.save()
+    }
+
+    public func deletePurchase(_ purchase: StoredPurchase) throws {
+        context.delete(purchase)
+        try context.save()
+    }
+
     /// Completion is derived, never asserted by a caller — a purchase is complete exactly when
     /// both facts are present, and no code path gets to claim otherwise.
     private func refreshCompletion(_ purchase: StoredPurchase, at date: Date) {

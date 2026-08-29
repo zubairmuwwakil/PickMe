@@ -42,7 +42,10 @@ public enum CategoryPickerAdvisor {
     /// Every category id named by an accelerator predicate in the loaded catalogue, verbatim —
     /// the raw vocabulary the drift test checks pill coverage against.
     public static func acceleratedVocabulary(catalogue: Catalogue) -> Set<String> {
-        Set(catalogue.cards.flatMap(\.earnRules).compactMap(\.predicate.categories).flatMap { $0 })
+        Set(catalogue.cards.flatMap(\.earnRules)
+            .compactMap(\.predicate.categories)
+            .flatMap { $0 }
+            .map(CategoryTaxonomy.canonicalID))
     }
 
     /// Every category pill the picker screen renders: the catalogue's accelerator vocabulary,
@@ -75,11 +78,12 @@ public enum CategoryPickerAdvisor {
     /// reads as words instead of a token like `householdUtilities`.
     public static func label(for category: String,
                              distribution: SpendDistribution = .placeholderCanadianHousehold) -> String {
-        if let bucket = matchingBucket(for: category, distribution: distribution) {
+        let canonicalCategory = CategoryTaxonomy.canonicalID(category)
+        if let bucket = matchingBucket(for: canonicalCategory, distribution: distribution) {
             return bucket.label
         }
-        if let curated = curatedLabels[category] { return curated }
-        return humanize(category)
+        if let curated = curatedLabels[canonicalCategory] { return curated }
+        return humanize(canonicalCategory)
     }
 
     /// camelCase -> "Camel case". The fallback of last resort: never returns its input
@@ -110,10 +114,11 @@ public enum CategoryPickerAdvisor {
     public static func enrichedTemplate(for category: String,
                                         distribution: SpendDistribution = .placeholderCanadianHousehold)
     -> PurchaseContext {
-        if let bucket = matchingBucket(for: category, distribution: distribution) {
+        let canonicalCategory = CategoryTaxonomy.canonicalID(category)
+        if let bucket = matchingBucket(for: canonicalCategory, distribution: distribution) {
             return bucket.context
         }
-        return PurchaseContext(amountCad: 1, category: category)
+        return PurchaseContext(amountCad: 1, category: canonicalCategory)
     }
 
     private static func matchingBucket(for category: String,
@@ -134,6 +139,17 @@ public enum CategoryPickerAdvisor {
         public let recommendation: Recommendation
     }
 
+    /// Selects the band that contains a concrete purchase amount. At an exact boundary the
+    /// following band wins, matching the half-open ranges rendered by CategoryBandListView.
+    public static func band(containing amountCad: Double,
+                            in bands: [AmountBand]) -> AmountBand? {
+        let amount = max(0, amountCad)
+        return bands.first { band in
+            amount >= band.lowerBoundCad
+                && (band.upperBoundCad == nil || amount < band.upperBoundCad!)
+        } ?? bands.last
+    }
+
     /// Every amount band for one category: the amount ranges across which the engine's answer
     /// — `recommend(_:asOf:).winner`, never `allCandidates.first` — stays on the same card.
     /// `winner` is deliberate: it already applies the owner's switch threshold against their
@@ -146,7 +162,8 @@ public enum CategoryPickerAdvisor {
                              distribution: SpendDistribution = .placeholderCanadianHousehold,
                              asOf: String) -> [AmountBand] {
         let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
-        let template = enrichedTemplate(for: category, distribution: distribution)
+        let canonicalCategory = CategoryTaxonomy.canonicalID(category)
+        let template = enrichedTemplate(for: canonicalCategory, distribution: distribution)
 
         func recommendation(atCents cents: Int) -> Recommendation? {
             var context = template

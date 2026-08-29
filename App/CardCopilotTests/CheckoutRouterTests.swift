@@ -78,4 +78,10 @@ final class CheckoutRouterTests: XCTestCase {
         router.show(.sync)
         XCTAssertEqual(router.path, [.sync, .finish, .sync])
     }
+
+    func testCategoryPickerCanOpenASpecificCanonicalCategory() {
+        let router = CheckoutRouter()
+        router.push(.categoryPicker("gas"))
+        XCTAssertEqual(router.path, [.categoryPicker("gas")])
+    }
 }

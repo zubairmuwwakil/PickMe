@@ -430,13 +430,34 @@ final class CopilotSession {
         }
     }
 
-    /// Fills a missing receipt total from purchase history. Because this happens after capture,
-    /// the amount is explicitly marked as recalled rather than machine-captured.
+    /// Records the amount charged for a purchase and re-evaluates card assessment.
     func recordAmount(_ amount: Double, for purchase: StoredPurchase,
                       using graph: DependencyGraph) {
         do {
             try graph.service.log.recordAmount(amount, source: .recalledLater, on: purchase)
             try graph.service.assessPurchase(purchase)
+            refresh(using: graph)
+        } catch {
+            report(FlowError(error))
+        }
+    }
+
+    /// Records the card used for a purchase and re-evaluates card assessment.
+    func recordCard(_ cardUsedId: String, for purchase: StoredPurchase,
+                    using graph: DependencyGraph) {
+        do {
+            try graph.service.log.recordCard(cardUsedId, source: .recalledLater, on: purchase)
+            try graph.service.assessPurchase(purchase)
+            refresh(using: graph)
+        } catch {
+            report(FlowError(error))
+        }
+    }
+
+    /// Deletes a purchase record from history.
+    func deletePurchase(_ purchase: StoredPurchase, using graph: DependencyGraph) {
+        do {
+            try graph.service.log.deletePurchase(purchase)
             refresh(using: graph)
         } catch {
             report(FlowError(error))

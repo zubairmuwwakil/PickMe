@@ -59,6 +59,7 @@ final class BenefitsModelsTests: XCTestCase {
     func testDecodesCardCertificateAndBenefit() throws {
         let catalogue = try decodeSample()
         let card = try XCTUnwrap(catalogue.card("amex-cobalt"))
+        XCTAssertTrue(card.documents.isEmpty, "Legacy catalogue entries should decode without documents")
         XCTAssertEqual(card.certificate.verificationStatus, .stub)
         XCTAssertEqual(card.certificate.underwriter, "Royal & Sun Alliance")
         XCTAssertNil(card.certificate.certificateDate)
@@ -89,6 +90,25 @@ final class BenefitsModelsTests: XCTestCase {
         let data = try JSONEncoder().encode(catalogue)
         let again = try JSONDecoder().decode(BenefitsCatalogue.self, from: data)
         XCTAssertEqual(catalogue, again)
+    }
+
+    func testCardDocumentsRoundTripAndPreserveMetadata() throws {
+        var catalogue = try decodeSample()
+        let document = CardDocument(
+            documentId: "cobalt-cardholder-agreement",
+            kind: CardDocumentKind.cardholderAgreement.rawValue,
+            title: "Cardholder agreement",
+            url: "https://example.com/agreement.pdf",
+            effectiveDate: "2026-01",
+            jurisdiction: "Canada",
+            verificationStatus: .issuerPage,
+            lastVerifiedAt: "2026-08-29",
+            notes: "Issuer-published source")
+        catalogue.cards[0].documents = [document]
+
+        let data = try JSONEncoder().encode(catalogue)
+        let decoded = try JSONDecoder().decode(BenefitsCatalogue.self, from: data)
+        XCTAssertEqual(decoded.cards[0].documents, [document])
     }
 
     func testUnknownCardLookupReturnsNil() throws {

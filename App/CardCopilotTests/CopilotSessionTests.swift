@@ -231,4 +231,56 @@ final class CopilotSessionTests: XCTestCase {
                                                                 walletFeedback: feedback),
                        .best)
     }
+
+    func testRecordCardUpdatesCardAndAssessment() throws {
+        let context = try makeContext()
+        let graph = try makeGraph(context: context)
+        let purchase = StoredPurchase(merchantLabel: "Mom's Kitchen", walletEventId: "local-place-1")
+        purchase.amountCad = 47.43
+        context.insert(purchase)
+        try context.save()
+
+        let session = CopilotSession()
+        session.refresh(using: graph)
+        XCTAssertNil(purchase.cardUsedId)
+
+        session.recordCard("amex-cobalt", for: purchase, using: graph)
+        XCTAssertEqual(purchase.cardUsedId, "amex-cobalt")
+        XCTAssertEqual(purchase.cardSource, .recalledLater)
+    }
+
+    func testDeletePurchaseRemovesPurchaseFromHistory() throws {
+        let context = try makeContext()
+        let graph = try makeGraph(context: context)
+        let purchase = StoredPurchase(merchantLabel: "Mom's Kitchen", walletEventId: "local-place-2")
+        purchase.amountCad = 47.43
+        context.insert(purchase)
+        try context.save()
+
+        let session = CopilotSession()
+        session.refresh(using: graph)
+        XCTAssertEqual(session.purchaseHistory.count, 1)
+
+        session.deletePurchase(purchase, using: graph)
+        XCTAssertEqual(session.purchaseHistory.count, 0)
+    }
+
+    func testRecordAmountUpdatesAmountAndCompletesPurchase() throws {
+        let context = try makeContext()
+        let graph = try makeGraph(context: context)
+        let purchase = StoredPurchase(merchantLabel: "Mom's Kitchen", walletEventId: "local-place-3")
+        purchase.cardUsedId = "amex-cobalt"
+        context.insert(purchase)
+        try context.save()
+
+        let session = CopilotSession()
+        session.refresh(using: graph)
+        XCTAssertNil(purchase.amountCad)
+        XCTAssertFalse(purchase.isComplete)
+
+        session.recordAmount(85.50, for: purchase, using: graph)
+        XCTAssertEqual(purchase.amountCad, 85.50)
+        XCTAssertEqual(purchase.amountSource, .recalledLater)
+        XCTAssertTrue(purchase.isComplete)
+    }
 }

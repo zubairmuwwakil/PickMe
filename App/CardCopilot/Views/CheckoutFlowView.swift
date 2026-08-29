@@ -264,8 +264,14 @@ struct CheckoutFlowView: View {
             ProtectionLensView(initialContext: context)
         case .benefitsReference:
             BenefitsReferenceView()
-        case .categoryPicker:
-            CategoryPickerView()
+        case .categoryPicker(let category):
+            if let category, let graph = environment.graph {
+                CategoryBandListView(category: CategoryTaxonomy.canonicalID(category),
+                                     deps: graph,
+                                     distribution: .placeholderCanadianHousehold)
+            } else {
+                CategoryPickerView()
+            }
         case .walletHealth:
             WalletHealthView(recentPurchases: session.recentPurchases)
         case .valuationSandbox:

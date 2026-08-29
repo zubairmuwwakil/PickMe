@@ -21,7 +21,7 @@ public struct PurchaseContext: Codable, Equatable, Sendable {
         self.amountCad = amountCad
         self.currency = currency
         self.usdEquivalent = usdEquivalent
-        self.category = category
+        self.category = CategoryTaxonomy.canonicalID(category)
         self.mcc = mcc
         self.merchantBrand = merchantBrand
         self.country = country
@@ -40,7 +40,7 @@ public struct PurchaseContext: Codable, Equatable, Sendable {
         amountCad = try c.decode(Double.self, forKey: .amountCad)
         currency = try c.decodeIfPresent(String.self, forKey: .currency) ?? "CAD"
         usdEquivalent = try c.decodeIfPresent(Double.self, forKey: .usdEquivalent)
-        category = try c.decode(String.self, forKey: .category)
+        category = CategoryTaxonomy.canonicalID(try c.decode(String.self, forKey: .category))
         mcc = try c.decodeIfPresent(Int.self, forKey: .mcc)
         merchantBrand = try c.decodeIfPresent(String.self, forKey: .merchantBrand)
         country = try c.decodeIfPresent(String.self, forKey: .country) ?? "CA"

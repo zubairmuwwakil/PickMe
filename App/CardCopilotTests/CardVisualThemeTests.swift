@@ -162,6 +162,17 @@ final class CardVisualThemeTests: XCTestCase {
         XCTAssertEqual(CategoryVisuals.meta(for: "travel").icon, "airplane")
     }
 
+    func testCategoryVisualAliasesShareCanonicalMetadata() {
+        XCTAssertEqual(CategoryVisuals.meta(for: "groceries").icon,
+                       CategoryVisuals.meta(for: "grocery").icon)
+        XCTAssertEqual(CategoryVisuals.meta(for: "gas").displayName,
+                       CategoryVisuals.meta(for: "gasStation").displayName)
+        XCTAssertEqual(CategoryVisuals.meta(for: "pharmacy").icon,
+                       CategoryVisuals.meta(for: "drugStore").icon)
+        XCTAssertEqual(CategoryVisuals.meta(for: "hotel").displayName,
+                       CategoryVisuals.meta(for: "lodging").displayName)
+    }
+
     func testUnknownCategoryFallsBackToGenericBagMeta() {
         let unknown = "unmappedCategory_\(UUID().uuidString)"
         let fallback = CategoryVisuals.meta(for: unknown)
@@ -231,4 +242,3 @@ final class CardVisualThemeTests: XCTestCase {
         add(lightAttachment)
     }
 }
-

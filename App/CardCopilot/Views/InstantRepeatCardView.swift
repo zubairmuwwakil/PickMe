@@ -143,6 +143,8 @@ struct InstantRepeatCardView: View {
                     ForEach(presets, id: \.self) { preset in
                         let isSelected = !isCustomInputActive && selectedAmount == preset
                         Button {
+                            let impact = UIImpactFeedbackGenerator(style: .light)
+                            impact.impactOccurred()
                             withAnimation(.spring(duration: 0.25)) {
                                 isCustomInputActive = false
                                 isCustomFocused = false
@@ -166,6 +168,8 @@ struct InstantRepeatCardView: View {
 
                     // Custom Amount Button
                     Button {
+                        let impact = UIImpactFeedbackGenerator(style: .light)
+                        impact.impactOccurred()
                         withAnimation(.spring(duration: 0.25)) {
                             isCustomInputActive.toggle()
                             if isCustomInputActive {
@@ -220,6 +224,8 @@ struct InstantRepeatCardView: View {
                         .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 8))
 
                         Button("Set") {
+                            let impact = UIImpactFeedbackGenerator(style: .light)
+                            impact.impactOccurred()
                             applyCustomAmount()
                         }
                         .font(.system(size: 12, weight: .bold, design: .rounded))
@@ -235,6 +241,8 @@ struct InstantRepeatCardView: View {
             // MARK: - Action Buttons
             HStack(spacing: 8) {
                 Button {
+                    let impact = UIImpactFeedbackGenerator(style: .medium)
+                    impact.impactOccurred()
                     onLogPurchase(merchant, selectedAmount)
                 } label: {
                     HStack(spacing: 6) {

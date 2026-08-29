@@ -11,19 +11,34 @@ public struct BenefitDisclosure: Equatable, Sendable, Identifiable {
     public let conditions: [String]
     public let exclusions: [String]
     public let verification: BenefitVerification
+    /// Certificate provenance travels with a disclosure so every comparison row can open
+    /// the same source and verification context as the reference library.
+    public let underwriter: String?
+    public let sourceURL: String?
+    public let certificateDate: String?
+    public let lastVerifiedAt: String?
+    public let jurisdiction: String?
 
     /// Stable identity for SwiftUI sheets/lists.
     public var id: String { cardId + "/" + kind }
 
     public init(cardId: String, kind: String, coverage: BenefitCoverage,
                 conditions: [String], exclusions: [String],
-                verification: BenefitVerification) {
+                verification: BenefitVerification,
+                underwriter: String? = nil, sourceURL: String? = nil,
+                certificateDate: String? = nil, lastVerifiedAt: String? = nil,
+                jurisdiction: String? = nil) {
         self.cardId = cardId
         self.kind = kind
         self.coverage = coverage
         self.conditions = conditions
         self.exclusions = exclusions
         self.verification = verification
+        self.underwriter = underwriter
+        self.sourceURL = sourceURL
+        self.certificateDate = certificateDate
+        self.lastVerifiedAt = lastVerifiedAt
+        self.jurisdiction = jurisdiction
     }
 }
 
@@ -81,7 +96,8 @@ public enum BenefitsAdvisor {
             && !triggers.consumableCategories.contains(purchase.category) {
             families.insert(.shopping)
         }
-        if purchase.category == "hotel" || purchase.country != "CA" || purchase.currency != "CAD" {
+        // PurchaseContext canonicalizes both "hotel" and "hotels" to "lodging".
+        if purchase.category == "lodging" || purchase.country != "CA" || purchase.currency != "CAD" {
             families.insert(.travelDisruption)
             families.insert(.travelMedical)
         }
@@ -95,15 +111,20 @@ public enum BenefitsAdvisor {
             guard benefit.knownKind != nil,
                   let family = benefit.knownFamily, families.contains(family) else { return nil }
             return disclosure(benefit, cardId: cardId,
-                              verification: card.certificate.verificationStatus)
+                              certificate: card.certificate)
         }
     }
 
     static func disclosure(_ benefit: Benefit, cardId: String,
-                           verification: BenefitVerification) -> BenefitDisclosure {
+                           certificate: CertificateProvenance) -> BenefitDisclosure {
         BenefitDisclosure(cardId: cardId, kind: benefit.kind, coverage: benefit.coverage,
                           conditions: benefit.conditions, exclusions: benefit.exclusions ?? [],
-                          verification: verification)
+                          verification: certificate.verificationStatus,
+                          underwriter: certificate.underwriter,
+                          sourceURL: certificate.sourceUrl,
+                          certificateDate: certificate.certificateDate,
+                          lastVerifiedAt: certificate.lastVerifiedAt,
+                          jurisdiction: certificate.jurisdiction)
     }
 }
 
@@ -189,7 +210,7 @@ extension BenefitsAdvisor {
             } else {
                 let byKind = Dictionary(relevant.map {
                     ($0.kind, disclosure($0, cardId: cardId,
-                                         verification: card.certificate.verificationStatus))
+                                         certificate: card.certificate))
                 }, uniquingKeysWith: { first, _ in first })
                 columns.append(.init(cardId: cardId,
                                      verification: card.certificate.verificationStatus,

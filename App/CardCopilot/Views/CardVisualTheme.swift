@@ -752,18 +752,18 @@ enum CategoryVisuals {
     }
 
     static func meta(for category: String) -> Meta {
-        switch category.lowercased() {
-        case "grocery", "groceries":
+        switch CategoryTaxonomy.canonicalID(category).lowercased() {
+        case "grocery":
             return Meta(icon: "cart.fill", color: .green, displayName: "Grocery")
-        case "dining", "restaurants", "restaurant", "fooddelivery":
+        case "dining", "fooddelivery":
             return Meta(icon: "fork.knife", color: .orange, displayName: "Dining & Food")
-        case "gasstation", "gas":
+        case "gasstation":
             return Meta(icon: "fuelpump.fill", color: .blue, displayName: "Gas Station")
         case "transit":
             return Meta(icon: "tram.fill", color: .teal, displayName: "Transit & Travel")
-        case "flight", "flights", "travel":
+        case "travel":
             return Meta(icon: "airplane", color: .indigo, displayName: "Travel")
-        case "hotel", "lodging", "hotels":
+        case "lodging":
             return Meta(icon: "bed.double.fill", color: .purple, displayName: "Hotel & Lodging")
         case "streaming":
             return Meta(icon: "play.tv.fill", color: .red, displayName: "Streaming")
@@ -775,9 +775,9 @@ enum CategoryVisuals {
             return Meta(icon: "iphone", color: .indigo, displayName: "Mobile Device")
         case "homeimprovement":
             return Meta(icon: "hammer.fill", color: .brown, displayName: "Home Improvement")
-        case "drugstore", "pharmacy":
+        case "drugstore":
             return Meta(icon: "cross.case.fill", color: .mint, displayName: "Pharmacy")
-        case "recurring", "recurringbills":
+        case "recurring":
             return Meta(icon: "arrow.triangle.2.circlepath", color: .pink, displayName: "Recurring Bills")
         case "ctfamily":
             return Meta(icon: "triangle.fill", color: .red, displayName: "Canadian Tire Family")
@@ -789,13 +789,13 @@ enum CategoryVisuals {
             return Meta(icon: "bolt.car.fill", color: .green, displayName: "EV Charging")
         case "entertainment":
             return Meta(icon: "ticket.fill", color: .pink, displayName: "Entertainment")
-        case "householdutilities", "utilities":
+        case "householdutilities":
             return Meta(icon: "lightbulb.fill", color: .yellow, displayName: "Household Utilities")
         case "marriottdirect":
             return Meta(icon: "crown.fill", color: .brown, displayName: "Marriott Direct")
         case "memberships":
             return Meta(icon: "person.2.fill", color: .teal, displayName: "Memberships")
-        case "other", "general":
+        case "other":
             return Meta(icon: "tag.fill", color: .gray, displayName: "General Merchandise")
         case "fitness":
             return Meta(icon: "figure.run", color: .mint, displayName: "Fitness & Gym")

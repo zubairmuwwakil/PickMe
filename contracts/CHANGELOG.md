@@ -2,6 +2,15 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-29 — benefits-catalogue 1.2: add per-card document index
+
+Added a `documents` array to all 27 current benefits-catalogue cards. It supports multiple
+issuer/underwriter sources such as certificates of insurance, cardholder agreements, welcome
+guides, fee schedules, lounge terms, and claims instructions. Existing 1.1 readers remain valid;
+the document `kind` is open-ended and each document carries its own verification status and
+effective date. The research manifest is retained in `benefits-documents-research.json` so future
+refreshes can distinguish public issuer evidence from the owner's own cardholder documents.
+
 ## 2026-08-28 — card-catalogue 2.10 & fixtures 1.5: Amazon's Prime ladder becomes payable
 
 **Intentional behaviour activation.** `amazonEligiblePrimeLinked` became answerable in 2.8, but

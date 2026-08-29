@@ -62,15 +62,92 @@ public struct CertificateProvenance: Codable, Equatable, Sendable {
     public var sourceUrl: String?
     public var certificateDate: String?
     public var lastVerifiedAt: String?
+    public var jurisdiction: String?
     public var verificationStatus: BenefitVerification
+
+    public init(underwriter: String?, sourceUrl: String?, certificateDate: String?,
+                lastVerifiedAt: String?, verificationStatus: BenefitVerification,
+                jurisdiction: String? = nil) {
+        self.underwriter = underwriter
+        self.sourceUrl = sourceUrl
+        self.certificateDate = certificateDate
+        self.lastVerifiedAt = lastVerifiedAt
+        self.jurisdiction = jurisdiction
+        self.verificationStatus = verificationStatus
+    }
+}
+
+/// Additional card documentation is intentionally an open vocabulary. Issuers use different
+/// names for similar documents, and adding a new document kind must not make an older reader
+/// reject the whole catalogue.
+public enum CardDocumentKind: String, CaseIterable, Sendable {
+    case certificateOfInsurance
+    case cardholderAgreement
+    case welcomeGuide
+    case feeSchedule
+    case claimsInstructions
+    case loungeTerms
+    case productPage
+    case other
+}
+
+public struct CardDocument: Codable, Equatable, Identifiable, Sendable {
+    public var documentId: String
+    public var kind: String
+    public var title: String
+    public var url: String
+    public var effectiveDate: String?
+    public var jurisdiction: String?
+    public var verificationStatus: BenefitVerification
+    public var lastVerifiedAt: String?
+    public var notes: String?
+
+    public var id: String { documentId }
+
+    public init(documentId: String, kind: String, title: String, url: String,
+                effectiveDate: String? = nil, jurisdiction: String? = nil,
+                verificationStatus: BenefitVerification,
+                lastVerifiedAt: String? = nil, notes: String? = nil) {
+        self.documentId = documentId
+        self.kind = kind
+        self.title = title
+        self.url = url
+        self.effectiveDate = effectiveDate
+        self.jurisdiction = jurisdiction
+        self.verificationStatus = verificationStatus
+        self.lastVerifiedAt = lastVerifiedAt
+        self.notes = notes
+    }
 }
 
 public struct CardBenefits: Codable, Equatable, Identifiable, Sendable {
     public var cardId: String
     public var certificate: CertificateProvenance
     public var benefits: [Benefit]
+    /// Optional in the wire format for backwards compatibility with catalogue 1.1.
+    public var documents: [CardDocument]
 
     public var id: String { cardId }
+
+    public init(cardId: String, certificate: CertificateProvenance, benefits: [Benefit],
+                documents: [CardDocument] = []) {
+        self.cardId = cardId
+        self.certificate = certificate
+        self.benefits = benefits
+        self.documents = documents
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case cardId, certificate, benefits, documents
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        cardId = try container.decode(String.self, forKey: .cardId)
+        certificate = try container.decode(CertificateProvenance.self, forKey: .certificate)
+        benefits = try container.decode([Benefit].self, forKey: .benefits)
+        documents = try container.decodeIfPresent([CardDocument].self, forKey: .documents) ?? []
+    }
 }
 
 /// Ambient-trigger tuning lives in data, not code (spec §5).

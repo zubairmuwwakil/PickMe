@@ -15,7 +15,7 @@ enum Destination: Hashable {
     case dashboard
     case protectionLens(BenefitContext)
     case benefitsReference
-    case categoryPicker
+    case categoryPicker(String?)
     case walletHealth
     case valuationSandbox
     case sync

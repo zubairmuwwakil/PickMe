@@ -137,17 +137,17 @@ public struct ShareAdvisorView: View {
             if isTravel {
                 protectionRow(icon: "airplane.circle.fill", color: .purple,
                               title: "Flight Delay & Cancellation",
-                              detail: "Up to $1,000 / trip delay expense coverage when paid with this card.")
+                              detail: "Compare this card's delay, cancellation, interruption, and baggage terms in PickMe.")
                 protectionRow(icon: "cross.case.fill", color: .red,
                               title: "Out-of-Country Medical",
-                              detail: "15-21 days emergency medical protection included.")
+                              detail: "Check the certificate for destination, trip-length, age, and eligibility conditions.")
             } else {
                 protectionRow(icon: "shield.lefthalf.filled.badge.checkmark", color: .indigo,
-                              title: "Extended Warranty (+1 Year)",
-                              detail: "Doubles original manufacturer warranty up to 1 additional year.")
+                              title: "Extended Warranty",
+                              detail: "Warranty extensions and eligible original terms vary by card. Verify before buying.")
                 protectionRow(icon: "lock.shield.fill", color: .teal,
-                              title: "Purchase Security (90 Days)",
-                              detail: "Insures item against accidental damage and theft for 90 days from purchase.")
+                              title: "Purchase Protection",
+                              detail: "Open PickMe to compare the certificate's purchase window, limits, deductible, and exclusions.")
             }
         }
         .padding(16)
