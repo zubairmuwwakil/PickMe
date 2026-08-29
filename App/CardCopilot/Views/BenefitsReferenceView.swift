@@ -11,6 +11,8 @@ struct BenefitsReferenceView: View {
     var body: some View {
         if let graph = environment.graph {
             List {
+                researchStatusSection(graph: graph)
+
                 // Category Filter Pills
                 Section {
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -53,7 +55,8 @@ struct BenefitsReferenceView: View {
                     Section {
                         ForEach(filteredCards(graph: graph)) { card in
                             NavigationLink {
-                                CardBenefitsDetailView(card: card, cardName: cardName(card.cardId, graph: graph))
+                                CardBenefitsDetailView(cardId: card.cardId,
+                                                        cardName: cardName(card.cardId, graph: graph))
                             } label: {
                                 HStack(spacing: 12) {
                                     CardMiniBadge(cardId: card.cardId, size: 20)
@@ -128,15 +131,46 @@ struct BenefitsReferenceView: View {
         case .certificateVerified: return .green
         }
     }
+
+    private func researchStatusSection(graph: DependencyGraph) -> some View {
+        let health = BenefitsSourceHealth(catalogue: graph.benefits)
+        return Section("Research status") {
+            LabeledContent("Source coverage", value: health.sourceCoverageLabel)
+            LabeledContent("Documents indexed", value: "\(health.documentCount)")
+            LabeledContent("Owner-confirmed cards", value: "\(health.ownerVerifiedCards)")
+
+            if health.staleCards > 0 || health.staleDocuments > 0 {
+                Label("\(health.staleCards + health.staleDocuments) source\(health.staleCards + health.staleDocuments == 1 ? "" : "s") need a refresh",
+                      systemImage: "clock.badge.exclamationmark")
+                    .foregroundStyle(.orange)
+            } else {
+                Label("All indexed sources checked within the last year",
+                      systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            }
+
+            Text("Public sources are research references. Import your own certificate below a card and confirm that it belongs to you before relying on coverage.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
 }
 
 struct CardBenefitsDetailView: View {
-    let card: CardBenefits
+    let cardId: String
     let cardName: String
 
+    @Environment(CopilotEnvironment.self) private var environment
     @State private var selectedDisclosure: BenefitDisclosure?
+    @State private var isImporting = false
+    @State private var importKind = CardDocumentKind.certificateOfInsurance.rawValue
+    @State private var pendingVerification: PersonalBenefitsDocument?
 
-    private var families: [(name: String, icon: String, benefits: [Benefit])] {
+    private var card: CardBenefits? {
+        environment.graph?.benefits.card(cardId)
+    }
+
+    private func families(for card: CardBenefits) -> [(name: String, icon: String, benefits: [Benefit])] {
         let familyMeta: [(key: String, name: String, icon: String)] = [
             ("shopping", "Purchase & Shopping", "cart.fill"),
             ("travelDisruption", "Travel Disruption & Delay", "airplane"),
@@ -155,7 +189,7 @@ struct CardBenefitsDetailView: View {
 
     /// Catalogue 1.1 cards only have a single certificate URL. Expose that URL through the new
     /// document surface immediately, while allowing catalogue 1.2+ to supply multiple records.
-    private var sourceDocuments: [CardDocument] {
+    private func sourceDocuments(for card: CardBenefits) -> [CardDocument] {
         if !card.documents.isEmpty { return card.documents }
         guard let source = card.certificate.sourceUrl, !source.isEmpty else { return [] }
         return [CardDocument(
@@ -181,7 +215,51 @@ struct CardBenefitsDetailView: View {
         }
     }
 
+    private func personalDocumentID(_ document: CardDocument) -> UUID? {
+        let prefix = "personal-"
+        guard document.documentId.hasPrefix(prefix) else { return nil }
+        return UUID(uuidString: String(document.documentId.dropFirst(prefix.count)))
+    }
+
+    private func documentVerificationLabel(_ document: CardDocument) -> String {
+        guard URL(string: document.url)?.isFileURL == true else {
+            return BenefitsFormatting.verificationLabel(document.verificationStatus)
+        }
+        return document.verificationStatus == .certificateVerified ? "Owner confirmed" : "Imported"
+    }
+
     var body: some View {
+        Group {
+            if let card {
+                cardContent(card)
+            } else {
+                ContentUnavailableView("Benefits unavailable", systemImage: "doc.text.magnifyingglass")
+            }
+        }
+        .fileImporter(isPresented: $isImporting,
+                      allowedContentTypes: [.pdf, .image, .data],
+                      allowsMultipleSelection: false) { result in
+            guard case .success(let urls) = result, let url = urls.first else { return }
+            if environment.addPersonalBenefitDocument(cardId: cardId, sourceURL: url, kind: importKind) {
+                pendingVerification = environment.benefitsDocumentVault.documents.last { $0.cardId == cardId && $0.fileName == url.lastPathComponent }
+            }
+        }
+        .confirmationDialog("Confirm this document",
+                            isPresented: Binding(get: { pendingVerification != nil },
+                                                 set: { if !$0 { pendingVerification = nil } }),
+                            titleVisibility: .visible,
+                            presenting: pendingVerification) { document in
+            Button("I checked — verify this card") {
+                environment.verifyPersonalBenefitDocument(id: document.id)
+            }
+            Button("Keep imported, verify later") {}
+        } message: { document in
+            Text("Only confirm if \(document.fileName) is the current certificate or card document for your \(cardName) account. PickMe cannot determine eligibility from the file alone.")
+        }
+    }
+
+    @ViewBuilder
+    private func cardContent(_ card: CardBenefits) -> some View {
         List {
             // Card Hero Header in list
             Section {
@@ -217,11 +295,35 @@ struct CardBenefitsDetailView: View {
                         Label("Open certificate source", systemImage: "doc.text.magnifyingglass")
                     }
                 }
+
+                Menu {
+                    Button("Certificate of insurance") {
+                        importKind = CardDocumentKind.certificateOfInsurance.rawValue
+                        isImporting = true
+                    }
+                    Button("Cardholder agreement") {
+                        importKind = CardDocumentKind.cardholderAgreement.rawValue
+                        isImporting = true
+                    }
+                    Button("Claims instructions") {
+                        importKind = CardDocumentKind.claimsInstructions.rawValue
+                        isImporting = true
+                    }
+                    Button("Other benefit document") {
+                        importKind = CardDocumentKind.other.rawValue
+                        isImporting = true
+                    }
+                } label: {
+                    Label("Import my document", systemImage: "square.and.arrow.down")
+                }
+                Text("Stored only on this iPhone. Importing does not verify coverage until you confirm the document belongs to this card.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
-            if !sourceDocuments.isEmpty {
+            if !sourceDocuments(for: card).isEmpty {
                 Section("Documents") {
-                    ForEach(sourceDocuments) { document in
+                    ForEach(sourceDocuments(for: card)) { document in
                         VStack(alignment: .leading, spacing: 6) {
                             HStack(alignment: .top, spacing: 10) {
                                 Image(systemName: documentIcon(document.kind))
@@ -235,7 +337,7 @@ struct CardBenefitsDetailView: View {
                                         .foregroundStyle(.secondary)
                                 }
                                 Spacer()
-                                Text(BenefitsFormatting.verificationLabel(document.verificationStatus))
+                                Text(documentVerificationLabel(document))
                                     .font(.caption2.weight(.bold))
                                     .foregroundStyle(document.verificationStatus == .certificateVerified ? .green : .orange)
                             }
@@ -253,14 +355,41 @@ struct CardBenefitsDetailView: View {
 
                             if let url = URL(string: document.url) {
                                 HStack(spacing: 16) {
-                                    Link("Open document", destination: url)
-                                    ShareLink(item: document.url,
-                                              subject: Text(document.title),
-                                              message: Text("Source document for \(cardName)")) {
-                                        Label("Share", systemImage: "square.and.arrow.up")
+                                    if url.isFileURL {
+                                        ShareLink(item: url,
+                                                  subject: Text(document.title),
+                                                  message: Text("Personal benefit document for \(cardName)")) {
+                                            Label("Share file", systemImage: "square.and.arrow.up")
+                                        }
+                                        Text("On this iPhone")
+                                            .foregroundStyle(.secondary)
+                                    } else {
+                                        Link(document.kind == CardDocumentKind.claimsInstructions.rawValue
+                                             ? "Start claim" : "Open document", destination: url)
+                                        ShareLink(item: document.url,
+                                                  subject: Text(document.title),
+                                                  message: Text("Source document for \(cardName)")) {
+                                            Label("Share link", systemImage: "square.and.arrow.up")
+                                        }
                                     }
                                 }
                                 .font(.caption.weight(.semibold))
+
+                                if let personalID = personalDocumentID(document) {
+                                    Menu {
+                                        if document.verificationStatus != .certificateVerified {
+                                            Button("Confirm this document") {
+                                                pendingVerification = environment.benefitsDocumentVault.documents.first { $0.id == personalID }
+                                            }
+                                        }
+                                        Button("Remove from this iPhone", role: .destructive) {
+                                            environment.removePersonalBenefitDocument(id: personalID)
+                                        }
+                                    } label: {
+                                        Image(systemName: "ellipsis.circle")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
                             }
                         }
                         .padding(.vertical, 3)
@@ -284,7 +413,7 @@ struct CardBenefitsDetailView: View {
                 }
             }
 
-            ForEach(families, id: \.name) { family in
+            ForEach(families(for: card), id: \.name) { family in
                 Section {
                     ForEach(family.benefits, id: \.benefitId) { benefit in
                         Button {

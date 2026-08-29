@@ -14,6 +14,9 @@ struct ProtectionLensView: View {
     @State private var tripLengthText = ""
     @State private var rentalDaysText = ""
     @State private var vehicleValueText = ""
+    @State private var province = "ON"
+    @State private var coverageDateText = ""
+    @State private var fullPaymentConfirmed = false
     @State private var selectedDisclosure: BenefitDisclosure?
 
     init(initialContext: BenefitContext = BenefitContext(kind: .flight)) {
@@ -54,6 +57,7 @@ struct ProtectionLensView: View {
             List {
                 scenarioSelectorSection
                 scenarioParametersSection
+                eligibilityChecklistSection
                 earnVsProtectSection(graph: graph, comparison: comparison)
                 verdictSection(comparison: comparison, graph: graph)
 
@@ -171,6 +175,46 @@ struct ProtectionLensView: View {
                 .foregroundStyle(.secondary)
         }
     }
+
+    private var eligibilityChecklistSection: some View {
+        Section("Eligibility checklist") {
+            Picker("Province / territory", selection: $province) {
+                ForEach(Self.provinces, id: \.code) { province in
+                    Text(province.name).tag(province.code)
+                }
+            }
+
+            HStack {
+                Text("Coverage date")
+                Spacer()
+                TextField("YYYY-MM-DD", text: $coverageDateText)
+                    .keyboardType(.numbersAndPunctuation)
+                    .multilineTextAlignment(.trailing)
+                    .frame(width: 110)
+            }
+
+            Toggle("Paid the eligible amount with this card", isOn: $fullPaymentConfirmed)
+
+            Label(fullPaymentConfirmed
+                  ? "Payment condition marked complete — still check the certificate exclusions."
+                  : "Most benefits require the full eligible purchase to be charged to the card.",
+                  systemImage: fullPaymentConfirmed ? "checkmark.circle" : "exclamationmark.triangle")
+                .font(.caption)
+                .foregroundStyle(fullPaymentConfirmed ? .green : .orange)
+
+            Text("Province, card version, effective date, and payment method can change eligibility. These inputs are a conservative checklist; they do not override the certificate or rank cards by themselves.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private static let provinces: [(code: String, name: String)] = [
+        ("AB", "Alberta"), ("BC", "British Columbia"), ("MB", "Manitoba"),
+        ("NB", "New Brunswick"), ("NL", "Newfoundland & Labrador"), ("NS", "Nova Scotia"),
+        ("NT", "Northwest Territories"), ("NU", "Nunavut"), ("ON", "Ontario"),
+        ("PE", "Prince Edward Island"), ("QC", "Quebec"), ("SK", "Saskatchewan"),
+        ("YT", "Yukon")
+    ]
 
     private var detailPrompt: String {
         switch contextKind {

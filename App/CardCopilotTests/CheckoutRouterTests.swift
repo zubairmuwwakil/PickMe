@@ -81,7 +81,7 @@ final class CheckoutRouterTests: XCTestCase {
 
     func testCategoryPickerCanOpenASpecificCanonicalCategory() {
         let router = CheckoutRouter()
-        router.push(.categoryPicker("gas"))
-        XCTAssertEqual(router.path, [.categoryPicker("gas")])
+        router.push(.categoryPicker(CategoryTaxonomy.canonicalID("gas")))
+        XCTAssertEqual(router.path, [.categoryPicker("gasStation")])
     }
 }

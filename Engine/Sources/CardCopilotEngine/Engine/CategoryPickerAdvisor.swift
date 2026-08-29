@@ -39,8 +39,8 @@ public enum CategoryPickerAdvisor {
                             + "owner's selections, not a category any statement shows."),
     ]
 
-    /// Every category id named by an accelerator predicate in the loaded catalogue, verbatim —
-    /// the raw vocabulary the drift test checks pill coverage against.
+    /// Every canonical category id named by an accelerator predicate in the loaded catalogue —
+    /// the normalized vocabulary the drift test checks pill coverage against.
     public static func acceleratedVocabulary(catalogue: Catalogue) -> Set<String> {
         Set(catalogue.cards.flatMap(\.earnRules)
             .compactMap(\.predicate.categories)

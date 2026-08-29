@@ -69,6 +69,7 @@ public enum Scorer {
 
     public static func score(card: CardProduct, purchase: PurchaseContext,
                              ownerState: OwnerState, asOf: String) -> CandidateScore {
+        let purchase = purchase.canonicalized()
         func excludedScore(_ warning: Warning, _ reason: String) -> CandidateScore {
             CandidateScore(cardId: card.cardId, appliedRuleId: nil, rewardUnits: 0,
                            grossRewardCad: 0, fxCostCad: 0, netValueCad: 0, floorNetValueCad: 0,
