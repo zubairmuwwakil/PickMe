@@ -1,6 +1,6 @@
 // Single source of truth for every shipping bundle.
-// Xcode/App Store Connect manages the uploaded build number when
-// "Manage version and build number" is enabled. This is the local fallback.
+// The CardCopilot scheme increments this before every Archive action.
+// Xcode's "Manage version and build number" remains an upload-time fallback.
 // Change APP_MARKETING_VERSION only when creating a new public release.
 APP_MARKETING_VERSION = 2.0
 APP_BUILD_NUMBER = 18
