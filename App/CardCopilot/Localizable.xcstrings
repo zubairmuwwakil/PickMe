@@ -391,6 +391,16 @@
         }
       }
     },
+    "%lld source%@ need a refresh" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld source%2$@ need a refresh"
+          }
+        }
+      }
+    },
     "%lld to Finish" : {
 
     },
@@ -754,6 +764,9 @@
           }
         }
       }
+    },
+    "All indexed sources checked within the last year" : {
+
     },
     "Allow notifications" : {
 
@@ -1321,6 +1334,9 @@
         }
       }
     },
+    "Benefits unavailable" : {
+
+    },
     "Best card" : {
 
     },
@@ -1484,6 +1500,9 @@
         }
       }
     },
+    "Card benefits & documents" : {
+
+    },
     "Card Benefits Library" : {
 
     },
@@ -1535,6 +1554,9 @@
           }
         }
       }
+    },
+    "Cardholder agreement" : {
+
     },
     "CARDHOLDER NAME" : {
 
@@ -1590,6 +1612,9 @@
 
     },
     "Certificate Date" : {
+
+    },
+    "Certificate of insurance" : {
 
     },
     "Certificate Protection Benefits" : {
@@ -1659,6 +1684,9 @@
         }
       }
     },
+    "CHIP" : {
+
+    },
     "Chip's Tip" : {
 
     },
@@ -1715,6 +1743,9 @@
 
     },
     "Claims are adjudicated directly by the issuer's underwriter according to cardholder certificate terms." : {
+
+    },
+    "Claims instructions" : {
 
     },
     "Classification" : {
@@ -1807,6 +1838,9 @@
     "Confirm statement" : {
 
     },
+    "Confirm this document" : {
+
+    },
     "Confirmed No Coverage" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1888,6 +1922,9 @@
       }
     },
     "Coverage (Last 7 Days)" : {
+
+    },
+    "Coverage date" : {
 
     },
     "COVERAGE SUMMARY" : {
@@ -2142,6 +2179,9 @@
     "Documents" : {
 
     },
+    "Documents indexed" : {
+
+    },
     "Dominant Protection Card" : {
       "localizations" : {
         "fr-CA" : {
@@ -2277,6 +2317,9 @@
           }
         }
       }
+    },
+    "Eligibility checklist" : {
+
     },
     "Email" : {
 
@@ -2696,6 +2739,9 @@
         }
       }
     },
+    "I checked — verify this card" : {
+
+    },
     "I'm not sure" : {
       "localizations" : {
         "fr-CA" : {
@@ -2752,6 +2798,9 @@
           }
         }
       }
+    },
+    "Import my document" : {
+
     },
     "Important Note" : {
       "extractionState" : "stale",
@@ -2880,6 +2929,9 @@
       }
     },
     "Jurisdiction" : {
+
+    },
+    "Keep imported, verify later" : {
 
     },
     "Keep learning automatically" : {
@@ -3246,6 +3298,9 @@
     "Monitoring arrival at up to 20 saved merchants." : {
 
     },
+    "Most benefits require the full eligible purchase to be charged to the card." : {
+
+    },
     "MR, Aeroplan, Scene+ & Avion redemption rates" : {
 
     },
@@ -3603,6 +3658,9 @@
         }
       }
     },
+    "On this iPhone" : {
+
+    },
     "Once both are recorded, this moves to Reconcile to be checked against your statement." : {
       "localizations" : {
         "fr-CA" : {
@@ -3631,6 +3689,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seules les cartes assorties d’une condition exigent une réponse. Laissez les éléments incertains non résolus — nous ignorerons la prime de cette carte jusqu’à votre confirmation."
+          }
+        }
+      }
+    },
+    "Only confirm if %@ is the current certificate or card document for your %@ account. PickMe cannot determine eligibility from the file alone." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Only confirm if %1$@ is the current certificate or card document for your %2$@ account. PickMe cannot determine eligibility from the file alone."
           }
         }
       }
@@ -3718,6 +3786,9 @@
     "Other active connections (%lld)" : {
 
     },
+    "Other benefit document" : {
+
+    },
     "Outside Canada" : {
       "localizations" : {
         "fr-CA" : {
@@ -3737,6 +3808,9 @@
           }
         }
       }
+    },
+    "Owner-confirmed cards" : {
+
     },
     "ownerCondition.amazonEligiblePrimeLinked.detail" : {
       "extractionState" : "stale",
@@ -3815,10 +3889,16 @@
         }
       }
     },
+    "Paid the eligible amount with this card" : {
+
+    },
     "Patronage memory & arrival confidence" : {
 
     },
     "Pay with" : {
+
+    },
+    "Payment condition marked complete — still check the certificate exclusions." : {
 
     },
     "Per Card" : {
@@ -3830,6 +3910,9 @@
           }
         }
       }
+    },
+    "Personal benefit document for %@" : {
+
     },
     "Pick" : {
       "localizations" : {
@@ -4040,6 +4123,15 @@
         }
       }
     },
+    "Province / territory" : {
+
+    },
+    "Province, card version, effective date, and payment method can change eligibility. These inputs are a conservative checklist; they do not override the certificate or rank cards by themselves." : {
+
+    },
+    "Public sources are research references. Import your own certificate below a card and confirm that it belongs to you before relying on coverage." : {
+
+    },
     "Public Transportation and Parking" : {
 
     },
@@ -4222,6 +4314,9 @@
     "Remove Card?" : {
 
     },
+    "Remove from this iPhone" : {
+
+    },
     "Remove from wallet" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4298,6 +4393,9 @@
         }
       }
     },
+    "Research status" : {
+
+    },
     "Restaurants" : {
 
     },
@@ -4308,6 +4406,9 @@
 
     },
     "Retry token check" : {
+
+    },
+    "Review issuer sources, import your own certificates, and keep claim instructions close at hand." : {
 
     },
     "Review Mode" : {
@@ -4608,7 +4709,10 @@
     "Setup" : {
 
     },
-    "Share" : {
+    "Share file" : {
+
+    },
+    "Share link" : {
 
     },
     "Share Policy Link" : {
@@ -4726,6 +4830,9 @@
         }
       }
     },
+    "Source coverage" : {
+
+    },
     "Source document for %@" : {
 
     },
@@ -4756,6 +4863,9 @@
 
     },
     "Spend Rules & Condition Triggers" : {
+
+    },
+    "Start claim" : {
 
     },
     "Start over" : {
@@ -4803,6 +4913,9 @@
           }
         }
       }
+    },
+    "Stored only on this iPhone. Importing does not verify coverage until you confirm the document belongs to this card." : {
+
     },
     "Submitted diagnostics" : {
 
@@ -5343,6 +5456,9 @@
     "Verification" : {
 
     },
+    "View All %lld Purchases" : {
+
+    },
     "View Details" : {
 
     },
@@ -5728,6 +5844,9 @@
           }
         }
       }
+    },
+    "YYYY-MM-DD" : {
+
     }
   },
   "version" : "1.0"
