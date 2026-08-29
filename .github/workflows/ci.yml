@@ -87,7 +87,7 @@ jobs:
       - uses: actions/checkout@v6
 
       # The JVM engine is compiled and tested with the project's Java 25 toolchain.
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '25'
@@ -105,7 +105,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '25'
