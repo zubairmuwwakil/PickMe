@@ -1,0 +1,51 @@
+name: Document freshness (advisory)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "23 13 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ecosystem-freshness:
+    name: ecosystem-freshness (advisory)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare ECOSYSTEM.md with MoneyTalks main
+        run: |
+          set -euo pipefail
+          canonical="$(mktemp)"
+          trap 'rm -f "$canonical"' EXIT
+          curl --fail --silent --show-error --location --retry 3 \
+            "https://raw.githubusercontent.com/zubairmuwwakil/MoneyTalks/refs/heads/main/ECOSYSTEM.md" \
+            --output "$canonical"
+          if ! diff -u "$canonical" ECOSYSTEM.md; then
+            echo "::error::ECOSYSTEM.md has drifted from MoneyTalks main"
+            exit 1
+          fi
+          echo "ECOSYSTEM.md is current with MoneyTalks main"
+
+  fleet-freshness:
+    name: fleet-freshness (advisory)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare FLEET.md with agent-orchestrator main
+        run: |
+          set -euo pipefail
+          canonical="$(mktemp)"
+          trap 'rm -f "$canonical"' EXIT
+          curl --fail --silent --show-error --location --retry 3 \
+            "https://raw.githubusercontent.com/zubairmuwwakil/agent-orchestrator/refs/heads/main/FLEET.md" \
+            --output "$canonical"
+          if ! diff -u "$canonical" FLEET.md; then
+            echo "::error::FLEET.md has drifted from agent-orchestrator main"
+            exit 1
+          fi
+          echo "FLEET.md is current with agent-orchestrator main"
