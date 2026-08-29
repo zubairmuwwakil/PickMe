@@ -3,6 +3,15 @@ import XCTest
 
 final class CategoryMapperTests: XCTestCase {
 
+    func testCategoryPredictionNormalizesCategoryAndCandidates() {
+        let prediction = CategoryPrediction(category: "Groceries",
+                                             confidenceSource: .fallback,
+                                             candidates: ["gas", "drugstore"])
+
+        XCTAssertEqual(prediction.category, "grocery")
+        XCTAssertEqual(prediction.candidates, ["gasStation", "drugStore"])
+    }
+
     func testKnownMerchantUsesVerifiedTruthGraphBeforeMapperFallback() {
         let merchant = StoredMerchant(name: "Walmart Supercentre", identifier: "poi-walmart",
                                       poiCategoryRaw: "MKPOICategoryFoodMarket", latitude: 43.7,

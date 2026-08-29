@@ -27,6 +27,7 @@ public enum RuleMatcher {
 
     public static func resolve(card: CardProduct, purchase: PurchaseContext,
                                ownerState: OwnerState, asOf: String) -> RuleResolution {
+        let purchase = purchase.canonicalized()
         let state = ownerState.cardStates[card.cardId] ?? CardState()
         // One matching pass, then partitioned on capability. Asking "which rules matched" and
         // "which matched but for a capability" in two separate passes would let the two drift,

@@ -49,4 +49,13 @@ public struct PurchaseContext: Codable, Equatable, Sendable {
         acceptedNetworks = Set(try c.decodeIfPresent([Network].self, forKey: .acceptedNetworks)
                                ?? [.amex, .visa, .mastercard, .discover])
     }
+
+    /// Re-applies the category boundary for callers that mutate a decoded or existing context.
+    /// `category` remains mutable for the checkout/reconcile flows, so normalization cannot rely
+    /// on initialization alone.
+    public func canonicalized() -> PurchaseContext {
+        var copy = self
+        copy.category = CategoryTaxonomy.canonicalID(category)
+        return copy
+    }
 }

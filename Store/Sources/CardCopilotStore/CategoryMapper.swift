@@ -7,9 +7,9 @@ public struct CategoryPrediction: Equatable, Sendable {
     public let candidates: [String]
 
     public init(category: String, confidenceSource: ConfidenceSource, candidates: [String]) {
-        self.category = category
+        self.category = CategoryTaxonomy.canonicalID(category)
         self.confidenceSource = confidenceSource
-        self.candidates = candidates
+        self.candidates = candidates.map(CategoryTaxonomy.canonicalID)
     }
 }
 

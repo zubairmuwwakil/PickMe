@@ -28,8 +28,11 @@ final class CategoryTaxonomyTests: XCTestCase {
     }
 
     func testPurchaseContextNormalizesAtTheEngineBoundary() {
-        let context = PurchaseContext(amountCad: 50, category: " groceries ")
+        var context = PurchaseContext(amountCad: 50, category: " groceries ")
         XCTAssertEqual(context.category, "grocery")
+
+        context.category = "gas"
+        XCTAssertEqual(context.canonicalized().category, "gasStation")
     }
 
     func testCategoryAdvisorTreatsAliasesAndCanonicalIdsIdentically() throws {
