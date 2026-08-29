@@ -18,6 +18,7 @@ struct SettingsView: View {
     let onOpenSync: () -> Void
     let onOpenAmbient: () -> Void
     let onOpenLearnedMerchants: () -> Void
+    let onOpenBenefits: () -> Void
     let onEditWallet: () -> Void
     let onSignIn: () -> Void
     let onSignOut: () -> Void
@@ -65,6 +66,12 @@ struct SettingsView: View {
             Section("Wallet") {
                 Button("Edit cards and rewards", action: onEditWallet)
                 Text("Change your cards, account conditions, default card, switch threshold, or point values.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+
+            Section("Protection & Perks") {
+                Button("Card benefits & documents", action: onOpenBenefits)
+                Text("Review issuer sources, import your own certificates, and keep claim instructions close at hand.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
 

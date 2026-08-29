@@ -291,6 +291,7 @@ struct CheckoutFlowView: View {
                          onOpenSync: { router.push(.sync) },
                          onOpenAmbient: { router.push(.ambientSetup) },
                          onOpenLearnedMerchants: { router.push(.learnedMerchants) },
+                         onOpenBenefits: { router.push(.benefitsReference) },
                          onEditWallet: { router.push(.walletSetup) },
                          onSignIn: { router.push(.sync) },
                          onSignOut: { Task { await environment.signOut(session: session, router: router) } },

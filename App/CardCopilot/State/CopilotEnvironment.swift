@@ -52,11 +52,13 @@ final class CopilotEnvironment {
     private(set) var ambientCoverage = AmbientCoverageLog()
     private(set) var ambientEnabled = false
     private(set) var walletIsFirstRun = false
+    let benefitsDocumentVault = BenefitsDocumentVault()
 
     private let modelContext: ModelContext
     private let sync: SyncCoordinator
     private let ambient: AmbientLocationService
     private var walletWriteTask: Task<Void, Never>?
+    private var canonicalBenefits: BenefitsCatalogue?
 
     init(modelContext: ModelContext, sync: SyncCoordinator, ambient: AmbientLocationService) {
         self.modelContext = modelContext
@@ -83,6 +85,7 @@ final class CopilotEnvironment {
             let benefits = try SeedLoader.loadBenefitsCatalogue()
 
             seedOwnerState = seedOwner
+            canonicalBenefits = benefits
             isFirstRun = localOwner == nil
             walletIsFirstRun = localOwner == nil
             graph = makeGraph(catalogue: catalogue, candidates: candidates,
@@ -101,7 +104,7 @@ final class CopilotEnvironment {
     func rebuild(ownerState owner: OwnerState) {
         guard let existing = graph else { return }
         graph = makeGraph(catalogue: existing.catalogue, candidates: existing.candidateCardIds,
-                          owner: owner, benefits: existing.benefits)
+                          owner: owner, benefits: canonicalBenefits ?? existing.benefits)
         configureAmbient(catalogue: existing.catalogue, owner: owner)
         isFirstRun = false
     }
@@ -110,7 +113,39 @@ final class CopilotEnvironment {
     /// the local owner-state store has changed underneath us.
     func reload(session: CopilotSession) {
         graph = nil
+        canonicalBenefits = nil
         load(session: session)
+    }
+
+    /// Rebuilds only the benefit side of the graph after a personal document is imported or
+    /// verified. This keeps the recommendation and wallet state intact while making the new
+    /// provenance immediately visible in the library and protection lens.
+    func refreshBenefits() {
+        guard let existing = graph, let canonicalBenefits else { return }
+        graph = makeGraph(catalogue: existing.catalogue, candidates: existing.candidateCardIds,
+                          owner: existing.ownerState, benefits: canonicalBenefits)
+        configureAmbient(catalogue: existing.catalogue, owner: existing.ownerState)
+    }
+
+    @discardableResult
+    func addPersonalBenefitDocument(cardId: String, sourceURL: URL, kind: String,
+                                    effectiveDate: String? = nil, jurisdiction: String? = nil) -> Bool {
+        let added = benefitsDocumentVault.addDocument(cardId: cardId, sourceURL: sourceURL,
+                                                      kind: kind, effectiveDate: effectiveDate,
+                                                      jurisdiction: jurisdiction)
+        guard added != nil else { return false }
+        refreshBenefits()
+        return true
+    }
+
+    func verifyPersonalBenefitDocument(id: UUID) {
+        benefitsDocumentVault.confirmOwnerDocument(id: id)
+        refreshBenefits()
+    }
+
+    func removePersonalBenefitDocument(id: UUID) {
+        benefitsDocumentVault.removeDocument(id: id)
+        refreshBenefits()
     }
 
     private func makeGraph(catalogue: Catalogue, candidates: [String], owner: OwnerState,
@@ -119,11 +154,42 @@ final class CopilotEnvironment {
             catalogue: catalogue,
             candidateCardIds: candidates,
             ownerState: owner,
-            benefits: benefits,
+            benefits: benefitsApplyingPersonalDocuments(to: benefits),
             service: CheckoutService(catalogue: catalogue, ownerState: owner, context: modelContext),
             explainer: RecommendationExplainer(catalogue: catalogue),
             engine: RecommendationEngine(catalogue: catalogue, ownerState: owner),
             provider: LiveMerchantProvider())
+    }
+
+    private func benefitsApplyingPersonalDocuments(to benefits: BenefitsCatalogue) -> BenefitsCatalogue {
+        var adjusted = benefits
+        adjusted.cards = benefits.cards.map { card in
+            let personal = benefitsDocumentVault.documents.filter { $0.cardId == card.cardId }
+            guard !personal.isEmpty else { return card }
+
+            var documents = card.documents
+            documents.append(contentsOf: personal.map { record in
+                CardDocument(
+                    documentId: "personal-\(record.id.uuidString)",
+                    kind: record.kind,
+                    title: record.fileName,
+                    url: benefitsDocumentVault.fileURL(for: record).absoluteString,
+                    effectiveDate: record.effectiveDate,
+                    jurisdiction: record.jurisdiction,
+                    verificationStatus: record.status,
+                    lastVerifiedAt: record.verifiedAt ?? record.addedAt,
+                    notes: "Stored on this iPhone. Owner confirmation is required before this document verifies coverage.")
+            })
+
+            var certificate = card.certificate
+            if let verified = personal.filter(\.ownerConfirmed).compactMap(\.verifiedAt).max() {
+                certificate.verificationStatus = .certificateVerified
+                certificate.lastVerifiedAt = verified
+            }
+            return CardBenefits(cardId: card.cardId, certificate: certificate,
+                                benefits: card.benefits, documents: documents)
+        }
+        return adjusted
     }
 
     private func configureAmbient(catalogue: Catalogue, owner: OwnerState) {
@@ -339,6 +405,8 @@ extension CopilotEnvironment {
     func eraseLocalHistory(session: CopilotSession) {
         try? LocalDataEraser(context: modelContext).eraseLocalHistory()
         ambient.forgetLocalHistory()
+        benefitsDocumentVault.clearAll()
+        refreshBenefits()
         refreshAmbientDiagnostics()
         if let graph { session.refresh(using: graph) }
     }
