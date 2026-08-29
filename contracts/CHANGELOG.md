@@ -2,6 +2,13 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-29 — card-catalogue 2.11 & fixtures 1.6: release benefits document index
+
+The additive benefits-catalogue 1.2 document index landed after the 2.10 release stamp. This
+release carries those bytes in a new immutable digest and moves the paired catalogue/fixture
+versions as required by the contract versioning rule. No card rules or fixture expectations
+change; existing 1.1 benefits readers continue to work because `documents` is optional.
+
 ## 2026-08-29 — benefits-catalogue 1.2: add per-card document index
 
 Added a `documents` array to all 27 current benefits-catalogue cards. It supports multiple
