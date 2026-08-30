@@ -138,16 +138,32 @@ public enum Scorer {
 
         var inCapAmount = nativeAmount
         var overCapAmount = 0.0
-        if let capId = rule.capId, let cap = card.caps.first(where: { $0.capId == capId }) {
-            let usage = state.capProgress?[capId] ?? 0
-            let measureAmount = cap.measure == .spendUsdEquivalent
-                ? (purchase.usdEquivalent ?? purchase.amountCad * fallbackCadToUsd)
-                : nativeAmount
-            let split = CapMath.split(amount: measureAmount, capLimit: cap.limit, usage: usage)
-            let inFraction = measureAmount > 0 ? split.inCap / measureAmount : 1
+        let effectiveCaps = rule.effectiveCapIds.compactMap { id in card.caps.first { $0.capId == id } }
+
+        if !effectiveCaps.isEmpty {
+            var splitInputs: [(limit: Double, usage: Double)] = []
+            var baseMeasureAmount = nativeAmount // Used for the inFraction calculation
+
+            for cap in effectiveCaps {
+                let usage = state.capProgress?[cap.capId] ?? 0
+                let measureAmount = cap.measure == .spendUsdEquivalent
+                    ? (purchase.usdEquivalent ?? purchase.amountCad * fallbackCadToUsd)
+                    : nativeAmount
+                baseMeasureAmount = max(baseMeasureAmount, measureAmount) // Ensure we have a valid denominator
+                splitInputs.append((limit: cap.limit, usage: usage))
+
+                if usage >= cap.limit * 0.9 {
+                    // Only append if we haven't already
+                    if !warnings.contains(.capNearlyExhausted) {
+                        warnings.append(.capNearlyExhausted)
+                    }
+                }
+            }
+
+            let split = CapMath.splitMulti(amount: baseMeasureAmount, caps: splitInputs)
+            let inFraction = baseMeasureAmount > 0 ? split.inCap / baseMeasureAmount : 1
             inCapAmount = nativeAmount * inFraction
             overCapAmount = nativeAmount - inCapAmount
-            if usage >= cap.limit * 0.9 { warnings.append(.capNearlyExhausted) }
         }
 
         // Cashback earns real money in the card's own billing currency — unlike points, which are
@@ -164,7 +180,9 @@ public enum Scorer {
             return raw
         }
 
-        let postCapEarn = rule.capId.flatMap { id in card.caps.first { $0.capId == id }?.postCapEarn }
+        // Use the first specified cap's postCapEarn as the fallback. For grouped caps like CIBC,
+        // the postCapEarn is identical across all caps in the group (e.g. drops to 1% base).
+        let postCapEarn = effectiveCaps.first?.postCapEarn
         let units = unitsInReportingCurrency(rule.earn, amount: inCapAmount)
             + unitsInReportingCurrency(postCapEarn ?? rule.earn, amount: overCapAmount)
         // Force-unwrapped, not `?? 0`: the guard above proves a valuation exists, and `?? 0`

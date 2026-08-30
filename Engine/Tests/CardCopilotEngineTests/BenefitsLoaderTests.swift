@@ -4,7 +4,7 @@ import XCTest
 final class BenefitsLoaderTests: XCTestCase {
     func testLoadsBenefitsCatalogue() throws {
         let benefits = try SeedLoader.loadBenefitsCatalogue()
-        XCTAssertEqual(benefits.cards.count, 27)
+        XCTAssertEqual(benefits.cards.count, 46)
         XCTAssertGreaterThan(benefits.triggers.bigTicketThresholdCad, 0)
         XCTAssertFalse(benefits.triggers.consumableCategories.isEmpty)
     }
@@ -24,16 +24,13 @@ final class BenefitsLoaderTests: XCTestCase {
     /// deliberate act with a reviewer, not a silent gap.
     func testProductsWithoutBenefitsAreExactlyTheKnownGap() throws {
         let knownGap: Set<String> = [
-            "amex-aeroplan-reserve", "amex-gold-rewards", "amex-simplycash-preferred",
-            "bmo-cashback-world-elite", "cibc-aeroplan-visa-infinite-privilege",
-            "desjardins-odyssey-world-elite", "home-trust-preferred-visa",
-            "mbna-smart-cash-world", "pc-financial-mastercard", "pc-financial-world-elite",
-            "pc-financial-world-mastercard", "rbc-cashback-preferred-we",
-            "simplii-cashback-visa", "td-aeroplan-visa-infinite-privilege",
             "american-express-blue-business-plus", "american-express-gold-card",
             "american-express-the-platinum-card", "chase-freedom-flex",
             "chase-freedom-unlimited", "chase-sapphire-preferred-card",
             "chase-sapphire-reserve", "citi-double-cash-card",
+            "walmart-rewards-mastercard",
+            "neo-financial-neo-world-mastercard", "mbna-true-line-mastercard",
+            "capital-one-canada-capital-one-guaranteed",
         ]
         // Published only: a draft has no benefits entry because nobody has read its issuer's
         // terms yet, which is the definition of a draft rather than a gap to track.
@@ -64,8 +61,8 @@ final class BenefitsLoaderTests: XCTestCase {
 
         XCTAssertEqual(statusCounts["stub", default: 0], 1,
                        "expected only cryptocom-royal-indigo to remain stub")
-        XCTAssertEqual(statusCounts["issuerPage", default: 0], 26,
-                       "expected the twenty-six issuer-sourced cards to be issuerPage")
+        XCTAssertEqual(statusCounts["issuerPage", default: 0], 45,
+                       "expected the forty-five issuer-sourced cards to be issuerPage")
         XCTAssertEqual(statusCounts["certificateVerified", default: 0], 0,
                        "a card claims certificateVerified, but no card has had Zubair's own " +
                        "cardholder-document check yet — update this test's counts once one does")

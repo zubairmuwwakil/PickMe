@@ -266,7 +266,7 @@ struct YouHubView: View {
                         title: "Sync & Wallet Capture",
                         subtitle: syncSubtitle,
                         trailingContent: {
-                            if let issue = sync.syncIssue {
+                            if sync.syncIssue != nil {
                                 Image(systemName: "exclamationmark.circle.fill")
                                     .foregroundStyle(.orange)
                                     .font(.system(size: 14))
@@ -286,6 +286,38 @@ struct YouHubView: View {
             sectionHeader("WALLET & REWARDS")
 
             groupedContainer {
+                // Value Recovered & Scoreboard
+                Button {
+                    triggerHaptic()
+                    router.push(.dashboard)
+                } label: {
+                    settingsRow(
+                        icon: "sparkles",
+                        iconBackground: .blue,
+                        title: "Value Recovered",
+                        subtitle: valueRecoveredSubtitle,
+                        trailingContent: {
+                            HStack(spacing: 6) {
+                                Text(String(format: "$%.2f", session.valueRecoveredCad))
+                                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                                    .foregroundStyle(.primary)
+
+                                if let confirmed = session.metrics?.confirmedCount, confirmed > 0 {
+                                    Text("\(min(confirmed, 30))/30")
+                                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                                        .foregroundStyle(.secondary)
+                                        .padding(.horizontal, 7)
+                                        .padding(.vertical, 3)
+                                        .background(Color(.tertiarySystemFill), in: Capsule())
+                                }
+                            }
+                        }
+                    )
+                }
+                .buttonStyle(SettingsRowPressStyle())
+
+                rowDivider
+
                 // Edit Cards & Multipliers
                 Button {
                     triggerHaptic()
@@ -548,6 +580,14 @@ struct YouHubView: View {
             return "Last synced: \(lastSyncedAt.formatted(date: .abbreviated, time: .shortened))"
         } else {
             return "Sync wallet state and cap progress across devices"
+        }
+    }
+
+    private var valueRecoveredSubtitle: LocalizedStringKey {
+        if session.pendingValueCad > 0 {
+            return LocalizedStringKey(String(format: "$%.2f confirmed (+$%.2f pending)", session.valueRecoveredCad, session.pendingValueCad))
+        } else {
+            return "Track net reward gains & experiment calibration"
         }
     }
 

@@ -824,7 +824,16 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         case "td-aeroplan-visa-infinite": return "TD Aeroplan"
         case "rbc-avion-visa-infinite": return "RBC Avion"
         case "cibc-dividend-visa-infinite": return "CIBC Dividend"
+        case "cibc-dividend-visa": return "CIBC Dividend"
+        case "td-business-travel-visa": return "TD Biz Travel"
+        case "walmart-rewards-mastercard": return "Walmart Rewards"
+        case "walmart-rewards-world-mastercard": return "Walmart World"
         case "scotia-passport-visa-infinite-plus": return "Scotia Passport"
+        case "cibc-costco-mastercard": return "CIBC Costco"
+        case "royal-bank-of-canada-rbc-british-airways-visa": return "RBC British Airways"
+        case "neo-financial-neo-world-mastercard": return "Neo World"
+        case "mbna-true-line-mastercard": return "MBNA True Line"
+        case "capital-one-canada-capital-one-guaranteed": return "Capital One Guaranteed"
         default: return card.officialName.replacingOccurrences(of: " Credit Card", with: "")
         }
     }

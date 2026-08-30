@@ -13,8 +13,9 @@ struct MerchantConfirmView: View {
         List {
             Section {
                 ForEach(merchants) { merchant in
-                    let meta = CategoryVisuals.meta(for: merchant.poiCategoryRaw ?? "general")
-                    let formattedPoi = CategoryVisuals.humanizePoiCategory(merchant.poiCategoryRaw) ?? meta.displayName
+                    let prediction = CardCopilotStore.predict(poiCategoryRaw: merchant.poiCategoryRaw, merchantName: merchant.name)
+                    let meta = CategoryVisuals.meta(for: prediction.category)
+                    let formattedPoi = meta.displayName
 
                     Button {
                         onConfirm(merchant)

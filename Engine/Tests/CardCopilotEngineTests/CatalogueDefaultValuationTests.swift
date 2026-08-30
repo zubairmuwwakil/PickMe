@@ -76,7 +76,7 @@ final class CatalogueDefaultValuationTests: XCTestCase {
                                "hiltonHonors", "emiratesSkywards", "frontierMiles", "choicePrivileges",
                                "costcoCashRewardsCa", "costcoCashRewardsUs", "amazonRewardsUs",
                                "amexMembershipRewardsUs", "chaseUltimateRewards", "citiThankYou",
-                               "discoverCashback", "bofaPreferredRewards"],
+                               "discoverCashback", "bofaPreferredRewards", "walmartRewards"],
                        "the catalogue-only programs are what make the other cards scorable")
     }
 

@@ -122,7 +122,9 @@ public struct EarnRule: Codable, Equatable, Sendable {
     public var sourceType: SourceType
     public var earn: Earn
     public var predicate: Predicate
+    @available(*, deprecated, message: "Use capIds instead")
     public var capId: String?
+    public var capIds: [String]?
     public var ownerConditions: [String]?
     public var scoredInV1: Bool?
     /// Engine capabilities this rule needs, as `EngineCapability` raw values. Absent means none.
@@ -134,9 +136,15 @@ public struct EarnRule: Codable, Equatable, Sendable {
     /// Set when the rule will never be scored. Mutually exclusive with `requires`.
     public var outOfScope: OutOfScope?
 
+    public var effectiveCapIds: [String] {
+        if let capIds = capIds { return capIds }
+        if let capId = capId { return [capId] }
+        return []
+    }
+
     public init(ruleId: String, status: RuleStatus, effectiveFrom: String? = nil,
                 effectiveTo: String? = nil, sourceType: SourceType, earn: Earn,
-                predicate: Predicate, capId: String? = nil, ownerConditions: [String]? = nil,
+                predicate: Predicate, capId: String? = nil, capIds: [String]? = nil, ownerConditions: [String]? = nil,
                 scoredInV1: Bool? = nil, requires: [String]? = nil,
                 outOfScope: OutOfScope? = nil) {
         self.ruleId = ruleId
@@ -147,6 +155,7 @@ public struct EarnRule: Codable, Equatable, Sendable {
         self.earn = earn
         self.predicate = predicate
         self.capId = capId
+        self.capIds = capIds
         self.ownerConditions = ownerConditions
         self.scoredInV1 = scoredInV1
         self.requires = requires
@@ -163,7 +172,7 @@ public enum CapMeasure: String, Codable, Sendable { case spendNative, spendUsdEq
 /// `calendarQuarter` added for US rotating-category cards (e.g. 5x groceries up to $1,500/quarter)
 /// — a shape this catalogue could not previously express at all. Gated the same way as the other
 /// periods: `EngineCapability.capCalendarQuarter`.
-public enum CapPeriod: String, Codable, Sendable { case calendarMonth, calendarQuarter, calendarYear, accountYear }
+public enum CapPeriod: String, Codable, Sendable { case calendarMonth, calendarQuarter, calendarYear, accountYear, statementYear }
 
 public struct Cap: Codable, Equatable, Sendable {
     public var capId: String

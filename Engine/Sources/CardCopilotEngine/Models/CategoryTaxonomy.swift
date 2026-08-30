@@ -34,6 +34,7 @@ public enum CategoryTaxonomy {
         case "wholesaleclub": return "wholesaleClub"
         case "marriottdirect": return "marriottDirect"
         case "other", "general", "generalmerchandise": return "other"
+        case "retail", "retailshopping", "shopping": return "retailShopping"
         case "fitness", "gym": return "fitness"
         default: return trimmed
         }

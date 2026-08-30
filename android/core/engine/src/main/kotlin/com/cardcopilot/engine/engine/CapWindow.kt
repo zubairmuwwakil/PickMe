@@ -26,7 +26,9 @@ object CapWindow {
                 val quarterStart = (asOfIndex / 3) * 3
                 Window(startMonth = month(quarterStart), endMonth = month(quarterStart + 2))
             }
-            CapPeriod.CALENDAR_YEAR -> {
+            CapPeriod.CALENDAR_YEAR, CapPeriod.STATEMENT_YEAR -> {
+                // Statement-year caps currently reset after the December statement date. Monthly
+                // projections therefore use the calendar-year window, matching the Swift engine.
                 val january = (asOfIndex / 12) * 12
                 Window(startMonth = month(january), endMonth = month(january + 11))
             }

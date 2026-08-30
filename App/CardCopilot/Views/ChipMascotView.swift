@@ -1,4 +1,5 @@
 import SwiftUI
+import CardCopilotEngine
 
 /// Emotional & operational states for Chip the EMV Micro-Bot.
 enum ChipMood: Equatable {
@@ -7,27 +8,33 @@ enum ChipMood: Equatable {
     case calculating
     case celebrating
     case alert
+    case knock      // Reaching right up to the iPhone screen glass & tapping on it
+    case cool       // Deadpool sunglasses / smug expression
+    case shocked    // Wide OLED eyes & jaw drop
 }
 
 /// A pure SwiftUI vector-rendered and animated mascot companion for PickMe.
-/// Chip is a friendly micro-robot inspired by the golden EMV smart chip on credit cards,
+/// Chip is a friendly, 4th-wall breaking micro-robot inspired by the golden EMV smart chip on credit cards,
 /// featuring an expressive OLED matrix face, metallic brushed chassis, golden PCB circuit traces,
-/// articulated robot limbs, and laser-engraved details.
+/// articulated robot limbs, 3D parallax depth, and glass-knocking screen-breaking physics.
 struct ChipMascotView: View {
     var mood: ChipMood = .idle
     var size: CGFloat = 56
     var isWaving: Bool = true
+    var enable3DTilt: Bool = true
     var onTap: (() -> Void)? = nil
 
     init(
         mood: ChipMood = .idle,
         size: CGFloat = 56,
         isWaving: Bool = true,
+        enable3DTilt: Bool = true,
         onTap: (() -> Void)? = nil
     ) {
         self.mood = mood
         self.size = size
         self.isWaving = isWaving
+        self.enable3DTilt = enable3DTilt
         self.onTap = onTap
     }
 
@@ -37,78 +44,106 @@ struct ChipMascotView: View {
     @State private var isPressed = false
     @State private var waveAngle: Double = 0
     @State private var bodyTilt: Double = 0
+    @State private var pitchTilt: Double = 0
+    @State private var yawTilt: Double = 0
     @State private var scanOffset: CGFloat = -1
+    @State private var isKnockingGlass = false
+    @State private var glassRipples: [GlassRipple] = []
+
+    struct GlassRipple: Identifiable {
+        let id = UUID()
+        var scale: CGFloat = 0.2
+        var opacity: Double = 0.9
+    }
 
     var body: some View {
         Button {
-            let impact = UIImpactFeedbackGenerator(style: .medium)
-            impact.impactOccurred()
-            withAnimation(.spring(response: 0.28, dampingFraction: 0.52)) {
-                isPressed = true
-                bodyTilt = -5
-                isWinking = true
-                waveAngle = -22
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) {
-                    isPressed = false
-                    bodyTilt = 0
-                    waveAngle = 0
-                }
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
-                withAnimation { isWinking = false }
-            }
+            triggerGlassKnockInteraction()
             onTap?()
         } label: {
-            ZStack(alignment: .bottom) {
-                // Ground Ambient Shadow
-                Ellipse()
-                    .fill(Color.black.opacity(0.12))
-                    .frame(width: size * 0.95, height: size * 0.12)
-                    .blur(radius: max(1.5, size * 0.04))
-                    .offset(y: size * 0.06)
+            ZStack(alignment: .center) {
+                // Glass Shockwave Ripples (appearing right on the "phone screen")
+                ForEach(glassRipples) { ripple in
+                    Circle()
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    Color.cyan.opacity(0.8),
+                                    Color.white.opacity(0.9),
+                                    Color.orange.opacity(0.6)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: max(1.5, size * 0.04)
+                        )
+                        .frame(width: size * 1.6, height: size * 1.6)
+                        .scaleEffect(ripple.scale)
+                        .opacity(ripple.opacity)
+                        .offset(x: size * 0.22, y: -size * 0.15)
+                }
 
-                // Whole Robot Assembly
-                VStack(spacing: 0) {
-                    ZStack {
-                        // Left & Right Articulated Limbs
-                        HStack(spacing: 0) {
-                            // Left Arm (Thumbs up / friendly hand)
-                            leftArm
-                                .offset(x: -size * 0.04, y: size * 0.04)
+                ZStack(alignment: .bottom) {
+                    // Ground Ambient Depth Shadow (Casts onto card/surface behind)
+                    Ellipse()
+                        .fill(Color.black.opacity(0.22))
+                        .frame(width: size * 1.15, height: size * 0.16)
+                        .blur(radius: max(2.5, size * 0.06))
+                        .offset(y: size * 0.12)
 
-                            Spacer()
+                    // Whole Robot Assembly with 3D Pop-Out
+                    VStack(spacing: 0) {
+                        ZStack {
+                            // Left & Right Articulated Limbs
+                            HStack(spacing: 0) {
+                                // Left Arm (Thumbs up / friendly hand)
+                                leftArm
+                                    .offset(x: -size * 0.04, y: size * 0.04)
 
-                            // Right Arm (Waving hand)
-                            rightArm
-                                .offset(x: size * 0.04, y: -size * 0.02)
+                                Spacer()
+
+                                // Right Arm (Waving or Screen-Knocking hand)
+                                rightArm
+                                    .offset(x: size * 0.04, y: -size * 0.02)
+                            }
+                            .frame(width: size * 1.56)
+
+                            // Main Robot Torso / Chassis
+                            chassisBody
+                                .frame(width: size, height: size * 1.34)
                         }
-                        .frame(width: size * 1.52)
 
-                        // Main Robot Torso / Chassis
-                        chassisBody
-                            .frame(width: size, height: size * 1.34)
+                        // Legs & Shoes
+                        legsAndShoes
+                            .frame(width: size * 0.62, height: size * 0.24)
+                            .offset(y: -size * 0.02)
                     }
+                    .scaleEffect(isPressed ? 1.18 : (isHovering ? 1.04 : 1.0))
+                    .rotationEffect(.degrees(bodyTilt))
+                    .rotation3DEffect(
+                        .degrees(pitchTilt),
+                        axis: (x: 1.0, y: 0.0, z: 0.0),
+                        perspective: 0.4
+                    )
+                    .rotation3DEffect(
+                        .degrees(yawTilt),
+                        axis: (x: 0.0, y: 1.0, z: 0.0),
+                        perspective: 0.4
+                    )
+                    .shadow(
+                        color: Color.black.opacity(isPressed ? 0.35 : 0.18),
+                        radius: isPressed ? 14 : 7,
+                        x: 0,
+                        y: isPressed ? 8 : 4
+                    )
 
-                    // Legs & Shoes
-                    legsAndShoes
-                        .frame(width: size * 0.62, height: size * 0.24)
-                        .offset(y: -size * 0.02)
+                    if mood == .celebrating {
+                        sparkleBadge
+                            .offset(x: size * 0.42, y: -size * 1.30)
+                    }
                 }
-                .scaleEffect(isPressed ? 0.92 : (isHovering ? 1.02 : 1.0))
-                .rotationEffect(.degrees(bodyTilt))
-                .animation(
-                    .easeInOut(duration: 2.6).repeatForever(autoreverses: true),
-                    value: isHovering
-                )
-
-                if mood == .celebrating {
-                    sparkleBadge
-                        .offset(x: size * 0.42, y: -size * 1.30)
-                }
+                .frame(width: size * 1.62, height: size * 1.68)
             }
-            .frame(width: size * 1.55, height: size * 1.62)
         }
         .buttonStyle(.plain)
         .onAppear {
@@ -117,6 +152,61 @@ struct ChipMascotView: View {
             if isWaving {
                 startWaving()
             }
+            if enable3DTilt {
+                startSubtle3DParallax()
+            }
+        }
+    }
+
+    private func triggerGlassKnockInteraction() {
+        let impact = UIImpactFeedbackGenerator(style: .rigid)
+        impact.impactOccurred(intensity: 1.0)
+
+        // Rapid double knock feel
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.10) {
+            impact.impactOccurred(intensity: 0.85)
+        }
+
+        withAnimation(.spring(response: 0.22, dampingFraction: 0.45)) {
+            isPressed = true
+            isKnockingGlass = true
+            bodyTilt = -4
+            pitchTilt = -12 // Leans forward toward user
+            yawTilt = 6
+            waveAngle = -35
+        }
+
+        // Spawn glass ripples
+        let newRipple = GlassRipple()
+        glassRipples.append(newRipple)
+        let rippleIndex = glassRipples.count - 1
+        withAnimation(.easeOut(duration: 0.55)) {
+            if rippleIndex < glassRipples.count {
+                glassRipples[rippleIndex].scale = 1.85
+                glassRipples[rippleIndex].opacity = 0.0
+            }
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.58)) {
+                isPressed = false
+                bodyTilt = 0
+                pitchTilt = 0
+                yawTilt = 0
+                waveAngle = 0
+                isKnockingGlass = false
+            }
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            glassRipples.removeAll()
+        }
+    }
+
+    private func startSubtle3DParallax() {
+        withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) {
+            pitchTilt = 4.0
+            yawTilt = -3.5
         }
     }
 
@@ -129,7 +219,7 @@ struct ChipMascotView: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            Color(red: 0.98, green: 0.82, blue: 0.40).opacity(0.35),
+                            Color(red: 0.98, green: 0.82, blue: 0.40).opacity(0.42),
                             Color.clear
                         ],
                         center: .center,
@@ -137,7 +227,7 @@ struct ChipMascotView: View {
                         endRadius: size * 0.85
                     )
                 )
-                .frame(width: size * 1.18, height: size * 1.50)
+                .frame(width: size * 1.22, height: size * 1.54)
 
             // Outer 3D Beveled Golden Rim
             RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
@@ -157,17 +247,17 @@ struct ChipMascotView: View {
                         .strokeBorder(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.95),
+                                    Color.white.opacity(0.98),
                                     Color(red: 1.0, green: 0.90, blue: 0.55),
                                     Color(red: 0.45, green: 0.32, blue: 0.12)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
-                            lineWidth: max(1.6, size * 0.045)
+                            lineWidth: max(1.8, size * 0.05)
                         )
                 )
-                .shadow(color: Color.black.opacity(0.18), radius: 6, x: 0, y: 3)
+                .shadow(color: Color.black.opacity(0.24), radius: 8, x: 0, y: 4)
 
             // Inner Platinum Bevel Plate
             RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
@@ -223,8 +313,8 @@ struct ChipMascotView: View {
                         .strokeBorder(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.35),
-                                    Color.white.opacity(0.05),
+                                    Color.white.opacity(0.40),
+                                    Color.white.opacity(0.08),
                                     Color.black.opacity(0.6)
                                 ],
                                 startPoint: .topLeading,
@@ -234,31 +324,116 @@ struct ChipMascotView: View {
                         )
                 )
 
-            // Subtle Glass Glint & Horizon Curvature
+            // Glass Glint & 4th-Wall Horizon Curvature
             LinearGradient(
-                colors: [Color.white.opacity(0.18), Color.white.opacity(0.02), Color.clear],
+                colors: [Color.white.opacity(0.24), Color.white.opacity(0.04), Color.clear],
                 startPoint: .topLeading,
                 endPoint: .center
             )
             .clipShape(RoundedRectangle(cornerRadius: size * 0.16, style: .continuous))
 
-            // LED Matrix Expression (Eyes + Smile)
-            VStack(spacing: size * 0.025) {
-                HStack(spacing: size * 0.18) {
-                    eye(isLeft: true)
-                    eye(isLeft: false)
-                }
-
-                if !isBlinking && (mood == .idle || mood == .celebrating) {
-                    digitalSmile
-                }
+            // LED Matrix Expression (Eyes + Smile / Deadpool Sunglasses / Shocked Eyes)
+            if mood == .cool {
+                deadpoolCoolFace
+            } else if mood == .shocked {
+                shockedFace
+            } else {
+                standardFace
             }
+        }
+    }
+
+    private var standardFace: some View {
+        VStack(spacing: size * 0.025) {
+            HStack(spacing: size * 0.18) {
+                eye(isLeft: true)
+                eye(isLeft: false)
+            }
+
+            if !isBlinking && (mood == .idle || mood == .celebrating || mood == .knock) {
+                digitalSmile
+            }
+        }
+    }
+
+    private var deadpoolCoolFace: some View {
+        ZStack {
+            // Futuristic Gold / Neon Sunglasses
+            HStack(spacing: size * 0.04) {
+                // Left lens
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.orange, Color.yellow],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: size * 0.28, height: size * 0.14)
+                    .rotationEffect(.degrees(-6))
+                    .shadow(color: Color.orange.opacity(0.8), radius: 3)
+
+                // Bridge
+                Rectangle()
+                    .fill(Color.orange)
+                    .frame(width: size * 0.06, height: size * 0.03)
+
+                // Right lens
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.orange, Color.yellow],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: size * 0.28, height: size * 0.14)
+                    .rotationEffect(.degrees(6))
+                    .shadow(color: Color.orange.opacity(0.8), radius: 3)
+            }
+            .offset(y: -size * 0.03)
+
+            // Confident Smirk
+            Circle()
+                .trim(from: 0.25, to: 0.75)
+                .stroke(
+                    ledColor,
+                    style: StrokeStyle(lineWidth: max(1.4, size * 0.038), lineCap: .round)
+                )
+                .frame(width: size * 0.16, height: size * 0.10)
+                .rotationEffect(.degrees(160))
+                .offset(x: size * 0.04, y: size * 0.11)
+        }
+    }
+
+    private var shockedFace: some View {
+        VStack(spacing: size * 0.03) {
+            // Wide Round Eyes
+            HStack(spacing: size * 0.16) {
+                Circle()
+                    .strokeBorder(ledColor, lineWidth: max(1.6, size * 0.04))
+                    .background(Circle().fill(Color.black))
+                    .frame(width: size * 0.16, height: size * 0.16)
+                    .shadow(color: ledColor.opacity(0.9), radius: 3)
+
+                Circle()
+                    .strokeBorder(ledColor, lineWidth: max(1.6, size * 0.04))
+                    .background(Circle().fill(Color.black))
+                    .frame(width: size * 0.16, height: size * 0.16)
+                    .shadow(color: ledColor.opacity(0.9), radius: 3)
+            }
+
+            // O-shaped Jaw Drop Mouth
+            Capsule()
+                .stroke(ledColor, lineWidth: max(1.4, size * 0.038))
+                .frame(width: size * 0.10, height: size * 0.10)
+                .shadow(color: ledColor.opacity(0.85), radius: 2)
         }
     }
 
     @ViewBuilder
     private func eye(isLeft: Bool) -> some View {
-        let isWinkingEye = isLeft && isWinking
+        let isWinkingEye = isLeft && (isWinking || mood == .wink)
 
         if isBlinking || isWinkingEye {
             // Blink / wink slit
@@ -278,6 +453,16 @@ struct ChipMascotView: View {
                 .font(.system(size: size * 0.17, weight: .black, design: .monospaced))
                 .foregroundStyle(Color.orange)
                 .shadow(color: Color.orange.opacity(0.9), radius: 3)
+        } else if mood == .knock {
+            // Focused, direct-eye-contact capsule eyes looking through the screen
+            Capsule()
+                .fill(Color.cyan)
+                .frame(width: size * 0.12, height: size * 0.18)
+                .overlay(
+                    Capsule()
+                        .stroke(Color.white, lineWidth: 0.8)
+                )
+                .shadow(color: Color.cyan.opacity(0.95), radius: 5)
         } else {
             // Standard warm glowing dot-matrix eye (vertical capsule)
             Capsule()
@@ -295,12 +480,12 @@ struct ChipMascotView: View {
         Circle()
             .trim(from: 0.18, to: 0.82)
             .stroke(
-                ledColor,
+                mood == .knock ? Color.cyan : ledColor,
                 style: StrokeStyle(lineWidth: max(1.4, size * 0.038), lineCap: .round)
             )
             .frame(width: size * 0.17, height: size * 0.11)
             .rotationEffect(.degrees(180))
-            .shadow(color: ledColor.opacity(0.85), radius: 3)
+            .shadow(color: (mood == .knock ? Color.cyan : ledColor).opacity(0.85), radius: 3)
     }
 
     private var ledColor: Color {
@@ -309,8 +494,10 @@ struct ChipMascotView: View {
             return Color(red: 1.0, green: 0.62, blue: 0.15)
         case .celebrating:
             return Color(red: 1.0, green: 0.88, blue: 0.28)
+        case .knock:
+            return Color(red: 0.35, green: 0.85, blue: 1.0)
         default:
-            // Warm Champagne Amber LED (exact match to 3D mascot render)
+            // Warm Champagne Amber LED
             return Color(red: 1.0, green: 0.90, blue: 0.52)
         }
     }
@@ -357,50 +544,42 @@ struct ChipMascotView: View {
             let h = size * 0.52
 
             // Left Side Traces
-            // Trace 1
             path.move(to: CGPoint(x: w * 0.26, y: h * 0.20))
             path.addLine(to: CGPoint(x: w * 0.12, y: h * 0.20))
             path.addLine(to: CGPoint(x: w * 0.05, y: h * 0.28))
             path.addLine(to: CGPoint(x: w * 0.05, y: h * 0.75))
 
-            // Trace 2
             path.move(to: CGPoint(x: w * 0.26, y: h * 0.38))
             path.addLine(to: CGPoint(x: w * 0.16, y: h * 0.38))
             path.addLine(to: CGPoint(x: w * 0.10, y: h * 0.45))
             path.addLine(to: CGPoint(x: w * 0.10, y: h * 0.82))
 
-            // Trace 3
             path.move(to: CGPoint(x: w * 0.26, y: h * 0.58))
             path.addLine(to: CGPoint(x: w * 0.18, y: h * 0.58))
             path.addLine(to: CGPoint(x: w * 0.14, y: h * 0.63))
             path.addLine(to: CGPoint(x: w * 0.14, y: h * 0.88))
 
-            // Trace 4
             path.move(to: CGPoint(x: w * 0.26, y: h * 0.78))
             path.addLine(to: CGPoint(x: w * 0.20, y: h * 0.78))
             path.addLine(to: CGPoint(x: w * 0.18, y: h * 0.84))
             path.addLine(to: CGPoint(x: w * 0.18, y: h * 0.94))
 
             // Right Side Traces
-            // Trace 1
             path.move(to: CGPoint(x: w * 0.74, y: h * 0.20))
             path.addLine(to: CGPoint(x: w * 0.88, y: h * 0.20))
             path.addLine(to: CGPoint(x: w * 0.95, y: h * 0.28))
             path.addLine(to: CGPoint(x: w * 0.95, y: h * 0.75))
 
-            // Trace 2
             path.move(to: CGPoint(x: w * 0.74, y: h * 0.38))
             path.addLine(to: CGPoint(x: w * 0.84, y: h * 0.38))
             path.addLine(to: CGPoint(x: w * 0.90, y: h * 0.45))
             path.addLine(to: CGPoint(x: w * 0.90, y: h * 0.82))
 
-            // Trace 3
             path.move(to: CGPoint(x: w * 0.74, y: h * 0.58))
             path.addLine(to: CGPoint(x: w * 0.82, y: h * 0.58))
             path.addLine(to: CGPoint(x: w * 0.86, y: h * 0.63))
             path.addLine(to: CGPoint(x: w * 0.86, y: h * 0.88))
 
-            // Trace 4
             path.move(to: CGPoint(x: w * 0.74, y: h * 0.78))
             path.addLine(to: CGPoint(x: w * 0.80, y: h * 0.78))
             path.addLine(to: CGPoint(x: w * 0.82, y: h * 0.84))
@@ -410,7 +589,6 @@ struct ChipMascotView: View {
 
     private var pcbViaDots: some View {
         ZStack {
-            // 3 small left square test pads (as in reference image)
             VStack(spacing: size * 0.02) {
                 RoundedRectangle(cornerRadius: 0.5)
                     .fill(Color(red: 0.58, green: 0.42, blue: 0.14))
@@ -424,7 +602,6 @@ struct ChipMascotView: View {
             }
             .offset(x: -size * 0.35, y: -size * 0.02)
 
-            // Small circular via points
             Circle()
                 .strokeBorder(Color(red: 0.58, green: 0.42, blue: 0.14), lineWidth: 0.7)
                 .frame(width: size * 0.035, height: size * 0.035)
@@ -458,18 +635,15 @@ struct ChipMascotView: View {
 
             // EMV 8-Contact Grooved Grid
             VStack(spacing: size * 0.04) {
-                // Horizontal divider top
                 Rectangle()
                     .fill(Color(red: 0.52, green: 0.35, blue: 0.10))
                     .frame(height: 0.8)
 
-                // Middle segment with loops
                 HStack(spacing: size * 0.08) {
                     Rectangle()
                         .fill(Color(red: 0.52, green: 0.35, blue: 0.10))
                         .frame(width: 0.8, height: size * 0.16)
 
-                    // Center keyhole loops
                     RoundedRectangle(cornerRadius: 1.5)
                         .strokeBorder(Color(red: 0.52, green: 0.35, blue: 0.10), lineWidth: 0.8)
                         .frame(width: size * 0.13, height: size * 0.16)
@@ -479,7 +653,6 @@ struct ChipMascotView: View {
                         .frame(width: 0.8, height: size * 0.16)
                 }
 
-                // Horizontal divider bottom
                 Rectangle()
                     .fill(Color(red: 0.52, green: 0.35, blue: 0.10))
                     .frame(height: 0.8)
@@ -492,7 +665,6 @@ struct ChipMascotView: View {
 
     private var engravedChin: some View {
         VStack(spacing: size * 0.015) {
-            // "CHIP" Laser Engraved Typography
             Text("CHIP")
                 .font(.system(size: max(8, size * 0.11), weight: .heavy, design: .rounded))
                 .tracking(1.4)
@@ -508,16 +680,15 @@ struct ChipMascotView: View {
                 )
                 .shadow(color: Color.white.opacity(0.8), radius: 0, x: 0, y: 0.8)
 
-            // Micro Power Indicator Slit
             Capsule()
                 .fill(
                     mood == .alert
                         ? Color.orange
-                        : Color(red: 0.98, green: 0.84, blue: 0.42)
+                        : (mood == .knock ? Color.cyan : Color(red: 0.98, green: 0.84, blue: 0.42))
                 )
                 .frame(width: size * 0.15, height: size * 0.024)
                 .shadow(
-                    color: (mood == .alert ? Color.orange : Color(red: 1.0, green: 0.85, blue: 0.45)).opacity(0.95),
+                    color: (mood == .alert ? Color.orange : (mood == .knock ? Color.cyan : Color(red: 1.0, green: 0.85, blue: 0.45))).opacity(0.95),
                     radius: 2.5
                 )
         }
@@ -526,16 +697,12 @@ struct ChipMascotView: View {
     // MARK: - 5. Articulated Robot Limbs (Arms & Hands)
 
     private var leftArm: some View {
-        // Left Arm (Viewer's Left): Lowered thumbs up
         HStack(spacing: 0) {
-            // Hand (Thumbs up fist)
             ZStack {
-                // Main fist sphere
                 Circle()
                     .fill(metallicGradient)
                     .frame(width: size * 0.14, height: size * 0.14)
 
-                // Thumb pointing up
                 Capsule()
                     .fill(metallicGradient)
                     .frame(width: size * 0.05, height: size * 0.10)
@@ -544,24 +711,20 @@ struct ChipMascotView: View {
             }
             .shadow(color: Color.black.opacity(0.14), radius: 2, x: -1, y: 1)
 
-            // Forearm cylinder
             Capsule()
                 .fill(metallicGradient)
                 .frame(width: size * 0.16, height: size * 0.07)
                 .rotationEffect(.degrees(18))
 
-            // Elbow hinge ball
             Circle()
                 .fill(metallicJointGradient)
                 .frame(width: size * 0.10, height: size * 0.10)
 
-            // Upper arm cylinder
             Capsule()
                 .fill(metallicGradient)
                 .frame(width: size * 0.14, height: size * 0.075)
                 .rotationEffect(.degrees(-25))
 
-            // Shoulder ball socket
             Circle()
                 .fill(metallicJointGradient)
                 .frame(width: size * 0.12, height: size * 0.12)
@@ -569,57 +732,76 @@ struct ChipMascotView: View {
     }
 
     private var rightArm: some View {
-        // Right Arm (Viewer's Right): Raised waving hand with 3 digits
         HStack(spacing: 0) {
-            // Shoulder ball socket
             Circle()
                 .fill(metallicJointGradient)
                 .frame(width: size * 0.12, height: size * 0.12)
 
-            // Upper arm cylinder
             Capsule()
                 .fill(metallicGradient)
                 .frame(width: size * 0.15, height: size * 0.075)
-                .rotationEffect(.degrees(32))
+                .rotationEffect(.degrees(isKnockingGlass ? 15 : 32))
 
-            // Elbow hinge ball
             Circle()
                 .fill(metallicJointGradient)
                 .frame(width: size * 0.10, height: size * 0.10)
 
-            // Forearm cylinder
             Capsule()
                 .fill(metallicGradient)
                 .frame(width: size * 0.16, height: size * 0.07)
-                .rotationEffect(.degrees(-38))
+                .rotationEffect(.degrees(isKnockingGlass ? -15 : -38))
 
-            // Waving Hand (Open palm with 3 cute rounded robot fingers)
-            ZStack {
-                // Palm base sphere
-                Circle()
-                    .fill(metallicGradient)
-                    .frame(width: size * 0.13, height: size * 0.13)
-
-                // 3 Fingers
-                HStack(spacing: size * 0.015) {
-                    Capsule()
+            // Waving Hand or Screen Knocking Fist (Reaching towards the front glass)
+            if isKnockingGlass || mood == .knock {
+                ZStack {
+                    // Knocking Fist pressed close to viewer's screen glass
+                    Circle()
                         .fill(metallicGradient)
-                        .frame(width: size * 0.038, height: size * 0.09)
-                        .rotationEffect(.degrees(-20))
+                        .frame(width: size * 0.18, height: size * 0.18)
+                        .overlay(
+                            Circle()
+                                .strokeBorder(Color.white.opacity(0.8), lineWidth: 1.0)
+                        )
+                        .shadow(color: Color.cyan.opacity(0.7), radius: 6)
 
-                    Capsule()
-                        .fill(metallicGradient)
-                        .frame(width: size * 0.040, height: size * 0.11)
-
-                    Capsule()
-                        .fill(metallicGradient)
-                        .frame(width: size * 0.038, height: size * 0.09)
-                        .rotationEffect(.degrees(20))
+                    // 4 Knuckles
+                    HStack(spacing: size * 0.015) {
+                        ForEach(0..<4) { _ in
+                            Circle()
+                                .fill(Color.white.opacity(0.85))
+                                .frame(width: size * 0.03, height: size * 0.03)
+                        }
+                    }
                 }
-                .offset(y: -size * 0.065)
+                .scaleEffect(1.28)
+                .rotationEffect(.degrees(waveAngle))
+                .shadow(color: Color.black.opacity(0.3), radius: 4, x: 2, y: 2)
+            } else {
+                ZStack {
+                    Circle()
+                        .fill(metallicGradient)
+                        .frame(width: size * 0.13, height: size * 0.13)
+
+                    HStack(spacing: size * 0.015) {
+                        Capsule()
+                            .fill(metallicGradient)
+                            .frame(width: size * 0.038, height: size * 0.09)
+                            .rotationEffect(.degrees(-20))
+
+                        Capsule()
+                            .fill(metallicGradient)
+                            .frame(width: size * 0.040, height: size * 0.11)
+
+                        Capsule()
+                            .fill(metallicGradient)
+                            .frame(width: size * 0.038, height: size * 0.09)
+                            .rotationEffect(.degrees(20))
+                    }
+                    .offset(y: -size * 0.065)
+                }
+                .rotationEffect(.degrees(waveAngle))
+                .shadow(color: Color.black.opacity(0.14), radius: 2, x: 1, y: 1)
             }
-            .rotationEffect(.degrees(waveAngle))
-            .shadow(color: Color.black.opacity(0.14), radius: 2, x: 1, y: 1)
         }
     }
 
@@ -634,14 +816,11 @@ struct ChipMascotView: View {
 
     private var singleLegAndShoe: some View {
         VStack(spacing: -size * 0.02) {
-            // Thigh cylinder
             Capsule()
                 .fill(metallicJointGradient)
                 .frame(width: size * 0.14, height: size * 0.13)
 
-            // Curved 3D Robot Shoe / Foot
             ZStack(alignment: .top) {
-                // Main rounded foot
                 RoundedRectangle(cornerRadius: size * 0.07, style: .continuous)
                     .fill(
                         LinearGradient(
@@ -660,7 +839,6 @@ struct ChipMascotView: View {
                             .strokeBorder(Color.white.opacity(0.4), lineWidth: 0.6)
                     )
 
-                // Specular toe shine
                 Capsule()
                     .fill(Color.white.opacity(0.55))
                     .frame(width: size * 0.12, height: size * 0.03)
@@ -736,118 +914,500 @@ struct ChipMascotView: View {
     }
 }
 
-// MARK: - Interactive Chip Companion Header Card
+// MARK: - Interactive Chip Companion Header Card (4th-Wall Breaking)
 
-/// An Apple Intelligence-inspired interactive card pairing Chip with rotating smart tips and insights.
+struct ChipBanterItem {
+    let text: String
+    let mood: ChipMood
+    let tag: String
+}
+
+/// Formats typed Engine insights into Chip's 4th-wall breaking personality
+enum ChipInsightFormatter {
+    static func format(_ insight: ChipInsight) -> ChipBanterItem {
+        switch insight {
+        case .allCardsNegative:
+            return ChipBanterItem(
+                text: "Whoa, stop! Every single card in your wallet loses money on this after FX fees. Use debit or local cash!",
+                mood: .alert,
+                tag: "NET NEGATIVE"
+            )
+        case .networkRestricted(let merchant, let networks, let count):
+            let name = merchant ?? "This place"
+            let netString = networks.map { $0.rawValue.capitalized }.joined(separator: " or ")
+            return ChipBanterItem(
+                text: "Hey, put that away! \(name) only takes \(netString). I had to exclude \(count) of your cards from the math.",
+                mood: .alert,
+                tag: "NETWORK RULE"
+            )
+        case .declineDcc(let currency):
+            return ChipBanterItem(
+                text: "We're in \(currency) territory! When the terminal asks if you want to pay in CAD, say NO! Let the card do the math, their rate is a scam.",
+                mood: .alert,
+                tag: "DCC TRAP"
+            )
+        case .switchFromDefault(let fromId, let toId, let advantage):
+            return ChipBanterItem(
+                text: "This is why you hired me! Put your default card away and tap the \(toId). You're up $\(String(format: "%.2f", advantage)) just for listening to me.",
+                mood: .celebrating,
+                tag: "SMART SWITCH"
+            )
+        case .fxCostErosion(_, let fxCost, let gross, let rate):
+            let percent = (fxCost / gross) * 100
+            return ChipBanterItem(
+                text: "Ouch. That \(rate * 100)% foreign transaction fee just ate \(String(format: "%.0f", percent))% of your rewards. Still the best math, but hurts to watch.",
+                mood: .shocked,
+                tag: "FX EROSION"
+            )
+        case .capNearlyExhausted:
+            return ChipBanterItem(
+                text: "Careful, you're scraping the bottom of this category's monthly cap. I might have to tag in your backup card soon.",
+                mood: .wink,
+                tag: "CAP WARNING"
+            )
+        case .valuationSensitive(_, let declared, let breakeven, _, let direction):
+            let condition = direction == .below ? "drops below" : "goes above"
+            return ChipBanterItem(
+                text: "I picked this assuming your points are worth \(String(format: "%.2f", declared))¢. If their value \(condition) \(String(format: "%.2f", breakeven))¢, my math flips entirely.",
+                mood: .cool,
+                tag: "MATH CHECK"
+            )
+        case .marginalWinnerSuppressed(_, let advantage):
+            return ChipBanterItem(
+                text: "There's actually a card that beats your default by $\(String(format: "%.2f", advantage)), but it's not worth the hassle. I kept your usual card on top.",
+                mood: .wink,
+                tag: "CLOSE ENOUGH"
+            )
+        }
+    }
+}
+
+/// An Apple Intelligence & Deadpool-inspired 4th-wall breaking interactive companion card.
+/// Chip physically pops out of the card frame, knocks on the iPhone glass, and speaks directly to the user.
 struct ChipCompanionHeaderCard: View {
     let statusText: String
     let subtitle: String
+    var insights: [ChipInsight] = []
     var onSearchTap: (() -> Void)? = nil
 
-    @State private var tipIndex: Int = 0
+    @State private var quipIndex: Int = 0
     @State private var isBubblePresented: Bool = false
+    @State private var isGlowPulsing: Bool = false
+    @State private var currentMood: ChipMood = .cool
+    @State private var glassKnockTrigger: Int = 0
+    @State private var pokeCount: Int = 0
+    @State private var specialReactionText: String? = nil
 
-    private let chipWisdom: [String] = [
-        "Chip's Rule: Amex Cobalt earns 5x points on dining & groceries up to $2,500/month!",
-        "Chip's Alert: Costco Canada only accepts Mastercard at the warehouse register!",
-        "Chip's Tip: Loblaws & No Frills don't take Amex—tap your PC Financial or Visa.",
-        "Chip's Security: Flights and electronics come with built-in warranty on select premium cards.",
-        "Chip's Math: Log your exact spend to calibrate your machine-learning accuracy model."
+    private var activeBanterList: [ChipBanterItem] {
+        let dynamic = insights.map { ChipInsightFormatter.format($0) }
+        return dynamic + staticBanterList
+    }
+
+    private let staticBanterList: [ChipBanterItem] = [
+        ChipBanterItem(
+            text: "Hey you holding the iPhone! Yeah, you. Stop scrolling—Amex Cobalt earns 5x on this meal, so don't touch that debit card.",
+            mood: .cool,
+            tag: "4TH WALL BREAK"
+        ),
+        ChipBanterItem(
+            text: "Ow! Did you just poke my forehead? There's 0.8mm of Ceramic Shield glass between us, but I still felt that!",
+            mood: .shocked,
+            tag: "PHYSICS CHECK"
+        ),
+        ChipBanterItem(
+            text: "I'm literally living inside your screen running 4,000 interchange algorithms a second just so you can fly for free. You're welcome.",
+            mood: .knock,
+            tag: "CHIP LIVE"
+        ),
+        ChipBanterItem(
+            text: "Costco register ahead? Put that Visa away before you embarrass us both in front of the cashier. Mastercard only!",
+            mood: .alert,
+            tag: "CRITICAL INTEL"
+        ),
+        ChipBanterItem(
+            text: "Who approved this gorgeous golden chassis? Look at my circuit traces. I look fantastic today.",
+            mood: .celebrating,
+            tag: "CHASSIS DRIP"
+        ),
+        ChipBanterItem(
+            text: "Look at us: you, me, and a 5% multiplier on dining. Best cinematic duo since Deadpool & Wolverine.",
+            mood: .cool,
+            tag: "REWARDS DUO"
+        ),
+        ChipBanterItem(
+            text: "Fun fact: I can see your battery percentage and your credit score. Don't worry, your secret's safe with me.",
+            mood: .wink,
+            tag: "DEVICE SYNC"
+        ),
+        ChipBanterItem(
+            text: "Hey, look down at that search bar below me. Go ahead, type a merchant. I'll do all the heavy math while you take the glory.",
+            mood: .knock,
+            tag: "RADAR CO-PILOT"
+        ),
+        ChipBanterItem(
+            text: "Loblaws & No Frills don't take Amex—tap your PC Financial or Visa before you hold up the entire checkout line!",
+            mood: .alert,
+            tag: "MERCHANT RULE"
+        ),
+        ChipBanterItem(
+            text: "I'm breaking the 4th wall right now because your cash back strategy is an absolute cinematic masterpiece.",
+            mood: .celebrating,
+            tag: "MAXIMUM EFFORT"
+        )
     ]
 
     var body: some View {
         VStack(spacing: 8) {
-            HStack(spacing: 12) {
-                ChipMascotView(mood: isBubblePresented ? .wink : .idle, size: 44) {
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
-                        isBubblePresented.toggle()
-                        if isBubblePresented {
-                            tipIndex = (tipIndex + 1) % chipWisdom.count
-                        }
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text(statusText)
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(.primary)
-
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(.orange)
-                    }
-
-                    Text(subtitle)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-
-                Spacer()
-
+            // Main Pop-Out Card
+            ZStack(alignment: .topLeading) {
+                // Background Card Container
                 Button {
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                    let impact = UIImpactFeedbackGenerator(style: .medium)
+                    impact.impactOccurred()
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.72)) {
                         isBubblePresented.toggle()
                         if isBubblePresented {
-                            tipIndex = (tipIndex + 1) % chipWisdom.count
+                            advanceQuip()
                         }
                     }
                 } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: isBubblePresented ? "xmark.circle.fill" : "lightbulb.fill")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(isBubblePresented ? Color.secondary : Color.orange)
-                        Text(isBubblePresented ? "Hide" : "Chip's Tip")
-                            .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundStyle(isBubblePresented ? Color.secondary : Color.orange)
+                    HStack(spacing: 12) {
+                        // Spacer to reserve room for the 3D pop-out mascot on the left
+                        Spacer()
+                            .frame(width: 58)
+
+                        // Main Textual Status & Deadpool Cue
+                        VStack(alignment: .leading, spacing: 3) {
+                            HStack(spacing: 6) {
+                                Text(statusText)
+                                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                                    .foregroundStyle(.primary)
+
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [.orange, .pink, .purple],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                            }
+
+                            Text(subtitle)
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+
+                        Spacer(minLength: 4)
+
+                        // Trailing 4th-Wall Status Capsule
+                        HStack(spacing: 5) {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.cyan, Color.blue],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .frame(width: 7, height: 7)
+                                .shadow(color: Color.cyan.opacity(0.8), radius: 3)
+
+                            Image(systemName: isBubblePresented ? "bubble.left.and.bubble.right.fill" : "wand.and.stars")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(isBubblePresented ? Color.primary : Color.orange)
+                        }
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(Color(.tertiarySystemFill))
+                                .overlay(
+                                    Capsule()
+                                        .strokeBorder(
+                                            LinearGradient(
+                                                colors: [Color.orange.opacity(0.4), Color.pink.opacity(0.3)],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 0.8
+                                        )
+                                )
+                        )
                     }
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 5)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
                     .background(
-                        isBubblePresented
-                            ? Color(.tertiarySystemFill)
-                            : Color.orange.opacity(0.12),
-                        in: Capsule()
+                        ZStack {
+                            // Frosted Glass Base
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .fill(Color(.secondarySystemGroupedBackground))
+
+                            // Apple Intelligence Iridescent Ambient Fluid Glow
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.orange.opacity(0.14),
+                                            Color.pink.opacity(0.09),
+                                            Color.purple.opacity(0.09),
+                                            Color.cyan.opacity(0.12)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+
+                            // 3D Glass Rim
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.8),
+                                            Color.orange.opacity(0.45),
+                                            Color.pink.opacity(0.35),
+                                            Color.cyan.opacity(0.45)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1.4
+                                )
+                        }
+                        .shadow(color: Color.orange.opacity(0.10), radius: 12, x: 0, y: 6)
+                        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
                     )
                 }
                 .buttonStyle(.plain)
+
+                // 3D Pop-Out Mascot: Physically steps outside the card boundary in the foreground!
+                ZStack {
+                    // Pulsing Apple Intelligence Aurora Halo behind Chip
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    Color(red: 1.0, green: 0.55, blue: 0.15).opacity(0.60),
+                                    Color(red: 0.95, green: 0.25, blue: 0.70).opacity(0.40),
+                                    Color(red: 0.20, green: 0.75, blue: 1.0).opacity(0.30),
+                                    Color.clear
+                                ],
+                                center: .center,
+                                startRadius: 4,
+                                endRadius: 36
+                            )
+                        )
+                        .frame(width: 72, height: 72)
+                        .scaleEffect(isGlowPulsing ? 1.18 : 0.88)
+                        .opacity(isGlowPulsing ? 0.95 : 0.60)
+                        .blur(radius: 4)
+                        .animation(
+                            .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
+                            value: isGlowPulsing
+                        )
+
+                    // The Mascot Itself: Size 50, overlapping the top edge
+                    ChipMascotView(
+                        mood: currentMood,
+                        size: 48,
+                        isWaving: true,
+                        enable3DTilt: true
+                    ) {
+                        pokeChipAction()
+                    }
+                    .frame(width: 60, height: 60)
+                }
+                .offset(x: 10, y: -14) // Breaks through the top & left card frame!
+                .zIndex(10)
             }
+            .padding(.top, 14) // Headroom for the 3D popout mascot
 
-            // Interactive Speech Bubble
+            // Deadpool-Style 4th-Wall Speech Bubble
             if isBubblePresented {
-                HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: "cpu.fill")
-                        .font(.system(size: 13, weight: .black))
-                        .foregroundStyle(.orange.opacity(0.8))
+                VStack(alignment: .leading, spacing: 10) {
+                    // Bubble Header & Tag
+                    HStack(spacing: 8) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "quote.opening")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.orange)
 
-                    Text(chipWisdom[tipIndex])
+                            Text(activeBanterList[quipIndex].tag)
+                                .font(.system(size: 10, weight: .heavy, design: .monospaced))
+                                .foregroundStyle(.orange)
+                                .tracking(1.0)
+                        }
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Color.orange.opacity(0.14), in: Capsule())
+
+                        Spacer()
+
+                        // "Deadpool Mode" Live Mascot Mood Indicator
+                        HStack(spacing: 4) {
+                            Text("CHIP V4.0")
+                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                .foregroundStyle(.secondary)
+
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 5, height: 5)
+                        }
+                    }
+
+                    // The Dialogue Body
+                    Text(specialReactionText ?? activeBanterList[quipIndex].text)
                         .font(.system(size: 13, weight: .medium, design: .rounded))
                         .foregroundStyle(.primary)
-                        .lineSpacing(2)
+                        .lineSpacing(3.5)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
 
-                    Spacer()
+                    // Interactive 4th-Wall Actions (Poke Chip, Knock Glass, Next Quip)
+                    HStack(spacing: 8) {
+                        // Knock Glass Button
+                        Button {
+                            knockScreenGlassAction()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "hand.tap.fill")
+                                    .font(.system(size: 11, weight: .bold))
+                                Text("Knock Glass")
+                                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                            }
+                            .foregroundStyle(Color.cyan)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 5)
+                            .background(Color.cyan.opacity(0.14), in: Capsule())
+                            .overlay(Capsule().strokeBorder(Color.cyan.opacity(0.35), lineWidth: 0.8))
+                        }
+                        .buttonStyle(.plain)
+
+                        // Poke Chip Button
+                        Button {
+                            pokeChipAction()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "hand.point.up.left.fill")
+                                    .font(.system(size: 11, weight: .bold))
+                                Text("Poke Chip")
+                                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                            }
+                            .foregroundStyle(Color.orange)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 5)
+                            .background(Color.orange.opacity(0.14), in: Capsule())
+                            .overlay(Capsule().strokeBorder(Color.orange.opacity(0.35), lineWidth: 0.8))
+                        }
+                        .buttonStyle(.plain)
+
+                        Spacer()
+
+                        // Next Quip Button
+                        Button {
+                            advanceQuip()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text("Next")
+                                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                                Image(systemName: "arrow.right.circle.fill")
+                                    .font(.system(size: 11, weight: .bold))
+                            }
+                            .foregroundStyle(Color.blue)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 5)
+                            .background(Color.blue.opacity(0.14), in: Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
-                .padding(12)
+                .padding(14)
                 .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(.tertiarySystemGroupedBackground))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(Color.orange.opacity(0.25), lineWidth: 1)
-                        )
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(Color(.tertiarySystemGroupedBackground))
+
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [Color.orange.opacity(0.40), Color.pink.opacity(0.30), Color.cyan.opacity(0.35)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1.2
+                            )
+                    }
+                    .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 3)
                 )
                 .transition(.asymmetric(
-                    insertion: .scale(scale: 0.95, anchor: .topLeading).combined(with: .opacity),
+                    insertion: .scale(scale: 0.94, anchor: .topLeading).combined(with: .opacity),
                     removal: .opacity
                 ))
             }
         }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
-        )
+        .onAppear {
+            isGlowPulsing = true
+            currentMood = activeBanterList[quipIndex].mood
+        }
+        .onChange(of: insights) {
+            quipIndex = 0
+            currentMood = activeBanterList[quipIndex].mood
+        }
+    }
+
+    private func advanceQuip() {
+        let impact = UIImpactFeedbackGenerator(style: .light)
+        impact.impactOccurred()
+        specialReactionText = nil
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.75)) {
+            quipIndex = (quipIndex + 1) % activeBanterList.count
+            currentMood = activeBanterList[quipIndex].mood
+        }
+    }
+
+    private func pokeChipAction() {
+        pokeCount += 1
+        let impact = UIImpactFeedbackGenerator(style: .medium)
+        impact.impactOccurred()
+
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.55)) {
+            currentMood = .shocked
+            isBubblePresented = true
+            if pokeCount % 3 == 0 {
+                specialReactionText = "HEY! That's my face! Do you go around poking cashiers like that too?!"
+            } else if pokeCount % 2 == 0 {
+                specialReactionText = "Okay buddy, one more poke and I'm setting your default multiplier to 0.5%!"
+            } else {
+                specialReactionText = "Ow! You hit my golden bevel rim! That's 24-karat vector art right there."
+            }
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                currentMood = activeBanterList[quipIndex].mood
+            }
+        }
+    }
+
+    private func knockScreenGlassAction() {
+        let rigid = UIImpactFeedbackGenerator(style: .rigid)
+        rigid.impactOccurred(intensity: 1.0)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+            rigid.impactOccurred(intensity: 0.9)
+        }
+
+        withAnimation(.spring(response: 0.22, dampingFraction: 0.5)) {
+            currentMood = .knock
+            isBubblePresented = true
+            specialReactionText = "*TAP TAP TAP* — Hey! Lionel! Just checking if the Ceramic Shield glass is clean. Now check those multipliers!"
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                currentMood = activeBanterList[quipIndex].mood
+            }
+        }
     }
 }

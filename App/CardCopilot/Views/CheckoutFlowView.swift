@@ -29,7 +29,7 @@ struct CheckoutFlowView: View {
 
     private var rootTitle: String {
         switch router.selectedTab {
-        case .copilot: return "PickMe"
+        case .copilot: return ""
         case .activity: return "Activity"
         case .wallet: return "My Wallet"
         case .perks: return "Protection & Perks"
@@ -67,7 +67,7 @@ struct CheckoutFlowView: View {
                                 destinationView(destination, environment: environment)
                             }
                             .toolbar {
-                                if isAtRoot, !environment.isFirstRun {
+                                if isAtRoot, !environment.isFirstRun, router.selectedTab != .copilot {
                                     ToolbarItem(placement: .topBarTrailing) {
                                         SyncStatusToolbarButton(
                                             isSyncing: sync.isSyncing || sync.isPreparingAccount,

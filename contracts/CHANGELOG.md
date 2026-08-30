@@ -2,6 +2,41 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-30 — benefits-catalogue 1.3: Part 2 Canadian insurance dossier ingestion
+
+Ingested verified first-party insurance certificates, benefits terms, and document indices for 16 Canadian credit cards:
+- `cibc-costco-mastercard` (Belair; Purchase Security $60k aggregate, Extended Warranty +1 yr, Mobile Device $1,000)
+- `royal-bank-of-canada-rbc-british-airways-visa` (RBC / Aviva; Emergency Medical unlimited 31d/7d, Flight Delay $500, Baggage Delay $2,500, Rental CDW 48d $65k MSRP, Purchase Security $50k/yr, Extended Warranty +1 yr)
+- `amex-aeroplan-reserve` (Belair / Chubb; Emergency Medical $5M 15d, Trip Cancellation $3k, Trip Interruption $6k, Flight & Baggage Delay $1k shared, Baggage Loss $1k, Rental CDW 48d $85k MSRP, Purchase Protection $1k, Extended Warranty +1 yr)
+- `bmo-cashback-world-elite` (CUMIS / Allianz; Emergency Medical $5M 8d, Flight Delay $500, Baggage Delay $1k, Baggage Loss $1k, Rental CDW 48d $65k MSRP, Purchase Security + Extended Warranty $60k combined lifetime, Extended Warranty +1 yr)
+- `simplii-cashback-visa` (Belair; Purchase Security $60k aggregate, Extended Warranty +1 yr)
+- `pc-financial-world-mastercard` (American Bankers; Purchase Assurance $1k / $50k lifetime, Extended Warranty +1 yr)
+- `pc-financial-world-elite` (American Bankers; Emergency Medical 10d under 65, Rental CDW, Purchase Assurance $1k / $50k lifetime, Extended Warranty +1 yr)
+- `desjardins-odyssey-world-elite` (Desjardins / American Bankers; Emergency Medical $5M 60d/31d/15d, Trip Cancellation $2.5k, Trip Interruption, Baggage Delay $500, Baggage Loss $1k, Rental CDW 48d $85k MSRP, Purchase Protection $10k / $50k lifetime, Extended Warranty +2 yrs, Mobile Device $1,500)
+- `rbc-cashback-preferred-we` (Aviva / RBC; Rental CDW 48d $65k MSRP, Purchase Security $50k/yr, Extended Warranty +2 yrs / 3x multiplier)
+- `amex-gold-rewards` (Belair; Emergency Medical $5M 15d, Trip Cancellation $3k, Trip Interruption $6k, Flight & Baggage Delay $500 shared, Baggage Loss $500, Rental CDW 48d $85k MSRP, Purchase Protection $1k, Extended Warranty +1 yr)
+- `amex-simplycash-preferred` (Belair; Emergency Medical $5M 15d, Flight & Baggage Delay $500 shared, Baggage Loss $500, Rental CDW 48d $85k MSRP, Purchase Protection $1k, Extended Warranty +1 yr, Mobile Device $1k)
+- `cibc-aeroplan-visa-infinite-privilege` (Belair; Emergency Medical $5M 31d/10d, Trip Cancellation $10k, Trip Interruption $25k, Flight Delay $1k, Baggage Delay $1k, Baggage Loss $2.5k, Rental CDW 48d $100k MSRP, Purchase Security $60k aggregate, Extended Warranty +2 yrs / 3x, Mobile Device $1.5k)
+- `td-aeroplan-visa-infinite-privilege` (TD Life / TD Home & Auto / American Bankers; Emergency Medical $5M 31d/4d, Trip Cancellation $5k, Trip Interruption $25k, Flight Delay $1k, Baggage Delay $1k, Baggage Loss $2.5k, Rental CDW 48d $85k MSRP, Purchase Security $60k lifetime, Extended Warranty +2 yrs / 2x, Mobile Device $1.5k)
+- `home-trust-preferred-visa` (Chubb; Purchase Security $5k per occurrence)
+- `mbna-smart-cash-world` (TD Home & Auto; Rental CDW 31d $65k market value, Purchase Assurance $60k lifetime, Extended Warranty +1 yr)
+- `pc-financial-mastercard` (American Bankers; Purchase Assurance $1k / $50k lifetime, Extended Warranty +1 yr)
+- Benefits catalogue card count advances from 30 to 46 cards. All 16 cards retired from `BenefitsLoaderTests.knownGap`.
+
+## 2026-08-30 — card-catalogue 2.12 & owner-conditions 1.1: Part 1 Canadian card publication
+
+Ingested first-party publication research dossier for 5 Canadian credit cards:
+- **`cibc-costco-mastercard`**: Promoted to published. 3% dining, 3% Costco gas in Canada (sharing $5,000/yr gas+EV cap with 2% non-Costco gas and 2% EV charging MCC 5552, 1% post-cap), 2% Costco.ca ($8,000/yr cap, 1% post-cap), 1% base cashback under `costcoCashRewardsCa` (0.95 usability factor). 2.5% FX markup.
+- **`royal-bank-of-canada-rbc-british-airways-visa`**: Promoted to published. $165 annual fee, 3 Avios / $1 CAD on direct British Airways bookings (Visa MCC 3005), 2 Avios / $1 CAD on dining & food delivery (MCC 5812, 5813, 5814), 1 Avios / $1 CAD base earn under `avios` (1.0¢ ranked parity). 2.5% FX markup.
+- **`neo-financial-neo-world-mastercard`**: Promoted to published with 3 selectable cashback configurations supported via `owner-conditions.json` flags (`neoProfileGasAndGrocery`, `neoProfileShopAndDine`, `neoProfileEverywhere`):
+  - *Gas & Grocery*: 2% grocery ($1k/mo cap), 2% gas/EV ($1k/mo cap), 2% recurring ($500/mo cap), 0.5% post-cap.
+  - *Shop & Dine*: 2% food & drink ($500/mo cap), 2% retail shopping ($500/mo cap, excluding Amazon/Costco/wholesale), 0.5% post-cap.
+  - *Everywhere*: 1% flat unlimited.
+  - Base fallback: 0.5% unlimited. 3.0% FX markup.
+- **`mbna-true-line-mastercard`**: Promoted to published. $0 annual fee, `noRewards` program valued at $0.00.
+- **`capital-one-canada-capital-one-guaranteed`**: Promoted to published. $0 annual fee, secured card under `noRewards` program valued at $0.00.
+- Published card count advances from 53 to 58.
+
 ## 2026-08-29 — card-catalogue 2.11 & fixtures 1.6: release benefits document index
 
 The additive benefits-catalogue 1.2 document index landed after the 2.10 release stamp. This

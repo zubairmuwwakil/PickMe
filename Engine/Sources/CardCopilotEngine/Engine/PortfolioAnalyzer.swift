@@ -261,19 +261,23 @@ public struct PortfolioAnalyzer {
                                    catalogue: Catalogue, into state: inout OwnerState) {
         guard let card = catalogue.cards.first(where: { $0.cardId == score.cardId }),
               let ruleId = score.appliedRuleId,
-              let capId = card.earnRules.first(where: { $0.ruleId == ruleId })?.capId,
-              let cap = card.caps.first(where: { $0.capId == capId })
+              let rule = card.earnRules.first(where: { $0.ruleId == ruleId })
         else { return }
 
-        // `.spendNative` must accrue in the same currency `Scorer.score` compares it against —
-        // the card's own billingCurrency, not unconditionally CAD.
-        let amount = cap.measure == .spendUsdEquivalent
-            ? (purchase.usdEquivalent ?? purchase.amountCad * Scorer.fallbackCadToUsd)
-            : Scorer.nativeAmount(for: purchase, billingCurrency: card.billingCurrency)
-        var cardState = state.cardStates[card.cardId] ?? CardState()
-        cardState.capProgress = (cardState.capProgress ?? [:])
-            .merging([capId: amount], uniquingKeysWith: +)
-        state.cardStates[card.cardId] = cardState
+        let effectiveCaps = rule.effectiveCapIds.compactMap { id in card.caps.first { $0.capId == id } }
+        guard !effectiveCaps.isEmpty else { return }
+
+        for cap in effectiveCaps {
+            // `.spendNative` must accrue in the same currency `Scorer.score` compares it against —
+            // the card's own billingCurrency, not unconditionally CAD.
+            let amount = cap.measure == .spendUsdEquivalent
+                ? (purchase.usdEquivalent ?? purchase.amountCad * Scorer.fallbackCadToUsd)
+                : Scorer.nativeAmount(for: purchase, billingCurrency: card.billingCurrency)
+            var cardState = state.cardStates[card.cardId] ?? CardState()
+            cardState.capProgress = (cardState.capProgress ?? [:])
+                .merging([cap.capId: amount], uniquingKeysWith: +)
+            state.cardStates[card.cardId] = cardState
+        }
     }
 
     /// `asOf` advanced whole months, so effective-dated rules land in the right month.

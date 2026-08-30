@@ -162,8 +162,8 @@ public enum InstantRepeatAdvisor {
             }
         }
 
-        let meta = CategoryVisuals.meta(for: merchant.confirmedCategory ?? merchant.poiCategoryRaw ?? "general")
-        let formattedCat = CategoryVisuals.humanizePoiCategory(merchant.poiCategoryRaw) ?? meta.displayName
+        let meta = CategoryVisuals.meta(for: category)
+        let formattedCat = meta.displayName
 
         return InstantRepeatEvaluation(
             merchantId: merchant.identifier ?? merchant.id.uuidString,

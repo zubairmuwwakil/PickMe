@@ -119,6 +119,48 @@ struct RecommendationView: View {
                     .fill(Color(.secondarySystemGroupedBackground))
             )
 
+            // Chip Mascot Contextual Voice & Rule Insights
+            let purchase = ambientPurchaseContext(merchant: result.merchant, category: result.prediction.category)
+            let chipInsights = ChipInsightAdvisor.evaluate(
+                recommendation: recommendation,
+                purchase: purchase,
+                catalogue: graph.catalogue,
+                defaultCardId: graph.ownerState.defaultCardId
+            )
+            if let primaryInsight = chipInsights.first {
+                let formatted = ChipInsightFormatter.format(primaryInsight)
+                HStack(alignment: .center, spacing: 12) {
+                    ChipMascotView(
+                        mood: formatted.mood,
+                        size: 42,
+                        isWaving: true,
+                        enable3DTilt: false
+                    )
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(formatted.tag)
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundStyle(.orange)
+                            .tracking(0.8)
+
+                        Text(formatted.text)
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundStyle(.primary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color(.secondarySystemGroupedBackground))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(Color.orange.opacity(0.25), lineWidth: 1)
+                        )
+                )
+            }
+
             // Explanations & Insights
             VStack(spacing: 10) {
                 if let why = explanation?.why {

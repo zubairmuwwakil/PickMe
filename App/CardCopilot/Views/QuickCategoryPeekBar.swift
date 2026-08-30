@@ -42,12 +42,13 @@ struct QuickCategoryPeekBar: View {
             .padding(.horizontal, 2)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                HStack(spacing: 12) {
                     ForEach(topCategories, id: \.id) { cat in
-                        categoryPill(cat)
+                        categorySquircleItem(cat)
                     }
                 }
-                .padding(.vertical, 2)
+                .padding(.horizontal, 2)
+                .padding(.vertical, 4)
             }
 
             // Quick Inline Glance Card when tapped
@@ -63,7 +64,7 @@ struct QuickCategoryPeekBar: View {
         .animation(.spring(response: 0.32, dampingFraction: 0.75), value: peekedCategory)
     }
 
-    private func categoryPill(_ cat: (id: String, name: String, icon: String, color: Color)) -> some View {
+    private func categorySquircleItem(_ cat: (id: String, name: String, icon: String, color: Color)) -> some View {
         let isSelected = peekedCategory == cat.id
 
         return Button {
@@ -78,36 +79,39 @@ struct QuickCategoryPeekBar: View {
                 }
             }
         } label: {
-            HStack(spacing: 6) {
+            VStack(spacing: 6) {
                 ZStack {
-                    Circle()
-                        .fill(isSelected ? Color.white.opacity(0.25) : cat.color.opacity(0.14))
-                        .frame(width: 22, height: 22)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(
+                            isSelected
+                                ? cat.color
+                                : cat.color.opacity(0.16)
+                        )
+                        .frame(width: 58, height: 58)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .strokeBorder(
+                                    isSelected ? Color.white.opacity(0.4) : cat.color.opacity(0.12),
+                                    lineWidth: 1
+                                )
+                        )
+                        .shadow(
+                            color: isSelected ? cat.color.opacity(0.35) : Color.clear,
+                            radius: 6,
+                            x: 0,
+                            y: 3
+                        )
+
                     Image(systemName: cat.icon)
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.system(size: 22, weight: .semibold))
                         .foregroundStyle(isSelected ? Color.white : cat.color)
                 }
 
                 Text(cat.name)
-                    .font(.system(size: 12, weight: isSelected ? .bold : .semibold, design: .rounded))
-                    .foregroundStyle(isSelected ? Color.white : Color.primary)
+                    .font(.system(size: 12, weight: isSelected ? .bold : .medium, design: .rounded))
+                    .foregroundStyle(isSelected ? Color.primary : Color.secondary)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .background(
-                isSelected
-                    ? cat.color
-                    : Color(.secondarySystemGroupedBackground),
-                in: Capsule()
-            )
-            .overlay(
-                Capsule()
-                    .strokeBorder(
-                        isSelected ? Color.clear : Color.black.opacity(0.04),
-                        lineWidth: 1
-                    )
-            )
-            .shadow(color: isSelected ? cat.color.opacity(0.35) : Color.clear, radius: 4, x: 0, y: 2)
+            .frame(width: 62)
         }
         .buttonStyle(.plain)
     }

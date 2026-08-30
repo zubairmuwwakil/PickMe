@@ -41,7 +41,16 @@ object CardVisualTheme {
         "bmo-ascend-world-elite",
         "westjet-rbc-world-elite",
         "amazon-ca-rewards-mastercard",
-        "cibc-aventura-visa"
+        "cibc-aventura-visa",
+        "cibc-dividend-visa",
+        "td-business-travel-visa",
+        "walmart-rewards-mastercard",
+        "walmart-rewards-world-mastercard",
+        "cibc-costco-mastercard",
+        "royal-bank-of-canada-rbc-british-airways-visa",
+        "neo-financial-neo-world-mastercard",
+        "mbna-true-line-mastercard",
+        "capital-one-canada-capital-one-guaranteed"
     )
 
     fun style(cardId: String): CardStyle {
@@ -379,6 +388,96 @@ object CardVisualTheme {
                 gradientColors = listOf(Color(0xFF242E38), Color(0xFF141A24)),
                 textColor = Color.White,
                 accentColor = Color(0xFFFF9900),
+                isDark = true
+            )
+            "cibc-dividend-visa" -> CardStyle(
+                cardId = cardId,
+                shortName = "CIBC Dividend",
+                issuer = "CIBC",
+                networkLabel = "VISA",
+                gradientColors = listOf(Color(0xFF850D1F), Color(0xFF38050F)),
+                textColor = Color.White,
+                accentColor = Color(0xFFF2BFCB),
+                isDark = true
+            )
+            "td-business-travel-visa" -> CardStyle(
+                cardId = cardId,
+                shortName = "TD Biz Travel",
+                issuer = "TD",
+                networkLabel = "VISA",
+                gradientColors = listOf(Color(0xFF054224), Color(0xFF031A0D)),
+                textColor = Color.White,
+                accentColor = Color(0xFF59E68C),
+                isDark = true
+            )
+            "walmart-rewards-mastercard" -> CardStyle(
+                cardId = cardId,
+                shortName = "Walmart Rewards",
+                issuer = "Walmart",
+                networkLabel = "MASTERCARD",
+                gradientColors = listOf(Color(0xFF0070C2), Color(0xFF003373)),
+                textColor = Color.White,
+                accentColor = Color(0xFFFFC207),
+                isDark = true
+            )
+            "walmart-rewards-world-mastercard" -> CardStyle(
+                cardId = cardId,
+                shortName = "Walmart World",
+                issuer = "Walmart",
+                networkLabel = "MASTERCARD",
+                gradientColors = listOf(Color(0xFF263852), Color(0xFF0F1726)),
+                textColor = Color.White,
+                accentColor = Color(0xFFFFC207),
+                isDark = true
+            )
+            "cibc-costco-mastercard" -> CardStyle(
+                cardId = cardId,
+                shortName = "CIBC Costco",
+                issuer = "CIBC",
+                networkLabel = "MASTERCARD",
+                gradientColors = listOf(Color(0xFF991429), Color(0xFF1A3366)),
+                textColor = Color.White,
+                accentColor = Color(0xFFF2D966),
+                isDark = true
+            )
+            "royal-bank-of-canada-rbc-british-airways-visa" -> CardStyle(
+                cardId = cardId,
+                shortName = "RBC British Airways",
+                issuer = "RBC",
+                networkLabel = "VISA INFINITE",
+                gradientColors = listOf(Color(0xFF0D2661), Color(0xFF05102E)),
+                textColor = Color.White,
+                accentColor = Color(0xFFE62633),
+                isDark = true
+            )
+            "neo-financial-neo-world-mastercard" -> CardStyle(
+                cardId = cardId,
+                shortName = "Neo World",
+                issuer = "Neo Financial",
+                networkLabel = "WORLD ELITE",
+                gradientColors = listOf(Color(0xFF292B33), Color(0xFF0F1217)),
+                textColor = Color.White,
+                accentColor = Color(0xFF4DD9A6),
+                isDark = true
+            )
+            "mbna-true-line-mastercard" -> CardStyle(
+                cardId = cardId,
+                shortName = "True Line",
+                issuer = "MBNA",
+                networkLabel = "MASTERCARD",
+                gradientColors = listOf(Color(0xFF475261), Color(0xFF242933)),
+                textColor = Color.White,
+                accentColor = Color(0xFF59BFF2),
+                isDark = true
+            )
+            "capital-one-canada-capital-one-guaranteed" -> CardStyle(
+                cardId = cardId,
+                shortName = "Guaranteed Secured",
+                issuer = "Capital One",
+                networkLabel = "MASTERCARD",
+                gradientColors = listOf(Color(0xFF142E52), Color(0xFF08142E)),
+                textColor = Color.White,
+                accentColor = Color(0xFFD93333),
                 isDark = true
             )
 

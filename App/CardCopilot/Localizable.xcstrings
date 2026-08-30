@@ -407,9 +407,6 @@
     "%lld to Reconcile" : {
 
     },
-    "%lld to review" : {
-
-    },
     "%lld total · Chronological feed" : {
 
     },
@@ -440,7 +437,11 @@
         }
       }
     },
+    "%lld/30" : {
+
+    },
     "%lld/30 confirmed" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -1172,9 +1173,6 @@
         }
       }
     },
-    "Amount:" : {
-
-    },
     "Analysis" : {
       "localizations" : {
         "fr-CA" : {
@@ -1291,9 +1289,6 @@
           }
         }
       }
-    },
-    "back" : {
-
     },
     "Back" : {
       "localizations" : {
@@ -1687,7 +1682,7 @@
     "CHIP" : {
 
     },
-    "Chip's Tip" : {
+    "CHIP V4.0" : {
 
     },
     "Choose a default card" : {
@@ -1987,9 +1982,6 @@
       }
     },
     "Currency" : {
-
-    },
-    "Custom" : {
 
     },
     "CUSTOM AMOUNT" : {
@@ -2569,6 +2561,7 @@
 
     },
     "Find Nearby Merchant" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -2577,9 +2570,6 @@
           }
         }
       }
-    },
-    "Find or search a merchant once, and Chip will build 1-tap checkout tiles here with live CAD returns." : {
-
     },
     "Find or search a merchant once, then this list gives you instant 1-tap checkout advice." : {
       "extractionState" : "stale",
@@ -2720,9 +2710,6 @@
     "Haptic Feedback" : {
 
     },
-    "Hide" : {
-
-    },
     "Home Improvement" : {
 
     },
@@ -2844,9 +2831,6 @@
           }
         }
       }
-    },
-    "Instant 1-tap GPS checkout advice" : {
-
     },
     "Instant Matrix" : {
 
@@ -2981,6 +2965,9 @@
           }
         }
       }
+    },
+    "Knock Glass" : {
+
     },
     "Know what your cards protect." : {
 
@@ -3169,19 +3156,6 @@
         }
       }
     },
-    "Location off — tap to retry access" : {
-
-    },
-    "Log $%lld on %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Log $%1$lld on %2$@"
-          }
-        }
-      }
-    },
     "Manage cards & optimize reward rules" : {
 
     },
@@ -3292,9 +3266,6 @@
         }
       }
     },
-    "Model Calibration Progress" : {
-
-    },
     "Monitoring arrival at up to 20 saved merchants." : {
 
     },
@@ -3356,6 +3327,9 @@
       }
     },
     "Never" : {
+
+    },
+    "Next" : {
 
     },
     "No" : {
@@ -3915,6 +3889,7 @@
 
     },
     "Pick" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3942,7 +3917,6 @@
 
     },
     "PickMe" : {
-      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4057,6 +4031,9 @@
           }
         }
       }
+    },
+    "Poke Chip" : {
+
     },
     "Policies verified against official issuer certificates" : {
 
@@ -4552,6 +4529,9 @@
         }
       }
     },
+    "Search a merchant once or tap GPS Radar, and I'll build live reward checkout tiles right here inside your screen!" : {
+
+    },
     "Search All Card Benefits" : {
 
     },
@@ -4585,9 +4565,6 @@
         }
       }
     },
-    "Search merchant (e.g. Costco, Loblaws, Tim Hortons)" : {
-
-    },
     "Search merchant (e.g. Costco, Loblaws)" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4600,6 +4577,9 @@
       }
     },
     "Search merchants, cards, or categories" : {
+
+    },
+    "Search or Use Radar" : {
 
     },
     "Search perks, insurance, or cards…" : {
@@ -4653,9 +4633,6 @@
 
     },
     "Sent securely; expires %@" : {
-
-    },
-    "Set" : {
 
     },
     "Set as Default Payment" : {
@@ -4818,6 +4795,9 @@
       }
     },
     "SMART ADVICE" : {
+
+    },
+    "Smart Automation" : {
 
     },
     "Something went wrong" : {
@@ -5294,6 +5274,9 @@
     "Total tracked spending in PickMe" : {
 
     },
+    "Track net reward gains & experiment calibration" : {
+
+    },
     "TRANSACTION DETAILS" : {
 
     },
@@ -5427,7 +5410,11 @@
     "Valuations" : {
 
     },
+    "Value Recovered" : {
+
+    },
     "VALUE RECOVERED" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -5460,9 +5447,6 @@
 
     },
     "View Details" : {
-
-    },
-    "View full card breakdown" : {
 
     },
     "View the %lld %@ categories" : {
@@ -5675,9 +5659,6 @@
           }
         }
       }
-    },
-    "Which card are you tapping today?" : {
-
     },
     "Which card did you tap?" : {
       "localizations" : {

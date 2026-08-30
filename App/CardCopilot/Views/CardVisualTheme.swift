@@ -465,6 +465,96 @@ enum CardVisualTheme {
             accentColor: Color(red: 0.95, green: 0.80, blue: 0.45),
             isDark: true
         ),
+        "cibc-dividend-visa": CardStyle(
+            cardId: "cibc-dividend-visa",
+            shortName: "CIBC Dividend",
+            issuer: "CIBC",
+            network: .visa,
+            gradientColors: [Color(red: 0.52, green: 0.05, blue: 0.12), Color(red: 0.22, green: 0.02, blue: 0.06)],
+            textColor: .white,
+            accentColor: Color(red: 0.95, green: 0.75, blue: 0.80),
+            isDark: true
+        ),
+        "td-business-travel-visa": CardStyle(
+            cardId: "td-business-travel-visa",
+            shortName: "TD Biz Travel",
+            issuer: "TD",
+            network: .visa,
+            gradientColors: [Color(red: 0.02, green: 0.26, blue: 0.14), Color(red: 0.01, green: 0.10, blue: 0.05)],
+            textColor: .white,
+            accentColor: Color(red: 0.35, green: 0.90, blue: 0.55),
+            isDark: true
+        ),
+        "walmart-rewards-mastercard": CardStyle(
+            cardId: "walmart-rewards-mastercard",
+            shortName: "Walmart Rewards",
+            issuer: "Walmart",
+            network: .mastercard,
+            gradientColors: [Color(red: 0.00, green: 0.44, blue: 0.76), Color(red: 0.00, green: 0.20, blue: 0.45)],
+            textColor: .white,
+            accentColor: Color(red: 1.0, green: 0.76, blue: 0.03),
+            isDark: true
+        ),
+        "walmart-rewards-world-mastercard": CardStyle(
+            cardId: "walmart-rewards-world-mastercard",
+            shortName: "Walmart World",
+            issuer: "Walmart",
+            network: .mastercard,
+            gradientColors: [Color(red: 0.15, green: 0.22, blue: 0.32), Color(red: 0.06, green: 0.09, blue: 0.15)],
+            textColor: .white,
+            accentColor: Color(red: 1.0, green: 0.76, blue: 0.03),
+            isDark: true
+        ),
+        "cibc-costco-mastercard": CardStyle(
+            cardId: "cibc-costco-mastercard",
+            shortName: "CIBC Costco",
+            issuer: "CIBC",
+            network: .mastercard,
+            gradientColors: [Color(red: 0.60, green: 0.08, blue: 0.16), Color(red: 0.10, green: 0.20, blue: 0.40)],
+            textColor: .white,
+            accentColor: Color(red: 0.95, green: 0.85, blue: 0.40),
+            isDark: true
+        ),
+        "royal-bank-of-canada-rbc-british-airways-visa": CardStyle(
+            cardId: "royal-bank-of-canada-rbc-british-airways-visa",
+            shortName: "RBC British Airways",
+            issuer: "RBC",
+            network: .visaInfinite,
+            gradientColors: [Color(red: 0.05, green: 0.15, blue: 0.38), Color(red: 0.02, green: 0.06, blue: 0.18)],
+            textColor: .white,
+            accentColor: Color(red: 0.90, green: 0.15, blue: 0.20),
+            isDark: true
+        ),
+        "neo-financial-neo-world-mastercard": CardStyle(
+            cardId: "neo-financial-neo-world-mastercard",
+            shortName: "Neo World",
+            issuer: "Neo Financial",
+            network: .mastercardWorldElite,
+            gradientColors: [Color(red: 0.16, green: 0.17, blue: 0.20), Color(red: 0.06, green: 0.07, blue: 0.09)],
+            textColor: .white,
+            accentColor: Color(red: 0.30, green: 0.85, blue: 0.65),
+            isDark: true
+        ),
+        "mbna-true-line-mastercard": CardStyle(
+            cardId: "mbna-true-line-mastercard",
+            shortName: "True Line",
+            issuer: "MBNA",
+            network: .mastercard,
+            gradientColors: [Color(red: 0.28, green: 0.32, blue: 0.38), Color(red: 0.14, green: 0.16, blue: 0.20)],
+            textColor: .white,
+            accentColor: Color(red: 0.35, green: 0.75, blue: 0.95),
+            isDark: true
+        ),
+        "capital-one-canada-capital-one-guaranteed": CardStyle(
+            cardId: "capital-one-canada-capital-one-guaranteed",
+            shortName: "Guaranteed Secured",
+            issuer: "Capital One",
+            network: .mastercard,
+            gradientColors: [Color(red: 0.08, green: 0.18, blue: 0.32), Color(red: 0.03, green: 0.08, blue: 0.18)],
+            textColor: .white,
+            accentColor: Color(red: 0.85, green: 0.20, blue: 0.20),
+            isDark: true
+        ),
     ]
 
     private static let catalogueCardsById: [String: CardProduct] = {
@@ -797,6 +887,8 @@ enum CategoryVisuals {
             return Meta(icon: "person.2.fill", color: .teal, displayName: "Memberships")
         case "other":
             return Meta(icon: "tag.fill", color: .gray, displayName: "General Merchandise")
+        case "retailshopping":
+            return Meta(icon: "bag.fill", color: .indigo, displayName: "Retail Shopping")
         case "fitness":
             return Meta(icon: "figure.run", color: .mint, displayName: "Fitness & Gym")
         default:

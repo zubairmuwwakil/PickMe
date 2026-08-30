@@ -200,7 +200,9 @@ data class EarnRule(
     val sourceType: SourceType,
     val earn: Earn,
     val predicate: Predicate = Predicate(),
+    @Deprecated("Use capIds instead to support multi-meter caps")
     val capId: String? = null,
+    val capIds: List<String>? = null,
     val ownerConditions: List<String>? = null,
     val scoredInV1: Boolean? = null,
     /**
@@ -213,7 +215,10 @@ data class EarnRule(
     val requires: List<String>? = null,
     /** Set when the rule will never be scored. Mutually exclusive with [requires]. */
     val outOfScope: OutOfScope? = null
-)
+) {
+    val effectiveCapIds: List<String>
+        get() = capIds ?: capId?.let { listOf(it) } ?: emptyList()
+}
 
 /**
  * `SPEND_CAD`/`"spendCad"` renamed to `SPEND_NATIVE`/`"spendNative"` in catalogue 2.0: the amount
@@ -228,15 +233,15 @@ enum class CapMeasure {
 
 /**
  * `CALENDAR_QUARTER` added for US rotating-category cards (e.g. 5x groceries up to $1,500/
- * quarter) — a shape this catalogue could not previously express at all. Gated the same way as
- * the other periods: [EngineCapability.CAP_CALENDAR_QUARTER].
+ * quarter). `STATEMENT_YEAR` added for caps resetting on statement dates (e.g. CIBC Dividend).
  */
 @Serializable
 enum class CapPeriod {
     @SerialName("calendarMonth") CALENDAR_MONTH,
     @SerialName("calendarQuarter") CALENDAR_QUARTER,
     @SerialName("calendarYear") CALENDAR_YEAR,
-    @SerialName("accountYear") ACCOUNT_YEAR
+    @SerialName("accountYear") ACCOUNT_YEAR,
+    @SerialName("statementYear") STATEMENT_YEAR
 }
 
 @Serializable

@@ -114,8 +114,10 @@ public struct CapProjector {
                         capProgressAsOf: String? = nil) -> [CapProjectionOutcome] {
         var burnsByCap: [CapKey: [PlacedPayment]] = [:]
         for placement in placements {
-            guard let key = capBurned(by: placement, asOf: asOf) else { continue }
-            burnsByCap[key, default: []].append(placement)
+            let keys = capsBurned(by: placement, asOf: asOf)
+            for key in keys {
+                burnsByCap[key, default: []].append(placement)
+            }
         }
 
         return burnsByCap.keys.sorted().compactMap { key in
@@ -133,11 +135,11 @@ public struct CapProjector {
         }
     }
 
-    /// Which cap this bill burns on the card it sits on — decided by the rule that would
+    /// Which caps this bill burns on the card it sits on — decided by the rule that would
     /// actually apply, not by the category the owner typed. A bill that falls to an uncapped
     /// base rule burns nothing.
-    private func capBurned(by placement: PlacedPayment, asOf: String) -> CapKey? {
-        capId(for: placement, flagged: placement.assumeFlagged, asOf: asOf)
+    private func capsBurned(by placement: PlacedPayment, asOf: String) -> [CapKey] {
+        capIds(for: placement, flagged: placement.assumeFlagged, asOf: asOf)
             .map { CapKey(cardId: placement.cardId, capId: $0) }
     }
 
@@ -146,18 +148,18 @@ public struct CapProjector {
     private func flagIsLoadBearing(for placement: PlacedPayment, capId: String,
                                    asOf: String) -> Bool {
         guard placement.assumeFlagged else { return false }
-        return self.capId(for: placement, flagged: false, asOf: asOf) != capId
+        return !self.capIds(for: placement, flagged: false, asOf: asOf).contains(capId)
     }
 
-    private func capId(for placement: PlacedPayment, flagged: Bool, asOf: String) -> String? {
+    private func capIds(for placement: PlacedPayment, flagged: Bool, asOf: String) -> [String] {
         guard let card = catalogue.cards.first(where: { $0.cardId == placement.cardId })
-        else { return nil }
+        else { return [] }
         var purchase = context(for: placement)
         purchase.recurringIndicator = flagged
         guard case .applied(let rule, _) = RuleMatcher.resolve(card: card, purchase: purchase,
                                                            ownerState: ownerState, asOf: asOf)
-        else { return nil }
-        return rule.capId
+        else { return [] }
+        return rule.effectiveCapIds
     }
 
     private func context(for placement: PlacedPayment) -> PurchaseContext {
@@ -244,7 +246,7 @@ public struct CapProjector {
     }
 
     private func coverage(card: CardProduct, capId: String) -> CapCoverage {
-        let rules = card.earnRules.filter { $0.capId == capId }
+        let rules = card.earnRules.filter { $0.effectiveCapIds.contains(capId) }
         guard rules.allSatisfy({ $0.predicate.categories != nil }) else { return .allSpendOnCard }
         return .categories(Array(Set(rules.flatMap { $0.predicate.categories ?? [] })).sorted())
     }

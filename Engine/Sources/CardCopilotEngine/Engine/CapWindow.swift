@@ -34,7 +34,9 @@ public enum CapWindow {
         case .calendarQuarter:
             let quarterStart = (asOfIndex / 3) * 3
             return Window(startMonth: month(quarterStart), endMonth: month(quarterStart + 2))
-        case .calendarYear:
+        case .calendarYear, .statementYear:
+            // .statementYear is approximated as .calendarYear internally for monthly-granularity simulations
+            // because "December statement date" effectively means the cap covers the calendar year's spend.
             let january = (asOfIndex / 12) * 12
             return Window(startMonth: month(january), endMonth: month(january + 11))
         case .accountYear:
