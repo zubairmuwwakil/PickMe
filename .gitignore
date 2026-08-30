@@ -28,3 +28,6 @@ catalogue-pipeline/.raw-cache/
 
 # Brainstorming visual companion (local only)
 .superpowers/
+
+# Claude Code personal permissions stay local; shared verification permissions are tracked.
+.claude/settings.local.json

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(swift test:*)",
+      "Bash(./gradlew :core:engine:test:*)",
+      "Bash(./gradlew --no-daemon :core:engine:test:*)",
+      "Bash(./scripts/release-catalogue.sh --check)",
+      "Bash(python3 scripts/validate-catalogue-schema.py)",
+      "Bash(scripts/check-id-permanence.sh)",
+      "Bash(scripts/check-raw-source-policy.sh)",
+      "Bash(node scripts/generate-merchant-pack.mjs --check)"
+    ]
+  }
+}
