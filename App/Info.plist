@@ -30,10 +30,6 @@
 	<string>Your location helps PickMe suggest a card at saved merchants. If you enable Wallet Capture, one fresh checkout location may be sent securely to Inunity with that purchase; PickMe never tracks your route.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
 	<string>Your location identifies nearby merchants when you ask. If you enable Wallet Capture, one fresh checkout location may be sent securely to Inunity with that purchase; PickMe never tracks your route.</string>
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>location</string>
-    </array>
     <key>UIFileSharingEnabled</key>
     <true/>
     <key>UILaunchScreen</key>
