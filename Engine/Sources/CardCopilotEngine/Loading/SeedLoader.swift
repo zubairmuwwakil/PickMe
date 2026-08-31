@@ -15,6 +15,10 @@ public enum SeedLoader {
     /// candidate-catalogue.json became a list of cardIds in 2.0 (was full card definitions).
     static let supportedCandidateCatalogueMajorVersion = 2
 
+    /// First standalone application-requirements contract. Kept independent because issuer
+    /// qualification facts change on a different cadence from reward arithmetic.
+    static let supportedApplicationRequirementsMajorVersion = 1
+
     public static func loadCatalogue() throws -> Catalogue {
         let catalogue: Catalogue = try load("card-catalogue")
         try validate(catalogueVersion: catalogue.catalogueVersion)
@@ -34,6 +38,12 @@ public enum SeedLoader {
         let candidates: CandidateSet = try load("candidate-catalogue")
         try validate(candidateCatalogueVersion: candidates.candidateCatalogueVersion)
         return candidates
+    }
+
+    public static func loadApplicationRequirements() throws -> ApplicationRequirementCatalogue {
+        let requirements: ApplicationRequirementCatalogue = try load("application-requirements")
+        try validate(applicationRequirementsVersion: requirements.applicationRequirementsVersion)
+        return requirements
     }
 
     public static func loadOwnerState() throws -> OwnerState {
@@ -122,6 +132,14 @@ public enum SeedLoader {
               let major = Int(majorComponent),
               major == supportedCandidateCatalogueMajorVersion else {
             throw SeedLoaderError.unsupportedCatalogueVersion(candidateCatalogueVersion)
+        }
+    }
+
+    static func validate(applicationRequirementsVersion: String) throws {
+        guard let majorComponent = applicationRequirementsVersion.split(separator: ".", maxSplits: 1).first,
+              let major = Int(majorComponent),
+              major == supportedApplicationRequirementsMajorVersion else {
+            throw SeedLoaderError.unsupportedCatalogueVersion(applicationRequirementsVersion)
         }
     }
 

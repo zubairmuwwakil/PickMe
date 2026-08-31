@@ -10,6 +10,7 @@ mkdir -p "$res_main" "$res_test"
 
 cp "$root/contracts/card-catalogue.json" "$res_main/card-catalogue.json"
 cp "$root/contracts/candidate-catalogue.json" "$res_main/candidate-catalogue.json"
+cp "$root/contracts/application-requirements.json" "$res_main/application-requirements.json"
 cp "$root/contracts/benefits-catalogue.json" "$res_main/benefits-catalogue.json"
 cp "$root/contracts/programs.json" "$res_main/programs.json"
 cp "$root/contracts/owner-conditions.json" "$res_main/owner-conditions.json"
@@ -17,5 +18,6 @@ cp "$root/contracts/purchase-categories.json" "$res_main/purchase-categories.jso
 cp "$root/Engine/Sources/CardCopilotEngine/Resources/owner-state.json" "$res_main/owner-state.json"
 
 cp "$root/contracts/engine-fixtures.json" "$res_test/engine-fixtures.json"
+cp "$root/contracts/application-requirements-fixtures.json" "$res_test/application-requirements-fixtures.json"
 
 echo "Synced contracts/ into android/core/engine resources."

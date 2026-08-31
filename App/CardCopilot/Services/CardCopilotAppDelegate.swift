@@ -20,6 +20,8 @@ final class CardCopilotAppDelegate: NSObject, UIApplicationDelegate, @MainActor 
            response.actionIdentifier == "OPEN_CAPTURE_STATUS" || response.actionIdentifier == "OPEN_DIAGNOSTIC" {
             WalletCaptureDeepLinkStore.markPending()
             NotificationCenter.default.post(name: .openWalletCaptureStatus, object: nil)
+        } else if response.notification.request.content.userInfo["route"] as? String == "creditReminders" {
+            NotificationCenter.default.post(name: .openCreditReminders, object: nil)
         }
     }
 
@@ -31,4 +33,5 @@ final class CardCopilotAppDelegate: NSObject, UIApplicationDelegate, @MainActor 
 
 extension Notification.Name {
     static let openWalletCaptureStatus = Notification.Name("openWalletCaptureStatus")
+    static let openCreditReminders = Notification.Name("openCreditReminders")
 }

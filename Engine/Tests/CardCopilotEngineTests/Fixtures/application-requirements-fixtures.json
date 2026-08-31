@@ -1,0 +1,75 @@
+{
+  "fixturesVersion": "1.0",
+  "cases": [
+    {
+      "caseId": "bmo-personal-at-threshold-meets",
+      "cardId": "bmo-cashback-world-elite",
+      "profile": { "individualAnnualIncome": { "amount": 80000, "currency": "CAD" } },
+      "expectedStatus": "meetsPublishedMinimum",
+      "expectedMatchedType": "individualAnnualIncome"
+    },
+    {
+      "caseId": "bmo-ten-thousand-short-household-missing",
+      "cardId": "bmo-cashback-world-elite",
+      "profile": { "individualAnnualIncome": { "amount": 70000, "currency": "CAD" } },
+      "expectedStatus": "needsMoreInformation",
+      "expectedClosestType": "individualAnnualIncome",
+      "expectedShortfall": 10000,
+      "expectedMissingTypes": ["householdAnnualIncome"]
+    },
+    {
+      "caseId": "bmo-both-ten-thousand-short-prefers-relative-household-gap",
+      "cardId": "bmo-cashback-world-elite",
+      "profile": {
+        "individualAnnualIncome": { "amount": 70000, "currency": "CAD" },
+        "householdAnnualIncome": { "amount": 140000, "currency": "CAD" }
+      },
+      "expectedStatus": "belowPublishedMinimum",
+      "expectedClosestType": "householdAnnualIncome",
+      "expectedShortfall": 10000,
+      "expectedMissingTypes": []
+    },
+    {
+      "caseId": "mbna-strict-personal-boundary-needs-one-dollar",
+      "cardId": "mbna-smart-cash-world",
+      "profile": {
+        "individualAnnualIncome": { "amount": 50000, "currency": "CAD" },
+        "householdAnnualIncome": { "amount": 0, "currency": "CAD" }
+      },
+      "expectedStatus": "belowPublishedMinimum",
+      "expectedClosestType": "individualAnnualIncome",
+      "expectedShortfall": 1,
+      "expectedMissingTypes": []
+    },
+    {
+      "caseId": "mbna-one-dollar-over-meets",
+      "cardId": "mbna-smart-cash-world",
+      "profile": { "individualAnnualIncome": { "amount": 50001, "currency": "CAD" } },
+      "expectedStatus": "meetsPublishedMinimum",
+      "expectedMatchedType": "individualAnnualIncome"
+    },
+    {
+      "caseId": "simplii-ignores-personal-income-because-household-is-the-only-path",
+      "cardId": "simplii-cashback-visa",
+      "profile": { "individualAnnualIncome": { "amount": 100000, "currency": "CAD" } },
+      "expectedStatus": "needsMoreInformation",
+      "expectedMissingTypes": ["householdAnnualIncome"]
+    },
+    {
+      "caseId": "amex-preserves-no-published-minimum",
+      "cardId": "amex-simplycash-preferred",
+      "profile": {},
+      "expectedStatus": "noIssuerPublishedMinimumFound",
+      "expectedMissingTypes": []
+    },
+    {
+      "caseId": "home-trust-one-dollar-short",
+      "cardId": "home-trust-preferred-visa",
+      "profile": { "individualAnnualIncome": { "amount": 14999, "currency": "CAD" } },
+      "expectedStatus": "belowPublishedMinimum",
+      "expectedClosestType": "individualAnnualIncome",
+      "expectedShortfall": 1,
+      "expectedMissingTypes": []
+    }
+  ]
+}

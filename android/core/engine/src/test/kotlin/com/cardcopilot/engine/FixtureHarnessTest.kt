@@ -1,7 +1,11 @@
 package com.cardcopilot.engine
 
 import com.cardcopilot.engine.engine.RecommendationEngine
+import com.cardcopilot.engine.engine.CreditAdvisor
+import com.cardcopilot.engine.engine.CreditCheckoutAdvisor
+import com.cardcopilot.engine.engine.CreditOpportunityStatus
 import com.cardcopilot.engine.loading.SeedLoader
+import com.cardcopilot.engine.models.CardCredit
 import com.cardcopilot.engine.models.CardState
 import com.cardcopilot.engine.models.OwnerState
 import com.cardcopilot.engine.models.PurchaseContext
@@ -20,10 +24,35 @@ class FixtureHarnessTest {
     @Serializable
     private data class FixtureFile(
         val cases: List<FixtureCase>,
+        val creditCases: List<CreditFixtureCase>,
         val pinnedValuations: PinnedValuations
     ) {
         @Serializable
         data class PinnedValuations(val amexMembershipRewards: Double)
+    }
+
+    @Serializable
+    private data class CreditFixtureCase(
+        val caseId: String,
+        val asOf: String,
+        val cardId: String,
+        val credit: CardCredit,
+        val cardState: CardState,
+        val purchase: PurchaseContext? = null,
+        val expected: Expected
+    ) {
+        @Serializable
+        data class Expected(
+            val windowId: String,
+            val expiresOn: String? = null,
+            val nextEligibleOn: String? = null,
+            val remainingAmount: Double,
+            val realizedAmount: Double,
+            val status: CreditOpportunityStatus,
+            val daysRemaining: Int? = null,
+            val checkoutCreditId: String? = null,
+            val checkoutCreditValueCad: Double? = null
+        )
     }
 
     @Serializable
@@ -240,6 +269,44 @@ class FixtureHarnessTest {
             }
             if (e.breakevenCentsPerPoint != null) {
                 assertEquals(e.breakevenCentsPerPoint, r.breakevenCentsPerPoint ?: Double.NaN, 0.005, ctx)
+            }
+        }
+    }
+
+    @Test
+    fun testCreditFixtures() {
+        val stream = javaClass.getResourceAsStream("/com/cardcopilot/engine/engine-fixtures.json")
+            ?: javaClass.classLoader.getResourceAsStream("com/cardcopilot/engine/engine-fixtures.json")
+        assertNotNull(stream, "engine-fixtures.json not found in test resources")
+        val content = stream!!.bufferedReader().use { it.readText() }
+        val fixtureFile = json.decodeFromString<FixtureFile>(content)
+
+        assertEquals(4, fixtureFile.creditCases.size)
+        assertEquals(4, fixtureFile.creditCases.map { it.caseId }.toSet().size, "duplicate credit caseId")
+
+        for (fixture in fixtureFile.creditCases) {
+            val ctx = "credit case ${fixture.caseId}"
+            val actual = CreditAdvisor.opportunity(
+                fixture.cardId, fixture.credit, fixture.cardState, fixture.asOf
+            )
+            assertNotNull(actual, ctx)
+            actual!!
+            assertEquals(fixture.expected.windowId, actual.window.id, ctx)
+            assertEquals(fixture.expected.expiresOn, actual.window.expiresOn, ctx)
+            assertEquals(fixture.expected.nextEligibleOn, actual.window.nextEligibleOn, ctx)
+            assertEquals(fixture.expected.remainingAmount, actual.remainingAmount, 0.005, ctx)
+            assertEquals(fixture.expected.realizedAmount, actual.realizedAmount, 0.005, ctx)
+            assertEquals(fixture.expected.status, actual.status, ctx)
+            assertEquals(fixture.expected.daysRemaining, actual.daysRemaining, ctx)
+            if (fixture.purchase != null) {
+                val checkout = CreditCheckoutAdvisor.bestMatch(
+                    fixture.cardId, listOf(fixture.credit), fixture.cardState,
+                    fixture.purchase, fixture.asOf
+                )
+                assertNotNull(checkout, ctx)
+                assertEquals(fixture.expected.checkoutCreditId, checkout!!.creditId, ctx)
+                assertEquals(requireNotNull(fixture.expected.checkoutCreditValueCad),
+                    checkout.valueCad, 0.005, ctx)
             }
         }
     }

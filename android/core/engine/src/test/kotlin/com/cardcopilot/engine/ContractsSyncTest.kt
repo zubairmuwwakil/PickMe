@@ -51,6 +51,22 @@ class ContractsSyncTest {
     }
 
     @Test
+    fun `packaged application requirements match the published contract byte for byte`() {
+        assertPackagedResourceMatchesContract(
+            contractName = "application-requirements.json",
+            resourcePath = "/com/cardcopilot/engine/application-requirements.json",
+        )
+    }
+
+    @Test
+    fun `packaged application requirement fixtures match the published contract byte for byte`() {
+        assertPackagedResourceMatchesContract(
+            contractName = "application-requirements-fixtures.json",
+            resourcePath = "/com/cardcopilot/engine/application-requirements-fixtures.json",
+        )
+    }
+
+    @Test
     fun `packaged engine fixtures match the published contract byte for byte`() {
         assertPackagedResourceMatchesContract(
             contractName = "engine-fixtures.json",

@@ -39,6 +39,8 @@ PAIRS = [
     ("card-catalogue.json", "card-catalogue.schema.json"),
     ("benefits-catalogue.json", "benefits-catalogue.schema.json"),
     ("candidate-catalogue.json", "candidate-catalogue.schema.json"),
+    ("application-requirements.json", "application-requirements.schema.json"),
+    ("application-requirements-fixtures.json", "application-requirements-fixtures.schema.json"),
     ("owner-conditions.json", "owner-conditions.schema.json"),
     ("purchase-categories.json", "purchase-categories.schema.json"),
     # engine-fixtures shipped a schema inside the release digest that nothing ever ran. It is

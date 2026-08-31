@@ -44,15 +44,20 @@ class RecommendationEngine(
             val ownedSet = ownerState.ownedCardIds.toSet()
             catalogue.cards.filter { ownedSet.contains(it.cardId) }
         }
-        val scored = candidateCards.map { Scorer.score(it, purchase, ownerState, asOf) }
+        val scored = candidateCards.map { card ->
+            val score = Scorer.score(card, purchase, ownerState, asOf)
+            if (score.excluded) score else score.copy(
+                checkoutCredit = CreditCheckoutAdvisor.bestMatch(card, purchase, ownerState, asOf)
+            )
+        }
         val scores = scored.filter { !it.excluded }
         if (scores.isEmpty()) {
             return RecommendationOutcome.CannotAdvise(scored.mapNotNull { it.exclusionReason })
         }
 
-        val declared = rank(scores, purchase) { it.netValueCad }
-        val floor = rank(scores, purchase) { it.floorNetValueCad }
-        val aspirational = rank(scores, purchase) { it.aspirationalNetValueCad }
+        val declared = rank(scores, purchase) { it.decisionValueCad }
+        val floor = rank(scores, purchase) { it.floorDecisionValueCad }
+        val aspirational = rank(scores, purchase) { it.aspirationalDecisionValueCad }
 
         var sensitive = false
         var direction: ValuationDirection? = null
@@ -138,14 +143,15 @@ class RecommendationEngine(
         }
         val defaultId = ownerState.defaultCardId
 
-        var needed = incumbent.netValueCad + (if (incumbent.cardId == defaultId) requiredAdvantage else 0.0)
+        var needed = incumbent.decisionValueCad + (if (incumbent.cardId == defaultId) requiredAdvantage else 0.0)
         if (incumbent.cardId != defaultId && pointsCard.cardId != defaultId) {
             val defaultScore = ranked.firstOrNull { it.cardId == defaultId }
             if (defaultScore != null) {
-                needed = maxOf(needed, defaultScore.netValueCad + requiredAdvantage)
+                needed = maxOf(needed, defaultScore.decisionValueCad + requiredAdvantage)
             }
         }
-        return (needed + pointsCard.fxCostCad) * 100.0 / pointsCard.rewardUnits
+        return (needed - (pointsCard.checkoutCredit?.valueCad ?: 0.0) + pointsCard.fxCostCad) *
+            100.0 / pointsCard.rewardUnits
     }
 
     private fun rank(

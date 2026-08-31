@@ -18,6 +18,43 @@ public struct Carry: Codable, Equatable, Sendable {
     public init(drawerCards: [String]) { self.drawerCards = drawerCards }
 }
 
+/// What the owner has told PickMe about an enrollment-gated credit. Unknown fails closed for
+/// checkout use but still permits a reminder to enroll; it is never silently treated as false.
+public enum CreditEnrollmentStatus: String, Codable, Equatable, Sendable {
+    case unknown, enrolled, notEnrolled, notRequired
+}
+
+/// Aggregate state for one credit window. `consumedAmount` includes owner-declared/pending use so
+/// PickMe does not encourage the same credit twice while an issuer posting is delayed.
+/// `realizedAmount` is narrower: a statement or owner confirmation says the credit actually posted.
+public struct CreditWindowState: Codable, Equatable, Sendable {
+    public var consumedAmount: Double
+    public var realizedAmount: Double
+    public var updatedAt: String
+
+    public init(consumedAmount: Double = 0, realizedAmount: Double = 0, updatedAt: String) {
+        self.consumedAmount = consumedAmount
+        self.realizedAmount = realizedAmount
+        self.updatedAt = updatedAt
+    }
+}
+
+/// Owner/account facts for one catalogue credit. Windows are aggregates rather than transactions;
+/// this keeps PickMe a decision copilot while allowing a small bounded history for renewal math.
+public struct CreditState: Codable, Equatable, Sendable {
+    public var enrollmentStatus: CreditEnrollmentStatus
+    public var windows: [String: CreditWindowState]
+    /// Last successful redemption for rolling schedules such as one reimbursement every 48 months.
+    public var lastRedemptionAt: String?
+
+    public init(enrollmentStatus: CreditEnrollmentStatus = .unknown,
+                windows: [String: CreditWindowState] = [:], lastRedemptionAt: String? = nil) {
+        self.enrollmentStatus = enrollmentStatus
+        self.windows = windows
+        self.lastRedemptionAt = lastRedemptionAt
+    }
+}
+
 /// The Tangerine Money-Back categories an owner can select on their account.
 ///
 /// Raw values use the engine's purchase vocabulary. Categories that depend on purchase facts
@@ -43,6 +80,10 @@ public enum TangerineMoneyBackCategory: String, CaseIterable, Codable, Sendable 
 /// A `nil` field means unresolved — the engine skips rules that depend on it rather than guessing.
 public struct CardState: Codable, Equatable, Sendable {
     public var capProgress: [String: Double]?
+    /// Generic account-open date for anniversary credit windows. Existing named cap anchors remain
+    /// until their own migration; credits do not add another issuer-specific month field.
+    public var accountOpenedAt: String?
+    public var creditStates: [String: CreditState]?
     public var scotiaAccountYearAnchorMonth: Int?
     public var selectedCategories: [String]?
     public var treatAsAllSelected: Bool?

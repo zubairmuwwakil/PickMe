@@ -50,6 +50,8 @@ public struct AcquisitionCandidate: Equatable, Sendable {
     /// "show other markets" override) — it only gates `recommended`, so a US card never surfaces
     /// as a default suggestion to a Canadian resident while still being comparable on request.
     public let eligibleForResident: Bool
+    /// Assessment against issuer-published income paths only. It never predicts approval.
+    public let incomeAssessment: IncomeRequirementAssessment
 }
 
 public struct AcquisitionAnalysis: Equatable, Sendable {
@@ -62,7 +64,27 @@ public struct AcquisitionAnalysis: Equatable, Sendable {
     public let candidates: [AcquisitionCandidate]
 
     public var recommended: [AcquisitionCandidate] {
-        candidates.filter { $0.verdict == .worthAdding && $0.eligibleForResident }
+        candidates.filter {
+            $0.verdict == .worthAdding && $0.eligibleForResident
+                && ($0.incomeAssessment.isIncomeReady
+                    || $0.incomeAssessment.status == .requirementsUnavailable)
+        }
+    }
+
+    public var incomeReadyCandidates: [AcquisitionCandidate] {
+        candidates.filter { $0.incomeAssessment.isIncomeReady }
+    }
+
+    public var incomeInformationNeeded: [AcquisitionCandidate] {
+        candidates.filter { $0.incomeAssessment.status == .needsMoreInformation }
+    }
+
+    public var incomeCloseMatches: [AcquisitionCandidate] {
+        candidates.filter { $0.incomeAssessment.status == .belowPublishedMinimum }
+    }
+
+    public var incomeUnassessedCandidates: [AcquisitionCandidate] {
+        candidates.filter { $0.incomeAssessment.status == .requirementsUnavailable }
     }
 
     public func candidate(_ cardId: String) -> AcquisitionCandidate? {
@@ -75,11 +97,17 @@ public struct AcquisitionAnalyzer {
     /// References into `catalogue`, not definitions — see CandidateSet.
     let candidateCardIds: [String]
     let ownerState: OwnerState
+    let applicationRequirements: ApplicationRequirementCatalogue?
+    let applicantIncomeProfile: ApplicantIncomeProfile
 
-    public init(catalogue: Catalogue, candidateCardIds: [String], ownerState: OwnerState) {
+    public init(catalogue: Catalogue, candidateCardIds: [String], ownerState: OwnerState,
+                applicationRequirements: ApplicationRequirementCatalogue? = nil,
+                applicantIncomeProfile: ApplicantIncomeProfile = .init()) {
         self.catalogue = catalogue
         self.candidateCardIds = candidateCardIds
         self.ownerState = ownerState
+        self.applicationRequirements = applicationRequirements
+        self.applicantIncomeProfile = applicantIncomeProfile
     }
 
     public func analyze(_ distribution: SpendDistribution, asOf: String) -> AcquisitionAnalysis {
@@ -123,6 +151,9 @@ public struct AcquisitionAnalyzer {
             let net = marginal - fee
             let eligibleMarkets = card.eligibility?.residency ?? [card.market]
             let eligibleForResident = eligibleMarkets.contains(ownerState.resolvedMarket)
+            let incomeAssessment = ApplicationRequirementEvaluator.assess(
+                requirements: applicationRequirements?.requirement(for: card.cardId),
+                profile: applicantIncomeProfile)
             let gains = combined.winnersByBucket.keys.compactMap { label -> AcquisitionBucketGain? in
                 guard combined.winnersByBucket[label]?.contains(card.cardId) == true else {
                     return nil
@@ -163,7 +194,8 @@ public struct AcquisitionAnalyzer {
                     && ownerState.cardStates[card.cardId]?.feeWaiverActive == nil,
                 neverScorable: !scorable,
                 bucketGains: gains,
-                eligibleForResident: eligibleForResident))
+                eligibleForResident: eligibleForResident,
+                incomeAssessment: incomeAssessment))
         }
         results.sort {
             $0.netAnnualValueCad != $1.netAnnualValueCad

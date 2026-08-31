@@ -3,9 +3,32 @@ import XCTest
 
 private struct FixtureFile: Decodable {
     let cases: [FixtureCase]
+    let creditCases: [CreditFixtureCase]
     let pinnedValuations: PinnedValuations
 
     struct PinnedValuations: Decodable { let amexMembershipRewards: Double }
+}
+
+private struct CreditFixtureCase: Decodable {
+    let caseId: String
+    let asOf: String
+    let cardId: String
+    let credit: CardCredit
+    let cardState: CardState
+    let purchase: PurchaseContext?
+    let expected: Expected
+
+    struct Expected: Decodable {
+        let windowId: String
+        let expiresOn: String?
+        let nextEligibleOn: String?
+        let remainingAmount: Double
+        let realizedAmount: Double
+        let status: CreditOpportunityStatus
+        let daysRemaining: Int?
+        let checkoutCreditId: String?
+        let checkoutCreditValueCad: Double?
+    }
 }
 
 private struct FixtureCase: Decodable {
@@ -194,6 +217,43 @@ final class FixtureHarnessTests: XCTestCase {
             if let a = e.alternateWinner { XCTAssertEqual(r.alternateWinnerCardId, a, ctx) }
             if let b = e.breakevenCentsPerPoint {
                 XCTAssertEqual(r.breakevenCentsPerPoint ?? .nan, b, accuracy: 0.005, ctx)
+            }
+        }
+    }
+
+    func testCreditFixtures() throws {
+        let url = try XCTUnwrap(Bundle.module.url(forResource: "engine-fixtures",
+                                                  withExtension: "json",
+                                                  subdirectory: "Fixtures"))
+        let file = try JSONDecoder().decode(FixtureFile.self, from: Data(contentsOf: url))
+        XCTAssertEqual(file.creditCases.count, 4)
+        XCTAssertEqual(Set(file.creditCases.map(\.caseId)).count, file.creditCases.count,
+                       "duplicate credit caseId")
+
+        for fixture in file.creditCases {
+            let ctx = "credit case \(fixture.caseId)"
+            let actual = try XCTUnwrap(
+                CreditAdvisor.opportunity(cardId: fixture.cardId, credit: fixture.credit,
+                                          cardState: fixture.cardState, asOf: fixture.asOf),
+                ctx
+            )
+            XCTAssertEqual(actual.window.id, fixture.expected.windowId, ctx)
+            XCTAssertEqual(actual.window.expiresOn, fixture.expected.expiresOn, ctx)
+            XCTAssertEqual(actual.window.nextEligibleOn, fixture.expected.nextEligibleOn, ctx)
+            XCTAssertEqual(actual.remainingAmount, fixture.expected.remainingAmount,
+                           accuracy: 0.005, ctx)
+            XCTAssertEqual(actual.realizedAmount, fixture.expected.realizedAmount,
+                           accuracy: 0.005, ctx)
+            XCTAssertEqual(actual.status, fixture.expected.status, ctx)
+            XCTAssertEqual(actual.daysRemaining, fixture.expected.daysRemaining, ctx)
+            if let purchase = fixture.purchase {
+                let checkout = try XCTUnwrap(CreditCheckoutAdvisor.bestMatch(
+                    cardId: fixture.cardId, credits: [fixture.credit],
+                    cardState: fixture.cardState, purchase: purchase, asOf: fixture.asOf
+                ), ctx)
+                XCTAssertEqual(checkout.creditId, fixture.expected.checkoutCreditId, ctx)
+                XCTAssertEqual(checkout.valueCad, fixture.expected.checkoutCreditValueCad ?? .nan,
+                               accuracy: 0.005, ctx)
             }
         }
     }

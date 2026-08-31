@@ -1,0 +1,162 @@
+{
+  "applicationRequirementsVersion": "1.0",
+  "verifiedAt": "2026-08-31",
+  "requirements": [
+    {
+      "cardId": "simplii-cashback-visa",
+      "coverage": "completePublishedSet",
+      "financialRequirements": {
+        "publicationStatus": "published",
+        "semantics": "any",
+        "options": [
+          {
+            "type": "householdAnnualIncome",
+            "operator": "atLeast",
+            "amount": { "amount": 15000, "currency": "CAD" }
+          }
+        ]
+      },
+      "sources": [
+        {
+          "url": "https://www.simplii.com/en/credit-cards/cash-back-visa.html",
+          "scope": "cardSpecific",
+          "verifiedAt": "2026-08-31"
+        },
+        {
+          "url": "https://www.simplii.com/en/faq.html",
+          "scope": "cardSpecific",
+          "verifiedAt": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "cardId": "amex-simplycash-preferred",
+      "coverage": "completePublishedSet",
+      "financialRequirements": {
+        "publicationStatus": "noIssuerPublishedMinimumFound",
+        "semantics": "unknown",
+        "options": []
+      },
+      "sources": [
+        {
+          "url": "https://www.americanexpress.com/en-ca/credit-cards/simply-cash-preferred/",
+          "scope": "cardSpecific",
+          "verifiedAt": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "cardId": "bmo-cashback-world-elite",
+      "coverage": "completePublishedSet",
+      "financialRequirements": {
+        "publicationStatus": "published",
+        "semantics": "any",
+        "options": [
+          {
+            "type": "individualAnnualIncome",
+            "operator": "atLeast",
+            "amount": { "amount": 80000, "currency": "CAD" }
+          },
+          {
+            "type": "householdAnnualIncome",
+            "operator": "atLeast",
+            "amount": { "amount": 150000, "currency": "CAD" }
+          }
+        ]
+      },
+      "sources": [
+        {
+          "url": "https://www.bmo.com/en-ca/main/personal/credit-cards/bmo-cashback-world-elite-mastercard/",
+          "scope": "cardSpecific",
+          "verifiedAt": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "cardId": "mbna-smart-cash-world",
+      "coverage": "partialPublishedSet",
+      "financialRequirements": {
+        "publicationStatus": "published",
+        "semantics": "any",
+        "options": [
+          {
+            "type": "individualAnnualIncome",
+            "operator": "greaterThan",
+            "amount": { "amount": 50000, "currency": "CAD" }
+          },
+          {
+            "type": "householdAnnualIncome",
+            "operator": "atLeast",
+            "amount": { "amount": 80000, "currency": "CAD" }
+          }
+        ]
+      },
+      "sources": [
+        {
+          "url": "https://www.mbna.ca/en/credit-cards/cash-back/smart-cash-world-mastercard",
+          "scope": "cardSpecific",
+          "verifiedAt": "2026-08-31"
+        },
+        {
+          "url": "https://www.mbna.ca/en/credit-cards/compare-cards",
+          "scope": "cardSpecific",
+          "verifiedAt": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "cardId": "home-trust-preferred-visa",
+      "coverage": "completePublishedSet",
+      "financialRequirements": {
+        "publicationStatus": "published",
+        "semantics": "any",
+        "options": [
+          {
+            "type": "individualAnnualIncome",
+            "operator": "atLeast",
+            "amount": { "amount": 15000, "currency": "CAD" }
+          }
+        ]
+      },
+      "sources": [
+        {
+          "url": "https://www.hometrust.ca/credit-cards/preferred-visa-card/",
+          "scope": "cardSpecific",
+          "verifiedAt": "2026-08-31"
+        },
+        {
+          "url": "https://visa.hometrust.ca/",
+          "scope": "cardSpecificApplication",
+          "verifiedAt": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "cardId": "rbc-cashback-preferred-we",
+      "coverage": "partialPublishedSet",
+      "financialRequirements": {
+        "publicationStatus": "published",
+        "semantics": "any",
+        "options": [
+          {
+            "type": "individualAnnualIncome",
+            "operator": "atLeast",
+            "amount": { "amount": 80000, "currency": "CAD" }
+          },
+          {
+            "type": "householdAnnualIncome",
+            "operator": "atLeast",
+            "amount": { "amount": 150000, "currency": "CAD" }
+          }
+        ]
+      },
+      "sources": [
+        {
+          "url": "https://www.rbcroyalbank.com/credit-cards/cash-back/rbc-preferred-world-elite-mastercard.html",
+          "scope": "cardSpecific",
+          "verifiedAt": "2026-08-31"
+        }
+      ]
+    }
+  ]
+}

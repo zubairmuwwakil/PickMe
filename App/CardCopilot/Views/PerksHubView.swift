@@ -37,6 +37,7 @@ struct PerksHubView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         headerSection
+                        CreditOpportunitySection(graph: graph)
                         protectionRadarCard(graph: graph)
                         searchAndFilterSection(graph: graph)
 

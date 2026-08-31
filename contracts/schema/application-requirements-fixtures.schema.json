@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pickme.local/contracts/application-requirements-fixtures.schema.json",
+  "title": "Application requirement cross-language fixtures",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fixturesVersion", "cases"],
+  "properties": {
+    "fixturesVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$" },
+    "cases": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/case" }
+    }
+  },
+  "$defs": {
+    "money": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount": { "type": "number", "minimum": 0 },
+        "currency": { "enum": ["CAD", "USD"] }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "individualAnnualIncome": { "$ref": "#/$defs/money" },
+        "householdAnnualIncome": { "$ref": "#/$defs/money" }
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["caseId", "cardId", "profile", "expectedStatus"],
+      "properties": {
+        "caseId": { "type": "string" },
+        "cardId": { "type": "string" },
+        "profile": { "$ref": "#/$defs/profile" },
+        "expectedStatus": {
+          "enum": ["meetsPublishedMinimum", "belowPublishedMinimum", "needsMoreInformation", "noIssuerPublishedMinimumFound"]
+        },
+        "expectedMatchedType": { "enum": ["individualAnnualIncome", "householdAnnualIncome"] },
+        "expectedClosestType": { "enum": ["individualAnnualIncome", "householdAnnualIncome"] },
+        "expectedShortfall": { "type": "number", "minimum": 0 },
+        "expectedMissingTypes": {
+          "type": "array",
+          "items": { "enum": ["individualAnnualIncome", "householdAnnualIncome"] }
+        }
+      }
+    }
+  }
+}

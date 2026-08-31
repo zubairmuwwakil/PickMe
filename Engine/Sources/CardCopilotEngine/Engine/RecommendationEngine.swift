@@ -65,16 +65,24 @@ public struct RecommendationEngine {
         let candidateCards = ownerState.ownedCardIds.isEmpty
             ? catalogue.cards.filter { $0.market == ownerState.resolvedMarket }
             : catalogue.cards.filter { ownerState.ownedCardIds.contains($0.cardId) }
-        let scored = candidateCards
-            .map { Scorer.score(card: $0, purchase: purchase, ownerState: ownerState, asOf: asOf) }
+        let scored = candidateCards.map { card -> CandidateScore in
+            var score = Scorer.score(card: card, purchase: purchase,
+                                     ownerState: ownerState, asOf: asOf)
+            if !score.excluded {
+                score.checkoutCredit = CreditCheckoutAdvisor.bestMatch(
+                    card: card, purchase: purchase, ownerState: ownerState, asOf: asOf
+                )
+            }
+            return score
+        }
         let scores = scored.filter { !$0.excluded }
         guard !scores.isEmpty else {
             return .cannotAdvise(reasons: scored.compactMap(\.exclusionReason))
         }
 
-        let declared = rank(scores, purchase: purchase, value: { $0.netValueCad })
-        let floor = rank(scores, purchase: purchase, value: { $0.floorNetValueCad })
-        let aspirational = rank(scores, purchase: purchase, value: { $0.aspirationalNetValueCad })
+        let declared = rank(scores, purchase: purchase, value: { $0.decisionValueCad })
+        let floor = rank(scores, purchase: purchase, value: { $0.floorDecisionValueCad })
+        let aspirational = rank(scores, purchase: purchase, value: { $0.aspirationalDecisionValueCad })
 
         var sensitive = false
         var direction: ValuationDirection?
@@ -156,13 +164,14 @@ public struct RecommendationEngine {
         let defaultId = ownerState.defaultCardId
 
         // The points card must clear the incumbent, plus the switch threshold over the default.
-        var needed = incumbent.netValueCad
+        var needed = incumbent.decisionValueCad
             + (incumbent.cardId == defaultId ? requiredAdvantage : 0)
         if incumbent.cardId != defaultId, pointsCard.cardId != defaultId,
            let defaultScore = ranked.first(where: { $0.cardId == defaultId }) {
-            needed = max(needed, defaultScore.netValueCad + requiredAdvantage)
+            needed = max(needed, defaultScore.decisionValueCad + requiredAdvantage)
         }
-        return (needed + pointsCard.fxCostCad) * 100 / pointsCard.rewardUnits
+        return (needed - (pointsCard.checkoutCredit?.valueCad ?? 0) + pointsCard.fxCostCad)
+            * 100 / pointsCard.rewardUnits
     }
 
     private func rank(_ scores: [CandidateScore], purchase: PurchaseContext,

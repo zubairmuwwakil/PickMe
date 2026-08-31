@@ -114,6 +114,9 @@ struct CheckoutFlowView: View {
         .onReceive(NotificationCenter.default.publisher(for: .openWalletCaptureStatus)) { _ in
             router.show(.sync)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .openCreditReminders)) { _ in
+            router.selectTab(.perks)
+        }
     }
 
     @ViewBuilder

@@ -36,7 +36,11 @@ public struct CardContribution: Equatable, Sendable {
     /// fee from this number is the classic wrong answer.
     public let grossRewardValueCad: Double
     public let annualFeeCad: Double
-    /// `marginalValueCad − annualFeeCad`. The ranking key.
+    /// Issuer credits the owner confirmed actually posted. Unspent credits never enter this value.
+    public let realizedCreditValueCad: Double
+    /// Current unused amount, disclosed as recoverable upside but excluded from the verdict.
+    public let unspentCreditPotentialCad: Double
+    /// `marginalValueCad + realizedCreditValueCad − annualFeeCad`. The ranking key.
     public let netContributionCad: Double
     public let verdict: PortfolioVerdict
     /// Annual value the owner must get from benefits this engine does not price, for the fee to
@@ -132,6 +136,9 @@ public struct PortfolioAnalyzer {
             let without = run(distribution, excluding: [card.cardId], asOf: asOf)
             let marginal = full.totalValueCad - without.totalValueCad
             let fee = ReportingCurrency.toReporting(card.fee.annual)
+            let creditRecovery = CreditPortfolioRecoveryCalculator.recovery(
+                card: card, cardState: ownerState.cardStates[card.cardId] ?? CardState(), asOf: asOf
+            )
             let wins = full.winnersByBucket
                 .filter { $0.value.contains(card.cardId) }
                 .keys.sorted()
@@ -141,9 +148,12 @@ public struct PortfolioAnalyzer {
                 marginalValueCad: marginal,
                 grossRewardValueCad: full.valueByCard[card.cardId] ?? 0,
                 annualFeeCad: fee,
-                netContributionCad: marginal - fee,
-                verdict: verdict(for: card, marginal: marginal, fee: fee),
-                requiredBenefitValueCad: max(0, fee - marginal),
+                realizedCreditValueCad: creditRecovery.realizedCad,
+                unspentCreditPotentialCad: creditRecovery.unspentPotentialCad,
+                netContributionCad: marginal + creditRecovery.realizedCad - fee,
+                verdict: verdict(for: card, marginal: marginal + creditRecovery.realizedCad,
+                                 fee: fee),
+                requiredBenefitValueCad: max(0, fee - marginal - creditRecovery.realizedCad),
                 feeWaiverUnresolved: feeWaiverUnresolved(card),
                 neverScorable: !full.scorableCards.contains(card.cardId),
                 winningBuckets: wins,

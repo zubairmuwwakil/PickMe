@@ -224,33 +224,127 @@ public struct Program: Codable, Equatable, Sendable {
     }
 }
 
-/// A recurring statement credit the issuer grants for holding the card — Platinum's annual travel
-/// and dining credits, Crypto.com's monthly streaming rebates. Deliberately NOT an earn rule: a
-/// credit does not depend on what the purchase was, so it never enters the checkout pick. It is
-/// keep/cancel and net-value input, which is why `RecommendationEngine` does not read it and the
-/// golden fixtures are unaffected by its presence.
-///
-/// `value` (renamed from `valueCad: Double` in catalogue 2.0, now `Money`) is the issuer's stated
-/// maximum, not a forecast of what the owner will actually use; whether a credit was redeemed is
-/// owner activity and lives with the consumer, not here.
+public enum CreditScheduleBasis: String, Codable, Equatable, Sendable {
+    case calendar, accountAnniversary, rolling
+}
+
+public enum CreditScheduleUnit: String, Codable, Equatable, Sendable {
+    case month, quarter, halfYear, year
+}
+
+/// A credit's reset rule. This is deliberately separate from `CapPeriod`: statement-credit
+/// eligibility includes rolling 48/54-month reimbursements and account anniversaries, neither of
+/// which is an earn-cap window. `intervalMonths` is required by the contract for anniversary and
+/// rolling schedules; `interval` defaults to one for calendar schedules.
+public struct CreditSchedule: Codable, Equatable, Sendable {
+    public var basis: CreditScheduleBasis
+    public var unit: CreditScheduleUnit?
+    public var interval: Int?
+    public var intervalMonths: Int?
+    public var resetTimeZone: String?
+
+    public init(basis: CreditScheduleBasis, unit: CreditScheduleUnit? = nil,
+                interval: Int? = nil, intervalMonths: Int? = nil,
+                resetTimeZone: String? = nil) {
+        self.basis = basis
+        self.unit = unit
+        self.interval = interval
+        self.intervalMonths = intervalMonths
+        self.resetTimeZone = resetTimeZone
+    }
+}
+
+public enum CreditRedemptionMethod: String, Codable, Equatable, Sendable {
+    case statementCredit, portalCredit, accountCredit, reimbursement
+}
+
+public enum CreditEnrollmentChannel: String, Codable, Equatable, Sendable {
+    case issuerPortal, issuerApp, partnerAccount, phone
+}
+
+public struct CreditEnrollment: Codable, Equatable, Sendable {
+    public var required: Bool
+    public var channel: CreditEnrollmentChannel?
+    public var url: String?
+
+    public init(required: Bool, channel: CreditEnrollmentChannel? = nil, url: String? = nil) {
+        self.required = required
+        self.channel = channel
+        self.url = url
+    }
+}
+
+public enum CreditCoverageStatus: String, Codable, Equatable, Sendable {
+    case complete, partial, unknown
+}
+
+public struct CreditCoverage: Codable, Equatable, Sendable {
+    public var status: CreditCoverageStatus
+    public var lastReviewedAt: String
+
+    public init(status: CreditCoverageStatus, lastReviewedAt: String) {
+        self.status = status
+        self.lastReviewedAt = lastReviewedAt
+    }
+}
+
+/// A standard recurring monetary credit. `value` is the issuer maximum PER WINDOW, not an
+/// annualized marketing total and not a forecast of owner use. Targeted offers and non-monetary
+/// certificates do not belong here. Owner consumption/posting state lives in `OwnerState`.
 public struct CardCredit: Codable, Equatable, Identifiable, Sendable {
     public var creditId: String
     public var label: String
     public var value: Money
-    public var period: CapPeriod
+    /// Legacy cadence. New and corrected records use `schedule`.
+    public var period: CapPeriod?
+    public var schedule: CreditSchedule?
+    public var redemptionMethod: CreditRedemptionMethod?
+    public var purchasePredicate: Predicate?
+    public var minimumTransaction: Money?
+    public var allowsPartialUse: Bool?
+    public var enrollment: CreditEnrollment?
+    public var effectiveFrom: String?
+    public var effectiveTo: String?
     public var sourceType: SourceType
     public var lastVerifiedAt: String
+    public var sources: [String]?
 
     public var id: String { creditId }
 
-    public init(creditId: String, label: String, value: Money, period: CapPeriod,
-                sourceType: SourceType, lastVerifiedAt: String) {
+    public init(creditId: String, label: String, value: Money, period: CapPeriod? = nil,
+                schedule: CreditSchedule? = nil,
+                redemptionMethod: CreditRedemptionMethod? = nil,
+                purchasePredicate: Predicate? = nil, minimumTransaction: Money? = nil,
+                allowsPartialUse: Bool? = nil, enrollment: CreditEnrollment? = nil,
+                effectiveFrom: String? = nil, effectiveTo: String? = nil,
+                sourceType: SourceType, lastVerifiedAt: String, sources: [String]? = nil) {
         self.creditId = creditId
         self.label = label
         self.value = value
         self.period = period
+        self.schedule = schedule
+        self.redemptionMethod = redemptionMethod
+        self.purchasePredicate = purchasePredicate
+        self.minimumTransaction = minimumTransaction
+        self.allowsPartialUse = allowsPartialUse
+        self.enrollment = enrollment
+        self.effectiveFrom = effectiveFrom
+        self.effectiveTo = effectiveTo
         self.sourceType = sourceType
         self.lastVerifiedAt = lastVerifiedAt
+        self.sources = sources
+    }
+
+    public var effectiveSchedule: CreditSchedule? {
+        if let schedule { return schedule }
+        switch period {
+        case .calendarMonth: return CreditSchedule(basis: .calendar, unit: .month)
+        case .calendarQuarter: return CreditSchedule(basis: .calendar, unit: .quarter)
+        case .calendarYear: return CreditSchedule(basis: .calendar, unit: .year)
+        case .accountYear: return CreditSchedule(basis: .accountAnniversary, intervalMonths: 12)
+        case .statementYear: return CreditSchedule(basis: .accountAnniversary, intervalMonths: 12)
+        case nil: return nil
+        }
     }
 }
 
@@ -315,6 +409,9 @@ public struct CardProduct: Codable, Equatable, Identifiable, Sendable {
     /// before credits existed still decodes, exactly as `sources` and `stacking` do by being
     /// absent from this struct entirely.
     public var credits: [CardCredit]?
+    /// Whether issuer materials were reviewed comprehensively for recurring monetary credits.
+    /// Without `.complete`, an absent `credits` array means unreviewed rather than "none".
+    public var creditCoverage: CreditCoverage?
     /// Set when the issuer has discontinued the product. The card is never deleted from the
     /// catalogue and its id is never reused: ledgers, prediction rows, and other repos' vendored
     /// copies all key on that id, and an id that stops resolving turns history into orphans.
@@ -347,6 +444,7 @@ public struct CardProduct: Codable, Equatable, Identifiable, Sendable {
                 program: Program, fxRules: [FxRule], earnRules: [EarnRule], caps: [Cap],
                 perTransactionRewardVisibility: String, lastVerifiedAt: String,
                 credits: [CardCredit]? = nil,
+                creditCoverage: CreditCoverage? = nil,
                 lifecycleStatus: ProductLifecycleStatus? = nil, effectiveTo: String? = nil) {
         self.cardId = cardId
         self.officialName = officialName
@@ -366,6 +464,7 @@ public struct CardProduct: Codable, Equatable, Identifiable, Sendable {
         self.perTransactionRewardVisibility = perTransactionRewardVisibility
         self.lastVerifiedAt = lastVerifiedAt
         self.credits = credits
+        self.creditCoverage = creditCoverage
         self.lifecycleStatus = lifecycleStatus
         self.effectiveTo = effectiveTo
     }

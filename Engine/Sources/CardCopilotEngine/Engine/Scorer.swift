@@ -42,6 +42,13 @@ public struct CandidateScore: Equatable, Sendable {
     public let warnings: [Warning]
     public let excluded: Bool
     public let exclusionReason: String?
+    public var checkoutCredit: CheckoutCreditMatch? = nil
+
+    public var decisionValueCad: Double { netValueCad + (checkoutCredit?.valueCad ?? 0) }
+    public var floorDecisionValueCad: Double { floorNetValueCad + (checkoutCredit?.valueCad ?? 0) }
+    public var aspirationalDecisionValueCad: Double {
+        aspirationalNetValueCad + (checkoutCredit?.valueCad ?? 0)
+    }
 }
 
 /// Turns one card's matched earn rule into a net CAD value for this purchase.

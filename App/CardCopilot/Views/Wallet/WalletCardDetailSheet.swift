@@ -328,7 +328,7 @@ struct WalletCardDetailSheet: View {
                                 .font(.system(size: 14, weight: .semibold, design: .rounded))
                                 .foregroundStyle(.primary)
 
-                            Text(credit.period.rawValue.replacingOccurrences(of: "calendar", with: "").capitalized + " credit")
+                            Text(creditCadenceLabel(credit) + " credit")
                                 .font(.system(size: 11, weight: .medium))
                                 .foregroundStyle(.secondary)
                         }
@@ -346,6 +346,20 @@ struct WalletCardDetailSheet: View {
                     )
                 }
             }
+        }
+    }
+
+    private func creditCadenceLabel(_ credit: CardCredit) -> String {
+        guard let schedule = credit.effectiveSchedule else { return "Recurring" }
+        switch (schedule.basis, schedule.unit, schedule.intervalMonths) {
+        case (.calendar, .month, _): return "Monthly"
+        case (.calendar, .quarter, _): return "Quarterly"
+        case (.calendar, .halfYear, _): return "Semi-annual"
+        case (.calendar, .year, _): return "Annual"
+        case (.accountAnniversary, _, let months?):
+            return months == 12 ? "Anniversary-year" : "Every \(months) months"
+        case (.rolling, _, let months?): return "Every \(months) months"
+        default: return "Recurring"
         }
     }
 

@@ -286,6 +286,95 @@ data class Program(
     val unit: String
 )
 
+@Serializable
+enum class CreditScheduleBasis {
+    @SerialName("calendar") CALENDAR,
+    @SerialName("accountAnniversary") ACCOUNT_ANNIVERSARY,
+    @SerialName("rolling") ROLLING
+}
+
+@Serializable
+enum class CreditScheduleUnit {
+    @SerialName("month") MONTH,
+    @SerialName("quarter") QUARTER,
+    @SerialName("halfYear") HALF_YEAR,
+    @SerialName("year") YEAR
+}
+
+@Serializable
+data class CreditSchedule(
+    val basis: CreditScheduleBasis,
+    val unit: CreditScheduleUnit? = null,
+    val interval: Int? = null,
+    val intervalMonths: Int? = null,
+    val resetTimeZone: String? = null
+)
+
+@Serializable
+enum class CreditRedemptionMethod {
+    @SerialName("statementCredit") STATEMENT_CREDIT,
+    @SerialName("portalCredit") PORTAL_CREDIT,
+    @SerialName("accountCredit") ACCOUNT_CREDIT,
+    @SerialName("reimbursement") REIMBURSEMENT
+}
+
+@Serializable
+enum class CreditEnrollmentChannel {
+    @SerialName("issuerPortal") ISSUER_PORTAL,
+    @SerialName("issuerApp") ISSUER_APP,
+    @SerialName("partnerAccount") PARTNER_ACCOUNT,
+    @SerialName("phone") PHONE
+}
+
+@Serializable
+data class CreditEnrollment(
+    val required: Boolean,
+    val channel: CreditEnrollmentChannel? = null,
+    val url: String? = null
+)
+
+@Serializable
+data class CardCredit(
+    val creditId: String,
+    val label: String,
+    val value: Money,
+    val period: CapPeriod? = null,
+    val schedule: CreditSchedule? = null,
+    val redemptionMethod: CreditRedemptionMethod? = null,
+    val purchasePredicate: Predicate? = null,
+    val minimumTransaction: Money? = null,
+    val allowsPartialUse: Boolean? = null,
+    val enrollment: CreditEnrollment? = null,
+    val effectiveFrom: String? = null,
+    val effectiveTo: String? = null,
+    val sourceType: SourceType,
+    val lastVerifiedAt: String,
+    val sources: List<String>? = null
+) {
+    val effectiveSchedule: CreditSchedule?
+        get() = schedule ?: when (period) {
+            CapPeriod.CALENDAR_MONTH -> CreditSchedule(CreditScheduleBasis.CALENDAR, CreditScheduleUnit.MONTH)
+            CapPeriod.CALENDAR_QUARTER -> CreditSchedule(CreditScheduleBasis.CALENDAR, CreditScheduleUnit.QUARTER)
+            CapPeriod.CALENDAR_YEAR -> CreditSchedule(CreditScheduleBasis.CALENDAR, CreditScheduleUnit.YEAR)
+            CapPeriod.ACCOUNT_YEAR, CapPeriod.STATEMENT_YEAR ->
+                CreditSchedule(CreditScheduleBasis.ACCOUNT_ANNIVERSARY, intervalMonths = 12)
+            null -> null
+        }
+}
+
+@Serializable
+enum class CreditCoverageStatus {
+    @SerialName("complete") COMPLETE,
+    @SerialName("partial") PARTIAL,
+    @SerialName("unknown") UNKNOWN
+}
+
+@Serializable
+data class CreditCoverage(
+    val status: CreditCoverageStatus,
+    val lastReviewedAt: String
+)
+
 /**
  * Which market(s) a resident must be in to hold a card. Absent means "assume `[market]`" —
  * `AcquisitionAnalyzer` falls back to the card's own `market` when this is nil.
@@ -343,6 +432,8 @@ data class CardProduct(
     val caps: List<Cap> = emptyList(),
     val perTransactionRewardVisibility: String,
     val lastVerifiedAt: String,
+    val credits: List<CardCredit>? = null,
+    val creditCoverage: CreditCoverage? = null,
     /** Absent means active for catalogues written before tombstoning existed. */
     val lifecycleStatus: ProductLifecycleStatus? = null,
     /** Last date on which a withdrawn product remains scoreable. */

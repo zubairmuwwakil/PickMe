@@ -63,8 +63,32 @@ enum class TangerineMoneyBackCategory {
 }
 
 @Serializable
+enum class CreditEnrollmentStatus {
+    @SerialName("unknown") UNKNOWN,
+    @SerialName("enrolled") ENROLLED,
+    @SerialName("notEnrolled") NOT_ENROLLED,
+    @SerialName("notRequired") NOT_REQUIRED
+}
+
+@Serializable
+data class CreditWindowState(
+    val consumedAmount: Double = 0.0,
+    val realizedAmount: Double = 0.0,
+    val updatedAt: String
+)
+
+@Serializable
+data class CreditState(
+    val enrollmentStatus: CreditEnrollmentStatus = CreditEnrollmentStatus.UNKNOWN,
+    val windows: Map<String, CreditWindowState> = emptyMap(),
+    val lastRedemptionAt: String? = null
+)
+
+@Serializable
 data class CardState(
     val capProgress: Map<String, Double>? = null,
+    val accountOpenedAt: String? = null,
+    val creditStates: Map<String, CreditState>? = null,
     val scotiaAccountYearAnchorMonth: Int? = null,
     val selectedCategories: List<String>? = null,
     val treatAsAllSelected: Boolean? = null,

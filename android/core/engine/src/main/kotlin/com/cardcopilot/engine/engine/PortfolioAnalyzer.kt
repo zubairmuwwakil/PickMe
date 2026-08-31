@@ -30,6 +30,8 @@ data class CardContribution(
     val marginalValueCad: Double,
     val grossRewardValueCad: Double,
     val annualFeeCad: Double,
+    val realizedCreditValueCad: Double,
+    val unspentCreditPotentialCad: Double,
     val netContributionCad: Double,
     val verdict: PortfolioVerdict,
     val requiredBenefitValueCad: Double,
@@ -102,6 +104,9 @@ class PortfolioAnalyzer(
             val without = run(distribution, setOf(card.cardId), asOf)
             val marginal = full.totalValueCad - without.totalValueCad
             val fee = ReportingCurrency.toReporting(card.fee.annual)
+            val creditRecovery = CreditPortfolioRecoveryCalculator.recovery(
+                card, ownerState.cardStates[card.cardId] ?: CardState(), asOf
+            )
             val wins = full.winnersByBucket
                 .filter { it.value.contains(card.cardId) }
                 .keys.sorted()
@@ -112,9 +117,11 @@ class PortfolioAnalyzer(
                     marginalValueCad = marginal,
                     grossRewardValueCad = full.valueByCard[card.cardId] ?: 0.0,
                     annualFeeCad = fee,
-                    netContributionCad = marginal - fee,
-                    verdict = verdict(card, marginal, fee),
-                    requiredBenefitValueCad = maxOf(0.0, fee - marginal),
+                    realizedCreditValueCad = creditRecovery.realizedCad,
+                    unspentCreditPotentialCad = creditRecovery.unspentPotentialCad,
+                    netContributionCad = marginal + creditRecovery.realizedCad - fee,
+                    verdict = verdict(card, marginal + creditRecovery.realizedCad, fee),
+                    requiredBenefitValueCad = maxOf(0.0, fee - marginal - creditRecovery.realizedCad),
                     feeWaiverUnresolved = feeWaiverUnresolved(card),
                     neverScorable = !full.scorableCards.contains(card.cardId),
                     winningBuckets = wins,

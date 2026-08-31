@@ -1,6 +1,7 @@
 import SwiftUI
 import CardCopilotEngine
 import CardCopilotStore
+import ClerkKit
 
 /// Surfaces `PortfolioAnalyzer` — the keep/cancel question — for the first time anywhere in the
 /// app. Two facts stay visible everywhere on this screen, never buried behind a tap:
@@ -13,6 +14,8 @@ struct WalletHealthView: View {
 
     @State private var analysis: PortfolioAnalysis?
     @State private var acquisitionAnalysis: AcquisitionAnalysis?
+    @State private var applicantIncomeProfile = ApplicantIncomeProfile()
+    @State private var showingIncomeEditor = false
     @State private var mode: Mode = .wallet
 
     private enum Mode: String, CaseIterable, Identifiable {
@@ -119,7 +122,15 @@ struct WalletHealthView: View {
                 }
             }
             .task {
+                applicantIncomeProfile = ApplicantIncomeProfileStore().load(profileId: incomeProfileId)
                 recalculateAnalysis(graph: graph)
+            }
+            .sheet(isPresented: $showingIncomeEditor) {
+                ApplicantIncomeEditor(profile: applicantIncomeProfile) { profile in
+                    applicantIncomeProfile = profile
+                    ApplicantIncomeProfileStore().save(profile, profileId: incomeProfileId)
+                    recalculateAnalysis(graph: graph)
+                }
             }
         } else {
             EmptyView()
@@ -133,9 +144,13 @@ struct WalletHealthView: View {
         acquisitionAnalysis = AcquisitionAnalyzer(
             catalogue: graph.catalogue,
             candidateCardIds: graph.candidateCardIds,
-            ownerState: graph.ownerState)
+            ownerState: graph.ownerState,
+            applicationRequirements: try? SeedLoader.loadApplicationRequirements(),
+            applicantIncomeProfile: applicantIncomeProfile)
             .analyze(activeDistribution, asOf: today)
     }
+
+    private var incomeProfileId: String? { Clerk.shared.user?.id }
 
     private func profileSwitcher(graph: DependencyGraph) -> some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -338,6 +353,8 @@ struct WalletHealthView: View {
         VStack(alignment: .leading, spacing: 18) {
             acquisitionOutcome(acquisition)
 
+            incomeProfileCard
+
             VStack(alignment: .leading, spacing: 4) {
                 Text("Ranked by recurring net value")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -346,15 +363,116 @@ struct WalletHealthView: View {
                     .foregroundStyle(.secondary)
             }
 
+            if !acquisition.incomeReadyCandidates.isEmpty {
+                acquisitionCandidateSection(
+                    title: "Income-ready matches",
+                    detail: "You meet a published income path, or the issuer publishes no numeric minimum.",
+                    candidates: acquisition.incomeReadyCandidates,
+                    allCandidates: acquisition.candidates,
+                    candidateNames: candidateNames,
+                    cardNames: cardNames)
+            }
+
+            if !acquisition.incomeInformationNeeded.isEmpty {
+                acquisitionCandidateSection(
+                    title: "More information needed",
+                    detail: "Add the missing income type to check every published alternative.",
+                    candidates: acquisition.incomeInformationNeeded,
+                    allCandidates: acquisition.candidates,
+                    candidateNames: candidateNames,
+                    cardNames: cardNames)
+            }
+
+            if !acquisition.incomeCloseMatches.isEmpty {
+                acquisitionCandidateSection(
+                    title: "High-value close matches",
+                    detail: "Still visible for planning, with the exact gap to the closest published income path.",
+                    candidates: acquisition.incomeCloseMatches,
+                    allCandidates: acquisition.candidates,
+                    candidateNames: candidateNames,
+                    cardNames: cardNames)
+            }
+
+            if !acquisition.incomeUnassessedCandidates.isEmpty {
+                acquisitionCandidateSection(
+                    title: "Income screen unavailable",
+                    detail: "These cards remain visible because their contract-grade income requirements could not be loaded.",
+                    candidates: acquisition.incomeUnassessedCandidates,
+                    allCandidates: acquisition.candidates,
+                    candidateNames: candidateNames,
+                    cardNames: cardNames)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Label("What is not in the number", systemImage: "equal.circle")
+                    .font(.subheadline.weight(.semibold))
+                Text("Welcome bonuses, first-year fee rebates, approval odds, credit-score effects, insurance, lounges and statement credits are excluded. Income screening checks published minimums only and never predicts approval.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 2)
+        }
+    }
+
+    private var incomeProfileCard: some View {
+        Button { showingIncomeEditor = true } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "person.text.rectangle")
+                    .font(.title3)
+                    .foregroundStyle(.teal)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Application income profile")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text(incomeProfileSummary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text("Edit")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.teal)
+            }
+            .padding(14)
+            .background(Color.teal.opacity(0.08),
+                        in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var incomeProfileSummary: String {
+        var values: [String] = []
+        if let personal = applicantIncomeProfile.individualAnnualIncome {
+            values.append("Personal \(WalletHealthFormatting.money(personal))")
+        }
+        if let household = applicantIncomeProfile.householdAnnualIncome {
+            values.append("Household \(WalletHealthFormatting.money(household))")
+        }
+        return values.isEmpty
+            ? "Add personal and household income to screen issuer-published minimums. Stored only on this device."
+            : values.joined(separator: " · ") + " · stored only on this device"
+    }
+
+    private func acquisitionCandidateSection(
+        title: String, detail: String, candidates: [AcquisitionCandidate],
+        allCandidates: [AcquisitionCandidate], candidateNames: [String: String],
+        cardNames: [String: String]
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 16, weight: .bold, design: .rounded))
+            Text(detail)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
             VStack(spacing: 0) {
-                ForEach(Array(acquisition.candidates.enumerated()), id: \.element.cardId) {
-                    index, candidate in
+                ForEach(Array(candidates.enumerated()), id: \.element.cardId) { index, candidate in
                     AcquisitionCandidateRow(
-                        rank: index + 1,
+                        rank: (allCandidates.firstIndex { $0.cardId == candidate.cardId } ?? index) + 1,
                         candidate: candidate,
                         cardName: candidateNames[candidate.cardId] ?? candidate.cardId,
                         walletNames: cardNames)
-                    if index < acquisition.candidates.count - 1 {
+                    if index < candidates.count - 1 {
                         Divider().padding(.leading, 42)
                     }
                 }
@@ -362,15 +480,6 @@ struct WalletHealthView: View {
             .padding(.horizontal, 14)
             .background(Color(.secondarySystemGroupedBackground),
                         in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-            VStack(alignment: .leading, spacing: 8) {
-                Label("What is not in the number", systemImage: "equal.circle")
-                    .font(.subheadline.weight(.semibold))
-                Text("Welcome bonuses, first-year fee rebates, approval odds, credit-score effects, insurance, lounges and statement credits are excluded. Income eligibility is not assessed.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 2)
         }
     }
 
@@ -536,6 +645,9 @@ private struct AcquisitionCandidateRow: View {
                     Text(WalletHealthFormatting.acquisitionLabel(candidate.verdict))
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(WalletHealthFormatting.acquisitionColor(candidate.verdict))
+                    Text(WalletHealthFormatting.incomeLine(candidate.incomeAssessment))
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(WalletHealthFormatting.incomeColor(candidate.incomeAssessment.status))
                 }
                 Spacer(minLength: 8)
                 VStack(alignment: .trailing, spacing: 2) {
@@ -600,6 +712,10 @@ private struct AcquisitionCandidateRow: View {
                     .font(.caption)
                     .foregroundStyle(.orange)
             }
+            Label(WalletHealthFormatting.incomeDetail(candidate.incomeAssessment),
+                  systemImage: WalletHealthFormatting.incomeIcon(candidate.incomeAssessment.status))
+                .font(.caption)
+                .foregroundStyle(WalletHealthFormatting.incomeColor(candidate.incomeAssessment.status))
         }
         .padding(.bottom, 14)
     }
@@ -623,6 +739,94 @@ enum WalletHealthFormatting {
         formatter.currencySymbol = "$"
         formatter.maximumFractionDigits = value.truncatingRemainder(dividingBy: 1) == 0 ? 0 : 2
         return formatter.string(from: value as NSNumber) ?? "$\(Int(value))"
+    }
+
+    static func money(_ money: Money) -> String {
+        let prefix = money.currency == .cad ? "$" : "US$"
+        return prefix + integer(money.amount)
+    }
+
+    private static func integer(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: value as NSNumber) ?? String(Int(value))
+    }
+
+    static func incomeLine(_ assessment: IncomeRequirementAssessment) -> String {
+        switch assessment.status {
+        case .meetsPublishedMinimum:
+            return "Meets published \(incomeLabel(assessment.matchedType)) minimum"
+        case .belowPublishedMinimum:
+            return shortfallLine(assessment) ?? "Below published income minimum"
+        case .needsMoreInformation:
+            return assessment.missingTypes.isEmpty
+                ? "More income information needed"
+                : "Add \(assessment.missingTypes.map(incomeLabel).joined(separator: " or ")) income"
+        case .noIssuerPublishedMinimumFound:
+            return "No issuer-published income minimum"
+        case .requirementsUnavailable:
+            return "Published income requirements unavailable"
+        }
+    }
+
+    static func incomeDetail(_ assessment: IncomeRequirementAssessment) -> String {
+        switch assessment.status {
+        case .meetsPublishedMinimum:
+            return "Your reported income meets one published path. Approval still depends on the issuer's full assessment."
+        case .belowPublishedMinimum:
+            return (shortfallLine(assessment) ?? "Reported income is below the published minimum.")
+                + " The card remains visible for planning, not as an application recommendation."
+        case .needsMoreInformation:
+            var parts: [String] = []
+            if let gap = shortfallLine(assessment) { parts.append(gap + ".") }
+            if !assessment.missingTypes.isEmpty {
+                parts.append("Add \(assessment.missingTypes.map(incomeLabel).joined(separator: " or ")) income to check the remaining alternative.")
+            }
+            return parts.joined(separator: " ")
+        case .noIssuerPublishedMinimumFound:
+            return "The issuer asks for financial information but publishes no numeric income cutoff. This is not a claim that no minimum exists."
+        case .requirementsUnavailable:
+            return "PickMe has no contract-grade income requirement for this card yet."
+        }
+    }
+
+    static func incomeColor(_ status: IncomeRequirementAssessmentStatus) -> Color {
+        switch status {
+        case .meetsPublishedMinimum: .green
+        case .belowPublishedMinimum: .orange
+        case .needsMoreInformation: .blue
+        case .noIssuerPublishedMinimumFound: .secondary
+        case .requirementsUnavailable: .secondary
+        }
+    }
+
+    static func incomeIcon(_ status: IncomeRequirementAssessmentStatus) -> String {
+        switch status {
+        case .meetsPublishedMinimum: "checkmark.circle"
+        case .belowPublishedMinimum: "arrow.up.circle"
+        case .needsMoreInformation: "questionmark.circle"
+        case .noIssuerPublishedMinimumFound: "info.circle"
+        case .requirementsUnavailable: "exclamationmark.circle"
+        }
+    }
+
+    private static func shortfallLine(_ assessment: IncomeRequirementAssessment) -> String? {
+        guard let path = assessment.closestPath, let shortfall = path.shortfall else { return nil }
+        let percentage = path.shortfallPercentage.map {
+            String(format: "%.1f%%", $0 * 100)
+        }
+        return "\(incomeLabel(path.requirement.type).capitalized) income is \(money(shortfall)) below"
+            + (percentage.map { " (\($0))" } ?? "")
+            + " the published minimum"
+    }
+
+    private static func incomeLabel(_ type: IncomeRequirementType?) -> String {
+        switch type {
+        case .individualAnnualIncome: "personal"
+        case .householdAnnualIncome: "household"
+        case nil: "income"
+        }
     }
 
     static func verdictLabel(_ verdict: PortfolioVerdict) -> String {
@@ -662,5 +866,66 @@ enum WalletHealthFormatting {
         case .benefitsRequired: return .orange
         case .noEarnAdvantage: return .secondary
         }
+    }
+}
+
+private struct ApplicantIncomeEditor: View {
+    @Environment(\.dismiss) private var dismiss
+    let onSave: (ApplicantIncomeProfile) -> Void
+    @State private var individual: String
+    @State private var household: String
+
+    init(profile: ApplicantIncomeProfile, onSave: @escaping (ApplicantIncomeProfile) -> Void) {
+        self.onSave = onSave
+        _individual = State(initialValue: Self.editingValue(profile.individualAnnualIncome?.amount))
+        _household = State(initialValue: Self.editingValue(profile.householdAnnualIncome?.amount))
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Personal income", text: $individual)
+                        .keyboardType(.numberPad)
+                    TextField("Household income", text: $household)
+                        .keyboardType(.numberPad)
+                } header: {
+                    Text("Annual income")
+                } footer: {
+                    Text("Optional. Enter whole Canadian dollars. PickMe compares these values only with issuer-published income paths and stores them on this device.")
+                }
+                Section {
+                    Text("Meeting a published income minimum does not mean the issuer will approve an application. Credit history and unpublished underwriting criteria are not scored.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .navigationTitle("Income profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        onSave(ApplicantIncomeProfile(
+                            individualAnnualIncome: money(individual),
+                            householdAnnualIncome: money(household)))
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+
+    private func money(_ text: String) -> Money? {
+        let digits = text.filter(\.isNumber)
+        guard let amount = Double(digits), amount >= 0 else { return nil }
+        return Money(amount: amount, currency: .cad)
+    }
+
+    private static func editingValue(_ amount: Double?) -> String {
+        guard let amount else { return "" }
+        return String(Int(amount))
     }
 }

@@ -208,6 +208,29 @@ final class CopilotEnvironment {
         refreshAmbientDiagnostics()
     }
 
+    /// Persists one aggregate credit fact locally first and queues the complete owner state when
+    /// this device is account-bound. Credit tracking never creates or edits purchase records.
+    @discardableResult
+    func applyCreditAction(_ action: CreditStateAction, cardId: String, creditId: String,
+                           asOf: String) -> Bool {
+        guard let graph,
+              let card = graph.catalogue.cards.first(where: { $0.cardId == cardId }),
+              let credit = card.credits?.first(where: { $0.creditId == creditId }),
+              let owner = CreditStateEditor.applying(action, to: graph.ownerState,
+                                                      cardId: cardId, credit: credit,
+                                                      asOf: asOf) else { return false }
+        do {
+            try sync.accountOwnerStateStore.updateActive(owner)
+            if let userID = sync.accountOwnerStateStore.activeUserID {
+                try sync.ownerStateUploadQueue.enqueue(owner, forUserID: userID)
+            }
+            rebuild(ownerState: owner)
+            return true
+        } catch {
+            return false
+        }
+    }
+
     /// Completes the first-run gateway without forcing the owner into a separate wallet setup screen.
     /// The initial owner state is saved to the local store and derived session state is refreshed.
     func continuePrivately(session: CopilotSession) {

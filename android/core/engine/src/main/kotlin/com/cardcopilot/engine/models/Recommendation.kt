@@ -2,6 +2,7 @@ package com.cardcopilot.engine.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import com.cardcopilot.engine.engine.CheckoutCreditMatch
 
 @Serializable
 enum class Warning(val rawValue: String) {
@@ -63,8 +64,14 @@ data class CandidateScore(
     val aspirationalNetValueCad: Double,
     val warnings: List<Warning> = emptyList(),
     val excluded: Boolean = false,
-    val exclusionReason: String? = null
-)
+    val exclusionReason: String? = null,
+    val checkoutCredit: CheckoutCreditMatch? = null
+) {
+    val decisionValueCad: Double get() = netValueCad + (checkoutCredit?.valueCad ?: 0.0)
+    val floorDecisionValueCad: Double get() = floorNetValueCad + (checkoutCredit?.valueCad ?: 0.0)
+    val aspirationalDecisionValueCad: Double
+        get() = aspirationalNetValueCad + (checkoutCredit?.valueCad ?: 0.0)
+}
 
 @Serializable
 enum class ValuationDirection {

@@ -24,25 +24,28 @@ public struct RecommendationExplainer {
         let name = displayName(recommendation.winner.cardId)
         let verb = recommendation.switchedFromDefault || recommendation.defaultNotAccepted
             ? "Use" : "Stay on"
-        let headline = "\(verb) \(name) — about \(money(recommendation.winner.netValueCad)) back on this \(money(purchase.amountCad)) purchase."
+        let headline = "\(verb) \(name) — about \(money(recommendation.winner.decisionValueCad)) back on this \(money(purchase.amountCad)) purchase."
 
         let why: String
         if let rule = recommendation.winner.appliedRuleId {
             let fxClause = recommendation.winner.fxCostCad > 0
                 ? " minus \(money(recommendation.winner.fxCostCad)) foreign-transaction fee."
                 : "."
-            why = "Applied rule \(rule): \(money(recommendation.winner.grossRewardCad)) in rewards\(fxClause)"
+            let creditClause = recommendation.winner.checkoutCredit.map {
+                " Plus \(money($0.valueCad)) from your unused \($0.label)."
+            } ?? ""
+            why = "Applied rule \(rule): \(money(recommendation.winner.grossRewardCad)) in rewards\(fxClause)\(creditClause)"
         } else {
             why = "No earn rule applied."
         }
 
         var runnerUpLine: String?
         if let suppressed = recommendation.suppressedBetterCard {
-            let delta = suppressed.netValueCad - recommendation.winner.netValueCad
+            let delta = suppressed.decisionValueCad - recommendation.winner.decisionValueCad
             runnerUpLine = "\(displayName(suppressed.cardId)) is marginally better (+\(money(delta))) — not worth the wallet dig."
         } else if let runnerUp = recommendation.runnerUp {
-            let delta = recommendation.winner.netValueCad - runnerUp.netValueCad
-            runnerUpLine = "Next best: \(displayName(runnerUp.cardId)) (\(money(runnerUp.netValueCad))) — you'd give up \(money(delta))."
+            let delta = recommendation.winner.decisionValueCad - runnerUp.decisionValueCad
+            runnerUpLine = "Next best: \(displayName(runnerUp.cardId)) (\(money(runnerUp.decisionValueCad))) — you'd give up \(money(delta))."
         }
 
         var valuationLine: String?
