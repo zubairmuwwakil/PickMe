@@ -330,7 +330,23 @@ enum class CreditEnrollmentChannel {
 data class CreditEnrollment(
     val required: Boolean,
     val channel: CreditEnrollmentChannel? = null,
-    val url: String? = null
+    val url: String? = null,
+    val instructions: String? = null
+)
+
+@Serializable
+enum class CreditCardholderRole {
+    @SerialName("primary") PRIMARY,
+    @SerialName("additional") ADDITIONAL
+}
+
+@Serializable
+data class CreditEligibility(
+    val cardholderRoles: List<CreditCardholderRole>? = null,
+    val accountLevelLimit: Boolean? = null,
+    val accountStandingRequired: Boolean? = null,
+    val claimRequired: Boolean? = null,
+    val claimDeadlineDays: Int? = null
 )
 
 @Serializable
@@ -345,6 +361,8 @@ data class CardCredit(
     val minimumTransaction: Money? = null,
     val allowsPartialUse: Boolean? = null,
     val enrollment: CreditEnrollment? = null,
+    val eligibility: CreditEligibility? = null,
+    val usageTerms: List<String>? = null,
     val effectiveFrom: String? = null,
     val effectiveTo: String? = null,
     val sourceType: SourceType,

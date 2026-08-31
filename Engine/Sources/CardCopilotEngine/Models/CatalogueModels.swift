@@ -266,11 +266,36 @@ public struct CreditEnrollment: Codable, Equatable, Sendable {
     public var required: Bool
     public var channel: CreditEnrollmentChannel?
     public var url: String?
+    public var instructions: String?
 
-    public init(required: Bool, channel: CreditEnrollmentChannel? = nil, url: String? = nil) {
+    public init(required: Bool, channel: CreditEnrollmentChannel? = nil, url: String? = nil,
+                instructions: String? = nil) {
         self.required = required
         self.channel = channel
         self.url = url
+        self.instructions = instructions
+    }
+}
+
+public enum CreditCardholderRole: String, Codable, Equatable, Sendable {
+    case primary, additional
+}
+
+public struct CreditEligibility: Codable, Equatable, Sendable {
+    public var cardholderRoles: [CreditCardholderRole]?
+    public var accountLevelLimit: Bool?
+    public var accountStandingRequired: Bool?
+    public var claimRequired: Bool?
+    public var claimDeadlineDays: Int?
+
+    public init(cardholderRoles: [CreditCardholderRole]? = nil,
+                accountLevelLimit: Bool? = nil, accountStandingRequired: Bool? = nil,
+                claimRequired: Bool? = nil, claimDeadlineDays: Int? = nil) {
+        self.cardholderRoles = cardholderRoles
+        self.accountLevelLimit = accountLevelLimit
+        self.accountStandingRequired = accountStandingRequired
+        self.claimRequired = claimRequired
+        self.claimDeadlineDays = claimDeadlineDays
     }
 }
 
@@ -303,6 +328,8 @@ public struct CardCredit: Codable, Equatable, Identifiable, Sendable {
     public var minimumTransaction: Money?
     public var allowsPartialUse: Bool?
     public var enrollment: CreditEnrollment?
+    public var eligibility: CreditEligibility?
+    public var usageTerms: [String]?
     public var effectiveFrom: String?
     public var effectiveTo: String?
     public var sourceType: SourceType
@@ -316,6 +343,7 @@ public struct CardCredit: Codable, Equatable, Identifiable, Sendable {
                 redemptionMethod: CreditRedemptionMethod? = nil,
                 purchasePredicate: Predicate? = nil, minimumTransaction: Money? = nil,
                 allowsPartialUse: Bool? = nil, enrollment: CreditEnrollment? = nil,
+                eligibility: CreditEligibility? = nil, usageTerms: [String]? = nil,
                 effectiveFrom: String? = nil, effectiveTo: String? = nil,
                 sourceType: SourceType, lastVerifiedAt: String, sources: [String]? = nil) {
         self.creditId = creditId
@@ -328,6 +356,8 @@ public struct CardCredit: Codable, Equatable, Identifiable, Sendable {
         self.minimumTransaction = minimumTransaction
         self.allowsPartialUse = allowsPartialUse
         self.enrollment = enrollment
+        self.eligibility = eligibility
+        self.usageTerms = usageTerms
         self.effectiveFrom = effectiveFrom
         self.effectiveTo = effectiveTo
         self.sourceType = sourceType
