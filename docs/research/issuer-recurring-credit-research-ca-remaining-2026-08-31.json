@@ -1,0 +1,207 @@
+{
+  "reviewedAt": "2026-08-31",
+  "scope": {
+    "market": "CA",
+    "canonicalCatalogueVersion": "2.18",
+    "canonicalCanadianCards": 45,
+    "previouslyAuditedCanonicalCanadianCards": 43,
+    "remainingCanadianCardsReviewed": 2,
+    "excludedPriorResearchArtifact": "docs/research/issuer-recurring-credit-research-2026-08-31.json",
+    "notes": "This artifact audits only canonical Canadian-market cards not already present in the earlier recurring-credit research pack."
+  },
+  "summary": {
+    "cardsReviewed": 2,
+    "highConfidenceCredits": 0,
+    "mediumConfidenceClaims": 0,
+    "refusedClaims": 7,
+    "coverage": {
+      "complete": 0,
+      "partial": 0,
+      "unknown": 2
+    },
+    "productNameOrCardIdMismatches": 0,
+    "cardLevelRefusedClaims": 6,
+    "globalRefusals": 1
+  },
+  "cards": [
+    {
+      "cardId": "td-cash-back-visa-infinite",
+      "officialName": "TD Cash Back Visa Infinite Card",
+      "issuer": "TD Canada Trust",
+      "market": "CA",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "No defensible fixed recurring monetary credit was found in the current TD product page or cardholder welcome guide. The first-year annual-fee rebate is a welcome offer and is excluded. Deluxe TD Auto Club and the annual GigSky data plan are included services rather than fixed monetary reimbursements; Visa Infinite hotel privileges, merchant discounts, and insurance are also outside this research scope. Public TD pages were not treated as an exhaustive legal inventory, so an empty credits array is not proof that no qualifying credit can exist.",
+      "productIdentityMismatch": null,
+      "officialIssuerUrlsChecked": [
+        "https://www.td.com/ca/en/personal-banking/products/credit-cards/cash-back/cash-back-visa-infinite-card",
+        "https://www.td.com/ca/en/personal-banking/products/credit-cards/cash-back/cash-back-visa-infinite-card/welcome-guide"
+      ],
+      "reviewedSources": [
+        {
+          "url": "https://www.td.com/ca/en/personal-banking/products/credit-cards/cash-back/cash-back-visa-infinite-card",
+          "accessedAt": "2026-08-31",
+          "notes": "Current issuer product page reviewed for standard card benefits, current special-offer terms, fee rebate language, discounts, and included services."
+        },
+        {
+          "url": "https://www.td.com/ca/en/personal-banking/products/credit-cards/cash-back/cash-back-visa-infinite-card/welcome-guide",
+          "accessedAt": "2026-08-31",
+          "notes": "Current issuer welcome guide reviewed for cash-back redemption, standard cardholder perks, annual GigSky plan, Visa Infinite benefits, and included insurance/services."
+        }
+      ],
+      "credits": [],
+      "discrepanciesAgainstCurrentContract": [],
+      "endedOrChangedBenefits": [],
+      "refusals": [
+        {
+          "claim": "First-year annual-fee rebate for the primary cardholder and first additional cardholder",
+          "reason": "Issuer labels this as a current special/welcome offer available in the first year of a newly opened account; welcome offers are explicitly out of scope.",
+          "confidence": "refused",
+          "sources": [
+            {
+              "url": "https://www.td.com/ca/en/personal-banking/products/credit-cards/cash-back/cash-back-visa-infinite-card",
+              "accessedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "claim": "Deluxe TD Auto Club membership and one complimentary 1GB/15-day GigSky global mobile data plan per year",
+          "reason": "These are included services. TD does not present them as a fixed recurring monetary statement/account/portal credit or reimbursement, so they do not meet this pack's monetary-credit definition.",
+          "confidence": "refused",
+          "sources": [
+            {
+              "url": "https://www.td.com/ca/en/personal-banking/products/credit-cards/cash-back/cash-back-visa-infinite-card/welcome-guide",
+              "accessedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "claim": "Visa Infinite hotel privileges, Avis/Budget savings, and insurance reimbursements",
+          "reason": "Hotel privileges are not established as a stable fixed issuer credit, rental-car benefits are merchant discounts, and insurance is explicitly out of scope.",
+          "confidence": "refused",
+          "sources": [
+            {
+              "url": "https://www.td.com/ca/en/personal-banking/products/credit-cards/cash-back/cash-back-visa-infinite-card/welcome-guide",
+              "accessedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "rbc-cashback-preferred-we",
+      "officialName": "RBC Cash Back Preferred World Elite Mastercard",
+      "issuer": "Royal Bank of Canada",
+      "market": "CA",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "No defensible fixed recurring monetary credit was found after reviewing RBC's current product page, the issuer-hosted benefits guide, and the current card-change page. Cash-back earnings are variable purchase rewards, the complimentary DashPass benefit is an included subscription rather than a recurring fixed monetary reimbursement, Petro-Canada and Mastercard partner benefits are discounts/offers, and the RBC VIP Banking annual-fee rebate is conditional on a separate banking package rather than a standard benefit of every card account. The benefits-guide PDF is dated 09/2024, while the current RBC update page announces changes effective October 1, 2026; because issuer materials are fragmented across current and older documents, coverage remains unknown rather than complete.",
+      "productIdentityMismatch": null,
+      "officialIssuerUrlsChecked": [
+        "https://www.rbcroyalbank.com/credit-cards/cash-back/rbc-preferred-world-elite-mastercard.html",
+        "https://www.rbcroyalbank.com/credit-cards/cash-back/rbc-cash-back-preferred-world-elite-mastercard/rbc-cash-back-preferred-world-elite-mastercard-benefits-guide.pdf",
+        "https://www.rbcroyalbank.com/credit-cards/cardholders/cash-back-updates.html"
+      ],
+      "reviewedSources": [
+        {
+          "url": "https://www.rbcroyalbank.com/credit-cards/cash-back/rbc-preferred-world-elite-mastercard.html",
+          "accessedAt": "2026-08-31",
+          "notes": "Current issuer product page reviewed for standard benefits, cash-back redemption, partner offers, DashPass, Mastercard benefits, and current card identity."
+        },
+        {
+          "url": "https://www.rbcroyalbank.com/credit-cards/cash-back/rbc-cash-back-preferred-world-elite-mastercard/rbc-cash-back-preferred-world-elite-mastercard-benefits-guide.pdf",
+          "accessedAt": "2026-08-31",
+          "documentDate": "2024-09",
+          "notes": "Issuer-hosted six-page benefits guide reviewed visually and textually; it inventories cash-back rewards, partner benefits, insurance, Mastercard benefits, and DashPass terms but is older than current 2026 product updates."
+        },
+        {
+          "url": "https://www.rbcroyalbank.com/credit-cards/cardholders/cash-back-updates.html",
+          "accessedAt": "2026-08-31",
+          "notes": "Current issuer change notice reviewed for October 1, 2026 product changes, current/future benefit treatment, DashPass eligibility, and RBC VIP Banking annual-fee rebate language."
+        }
+      ],
+      "credits": [],
+      "discrepanciesAgainstCurrentContract": [],
+      "endedOrChangedBenefits": [
+        {
+          "label": "RBC Cash Back Preferred World Elite Mastercard product refresh",
+          "effectiveFrom": "2026-10-01",
+          "change": "RBC states the annual fee, additional-card fee, purchase rate, cash-back earn structure, and insurance package will change effective October 1, 2026. No new fixed recurring monetary credit was established by the reviewed change notice.",
+          "source": "https://www.rbcroyalbank.com/credit-cards/cardholders/cash-back-updates.html"
+        }
+      ],
+      "refusals": [
+        {
+          "claim": "Cash Back Credits redeemed to the card account",
+          "reason": "These are variable rewards earned from spend, not a fixed-value recurring monetary credit with a defined periodic maximum; rewards earnings are out of scope for this audit.",
+          "confidence": "refused",
+          "sources": [
+            {
+              "url": "https://www.rbcroyalbank.com/credit-cards/cash-back/rbc-preferred-world-elite-mastercard.html",
+              "accessedAt": "2026-08-31"
+            },
+            {
+              "url": "https://www.rbcroyalbank.com/credit-cards/cash-back/rbc-cash-back-preferred-world-elite-mastercard/rbc-cash-back-preferred-world-elite-mastercard-benefits-guide.pdf",
+              "accessedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "claim": "Complimentary DashPass subscription",
+          "reason": "RBC waives the DashPass subscription fee for an eligible complimentary period. The benefit is an included subscription, not a recurring fixed monetary reimbursement. The one-time refund of a subscription fee in the activation month for an already-charged subscriber does not establish a recurring credit.",
+          "confidence": "refused",
+          "sources": [
+            {
+              "url": "https://www.rbcroyalbank.com/credit-cards/cash-back/rbc-preferred-world-elite-mastercard.html",
+              "accessedAt": "2026-08-31"
+            },
+            {
+              "url": "https://www.rbcroyalbank.com/credit-cards/cardholders/cash-back-updates.html",
+              "accessedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "claim": "Petro-Canada savings, Mastercard Travel Rewards offers, and RBC VIP Banking annual-fee rebate",
+          "reason": "Petro-Canada is a per-litre merchant discount; Mastercard Travel Rewards are limited-time partner offers subject to changing terms; and the annual-fee rebate is conditional on holding a separate RBC VIP Banking package rather than being a standard recurring credit of the card itself.",
+          "confidence": "refused",
+          "sources": [
+            {
+              "url": "https://www.rbcroyalbank.com/credit-cards/cash-back/rbc-preferred-world-elite-mastercard.html",
+              "accessedAt": "2026-08-31"
+            },
+            {
+              "url": "https://www.rbcroyalbank.com/credit-cards/cardholders/cash-back-updates.html",
+              "accessedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "globalFindings": [
+    {
+      "findingId": "remaining-ca-scope",
+      "summary": "The canonical catalogue contains 45 Canadian-market cards. Forty-three are already present in docs/research/issuer-recurring-credit-research-2026-08-31.json, leaving exactly td-cash-back-visa-infinite and rbc-cashback-preferred-we for this artifact."
+    },
+    {
+      "findingId": "no-fixed-credit-found",
+      "summary": "No high- or medium-confidence fixed recurring monetary credit was established for either remaining card. Empty credits arrays are paired with unknown coverage and are not claims that the products have no possible monetary credits."
+    },
+    {
+      "findingId": "no-mcc-or-timezone-invention",
+      "summary": "No credit-level MCCs, reset time zones, enrollment channels, or merchant eligibility rules were inferred. No credit records were normalized."
+    },
+    {
+      "findingId": "product-identity",
+      "summary": "Current issuer pages use the same product names represented by the canonical cardIds for both remaining cards; no product-name or cardId mismatch was identified."
+    }
+  ],
+  "refusals": [
+    {
+      "scope": "completeness",
+      "reason": "Public issuer materials were not assumed exhaustive. Both cards remain unknown because the reviewed evidence supports exclusions of visible candidate benefits but does not prove that every possible standard monetary credit has been enumerated.",
+      "confidence": "refused"
+    }
+  ]
+}
