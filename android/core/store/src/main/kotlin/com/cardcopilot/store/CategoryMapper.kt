@@ -28,7 +28,12 @@ object CategoryMapper {
         BrandPrior(normalizedMerchantName("marriott"), "marriottDirect")
     )
 
-    fun predict(poiCategoryRaw: String?, merchantName: String): CategoryPrediction {
+    fun predict(poiCategoryRaw: String?, merchantName: String, merchantCategoryCode: Int? = null): CategoryPrediction {
+        val mccCategory = observedMccCategory(merchantCategoryCode)
+        if (mccCategory != null) {
+            return CategoryPrediction(mccCategory, ConfidenceSource.OBSERVED_MCC, listOf(mccCategory),
+                rawCategory = poiCategoryRaw, merchantCategoryCode = merchantCategoryCode)
+        }
         val normalizedMerchant = normalizedMerchantName(merchantName)
         val prior = brandPriors.firstOrNull { normalizedMerchant.contains(it.normalizedNeedle) }
         if (prior != null) {
@@ -66,10 +71,25 @@ object CategoryMapper {
             return CategoryPrediction(
                 category = category,
                 confidenceSource = if (merchant.confirmationCount >= 2) ConfidenceSource.REPEATED_TERMINAL else ConfidenceSource.OWNER_CONFIRMED_TERMINAL,
-                candidates = listOf(category)
+                candidates = listOf(category),
+                rawCategory = merchant.rawCategory ?: merchant.poiCategoryRaw,
+                merchantCategoryCode = merchant.merchantCategoryCode,
+                merchantGroupID = merchant.merchantGroupID,
+                taxonomyVersion = merchant.categoryTaxonomyVersion ?: CategoryTaxonomy.taxonomyVersion
             )
         }
-        return predict(merchant.poiCategoryRaw, merchant.name)
+        return predict(merchant.poiCategoryRaw, merchant.name, merchant.merchantCategoryCode)
+    }
+
+    private fun observedMccCategory(mcc: Int?): String? = when (mcc) {
+        4111, 4121 -> "transit"
+        5411 -> "grocery"
+        5541, 5542 -> "gasStation"
+        5812, 5814 -> "dining"
+        5912 -> "drugStore"
+        7011 -> "lodging"
+        7512 -> "carRental"
+        else -> null
     }
 
     fun canonicalEngineBrand(merchantName: String): String? {

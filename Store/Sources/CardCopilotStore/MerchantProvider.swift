@@ -6,15 +6,17 @@ public struct NearbyMerchant: Equatable, Sendable, Identifiable {
     public let id: String
     public let name: String
     public let poiCategoryRaw: String?
+    public let merchantCategoryCode: Int?
     public let latitude: Double
     public let longitude: Double
     public let distanceMeters: Double?
 
-    public init(id: String, name: String, poiCategoryRaw: String?,
+    public init(id: String, name: String, poiCategoryRaw: String?, merchantCategoryCode: Int? = nil,
                 latitude: Double, longitude: Double, distanceMeters: Double?) {
         self.id = id
         self.name = name
         self.poiCategoryRaw = poiCategoryRaw
+        self.merchantCategoryCode = merchantCategoryCode
         self.latitude = latitude
         self.longitude = longitude
         self.distanceMeters = distanceMeters

@@ -155,6 +155,11 @@ public struct PredictionLog {
                 merchantLongitude: merchantLongitude,
                 categoryAtPurchase: prediction.predictedCategory,
                 categoryConfidence: prediction.confidenceSource,
+                rawCategoryAtPurchase: prediction.rawCategory,
+                categoryTaxonomyVersion: prediction.categoryTaxonomyVersion,
+                categoryConfidenceScore: prediction.categoryConfidenceScore,
+                merchantCategoryCode: prediction.merchantCategoryCode,
+                merchantGroupID: prediction.merchantGroupID,
                 bestCardId: prediction.winnerCardId,
                 bestCardValueCad: prediction.winnerValueCad)
             context.insert(purchase)
@@ -196,10 +201,10 @@ public struct PredictionLog {
         try context.save()
     }
 
-    public func recordCard(_ cardUsedId: String, source: CaptureSource,
+    public func recordCard(_ cardUsedId: String?, source: CaptureSource? = .recalledLater,
                            on purchase: StoredPurchase, at date: Date = Date()) throws {
         purchase.cardUsedId = cardUsedId
-        purchase.cardSourceRaw = source.rawValue
+        purchase.cardSourceRaw = source?.rawValue
         refreshCompletion(purchase, at: date)
         try context.save()
     }
@@ -220,16 +225,20 @@ public struct PredictionLog {
     public func confirm(_ purchase: StoredPurchase,
                         observedCategory: String, observedRewardUnits: Double? = nil,
                         missClass: MissClass?,
-                        note: String?, confirmedAt: Date = Date()) throws {
+                        note: String?, confirmedAt: Date = Date(),
+                        observedMerchantCategoryCode: Int? = nil) throws {
+        let rawObservedCategory = observedCategory
         let observedCategory = CategoryTaxonomy.canonicalID(observedCategory)
         let observation = StoredObservation(observedCategory: observedCategory,
                                             observedRewardUnits: observedRewardUnits,
                                             missClass: missClass, note: note,
+                                            rawObservedCategory: rawObservedCategory,
+                                            observedMerchantCategoryCode: observedMerchantCategoryCode,
                                             confirmedAt: confirmedAt)
         context.insert(observation)
         observation.purchase = purchase
         if let prediction = purchase.prediction {
-            try promoteMerchant(for: prediction, observedCategory: observedCategory)
+            try promoteMerchant(for: prediction, observedCategory: observedCategory, at: confirmedAt)
         }
         try context.save()
     }
@@ -238,7 +247,7 @@ public struct PredictionLog {
     /// reconciled outcome is the only source that can promote a merchant to "verified", and it
     /// promotes THAT location — a confirmation at one Walmart says nothing about another.
     private func promoteMerchant(for prediction: StoredPrediction,
-                                 observedCategory: String) throws {
+                                 observedCategory: String, at date: Date) throws {
         guard let identifier = prediction.merchantIdentifier else { return }
         let matches = try context.fetch(FetchDescriptor<StoredMerchant>(
             predicate: #Predicate { $0.identifier == identifier }))
@@ -251,6 +260,13 @@ public struct PredictionLog {
             ? merchant.confirmationCount + 1
             : 1
         merchant.confirmedCategory = observedCategory
+        merchant.rawCategory = observedCategory
+        merchant.categoryTaxonomyVersion = CategoryTaxonomy.taxonomyVersion
+        merchant.categoryConfidenceScore = merchant.confirmationCount >= 2
+            ? ConfidenceSource.repeatedTerminal.defaultScore
+            : ConfidenceSource.ownerConfirmedTerminal.defaultScore
+        merchant.merchantGroupID = CategoryTaxonomy.merchantGroupID(for: observedCategory)
+        merchant.lastConfirmedAt = date
     }
 
     /// Reclassifies a transaction's category and updates the Merchant Truth Graph.
@@ -260,6 +276,7 @@ public struct PredictionLog {
     /// stamp is what lets the accuracy math exclude the row instead of silently counting it.
     public func updateCategory(for prediction: StoredPrediction, to newCategory: String,
                                correctedAt: Date = Date()) throws {
+        let rawCategory = newCategory
         let newCategory = CategoryTaxonomy.canonicalID(newCategory)
         prediction.predictedCategory = newCategory
         prediction.categoryCorrectedAt = correctedAt
@@ -267,12 +284,14 @@ public struct PredictionLog {
             if let observation = purchase.observation {
                 observation.observedCategory = newCategory
             } else {
-                let observation = StoredObservation(observedCategory: newCategory, confirmedAt: correctedAt)
+                let observation = StoredObservation(observedCategory: newCategory,
+                                                    rawObservedCategory: rawCategory,
+                                                    confirmedAt: correctedAt)
                 context.insert(observation)
                 observation.purchase = purchase
             }
         }
-        try promoteMerchant(for: prediction, observedCategory: newCategory)
+        try promoteMerchant(for: prediction, observedCategory: newCategory, at: correctedAt)
         try context.save()
     }
 
@@ -284,6 +303,7 @@ public struct PredictionLog {
     /// prefers that observation, while the original machine evidence remains auditable.
     public func updateCategory(for purchase: StoredPurchase, to newCategory: String,
                                correctedAt: Date = Date()) throws {
+        let rawCategory = newCategory
         let newCategory = CategoryTaxonomy.canonicalID(newCategory)
         if let prediction = purchase.prediction {
             try updateCategory(for: prediction, to: newCategory, correctedAt: correctedAt)
@@ -295,17 +315,19 @@ public struct PredictionLog {
             observation.observedCategory = newCategory
         } else {
             let observation = StoredObservation(observedCategory: newCategory,
+                                                rawObservedCategory: rawCategory,
                                                 confirmedAt: correctedAt)
             context.insert(observation)
             observation.purchase = purchase
         }
         try learnMerchant(from: purchase, category: newCategory,
-                          incrementsConfirmation: isFirstOwnerCategory)
+                          incrementsConfirmation: isFirstOwnerCategory,
+                          correctedAt: correctedAt)
         try context.save()
     }
 
     private func learnMerchant(from purchase: StoredPurchase, category: String,
-                               incrementsConfirmation: Bool) throws {
+                               incrementsConfirmation: Bool, correctedAt: Date) throws {
         let identifier = purchase.merchantIdentifier
             ?? purchase.merchantKey
             ?? merchantActivityKey(name: purchase.displayMerchant, locationIdentifier: nil)
@@ -326,6 +348,14 @@ public struct PredictionLog {
                 existing.confirmationCount = 1
             }
             existing.lastSeenAt = purchase.createdAt
+            existing.rawCategory = category
+            existing.categoryTaxonomyVersion = CategoryTaxonomy.taxonomyVersion
+            existing.categoryConfidenceScore = existing.confirmationCount >= 2
+                ? ConfidenceSource.repeatedTerminal.defaultScore
+                : ConfidenceSource.ownerConfirmedTerminal.defaultScore
+            existing.merchantCategoryCode = purchase.merchantCategoryCode
+            existing.merchantGroupID = CategoryTaxonomy.merchantGroupID(for: category)
+            existing.lastConfirmedAt = correctedAt
             return
         }
 
@@ -336,7 +366,13 @@ public struct PredictionLog {
             longitude: purchase.merchantLongitude ?? 0,
             confirmedCategory: category,
             confirmationCount: 1,
-            lastSeenAt: purchase.createdAt))
+            lastSeenAt: purchase.createdAt,
+            rawCategory: category,
+            merchantCategoryCode: purchase.merchantCategoryCode,
+            merchantGroupID: CategoryTaxonomy.merchantGroupID(for: category),
+            categoryTaxonomyVersion: CategoryTaxonomy.taxonomyVersion,
+            categoryConfidenceScore: ConfidenceSource.ownerConfirmedTerminal.defaultScore,
+            lastConfirmedAt: correctedAt))
     }
 
     public func allPredictions() throws -> [StoredPrediction] {

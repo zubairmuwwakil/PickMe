@@ -52,6 +52,15 @@ final class CategoryTaxonomyTests: XCTestCase {
         }
     }
 
+    func testHierarchyAndMerchantDimensionsAreMetadataNotAliases() {
+        XCTAssertEqual(CategoryTaxonomy.parentIDs(for: "marriottDirect"), ["lodging", "travel"])
+        XCTAssertEqual(CategoryTaxonomy.parentIDs(for: "ctFamily"), ["retailShopping"])
+        XCTAssertEqual(CategoryTaxonomy.merchantGroupID(for: "ctFamily"), "canadianTireFamily")
+        XCTAssertNil(CategoryTaxonomy.merchantGroupID(for: "grocery"))
+        XCTAssertEqual(CategoryTaxonomy.canonicalID("marriottDirect"), "marriottDirect",
+                       "hierarchy must not silently rewrite an exact card predicate")
+    }
+
     func testPurchaseContextNormalizesAtTheEngineBoundary() {
         var context = PurchaseContext(amountCad: 50, category: " groceries ")
         XCTAssertEqual(context.category, "grocery")

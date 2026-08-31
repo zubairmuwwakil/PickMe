@@ -131,7 +131,8 @@ public struct CheckoutService {
                           asOf: String,
                           purchaseSource: PurchaseActivitySource = .pickMeCheckout) throws -> CheckoutResult {
         let prediction = try confirmedPrediction(forMerchantId: merchant.id)
-            ?? predict(poiCategoryRaw: merchant.poiCategoryRaw, merchantName: merchant.name)
+            ?? predict(poiCategoryRaw: merchant.poiCategoryRaw, merchantName: merchant.name,
+                       merchantCategoryCode: merchant.merchantCategoryCode)
         let brand = canonicalEngineBrand(merchant.name)
         let effectiveAmount = amountCad
             ?? categoryAmountEstimates[prediction.category]
@@ -141,6 +142,7 @@ public struct CheckoutService {
         func recommend(for category: String) throws -> Recommendation {
             let outcome = engine.recommend(PurchaseContext(amountCad: effectiveAmount,
                                                            category: category,
+                                                           mcc: prediction.merchantCategoryCode,
                                                            merchantBrand: brand,
                                                            acceptedNetworks: acceptedNetworks),
                                            asOf: asOf)
@@ -175,6 +177,7 @@ public struct CheckoutService {
 
         let purchase = PurchaseContext(amountCad: effectiveAmount,
                                        category: prediction.category,
+                                       mcc: prediction.merchantCategoryCode,
                                        merchantBrand: brand,
                                        acceptedNetworks: acceptedNetworks)
         let headline = explainer.explain(primary, purchase: purchase).headline
@@ -202,6 +205,11 @@ public struct CheckoutService {
             contractRelease: contractRelease?.release,
             contractDigest: contractRelease?.digest,
             frozenInputs: frozen.flatMap { try? JSONEncoder().encode($0) },
+            rawCategory: prediction.rawCategory,
+            categoryTaxonomyVersion: prediction.taxonomyVersion,
+            categoryConfidenceScore: prediction.confidenceScore,
+            merchantCategoryCode: prediction.merchantCategoryCode,
+            merchantGroupID: prediction.merchantGroupID,
             headline: headline))
         // Asking "which card here?" is an assertion of intent to buy, so the till record opens
         // now — otherwise the purchase would reach neither queue and the checkout could never be
@@ -273,7 +281,11 @@ public struct CheckoutService {
             category: category,
             confidenceSource: merchant.confirmationCount >= 2 ? .repeatedTerminal
                                                               : .ownerConfirmedTerminal,
-            candidates: [category])
+            candidates: [category], confidenceScore: merchant.categoryConfidenceScore,
+            rawCategory: merchant.rawCategory,
+            merchantCategoryCode: merchant.merchantCategoryCode,
+            merchantGroupID: merchant.merchantGroupID,
+            taxonomyVersion: merchant.categoryTaxonomyVersion ?? CategoryTaxonomy.taxonomyVersion)
     }
 
     private func defaultCardValueCad(for recommendation: Recommendation) -> Double? {
@@ -335,6 +347,11 @@ public struct CheckoutService {
                                                    locationIdentifier: merchant.id)
         purchase.categoryAtPurchase = prediction.category
         purchase.categoryConfidenceRaw = prediction.confidenceSource.rawValue
+        purchase.rawCategoryAtPurchase = prediction.rawCategory
+        purchase.categoryTaxonomyVersion = prediction.taxonomyVersion
+        purchase.categoryConfidenceScore = prediction.confidenceScore
+        purchase.merchantCategoryCode = prediction.merchantCategoryCode
+        purchase.merchantGroupID = prediction.merchantGroupID
 
         // Retain the Wallet descriptor as the display name so a later name-only capture can join
         // the learned POI even when the descriptor carries a city or processor suffix.
@@ -342,6 +359,7 @@ public struct CheckoutService {
             id: merchant.id,
             name: purchase.displayMerchant,
             poiCategoryRaw: merchant.poiCategoryRaw,
+            merchantCategoryCode: merchant.merchantCategoryCode,
             latitude: merchant.latitude,
             longitude: merchant.longitude,
             distanceMeters: merchant.distanceMeters))
@@ -362,11 +380,14 @@ public struct CheckoutService {
         if let found = existing.first {
             found.lastSeenAt = Date()
             found.poiCategoryRaw = merchant.poiCategoryRaw
+            found.rawCategory = merchant.poiCategoryRaw
+            found.merchantCategoryCode = merchant.merchantCategoryCode
         } else {
             context.insert(StoredMerchant(name: merchant.name, identifier: merchant.id,
                                           poiCategoryRaw: merchant.poiCategoryRaw,
                                           latitude: merchant.latitude,
-                                          longitude: merchant.longitude))
+                                          longitude: merchant.longitude,
+                                          merchantCategoryCode: merchant.merchantCategoryCode))
         }
         try context.save()
     }

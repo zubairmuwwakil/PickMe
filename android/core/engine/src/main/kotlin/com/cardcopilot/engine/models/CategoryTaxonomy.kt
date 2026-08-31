@@ -9,6 +9,8 @@ import kotlinx.serialization.Serializable
 data class PurchaseCategoryDefinition(
     val id: String,
     val displayName: String,
+    val parentID: String? = null,
+    val merchantGroupID: String? = null,
     val aliases: List<String> = emptyList(),
 )
 
@@ -24,6 +26,8 @@ object CategoryTaxonomy {
     private val registry by lazy(SeedLoader::loadPurchaseCategories)
 
     val purchaseCategoryIds: Set<String> by lazy { registry.categories.mapTo(mutableSetOf()) { it.id } }
+
+    val taxonomyVersion: String get() = registry.taxonomyVersion
 
     val ruleSideCategoryIds: Set<String> by lazy {
         registry.ruleSideCategories.mapTo(mutableSetOf()) { it.id }
@@ -61,6 +65,21 @@ object CategoryTaxonomy {
 
     fun canonicalPurchaseId(raw: String): String? =
         canonicalId(raw).takeIf(purchaseCategoryIds::contains)
+
+    fun parentIds(raw: String): List<String> {
+        val result = mutableListOf<String>()
+        val visited = mutableSetOf<String>()
+        var current = canonicalId(raw)
+        while (true) {
+            val parent = definitionsById[current]?.parentID ?: break
+            if (!visited.add(parent)) break
+            result += parent
+            current = parent
+        }
+        return result
+    }
+
+    fun merchantGroupId(raw: String): String? = definitionsById[canonicalId(raw)]?.merchantGroupID
 
     fun displayName(raw: String): String {
         val category = canonicalId(raw)

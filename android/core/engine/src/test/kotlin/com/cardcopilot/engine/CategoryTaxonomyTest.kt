@@ -12,13 +12,22 @@ class CategoryTaxonomyTest {
     @Test
     fun `taxonomy is loaded from the published registry`() {
         val registry = SeedLoader.loadPurchaseCategories()
-        assertEquals("1.0", registry.taxonomyVersion)
+        assertEquals("1.1", registry.taxonomyVersion)
         assertEquals(25, registry.categories.size)
         assertEquals(registry.categories.map { it.id }.toSet(), CategoryTaxonomy.purchaseCategoryIds)
         assertEquals(
             registry.ruleSideCategories.map { it.id }.toSet(),
             CategoryTaxonomy.ruleSideCategoryIds,
         )
+    }
+
+    @Test
+    fun `hierarchy and merchant dimensions do not rewrite exact predicates`() {
+        assertEquals(listOf("lodging", "travel"), CategoryTaxonomy.parentIds("marriottDirect"))
+        assertEquals(listOf("retailShopping"), CategoryTaxonomy.parentIds("ctFamily"))
+        assertEquals("canadianTireFamily", CategoryTaxonomy.merchantGroupId("ctFamily"))
+        assertNull(CategoryTaxonomy.merchantGroupId("grocery"))
+        assertEquals("marriottDirect", CategoryTaxonomy.canonicalId("marriottDirect"))
     }
     @Test
     fun aliasesResolveToCanonicalPurchaseIds() {

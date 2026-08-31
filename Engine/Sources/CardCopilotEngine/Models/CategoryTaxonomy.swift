@@ -8,6 +8,8 @@ import Foundation
 /// so a new catalogue category is not silently misclassified.
 public enum CategoryTaxonomy {
 
+    public static var taxonomyVersion: String { registry.taxonomyVersion }
+
     /// Real purchase/merchant categories. Predicate-only dimensions such as `recurring` and
     /// `ownerSelectedCategory` are deliberately excluded: no database row should claim that a
     /// merchant *is* one of those conditions.
@@ -56,6 +58,24 @@ public enum CategoryTaxonomy {
     public static func canonicalPurchaseID(_ raw: String) -> String? {
         let canonical = canonicalID(raw)
         return purchaseCategoryIDs.contains(canonical) ? canonical : nil
+    }
+
+    /// Broader reporting lineage, nearest parent first. This is metadata only: card predicates
+    /// remain exact unless their issuer-sourced contract explicitly names multiple categories.
+    public static func parentIDs(for raw: String) -> [String] {
+        var result: [String] = []
+        var current = canonicalID(raw)
+        var visited = Set<String>()
+        while let parent = definitionsByID[current]?.parentID, visited.insert(parent).inserted {
+            result.append(parent)
+            current = parent
+        }
+        return result
+    }
+
+    /// Separate merchant dimension for compatibility categories such as `ctFamily`.
+    public static func merchantGroupID(for raw: String) -> String? {
+        definitionsByID[canonicalID(raw)]?.merchantGroupID
     }
 
     /// Shared human-readable fallback for every non-visual surface.

@@ -4,11 +4,16 @@ import Foundation
 public struct PurchaseCategoryDefinition: Codable, Equatable, Sendable {
     public var id: String
     public var displayName: String
+    public var parentID: String?
+    public var merchantGroupID: String?
     public var aliases: [String]
 
-    public init(id: String, displayName: String, aliases: [String] = []) {
+    public init(id: String, displayName: String, parentID: String? = nil,
+                merchantGroupID: String? = nil, aliases: [String] = []) {
         self.id = id
         self.displayName = displayName
+        self.parentID = parentID
+        self.merchantGroupID = merchantGroupID
         self.aliases = aliases
     }
 }

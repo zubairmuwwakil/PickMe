@@ -125,6 +125,25 @@ public enum CardCopilotSchemaV4: VersionedSchema {
     }
 }
 
+/// Version 5 preserves the evidence behind category classification and the numeric confidence
+/// snapshot used by the local learner. All additions are nullable: old rows correctly migrate
+/// with unknown evidence rather than fabricated provenance.
+public enum CardCopilotSchemaV5: VersionedSchema {
+    public static var versionIdentifier: Schema.Version { Schema.Version(5, 0, 0) }
+
+    public static var models: [any PersistentModel.Type] {
+        [
+            StoredPrediction.self,
+            StoredPurchase.self,
+            StoredObservation.self,
+            StoredMerchant.self,
+            ExploredCell.self,
+            ShoppingArea.self,
+            AreaMember.self,
+        ]
+    }
+}
+
 /// The version every container opens at.
 ///
 /// One name, so moving to a new version is one edit rather than a grep across the app target, this
@@ -135,7 +154,7 @@ public enum CardCopilotSchemaV4: VersionedSchema {
 /// inserted. `SchemaVersionTests.testCurrentSchemaIsTheNewestInTheMigrationPlan` pins this to the
 /// plan's newest entry.
 public enum CardCopilotSchema {
-    public static var current: any VersionedSchema.Type { CardCopilotSchemaV4.self }
+    public static var current: any VersionedSchema.Type { CardCopilotSchemaV5.self }
 }
 
 /// How owners are carried from one schema version to the next.
@@ -150,7 +169,7 @@ public enum CardCopilotSchema {
 public enum CardCopilotMigrationPlan: SchemaMigrationPlan {
     public static var schemas: [any VersionedSchema.Type] {
         [CardCopilotSchemaV1.self, CardCopilotSchemaV2.self, CardCopilotSchemaV3.self,
-         CardCopilotSchemaV4.self]
+         CardCopilotSchemaV4.self, CardCopilotSchemaV5.self]
     }
 
     /// Lightweight because every added property is optional. `.custom` would be required only if
@@ -162,6 +181,7 @@ public enum CardCopilotMigrationPlan: SchemaMigrationPlan {
             .lightweight(fromVersion: CardCopilotSchemaV1.self, toVersion: CardCopilotSchemaV2.self),
             .lightweight(fromVersion: CardCopilotSchemaV2.self, toVersion: CardCopilotSchemaV3.self),
             .lightweight(fromVersion: CardCopilotSchemaV3.self, toVersion: CardCopilotSchemaV4.self),
+            .lightweight(fromVersion: CardCopilotSchemaV4.self, toVersion: CardCopilotSchemaV5.self),
         ]
     }
 }
@@ -170,10 +190,10 @@ public enum CardCopilotMigrationPlan: SchemaMigrationPlan {
 // app and this package are unaffected by the nesting. Repointing these seven lines is what "the
 // current shape" means for every call site at once — and the only reason that is safe is that no
 // call site names a version literally. Containers get theirs from `CardCopilotSchema.current`.
-public typealias StoredPrediction = CardCopilotSchemaV4.StoredPrediction
-public typealias StoredPurchase = CardCopilotSchemaV4.StoredPurchase
-public typealias StoredObservation = CardCopilotSchemaV4.StoredObservation
-public typealias StoredMerchant = CardCopilotSchemaV4.StoredMerchant
-public typealias ExploredCell = CardCopilotSchemaV4.ExploredCell
-public typealias ShoppingArea = CardCopilotSchemaV4.ShoppingArea
-public typealias AreaMember = CardCopilotSchemaV4.AreaMember
+public typealias StoredPrediction = CardCopilotSchemaV5.StoredPrediction
+public typealias StoredPurchase = CardCopilotSchemaV5.StoredPurchase
+public typealias StoredObservation = CardCopilotSchemaV5.StoredObservation
+public typealias StoredMerchant = CardCopilotSchemaV5.StoredMerchant
+public typealias ExploredCell = CardCopilotSchemaV5.ExploredCell
+public typealias ShoppingArea = CardCopilotSchemaV5.ShoppingArea
+public typealias AreaMember = CardCopilotSchemaV5.AreaMember

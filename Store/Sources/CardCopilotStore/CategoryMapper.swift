@@ -4,12 +4,25 @@ import CardCopilotEngine
 public struct CategoryPrediction: Equatable, Sendable {
     public let category: String
     public let confidenceSource: ConfidenceSource
+    public let confidenceScore: Double
     public let candidates: [String]
+    public let rawCategory: String?
+    public let merchantCategoryCode: Int?
+    public let merchantGroupID: String?
+    public let taxonomyVersion: String
 
-    public init(category: String, confidenceSource: ConfidenceSource, candidates: [String]) {
+    public init(category: String, confidenceSource: ConfidenceSource, candidates: [String],
+                confidenceScore: Double? = nil, rawCategory: String? = nil,
+                merchantCategoryCode: Int? = nil, merchantGroupID: String? = nil,
+                taxonomyVersion: String = CategoryTaxonomy.taxonomyVersion) {
         self.category = CategoryTaxonomy.canonicalID(category)
         self.confidenceSource = confidenceSource
+        self.confidenceScore = min(1, max(0, confidenceScore ?? confidenceSource.defaultScore))
         self.candidates = candidates.map(CategoryTaxonomy.canonicalID)
+        self.rawCategory = rawCategory
+        self.merchantCategoryCode = merchantCategoryCode
+        self.merchantGroupID = merchantGroupID ?? CategoryTaxonomy.merchantGroupID(for: category)
+        self.taxonomyVersion = taxonomyVersion
     }
 }
 
@@ -33,12 +46,19 @@ private let brandPriors: [BrandPrior] = [
     .init(normalizedNeedle: normalizedMerchantName("marriott"), category: "marriottDirect"),
 ]
 
-public func predict(poiCategoryRaw: String?, merchantName: String) -> CategoryPrediction {
+public func predict(poiCategoryRaw: String?, merchantName: String,
+                    merchantCategoryCode: Int? = nil) -> CategoryPrediction {
+    if let merchantCategoryCode,
+       let category = observedMCCCategory(merchantCategoryCode) {
+        return CategoryPrediction(category: category, confidenceSource: .observedMcc,
+                                  candidates: [category], rawCategory: poiCategoryRaw,
+                                  merchantCategoryCode: merchantCategoryCode)
+    }
     let normalizedMerchant = normalizedMerchantName(merchantName)
     if let prior = brandPriors.first(where: { normalizedMerchant.contains($0.normalizedNeedle) }) {
         return CategoryPrediction(category: prior.category,
                                   confidenceSource: .brandPrior,
-                                  candidates: [prior.category])
+                                  candidates: [prior.category], rawCategory: poiCategoryRaw)
     }
 
     switch canonicalPoiCategory(poiCategoryRaw) {
@@ -46,47 +66,62 @@ public func predict(poiCategoryRaw: String?, merchantName: String) -> CategoryPr
         if isWalmart(normalizedMerchant) {
             return CategoryPrediction(category: "grocery",
                                       confidenceSource: .mapKitCategory,
-                                      candidates: ["grocery", "other"])
+                                      candidates: ["grocery", "other"], rawCategory: poiCategoryRaw)
         }
         return CategoryPrediction(category: "grocery",
                                   confidenceSource: .mapKitCategory,
-                                  candidates: ["grocery"])
+                                  candidates: ["grocery"], rawCategory: poiCategoryRaw)
     case "gasstation":
         return CategoryPrediction(category: "gasStation",
                                   confidenceSource: .mapKitCategory,
-                                  candidates: ["gasStation", "other"])
+                                  candidates: ["gasStation", "other"], rawCategory: poiCategoryRaw)
     case "restaurant", "cafe", "bakery":
         return CategoryPrediction(category: "dining",
                                   confidenceSource: .mapKitCategory,
-                                  candidates: ["dining"])
+                                  candidates: ["dining"], rawCategory: poiCategoryRaw)
     case "pharmacy":
         return CategoryPrediction(category: "drugStore",
                                   confidenceSource: .mapKitCategory,
-                                  candidates: ["drugStore"])
+                                  candidates: ["drugStore"], rawCategory: poiCategoryRaw)
     case "publictransport":
         return CategoryPrediction(category: "transit",
                                   confidenceSource: .mapKitCategory,
-                                  candidates: ["transit"])
+                                  candidates: ["transit"], rawCategory: poiCategoryRaw)
     case "hotel":
         return CategoryPrediction(category: "lodging",
                                   confidenceSource: .mapKitCategory,
-                                  candidates: ["lodging"])
+                                  candidates: ["lodging"], rawCategory: poiCategoryRaw)
     case "movietheater":
         return CategoryPrediction(category: "entertainment",
                                   confidenceSource: .mapKitCategory,
-                                  candidates: ["entertainment"])
+                                  candidates: ["entertainment"], rawCategory: poiCategoryRaw)
     case "fitnesscenter":
         return CategoryPrediction(category: "fitness",
                                   confidenceSource: .mapKitCategory,
-                                  candidates: ["fitness"])
+                                  candidates: ["fitness"], rawCategory: poiCategoryRaw)
     case "store":
         return CategoryPrediction(category: "other",
                                   confidenceSource: .mapKitCategory,
-                                  candidates: ["other", "grocery"])
+                                  candidates: ["other", "grocery"], rawCategory: poiCategoryRaw)
     default:
         return CategoryPrediction(category: "other",
                                   confidenceSource: .fallback,
-                                  candidates: ["other"])
+                                  candidates: ["other"], rawCategory: poiCategoryRaw)
+    }
+}
+
+/// Only MCCs with a stable, single meaning enter this table. Ambiguous department stores and
+/// marketplaces deliberately stay absent and flow to merchant/owner evidence instead.
+public func observedMCCCategory(_ mcc: Int) -> String? {
+    switch mcc {
+    case 4111, 4121: return "transit"
+    case 5411: return "grocery"
+    case 5541, 5542: return "gasStation"
+    case 5812, 5814: return "dining"
+    case 5912: return "drugStore"
+    case 7011: return "lodging"
+    case 7512: return "carRental"
+    default: return nil
     }
 }
 
@@ -99,9 +134,15 @@ public func predictionForKnownMerchant(_ merchant: StoredMerchant) -> CategoryPr
             category: category,
             confidenceSource: merchant.confirmationCount >= 2 ? .repeatedTerminal
                                                               : .ownerConfirmedTerminal,
-            candidates: [category])
+            candidates: [category],
+            confidenceScore: merchant.categoryConfidenceScore,
+            rawCategory: merchant.rawCategory,
+            merchantCategoryCode: merchant.merchantCategoryCode,
+            merchantGroupID: merchant.merchantGroupID,
+            taxonomyVersion: merchant.categoryTaxonomyVersion ?? CategoryTaxonomy.taxonomyVersion)
     }
-    return predict(poiCategoryRaw: merchant.poiCategoryRaw, merchantName: merchant.name)
+    return predict(poiCategoryRaw: merchant.poiCategoryRaw, merchantName: merchant.name,
+                   merchantCategoryCode: merchant.merchantCategoryCode)
 }
 
 private func isWalmart(_ normalizedMerchant: String) -> Bool {

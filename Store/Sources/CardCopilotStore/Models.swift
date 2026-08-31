@@ -16,6 +16,21 @@ public enum ConfidenceSource: String, Codable, Sendable, CaseIterable {
     public var isVerified: Bool {
         self == .ownerConfirmedTerminal || self == .repeatedTerminal
     }
+
+    /// Conservative starting confidence. This controls automation UX only; it never changes
+    /// reward math, and callers persist the numeric snapshot so later tuning cannot rewrite why
+    /// an old category was accepted.
+    public var defaultScore: Double {
+        switch self {
+        case .repeatedTerminal: return 0.99
+        case .ownerConfirmedTerminal: return 0.95
+        case .issuerOverride: return 0.90
+        case .observedMcc: return 0.85
+        case .brandPrior: return 0.70
+        case .mapKitCategory: return 0.55
+        case .fallback: return 0.10
+        }
+    }
 }
 
 /// How a prediction went wrong. Chosen during the weekly reconcile ritual so that a failed

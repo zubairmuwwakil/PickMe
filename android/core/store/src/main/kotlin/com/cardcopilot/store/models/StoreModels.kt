@@ -16,6 +16,17 @@ enum class ConfidenceSource(val rawValue: String) {
     val isVerified: Boolean
         get() = this == OWNER_CONFIRMED_TERMINAL || this == REPEATED_TERMINAL
 
+    val defaultScore: Double
+        get() = when (this) {
+            REPEATED_TERMINAL -> 0.99
+            OWNER_CONFIRMED_TERMINAL -> 0.95
+            ISSUER_OVERRIDE -> 0.90
+            OBSERVED_MCC -> 0.85
+            BRAND_PRIOR -> 0.70
+            MAP_KIT_CATEGORY -> 0.55
+            FALLBACK -> 0.10
+        }
+
     companion object {
         fun fromRaw(raw: String): ConfidenceSource {
             return entries.firstOrNull { it.rawValue == raw } ?: FALLBACK
@@ -64,11 +75,17 @@ data class NearbyMerchant(
     val poiCategoryRaw: String? = null,
     val latitude: Double,
     val longitude: Double,
-    val distanceMeters: Double? = null
+    val distanceMeters: Double? = null,
+    val merchantCategoryCode: Int? = null
 )
 
 data class CategoryPrediction(
     val category: String,
     val confidenceSource: ConfidenceSource,
-    val candidates: List<String>
+    val candidates: List<String>,
+    val confidenceScore: Double = confidenceSource.defaultScore,
+    val rawCategory: String? = null,
+    val merchantCategoryCode: Int? = null,
+    val merchantGroupID: String? = null,
+    val taxonomyVersion: String = com.cardcopilot.engine.models.CategoryTaxonomy.taxonomyVersion
 )

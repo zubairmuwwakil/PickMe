@@ -27,6 +27,11 @@ data class StoredPredictionEntity(
     val runnerUpValueCad: Double? = null,
     val scoredAmountCad: Double? = null,
     val valuationCentsPerPoint: Double? = null,
+    val rawCategory: String? = null,
+    val categoryTaxonomyVersion: String? = null,
+    val categoryConfidenceScore: Double? = null,
+    val merchantCategoryCode: Int? = null,
+    val merchantGroupID: String? = null,
     val headline: String
 )
 
@@ -50,7 +55,12 @@ data class StoredPurchaseEntity(
     var cardSourceRaw: String? = null,
     var amountCad: Double? = null,
     var amountSourceRaw: String? = null,
-    var completedAt: Long? = null
+    var completedAt: Long? = null,
+    var rawCategoryAtPurchase: String? = null,
+    var categoryTaxonomyVersion: String? = null,
+    var categoryConfidenceScore: Double? = null,
+    var merchantCategoryCode: Int? = null,
+    var merchantGroupID: String? = null
 )
 
 @Entity(
@@ -72,7 +82,12 @@ data class StoredObservationEntity(
     val observedCategory: String,
     val observedRewardUnits: Double? = null,
     val missClassRaw: String? = null,
-    val note: String? = null
+    val note: String? = null,
+    val rawObservedCategory: String? = null,
+    val categoryTaxonomyVersion: String? = null,
+    val categorySourceRaw: String? = null,
+    val categoryConfidenceScore: Double? = null,
+    val observedMerchantCategoryCode: Int? = null
 )
 
 @Entity(
@@ -88,7 +103,13 @@ data class StoredMerchantEntity(
     val longitude: Double = 0.0,
     var confirmedCategory: String? = null,
     var confirmationCount: Int = 0,
-    var lastSeenAt: Long = System.currentTimeMillis()
+    var lastSeenAt: Long = System.currentTimeMillis(),
+    var rawCategory: String? = null,
+    var merchantCategoryCode: Int? = null,
+    var merchantGroupID: String? = null,
+    var categoryTaxonomyVersion: String? = null,
+    var categoryConfidenceScore: Double? = null,
+    var lastConfirmedAt: Long? = null
 )
 
 @Entity(tableName = "discovery_cache")

@@ -88,12 +88,24 @@ class PredictionLogRepository(private val db: CardCopilotDatabase) {
             runnerUpValueCad = recommendation.runnerUp?.netValueCad,
             scoredAmountCad = scoredAmountCad,
             valuationCentsPerPoint = valuationCentsPerPoint,
+            rawCategory = predictionRawCategory(merchant, predictedCategory),
+            categoryTaxonomyVersion = CategoryTaxonomy.taxonomyVersion,
+            categoryConfidenceScore = confidenceSource.defaultScore,
+            merchantCategoryCode = merchant.merchantCategoryCode,
+            merchantGroupID = CategoryTaxonomy.merchantGroupId(predictedCategory),
             headline = headline
         )
 
         db.predictionDao().insert(prediction)
 
-        val purchase = initialPurchase ?: StoredPurchaseEntity(predictionId = prediction.id)
+        val purchase = initialPurchase ?: StoredPurchaseEntity(
+            predictionId = prediction.id,
+            rawCategoryAtPurchase = prediction.rawCategory,
+            categoryTaxonomyVersion = prediction.categoryTaxonomyVersion,
+            categoryConfidenceScore = prediction.categoryConfidenceScore,
+            merchantCategoryCode = prediction.merchantCategoryCode,
+            merchantGroupID = prediction.merchantGroupID
+        )
         db.purchaseDao().insert(purchase)
 
         // Seed or update truth graph merchant node
@@ -106,7 +118,9 @@ class PredictionLogRepository(private val db: CardCopilotDatabase) {
                     identifier = merchant.id,
                     poiCategoryRaw = merchant.poiCategoryRaw,
                     latitude = merchant.latitude,
-                    longitude = merchant.longitude
+                    longitude = merchant.longitude,
+                    rawCategory = merchant.poiCategoryRaw,
+                    merchantCategoryCode = merchant.merchantCategoryCode
                 )
             )
         }
@@ -149,7 +163,11 @@ class PredictionLogRepository(private val db: CardCopilotDatabase) {
             observedCategory = canonicalObservedCategory,
             observedRewardUnits = observedRewardUnits,
             missClassRaw = missClass?.rawValue,
-            note = note
+            note = note,
+            rawObservedCategory = observedCategory,
+            categoryTaxonomyVersion = CategoryTaxonomy.taxonomyVersion,
+            categorySourceRaw = ConfidenceSource.OWNER_CONFIRMED_TERMINAL.rawValue,
+            categoryConfidenceScore = ConfidenceSource.OWNER_CONFIRMED_TERMINAL.defaultScore
         )
         db.observationDao().insert(obs)
 
@@ -162,8 +180,17 @@ class PredictionLogRepository(private val db: CardCopilotDatabase) {
         merchant.confirmedCategory = canonicalObservedCategory
         merchant.confirmationCount += 1
         merchant.lastSeenAt = System.currentTimeMillis()
+        merchant.rawCategory = observedCategory
+        merchant.categoryTaxonomyVersion = CategoryTaxonomy.taxonomyVersion
+        merchant.categoryConfidenceScore = if (merchant.confirmationCount >= 2) {
+            ConfidenceSource.REPEATED_TERMINAL.defaultScore
+        } else ConfidenceSource.OWNER_CONFIRMED_TERMINAL.defaultScore
+        merchant.lastConfirmedAt = System.currentTimeMillis()
         db.merchantDao().insertOrUpdate(merchant)
     }
+
+    private fun predictionRawCategory(merchant: NearbyMerchant, predictedCategory: String): String? =
+        merchant.poiCategoryRaw ?: predictedCategory
 
     fun observeMetrics(): Flow<ExperimentMetrics> {
         return observeAllRecords().map { computeMetrics(it) }

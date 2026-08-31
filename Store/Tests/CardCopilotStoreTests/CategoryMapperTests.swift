@@ -100,9 +100,9 @@ final class CategoryMapperTests: XCTestCase {
         let unknown = predict(poiCategoryRaw: "planetarium", merchantName: "Mystery Shop")
         let nilCategory = predict(poiCategoryRaw: nil, merchantName: "Mystery Shop")
 
-        XCTAssertEqual(unknown, CategoryPrediction(category: "other",
-                                                   confidenceSource: .fallback,
-                                                   candidates: ["other"]))
+        XCTAssertEqual(unknown.category, "other")
+        XCTAssertEqual(unknown.rawCategory, "planetarium")
+        XCTAssertEqual(unknown.confidenceSource, .fallback)
         XCTAssertEqual(nilCategory, CategoryPrediction(category: "other",
                                                        confidenceSource: .fallback,
                                                        candidates: ["other"]))

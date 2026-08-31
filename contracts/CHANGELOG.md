@@ -2,6 +2,19 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-31 — card-catalogue 2.16 & purchase-categories 1.1: hierarchy and merchant dimensions
+
+**Additive taxonomy metadata; no scoring change.** Category definitions may now name a broader
+`parentID` for reporting and a separate `merchantGroupID` for merchant-specific legacy tokens.
+Neither field implicitly broadens a card predicate: issuer-sourced rule matching remains exact.
+
+- Travel, retail, entertainment, dining, and membership leaves now expose their broader parent.
+- `ctFamily` and `marriottDirect` remain valid wire ids for compatibility, while explicitly
+  declaring `canadianTireFamily` and `marriottDirect` as merchant-group dimensions. New storage
+  can retain both the purchase category and merchant group instead of conflating them.
+- `card-catalogue.json` moves only its version string, **MINOR 2.15 → 2.16**. No earn rule,
+  fixture expectation, or released card fact changes.
+
 ## 2026-08-31 — card-catalogue 2.15 & purchase-categories 1.0: one persisted vocabulary
 
 **Additive sidecar contract; persistence correction.** Purchase-category ids and aliases had

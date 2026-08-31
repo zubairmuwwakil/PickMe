@@ -103,7 +103,8 @@ public struct AutoCaptureLog {
         let categoryPrediction = learned ?? indexed.flatMap { merchant in
                 guard merchant.category != "other" else { return nil }
                 return CategoryPrediction(category: merchant.category, confidenceSource: .brandPrior,
-                                          candidates: [merchant.category])
+                                          candidates: [merchant.category],
+                                          merchantCategoryCode: merchant.mcc)
             } ?? predict(poiCategoryRaw: nil, merchantName: capture.merchant)
         let category = categoryPrediction.confidenceSource == .fallback
             ? nil : categoryPrediction.category
@@ -117,7 +118,14 @@ public struct AutoCaptureLog {
                                       merchantLongitude: capture.longitude,
                                       categoryAtPurchase: category,
                                       categoryConfidence: category == nil
-                                        ? nil : categoryPrediction.confidenceSource)
+                                        ? nil : categoryPrediction.confidenceSource,
+                                      rawCategoryAtPurchase: categoryPrediction.rawCategory,
+                                      categoryTaxonomyVersion: category == nil
+                                        ? nil : categoryPrediction.taxonomyVersion,
+                                      categoryConfidenceScore: category == nil
+                                        ? nil : categoryPrediction.confidenceScore,
+                                      merchantCategoryCode: categoryPrediction.merchantCategoryCode,
+                                      merchantGroupID: categoryPrediction.merchantGroupID)
         context.insert(purchase)
         if let cardUsedId = capture.cardUsedId {
             purchase.cardUsedId = cardUsedId

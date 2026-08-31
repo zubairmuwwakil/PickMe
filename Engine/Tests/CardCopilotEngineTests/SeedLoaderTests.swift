@@ -60,7 +60,7 @@ final class SeedLoaderTests: XCTestCase {
 
     func testPurchaseCategoryRegistryLoads() throws {
         let registry = try SeedLoader.loadPurchaseCategories()
-        XCTAssertEqual(registry.taxonomyVersion, "1.0")
+        XCTAssertEqual(registry.taxonomyVersion, "1.1")
         XCTAssertEqual(registry.categories.count, 25)
         XCTAssertEqual(Set(registry.categories.map(\.id)), CategoryTaxonomy.purchaseCategoryIDs)
         XCTAssertEqual(Set(registry.ruleSideCategories.map(\.id)),
