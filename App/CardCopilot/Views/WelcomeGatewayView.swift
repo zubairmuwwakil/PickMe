@@ -51,34 +51,45 @@ struct WelcomeGatewayView: View {
         ScrollView {
             VStack(spacing: 26) {
                 // Header / Hero Branding
-                VStack(spacing: 12) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.blue, Color(red: 0.1, green: 0.45, blue: 0.95)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
+                VStack(spacing: 14) {
+                    HStack(spacing: 18) {
+                        ChipMascotView(
+                            mood: .idle,
+                            size: 68,
+                            isWaving: true,
+                            enable3DTilt: true
+                        )
+
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.blue, Color(red: 0.1, green: 0.45, blue: 0.95)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
                                 )
-                            )
-                            .frame(width: 80, height: 80)
-                            .shadow(color: Color.blue.opacity(0.35), radius: 12, x: 0, y: 6)
+                                .frame(width: 68, height: 68)
+                                .shadow(color: Color.blue.opacity(0.35), radius: 12, x: 0, y: 6)
 
-                        Image(systemName: "creditcard.fill")
-                            .font(.system(size: 38))
-                            .foregroundStyle(.white)
+                            Image(systemName: "creditcard.fill")
+                                .font(.system(size: 32))
+                                .foregroundStyle(.white)
+                        }
                     }
-                    .padding(.top, 24)
+                    .padding(.top, 20)
 
-                    Text("Welcome to PickMe")
-                        .font(.system(size: 30, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary)
+                    VStack(spacing: 4) {
+                        Text("Welcome to PickMe")
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
+                            .foregroundStyle(.primary)
 
-                    Text("Pick the best card for every purchase, automatically maximizing your rewards and benefits.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 16)
+                        Text("Pick the best card for every purchase, automatically maximizing your rewards and benefits.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
+                    }
                 }
 
                 // Value Propositions
@@ -128,7 +139,9 @@ struct WelcomeGatewayView: View {
         .background(Color(.systemGroupedBackground))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: authSheetIsPresented) {
-            AuthView()
+            PickMeAuthSheet {
+                authIsPresented = false
+            }
         }
         .onChange(of: isSignedIn) { _, signedIn in
             if signedIn { authIsPresented = false }

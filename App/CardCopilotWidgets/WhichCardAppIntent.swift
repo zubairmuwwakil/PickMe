@@ -49,7 +49,7 @@ public struct WhichCardIntent: AppIntent {
         }
 
         // 2. Fallback on general category prediction
-        let prediction = predict(poiCategoryRaw: nil, merchantName: trimmedQuery)
+        let prediction = CardCopilotStore.predict(poiCategoryRaw: nil, merchantName: trimmedQuery)
         let context = PurchaseContext(amountCad: 50.0, category: prediction.category)
         let outcome = engine.recommend(context, asOf: today)
         if case .advised(let rec) = outcome {

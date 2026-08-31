@@ -10,6 +10,9 @@
     "!" : {
 
     },
+    "·" : {
+
+    },
     "/ %lld checkouts" : {
       "localizations" : {
         "fr-CA" : {
@@ -583,6 +586,9 @@
 
     },
     "100% on-device matching · Zero location tracking" : {
+
+    },
+    "100% On-Device Privacy · Checkout works offline" : {
 
     },
     "3739  876543  31001" : {
@@ -1816,6 +1822,9 @@
     "Clear Recorded Card" : {
 
     },
+    "Close" : {
+
+    },
     "Closest nearby" : {
 
     },
@@ -1919,7 +1928,7 @@
     "Connect Wallet Capture" : {
 
     },
-    "Connected to Inunity Cloud" : {
+    "Connected to PickMe Cloud" : {
 
     },
     "Connecting…" : {
@@ -1940,6 +1949,15 @@
       }
     },
     "Continue Privately" : {
+
+    },
+    "Continue Privately (No Account)" : {
+
+    },
+    "Continue with Email" : {
+
+    },
+    "Continue with Google" : {
 
     },
     "Conversion fee" : {
@@ -1995,6 +2013,9 @@
 
     },
     "COVERAGE SUMMARY" : {
+
+    },
+    "Create Account with Email" : {
 
     },
     "Create installation token" : {
@@ -2158,7 +2179,7 @@
         }
       }
     },
-    "Delete Inunity Account" : {
+    "Delete PickMe Account" : {
 
     },
     "Delete Purchase" : {
@@ -2203,6 +2224,7 @@
     },
     "Deletes your Inunity account and everything stored for it on the server. You choose separately what happens to this iPhone's history." : {
       "comment" : "human review before public launch",
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -2212,7 +2234,10 @@
         }
       }
     },
-    "Deletes your Inunity cloud account, saved remote cards, and server sync history. Your on-device data remains intact unless you choose to erase it." : {
+    "Deletes your PickMe account and everything stored for it on the server. You choose separately what happens to this iPhone's history." : {
+
+    },
+    "Deletes your PickMe cloud account, saved remote cards, and server sync history. Your on-device data remains intact unless you choose to erase it." : {
 
     },
     "Deleting…" : {
@@ -2235,6 +2260,9 @@
 
     },
     "Diagnostic Preview" : {
+
+    },
+    "Didn't receive the code?" : {
 
     },
     "Disable or Pause Wallet Capture" : {
@@ -2413,6 +2441,9 @@
     "Enable Wallet Capture" : {
 
     },
+    "Enter the 6-digit code sent to %@" : {
+
+    },
     "Enter the bank and card name. Our pipeline will research official issuer terms." : {
 
     },
@@ -2500,6 +2531,7 @@
     },
     "Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to Inunity are not affected." : {
       "comment" : "human review before public launch",
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -2508,6 +2540,9 @@
           }
         }
       }
+    },
+    "Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to PickMe are not affected." : {
+
     },
     "Estimated · Tap to enter exact amount & currency" : {
 
@@ -2958,9 +2993,6 @@
     "INTELLIGENCE & AUTOMATION" : {
 
     },
-    "Inunity Cloud Active" : {
-
-    },
     "Issuer" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3357,9 +3389,6 @@
     "Merchant Conditions" : {
 
     },
-    "Merchant or Category" : {
-
-    },
     "Minimum Spend Advantage" : {
 
     },
@@ -3407,6 +3436,9 @@
       }
     },
     "Name" : {
+
+    },
+    "name@example.com" : {
 
     },
     "Nearby" : {
@@ -3815,9 +3847,6 @@
     "Open Official Certificate PDF" : {
 
     },
-    "Open PickMe at checkout or specify a store like Costco, Tim Hortons, or Groceries." : {
-
-    },
     "Open Purchases in Inunity" : {
 
     },
@@ -3879,6 +3908,9 @@
           }
         }
       }
+    },
+    "or with email" : {
+
     },
     "Other Active Connections (%lld)" : {
 
@@ -4078,7 +4110,7 @@
         }
       }
     },
-    "PickMe could not load card rules. Open PickMe to try again." : {
+    "PickMe Cloud Active" : {
 
     },
     "PickMe for iOS · Version 1.0 (Build 42)" : {
@@ -4524,6 +4556,12 @@
     "Research status" : {
 
     },
+    "Resend Code" : {
+
+    },
+    "Resend in %llds" : {
+
+    },
     "Resets this purchase to card unrecorded status." : {
 
     },
@@ -4899,6 +4937,7 @@
 
     },
     "Sign in to Inunity" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4908,10 +4947,13 @@
         }
       }
     },
+    "Sign in to PickMe" : {
+
+    },
     "Sign in to sync cap limits across your devices and enable automated Apple Wallet Shortcuts capture." : {
 
     },
-    "Sign In with Inunity" : {
+    "Sign In with PickMe" : {
 
     },
     "Sign Out" : {
@@ -4933,6 +4975,15 @@
           }
         }
       }
+    },
+    "Sign out of PickMe?" : {
+
+    },
+    "Sign Up" : {
+
+    },
+    "Sign Up with Google" : {
+
     },
     "Signed in as" : {
       "localizations" : {
@@ -5075,9 +5126,6 @@
     "SUBMITTED DIAGNOSTIC PACKETS" : {
 
     },
-    "Suggests the optimal credit card for a given merchant or category." : {
-
-    },
     "Switch recommendations" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5130,6 +5178,9 @@
           }
         }
       }
+    },
+    "Sync card spend caps, shortcuts, and reward math across your Apple devices." : {
+
     },
     "Sync Engine" : {
 
@@ -5290,7 +5341,7 @@
         }
       }
     },
-    "The device credential belongs to another Inunity account. Creating a connection here replaces it safely." : {
+    "The device credential belongs to another PickMe account. Creating a connection here replaces it safely." : {
 
     },
     "The higher 2% rate requires an eligible Rogers, Fido, Shaw, Comwave, or Sportsnet+ service linked to your account." : {
@@ -5313,9 +5364,6 @@
           }
         }
       }
-    },
-    "The store or category you are buying from (e.g. Costco, Groceries, Dining, Shell)." : {
-
     },
     "The total on the receipt, not what you entered before paying." : {
       "localizations" : {
@@ -5639,6 +5687,12 @@
     "Verification" : {
 
     },
+    "Verify" : {
+
+    },
+    "Verify & Continue" : {
+
+    },
     "View" : {
 
     },
@@ -5872,9 +5926,6 @@
         }
       }
     },
-    "Which Card Should I Use?" : {
-
-    },
     "Which Card?" : {
       "localizations" : {
         "fr-CA" : {
@@ -6004,9 +6055,6 @@
       }
     },
     "Your location is processed on-device and never leaves this phone." : {
-
-    },
-    "Your PickMe wallet is empty. Open PickMe to add your cards first." : {
 
     },
     "Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected." : {

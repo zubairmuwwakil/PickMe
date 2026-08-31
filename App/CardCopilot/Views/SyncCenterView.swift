@@ -63,7 +63,11 @@ struct SyncCenterView: View {
                     .font(.system(size: 16, weight: .bold, design: .rounded))
             }
         }
-        .sheet(isPresented: $authIsPresented) { AuthView() }
+        .sheet(isPresented: $authIsPresented) {
+            PickMeAuthSheet {
+                authIsPresented = false
+            }
+        }
         .alert("Revoke this connection?", isPresented: .init(
             get: { pendingRevocation != nil },
             set: { if !$0 { pendingRevocation = nil } }
@@ -155,7 +159,7 @@ struct SyncCenterView: View {
                     HStack {
                         Spacer()
                         Image(systemName: "person.crop.circle.fill")
-                        Text("Sign In with Inunity")
+                        Text("Sign In with PickMe")
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                         Spacer()
                     }
@@ -474,7 +478,7 @@ struct SyncCenterView: View {
 
                     Text(!hasLocalCredential
                          ? "These records cannot restore secrets after reinstall. Create a replacement connection; saved taps remain on this iPhone."
-                         : "The device credential belongs to another Inunity account. Creating a connection here replaces it safely.")
+                         : "The device credential belongs to another PickMe account. Creating a connection here replaces it safely.")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
 

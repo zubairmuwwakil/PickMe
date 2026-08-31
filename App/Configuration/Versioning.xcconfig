@@ -2,8 +2,8 @@
 // The CardCopilot scheme increments this before every Archive action.
 // Xcode's "Manage version and build number" remains an upload-time fallback.
 // Change APP_MARKETING_VERSION only when creating a new public release.
-APP_MARKETING_VERSION = 3.0
-APP_BUILD_NUMBER = 26
+APP_MARKETING_VERSION = 2.0
+APP_BUILD_NUMBER = 27
 
 // iOS 18 pairs with watchOS 11. Keep the app and embedded targets aligned.
 APP_IOS_DEPLOYMENT_TARGET = 18.0

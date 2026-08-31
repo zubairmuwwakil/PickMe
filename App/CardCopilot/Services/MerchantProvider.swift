@@ -68,7 +68,7 @@ final class LiveMerchantProvider: MerchantProviding {
         }
         let name = mapItem.name ?? "Unknown merchant"
         return NearbyMerchant(
-            id: mapItem.identifier?.rawValue ?? syntheticId(name: name, coordinate: coordinate),
+            id: syntheticId(name: name, coordinate: coordinate),
             name: name,
             poiCategoryRaw: mapItem.pointOfInterestCategory?.rawValue,
             latitude: coordinate.latitude,

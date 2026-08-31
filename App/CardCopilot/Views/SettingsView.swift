@@ -39,7 +39,7 @@ struct SettingsView: View {
         List {
             Section("Account") {
                 if isSignedIn {
-                    LabeledContent("Signed in as", value: accountEmail ?? "your Inunity account")
+                    LabeledContent("Signed in as", value: accountEmail ?? "your PickMe account")
                     Button("Sync & Wallet Capture", action: onOpenSync)
                     LabeledContent("Last synced",
                                    value: lastSyncedAt.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "Never")
@@ -53,7 +53,7 @@ struct SettingsView: View {
                 } else {
                     Text("Checkout works without an account. Sign in only to sync cap usage and capture feedback.")
                         .font(.footnote).foregroundStyle(.secondary)
-                    Button("Sign in to Inunity", action: onSignIn)
+                    Button("Sign in to PickMe", action: onSignIn)
                 }
             }
 
@@ -97,7 +97,7 @@ struct SettingsView: View {
             } header: {
                 Text("This iPhone")
             } footer: {
-                Text("Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to Inunity are not affected.")
+                Text("Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to PickMe are not affected.")
             }
 
             if isSignedIn {
@@ -106,7 +106,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Danger zone")
                 } footer: {
-                    Text("Deletes your Inunity account and everything stored for it on the server. You choose separately what happens to this iPhone's history.")
+                    Text("Deletes your PickMe account and everything stored for it on the server. You choose separately what happens to this iPhone's history.")
                 }
             }
         }

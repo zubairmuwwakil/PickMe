@@ -14,6 +14,7 @@ struct YouHubView: View {
 
     @AppStorage("enableHaptics") private var enableHaptics = true
     @State private var accountDetailIsPresented = false
+    @State private var authIsPresented = false
     @State private var eraseIsPresented = false
     @State private var didErase = false
 
@@ -86,6 +87,11 @@ struct YouHubView: View {
                 }
             )
         }
+        .sheet(isPresented: $authIsPresented) {
+            PickMeAuthSheet {
+                authIsPresented = false
+            }
+        }
         .confirmationDialog("Erase this iPhone's history?", isPresented: $eraseIsPresented, titleVisibility: .visible) {
             Button("Erase On-Device History", role: .destructive) {
                 triggerHaptic()
@@ -126,7 +132,7 @@ struct YouHubView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(accountEmail ?? "Inunity Account")
+                        Text(accountEmail ?? "PickMe Account")
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundStyle(.primary)
                             .lineLimit(1)
@@ -136,7 +142,7 @@ struct YouHubView: View {
                                 .fill(Color(red: 0.13, green: 0.77, blue: 0.37))
                                 .frame(width: 7, height: 7)
 
-                            Text("Connected to Inunity Cloud")
+                            Text("Connected to PickMe Cloud")
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundStyle(.secondary)
                         }
@@ -183,7 +189,7 @@ struct YouHubView: View {
 
                     Button {
                         triggerHaptic()
-                        router.push(.sync)
+                        authIsPresented = true
                     } label: {
                         Text("Sign In")
                             .font(.system(size: 13, weight: .bold, design: .rounded))

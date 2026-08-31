@@ -64,7 +64,7 @@ struct AccountDetailSheet: View {
                         }
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(accountEmail ?? "Inunity Account")
+                            Text(accountEmail ?? "PickMe Account")
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                                 .foregroundStyle(.primary)
 
@@ -73,7 +73,7 @@ struct AccountDetailSheet: View {
                                     .fill(Color(red: 0.13, green: 0.77, blue: 0.37))
                                     .frame(width: 8, height: 8)
 
-                                Text("Inunity Cloud Active")
+                                Text("PickMe Cloud Active")
                                     .font(.system(size: 13, weight: .medium))
                                     .foregroundStyle(.secondary)
                             }
@@ -171,7 +171,7 @@ struct AccountDetailSheet: View {
                     } label: {
                         HStack {
                             Spacer()
-                            Text("Delete Inunity Account")
+                            Text("Delete PickMe Account")
                                 .font(.system(size: 15, weight: .medium))
                             Spacer()
                         }
@@ -179,7 +179,7 @@ struct AccountDetailSheet: View {
                 } header: {
                     Text("Danger Zone")
                 } footer: {
-                    Text("Deletes your Inunity cloud account, saved remote cards, and server sync history. Your on-device data remains intact unless you choose to erase it.")
+                    Text("Deletes your PickMe cloud account, saved remote cards, and server sync history. Your on-device data remains intact unless you choose to erase it.")
                 }
             }
             .navigationTitle("Account")
@@ -192,7 +192,7 @@ struct AccountDetailSheet: View {
                     .font(.headline)
                 }
             }
-            .confirmationDialog("Sign out of Inunity?", isPresented: $signOutIsPresented, titleVisibility: .visible) {
+            .confirmationDialog("Sign out of PickMe?", isPresented: $signOutIsPresented, titleVisibility: .visible) {
                 Button("Sign Out", role: .destructive) {
                     dismiss()
                     onSignOut()
