@@ -100,7 +100,7 @@ public extension SpendDistribution {
                   recurring: true),
             .init(label: "Phone & internet", annualCad: 1_800, category: "householdUtilities",
                   mcc: 4814, recurring: true),
-            .init(label: "Insurance premiums", annualCad: 2_400, category: "recurring", mcc: 6300,
+            .init(label: "Insurance premiums", annualCad: 2_400, category: "insurance", mcc: 6300,
                   recurring: true),
             .init(label: "Gas", annualCad: 2_400, category: "gasStation", mcc: 5541),
             .init(label: "Transit & rideshare", annualCad: 1_200, category: "transit", mcc: 4121),

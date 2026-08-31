@@ -194,9 +194,9 @@ public extension RecurringPlan {
             // The flag-contingent line, and the off-wallet one: nothing in the wallet
             // accelerates insurance except Scotia's 4%, and that needs the network's flag.
             .init(id: "home-auto-insurance", label: "Home & auto insurance", amountCad: 210,
-                  cadence: .monthly, category: "recurring", mcc: 6300, placement: .offWallet),
+                  cadence: .monthly, category: "insurance", mcc: 6300, placement: .offWallet),
             .init(id: "life-insurance", label: "Term life insurance", amountCad: 45,
-                  cadence: .monthly, category: "recurring", mcc: 6300, placement: .offWallet),
+                  cadence: .monthly, category: "insurance", mcc: 6300, placement: .offWallet),
             // Lumpy, and Mastercard-only at the till.
             .init(id: "costco-membership", label: "Costco membership", amountCad: 65,
                   cadence: .annual, category: "wholesaleClub", merchantBrand: "costco",

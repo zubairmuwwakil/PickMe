@@ -1,6 +1,7 @@
 package com.cardcopilot.engine.engine
 
 import com.cardcopilot.engine.models.Catalogue
+import com.cardcopilot.engine.models.CategoryTaxonomy
 import com.cardcopilot.engine.models.OwnerState
 import com.cardcopilot.engine.models.PurchaseContext
 import com.cardcopilot.engine.models.Recommendation
@@ -35,59 +36,52 @@ object CategoryPickerAdvisor {
 
     val excludedCategories: List<CuratedEntry> = listOf(
         CuratedEntry(
+            category = "recurring",
+            reason = "Rule condition resolved from recurringIndicator, not a merchant category a statement can confirm."
+        ),
+        CuratedEntry(
+            category = "ownerSelectedCategory",
+            reason = "Placeholder for the owner's selected bonus categories, not a category any statement shows."
+        ),
+        CuratedEntry(
             category = "ownerSelectedTangerineCategory",
             reason = "Placeholder for whichever categories the owner picked on Tangerine — a rule condition RuleMatcher resolves against the owner's selections, not a category any statement shows."
+        ),
+        CuratedEntry(
+            category = "foreignCurrency",
+            reason = "Resolved from the purchase currency, not a merchant category."
         )
     )
 
     fun acceleratedVocabulary(catalogue: Catalogue): Set<String> {
-        return catalogue.cards.flatMap { it.earnRules }.mapNotNull { it.predicate.categories }.flatten().toSet()
+        return catalogue.cards.flatMap { it.earnRules }.mapNotNull { it.predicate.categories }
+            .flatten().map(CategoryTaxonomy::canonicalId).toSet()
     }
 
     fun derivedCategories(catalogue: Catalogue): List<String> {
         val curated = curatedCategories.map { it.category }.toSet()
-        val excluded = excludedCategories.map { it.category }.toSet()
+        val excluded = CategoryTaxonomy.ruleSideCategoryIds
         return (acceleratedVocabulary(catalogue) + curated - excluded).sorted()
     }
-
-    val curatedLabels: Map<String, String> = mapOf(
-        "ctFamily" to "Canadian Tire family",
-        "marriottDirect" to "Marriott direct",
-        "other" to "General merchandise",
-        "evCharging" to "EV charging"
-    )
 
     fun label(
         category: String,
         distribution: SpendDistribution = SpendDistribution.placeholderCanadianHousehold
     ): String {
-        val bucket = matchingBucket(category, distribution)
+        val canonicalCategory = CategoryTaxonomy.canonicalId(category)
+        val bucket = matchingBucket(canonicalCategory, distribution)
         if (bucket != null) return bucket.label
-        val curated = curatedLabels[category]
-        if (curated != null) return curated
-        return humanize(category)
-    }
-
-    fun humanize(category: String): String {
-        if (category.isEmpty()) return category
-        val sb = StringBuilder()
-        for (ch in category) {
-            if (ch.isUpperCase() && sb.isNotEmpty()) {
-                sb.append(' ')
-            }
-            sb.append(ch)
-        }
-        val s = sb.toString()
-        return s.take(1).uppercase() + s.drop(1).lowercase()
+        return CategoryTaxonomy.displayName(canonicalCategory)
     }
 
     fun enrichedTemplate(
         category: String,
         distribution: SpendDistribution = SpendDistribution.placeholderCanadianHousehold
     ): PurchaseContext {
-        val bucket = matchingBucket(category, distribution)
+        val canonicalCategory = CategoryTaxonomy.canonicalId(category)
+        val bucket = matchingBucket(canonicalCategory, distribution)
         if (bucket != null) return bucket.context
-        return PurchaseContext(amountCad = 1.0, category = category)
+        return PurchaseContext(amountCad = 1.0, category = canonicalCategory)
     }
 
     private fun matchingBucket(

@@ -12,7 +12,7 @@ final class CategoryTaxonomyTests: XCTestCase {
             "Pharmacy": "drugStore",
             "Food Delivery": "foodDelivery",
             "Hotels": "lodging",
-            "Recurring Bills": "recurring",
+            "Recurring Bills": "householdUtilities",
             "General Merchandise": "other",
         ]
 
@@ -25,6 +25,31 @@ final class CategoryTaxonomyTests: XCTestCase {
         XCTAssertEqual(CategoryTaxonomy.canonicalID("someBrandNewSpendCategory"),
                        "someBrandNewSpendCategory")
         XCTAssertEqual(CategoryTaxonomy.canonicalID(""), "")
+    }
+
+    func testPersistablePurchaseCategoriesExcludeRuleMarkers() {
+        XCTAssertEqual(CategoryTaxonomy.canonicalPurchaseID(" groceries "), "grocery")
+        XCTAssertEqual(CategoryTaxonomy.canonicalPurchaseID("bills"), "householdUtilities")
+        XCTAssertNil(CategoryTaxonomy.canonicalPurchaseID("recurring"))
+        XCTAssertNil(CategoryTaxonomy.canonicalPurchaseID("ownerSelectedCategory"))
+    }
+
+    func testDisplayNamesComeFromTheTaxonomy() {
+        XCTAssertEqual(CategoryTaxonomy.displayName(for: "evCharging"), "EV charging")
+        XCTAssertEqual(CategoryTaxonomy.displayName(for: "ctFamily"), "Canadian Tire family")
+        XCTAssertEqual(CategoryTaxonomy.displayName(for: "householdUtilities"),
+                       "Utilities & telecom")
+    }
+
+    func testEveryContractAliasHasOneUnambiguousTarget() throws {
+        let registry = try SeedLoader.loadPurchaseCategories()
+        for definition in registry.categories + registry.ruleSideCategories {
+            XCTAssertEqual(CategoryTaxonomy.canonicalID(definition.id), definition.id)
+            for alias in definition.aliases {
+                XCTAssertEqual(CategoryTaxonomy.canonicalID(alias), definition.id,
+                               "Alias: \(alias)")
+            }
+        }
     }
 
     func testPurchaseContextNormalizesAtTheEngineBoundary() {

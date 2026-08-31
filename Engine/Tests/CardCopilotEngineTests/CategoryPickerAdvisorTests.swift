@@ -18,13 +18,13 @@ final class CategoryPickerAdvisorTests: XCTestCase {
         let catalogue = try SeedLoader.loadCatalogue()
         let vocabulary = CategoryPickerAdvisor.acceleratedVocabulary(catalogue: catalogue)
         let curated = Set(CategoryPickerAdvisor.curatedCategories.map(\.category))
-        let excluded = Set(CategoryPickerAdvisor.excludedCategories.map(\.category))
+        let excluded = CategoryTaxonomy.ruleSideCategoryIDs
         let expected = vocabulary.union(curated).subtracting(excluded)
 
         let derived = Set(CategoryPickerAdvisor.derivedCategories(catalogue: catalogue))
         XCTAssertEqual(derived, expected)
         // No pill for a rule-side marker, ever.
-        XCTAssertFalse(derived.contains("ownerSelectedTangerineCategory"))
+        XCTAssertTrue(derived.isDisjoint(with: CategoryTaxonomy.ruleSideCategoryIDs))
     }
 
     /// Drift test: every category an accelerator predicate names must be answered for — either
@@ -48,9 +48,8 @@ final class CategoryPickerAdvisorTests: XCTestCase {
 
     /// The curated and excluded lists are hand-maintained, so their written reasons can go
     /// stale as the catalogue changes. A curated pill should still have no accelerator (its
-    /// reason is "no accelerator names this"); an excluded id should still actually appear in
-    /// the accelerator vocabulary (excluding something the catalogue no longer mentions is a
-    /// silent no-op that would hide a real drift elsewhere).
+    /// reason is "no accelerator names this"); an excluded id must remain a recognized rule-side
+    /// dimension rather than becoming an arbitrary hidden purchase category.
     func testCuratedAndExcludedEntriesStayTrueToTheCatalogue() throws {
         let catalogue = try SeedLoader.loadCatalogue()
         let vocabulary = CategoryPickerAdvisor.acceleratedVocabulary(catalogue: catalogue)
@@ -64,11 +63,12 @@ final class CategoryPickerAdvisorTests: XCTestCase {
         }
         for entry in CategoryPickerAdvisor.excludedCategories {
             XCTAssertFalse(entry.reason.isEmpty, "'\(entry.category)' needs a written reason")
-            XCTAssertTrue(vocabulary.contains(entry.category),
-                          "'\(entry.category)' is excluded as a rule-side marker, but no "
-                          + "accelerator predicate names it any more — the exclusion is a "
-                          + "no-op and may be hiding a real gap")
+            XCTAssertTrue(CategoryTaxonomy.ruleSideCategoryIDs.contains(entry.category),
+                          "'\(entry.category)' is hidden but is not a recognized rule-side "
+                          + "dimension")
         }
+        XCTAssertEqual(Set(CategoryPickerAdvisor.excludedCategories.map(\.category)),
+                       CategoryTaxonomy.ruleSideCategoryIDs)
     }
 
     // MARK: - Labels

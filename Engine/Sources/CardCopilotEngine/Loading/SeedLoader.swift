@@ -62,6 +62,18 @@ public enum SeedLoader {
         try load("owner-conditions")
     }
 
+    /// Canonical purchase categories, aliases, labels, and predicate-only exclusions.
+    public static func loadPurchaseCategories() throws -> PurchaseCategoryRegistry {
+        try load("purchase-categories")
+    }
+
+    /// Decoded once and reused by every category boundary. An unreadable registry is a broken
+    /// build, not a reason to fall back to a second handwritten vocabulary.
+    public static let purchaseCategories: PurchaseCategoryRegistry = {
+        do { return try loadPurchaseCategories() }
+        catch { preconditionFailure("contracts/purchase-categories.json is unreadable: \(error)") }
+    }()
+
     /// Decoded once and reused. Traps rather than falling back to `[:]`, for the same reason
     /// `programValuationDefaults` does: an empty fallback would make every condition unanswerable
     /// and every conditional rate silently unreachable, which is the exact failure this registry

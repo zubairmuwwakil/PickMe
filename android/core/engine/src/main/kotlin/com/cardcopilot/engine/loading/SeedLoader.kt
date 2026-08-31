@@ -6,6 +6,7 @@ import com.cardcopilot.engine.models.Catalogue
 import com.cardcopilot.engine.models.OwnerState
 import com.cardcopilot.engine.models.ProgramCatalogue
 import com.cardcopilot.engine.models.ProgramValuation
+import com.cardcopilot.engine.models.PurchaseCategoryRegistry
 import kotlinx.serialization.json.Json
 
 sealed class SeedLoaderException(message: String) : Exception(message) {
@@ -67,6 +68,9 @@ object SeedLoader {
      * here and absent from owner state is valued by this file rather than excluded.
      */
     fun loadPrograms(): ProgramCatalogue = load("programs")
+
+    /** Canonical purchase ids, aliases, labels, and predicate-only exclusions. */
+    fun loadPurchaseCategories(): PurchaseCategoryRegistry = load("purchase-categories")
 
     /**
      * Throws rather than falling back to an empty map. programs.json is a resource compiled into

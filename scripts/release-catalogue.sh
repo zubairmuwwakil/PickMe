@@ -52,6 +52,10 @@ FILES=(
   # the engine gates on — that is exactly what the digest is for.
   "owner-conditions.json"
   "schema/owner-conditions.schema.json"
+  # Added for 2.15. Purchase categories are persisted outside the scoring engine, so the
+  # canonical ids, aliases, and rule-only exclusions must travel with the contract release.
+  "purchase-categories.json"
+  "schema/purchase-categories.schema.json"
 )
 
 sha256_of() {

@@ -58,6 +58,15 @@ final class SeedLoaderTests: XCTestCase {
                        "treat-as-all-selected: 13 eligible Tangerine categories")
     }
 
+    func testPurchaseCategoryRegistryLoads() throws {
+        let registry = try SeedLoader.loadPurchaseCategories()
+        XCTAssertEqual(registry.taxonomyVersion, "1.0")
+        XCTAssertEqual(registry.categories.count, 25)
+        XCTAssertEqual(Set(registry.categories.map(\.id)), CategoryTaxonomy.purchaseCategoryIDs)
+        XCTAssertEqual(Set(registry.ruleSideCategories.map(\.id)),
+                       CategoryTaxonomy.ruleSideCategoryIDs)
+    }
+
     func testCatalogueVersionRejectsAnUnknownMajor() {
         // 1.x was the last major before the 2026-08-26 multi-market bump (Money-shaped fees/
         // credits, market/billingCurrency, spendNative replacing spendCad, calendarQuarter) —

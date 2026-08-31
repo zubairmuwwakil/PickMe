@@ -2,6 +2,24 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-31 — card-catalogue 2.15 & purchase-categories 1.0: one persisted vocabulary
+
+**Additive sidecar contract; persistence correction.** Purchase-category ids and aliases had
+three handwritten implementations in Swift, Kotlin, and MoneyTalks. They already disagreed on
+legacy input and on which catalogue predicates could be stored as merchant classifications.
+
+- New `purchase-categories.json` declares 25 real purchase categories, their canonical English
+  source labels, and durable aliases. Swift and Kotlin now decode this registry instead of
+  maintaining alias switches.
+- Four rule-side predicate tokens (`recurring`, `foreignCurrency`, `ownerSelectedCategory`, and
+  legacy `ownerSelectedTangerineCategory`) are declared separately. Engines may match them, but
+  database write boundaries must reject them as merchant or purchase classifications.
+- Unknown engine input remains forward-compatible and can fall through to base earn. Persisted
+  values are intentionally stricter: only a declared purchase id may be written.
+- The new registry and schema join the content-addressed release set. `card-catalogue.json` moves
+  only its `catalogueVersion` string, **MINOR 2.14 → 2.15**, because consumers of 2.14 continue to
+  decode every existing catalogue record.
+
 ## 2026-08-30 — card-catalogue 2.14 & fixtures 1.7: plural cap references become executable
 
 **Additive contract shape, corrective twin coverage.** The 2.13 catalogue introduced `capIds`

@@ -65,7 +65,7 @@ data class SpendDistribution(
                 Bucket(label = "Digital media & apps", annualCad = 300.0, category = "digitalMedia", mcc = 5815, channel = "online"),
                 Bucket(label = "Memberships & dues", annualCad = 600.0, category = "memberships", mcc = 7997, recurring = true),
                 Bucket(label = "Phone & internet", annualCad = 1800.0, category = "householdUtilities", mcc = 4814, recurring = true),
-                Bucket(label = "Insurance premiums", annualCad = 2400.0, category = "recurring", mcc = 6300, recurring = true),
+                Bucket(label = "Insurance premiums", annualCad = 2400.0, category = "insurance", mcc = 6300, recurring = true),
                 Bucket(label = "Gas", annualCad = 2400.0, category = "gasStation", mcc = 5541),
                 Bucket(label = "Transit & rideshare", annualCad = 1200.0, category = "transit", mcc = 4121),
                 Bucket(label = "Flights", annualCad = 1800.0, category = "travel", mcc = 3000, channel = "online"),

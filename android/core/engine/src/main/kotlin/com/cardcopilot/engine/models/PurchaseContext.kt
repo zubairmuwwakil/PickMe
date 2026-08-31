@@ -14,4 +14,6 @@ data class PurchaseContext(
     val channel: String = "cardPresent",
     val recurringIndicator: Boolean = false,
     val acceptedNetworks: Set<Network> = setOf(Network.AMEX, Network.VISA, Network.MASTERCARD, Network.DISCOVER)
-)
+) {
+    fun canonicalized(): PurchaseContext = copy(category = CategoryTaxonomy.canonicalId(category))
+}

@@ -13,6 +13,7 @@ cp "$root/contracts/candidate-catalogue.json" "$res_main/candidate-catalogue.jso
 cp "$root/contracts/benefits-catalogue.json" "$res_main/benefits-catalogue.json"
 cp "$root/contracts/programs.json" "$res_main/programs.json"
 cp "$root/contracts/owner-conditions.json" "$res_main/owner-conditions.json"
+cp "$root/contracts/purchase-categories.json" "$res_main/purchase-categories.json"
 cp "$root/Engine/Sources/CardCopilotEngine/Resources/owner-state.json" "$res_main/owner-state.json"
 
 cp "$root/contracts/engine-fixtures.json" "$res_test/engine-fixtures.json"

@@ -2,6 +2,7 @@ package com.cardcopilot.engine.engine
 
 import com.cardcopilot.engine.models.CardProduct
 import com.cardcopilot.engine.models.CardState
+import com.cardcopilot.engine.models.CategoryTaxonomy
 import com.cardcopilot.engine.models.Earn
 import com.cardcopilot.engine.models.EarnRule
 import com.cardcopilot.engine.models.EngineCapability
@@ -44,6 +45,7 @@ object RuleMatcher {
         ownerState: OwnerState,
         asOf: String
     ): RuleResolution {
+        val purchase = purchase.canonicalized()
         val state = ownerState.cardStates[card.cardId] ?: CardState()
         // One matching pass, then partitioned on capability. Asking "which rules matched" and
         // "which matched but for a capability" in two separate passes would let the two drift,
@@ -177,7 +179,7 @@ object RuleMatcher {
 
     private fun matchesOwnerSelection(purchase: PurchaseContext, state: CardState): Boolean {
         val selections = state.selectedCategories ?: return false
-        val selected = selections.toSet()
+        val selected = selections.map(CategoryTaxonomy::canonicalId).toSet()
         val purchaseCategories = (listOf(purchase.category) + (categoryParents[purchase.category] ?: emptyList())).toSet()
 
         if (selected.intersect(purchaseCategories).isNotEmpty()) return true

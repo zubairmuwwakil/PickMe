@@ -79,8 +79,8 @@ data class RecurringPlan(
                 RecurringPayment(id = "phone", label = "Phone", amountCad = 85.0, cadence = Cadence.MONTHLY, category = "householdUtilities", mcc = 4814, placement = Placement.Card("wealthsimple-vip")),
                 RecurringPayment(id = "internet", label = "Internet", amountCad = 95.0, cadence = Cadence.MONTHLY, category = "householdUtilities", mcc = 4814, placement = Placement.Card("scotia-momentum-vi-plus")),
                 RecurringPayment(id = "gym", label = "Gym membership", amountCad = 59.0, cadence = Cadence.MONTHLY, category = "memberships", mcc = 7997, placement = Placement.Card("wealthsimple-vip")),
-                RecurringPayment(id = "home-auto-insurance", label = "Home & auto insurance", amountCad = 210.0, cadence = Cadence.MONTHLY, category = "recurring", mcc = 6300, placement = Placement.OffWallet),
-                RecurringPayment(id = "life-insurance", label = "Term life insurance", amountCad = 45.0, cadence = Cadence.MONTHLY, category = "recurring", mcc = 6300, placement = Placement.OffWallet),
+                RecurringPayment(id = "home-auto-insurance", label = "Home & auto insurance", amountCad = 210.0, cadence = Cadence.MONTHLY, category = "insurance", mcc = 6300, placement = Placement.OffWallet),
+                RecurringPayment(id = "life-insurance", label = "Term life insurance", amountCad = 45.0, cadence = Cadence.MONTHLY, category = "insurance", mcc = 6300, placement = Placement.OffWallet),
                 RecurringPayment(id = "costco-membership", label = "Costco membership", amountCad = 65.0, cadence = Cadence.ANNUAL, category = "wholesaleClub", merchantBrand = "costco", placement = Placement.Card("rogers-red-we"), declaredAcceptedNetworks = setOf(Network.MASTERCARD), nextChargeMonth = "2026-11")
             )
         )

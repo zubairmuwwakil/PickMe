@@ -33,10 +33,18 @@ public enum CategoryPickerAdvisor {
     /// Predicate-side vocabulary that names a rule condition, not a real spending category.
     /// Never a pill: no receipt or statement is ever coded this way.
     public static let excludedCategories: [CuratedEntry] = [
+        CuratedEntry(category: "recurring",
+                     reason: "Rule condition resolved from recurringIndicator, not a merchant "
+                            + "category a statement can confirm."),
+        CuratedEntry(category: "ownerSelectedCategory",
+                     reason: "Placeholder for the owner's selected bonus categories, not a "
+                            + "category any statement shows."),
         CuratedEntry(category: "ownerSelectedTangerineCategory",
                      reason: "Placeholder for whichever categories the owner picked on "
                             + "Tangerine — a rule condition RuleMatcher resolves against the "
                             + "owner's selections, not a category any statement shows."),
+        CuratedEntry(category: "foreignCurrency",
+                     reason: "Resolved from the purchase currency, not a merchant category."),
     ]
 
     /// Every canonical category id named by an accelerator predicate in the loaded catalogue —
@@ -53,50 +61,24 @@ public enum CategoryPickerAdvisor {
     /// — nothing about this list survives across a catalogue reload.
     public static func derivedCategories(catalogue: Catalogue) -> [String] {
         let curated = Set(curatedCategories.map(\.category))
-        let excluded = Set(excludedCategories.map(\.category))
+        let excluded = CategoryTaxonomy.ruleSideCategoryIDs
         return acceleratedVocabulary(catalogue: catalogue).union(curated).subtracting(excluded).sorted()
     }
 
     // MARK: - Labels
 
-    /// Overrides for categories whose catalogue id would otherwise read as a raw-ish token even
-    /// after the generic humanizer runs (an acronym like "evCharging" camel-splits to "Ev
-    /// charging"), or that need a name distinct from any single bucket's label. Kept short and
-    /// reasoned — the bucket path below (`enrichedTemplate`) is the first line of defense
-    /// against raw identifiers, and most categories never reach this table at all.
-    static let curatedLabels: [String: String] = [
-        "ctFamily": "Canadian Tire family",
-        "marriottDirect": "Marriott direct",
-        "other": "General merchandise",
-        "evCharging": "EV charging",
-    ]
-
     /// Human label for a category id. A `SpendDistribution` bucket's label wins when one
     /// exists — it's hand-written and specific ("Restaurants & coffee" beats "Dining"); the
-    /// curated table above covers ids with no bucket that wouldn't camel-split cleanly;
-    /// anything left over falls through to `humanize`, so a brand-new catalogue category still
-    /// reads as words instead of a token like `householdUtilities`.
+    /// the shared taxonomy covers ids with no bucket and provides the camel-case fallback, so a
+    /// brand-new catalogue category still reads as words instead of a token like
+    /// `householdUtilities`.
     public static func label(for category: String,
                              distribution: SpendDistribution = .placeholderCanadianHousehold) -> String {
         let canonicalCategory = CategoryTaxonomy.canonicalID(category)
         if let bucket = matchingBucket(for: canonicalCategory, distribution: distribution) {
             return bucket.label
         }
-        if let curated = curatedLabels[canonicalCategory] { return curated }
-        return humanize(canonicalCategory)
-    }
-
-    /// camelCase -> "Camel case". The fallback of last resort: never returns its input
-    /// unchanged for anything but an already-lowercase single word, so a category neither
-    /// bucketed nor curated still reads as a sentence rather than a raw identifier.
-    static func humanize(_ category: String) -> String {
-        guard !category.isEmpty else { return category }
-        var spaced = ""
-        for character in category {
-            if character.isUppercase, !spaced.isEmpty { spaced.append(" ") }
-            spaced.append(character)
-        }
-        return spaced.prefix(1).uppercased() + spaced.dropFirst().lowercased()
+        return CategoryTaxonomy.displayName(for: canonicalCategory)
     }
 
     // MARK: - Enrichment (SpendDistribution as a lookup table, not a source of truth)

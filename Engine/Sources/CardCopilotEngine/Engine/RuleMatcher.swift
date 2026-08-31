@@ -148,7 +148,7 @@ public enum RuleMatcher {
     private static func matchesOwnerSelection(purchase: PurchaseContext,
                                                state: CardState) -> Bool {
         guard let selections = state.selectedCategories else { return false }
-        let selected = Set(selections)
+        let selected = Set(selections.map(CategoryTaxonomy.canonicalID))
         let purchaseCategories = Set(
             [purchase.category] + (categoryParents[purchase.category] ?? [])
         )

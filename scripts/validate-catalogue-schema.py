@@ -40,6 +40,7 @@ PAIRS = [
     ("benefits-catalogue.json", "benefits-catalogue.schema.json"),
     ("candidate-catalogue.json", "candidate-catalogue.schema.json"),
     ("owner-conditions.json", "owner-conditions.schema.json"),
+    ("purchase-categories.json", "purchase-categories.schema.json"),
     # engine-fixtures shipped a schema inside the release digest that nothing ever ran. It is
     # the only thing standing between a typo'd override key and a fixture that silently asserts
     # against the UNMODIFIED base owner state, because cardStateOverride is
