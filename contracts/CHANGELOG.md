@@ -2,6 +2,29 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-08-30 — card-catalogue 2.14 & fixtures 1.7: plural cap references become executable
+
+**Additive contract shape, corrective twin coverage.** The 2.13 catalogue introduced `capIds`
+for rules that race multiple meters, but the 32-case shared fixture set never read the field.
+Swift implemented it while Kotlin still read only legacy `capId`, so both native suites could be
+green while disagreeing on the released bytes.
+
+- Two shared cases inspect the named CIBC Dividend Visa Infinite candidate through a new optional
+  `expected.cardScores` assertion. Its live base rule deliberately has `capId: null` and only
+  `capIds`; one case leaves $50 of global-cap room and the other leaves none. The dollar value is
+  unchanged because the base earn and post-cap earn are both 1%, so `capNearlyExhausted` is the
+  decisive signal: a consumer that ignores `capIds` omits it and fails.
+- `cardScores` is a general fixture capability over `Recommendation.allCandidates`, not a
+  CIBC-specific escape hatch. It lets the executable contract pin card-local behavior without
+  falsifying network acceptance or forcing a lower-value card to become the wallet winner.
+- Synthetic Swift and Kotlin scorer tests pin the true two-meter behavior: the cap with the least
+  remaining room constrains the accelerated portion; the first declared cap supplies
+  `postCapEarn`; and multiple nearly exhausted meters emit one warning. Kotlin now ports Swift's
+  `effectiveCapIds`/`splitMulti` semantics.
+- This release deliberately does **not** activate `cap.globalGroup` or `cap.statementYear`.
+  Twenty-nine rules across eleven cards still declare one of those capabilities, so enabling
+  either would be a separate catalogue-wide card-semantics decision, not fixture maintenance.
+
 ## 2026-08-30 — benefits-catalogue 1.3: Part 2 Canadian insurance dossier ingestion
 
 Ingested verified first-party insurance certificates, benefits terms, and document indices for 16 Canadian credit cards:

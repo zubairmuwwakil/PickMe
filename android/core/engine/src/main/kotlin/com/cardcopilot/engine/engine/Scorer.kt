@@ -134,24 +134,32 @@ object Scorer {
 
         var inCapAmount = nativeAmount
         var overCapAmount = 0.0
+        val effectiveCaps = rule.effectiveCapIds.mapNotNull { id ->
+            card.caps.firstOrNull { it.capId == id }
+        }
 
-        if (rule.capId != null) {
-            val cap = card.caps.firstOrNull { it.capId == rule.capId }
-            if (cap != null) {
-                val usage = state.capProgress?.get(rule.capId) ?: 0.0
+        if (effectiveCaps.isNotEmpty()) {
+            val splitInputs = mutableListOf<CapInput>()
+            var baseMeasureAmount = nativeAmount
+
+            for (cap in effectiveCaps) {
+                val usage = state.capProgress?.get(cap.capId) ?: 0.0
                 val measureAmount = if (cap.measure == CapMeasure.SPEND_USD_EQUIVALENT) {
                     purchase.usdEquivalent ?: (purchase.amountCad * FALLBACK_CAD_TO_USD)
                 } else {
                     nativeAmount
                 }
-                val split = CapMath.split(measureAmount, cap.limit, usage)
-                val inFraction = if (measureAmount > 0) split.inCap / measureAmount else 1.0
-                inCapAmount = nativeAmount * inFraction
-                overCapAmount = nativeAmount - inCapAmount
-                if (usage >= cap.limit * 0.9) {
+                baseMeasureAmount = maxOf(baseMeasureAmount, measureAmount)
+                splitInputs.add(CapInput(limit = cap.limit, usage = usage))
+                if (usage >= cap.limit * 0.9 && Warning.CAP_NEARLY_EXHAUSTED !in warnings) {
                     warnings.add(Warning.CAP_NEARLY_EXHAUSTED)
                 }
             }
+
+            val split = CapMath.splitMulti(baseMeasureAmount, splitInputs)
+            val inFraction = if (baseMeasureAmount > 0) split.inCap / baseMeasureAmount else 1.0
+            inCapAmount = nativeAmount * inFraction
+            overCapAmount = nativeAmount - inCapAmount
         }
 
         // Cashback earns real money in the card's own billing currency — unlike points, which are
@@ -169,7 +177,9 @@ object Scorer {
             }
         }
 
-        val postCapEarn = rule.capId?.let { id -> card.caps.firstOrNull { it.capId == id }?.postCapEarn }
+        // Use the first specified cap's postCapEarn as the fallback. For grouped caps like CIBC,
+        // the postCapEarn is identical across all caps in the group (e.g. drops to 1% base).
+        val postCapEarn = effectiveCaps.firstOrNull()?.postCapEarn
         val units = unitsInReportingCurrency(rule.earn, inCapAmount) +
             unitsInReportingCurrency(postCapEarn ?: rule.earn, overCapAmount)
 

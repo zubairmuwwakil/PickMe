@@ -69,11 +69,21 @@ class FixtureHarnessTest {
             val suppressedValueCad: Double? = null,
             val warnings: List<String>? = null,
             val warningsAbsent: List<String>? = null,
+            val cardScores: List<CardScore>? = null,
             val valuationSensitive: Boolean? = null,
             val valuationDirection: String? = null,
             val alternateWinner: String? = null,
             val breakevenCentsPerPoint: Double? = null
-        )
+        ) {
+            @Serializable
+            data class CardScore(
+                val cardId: String,
+                val valueCad: Double,
+                val rule: String? = null,
+                val warnings: List<String>? = null,
+                val warningsAbsent: List<String>? = null,
+            )
+        }
     }
 
     private val json = Json {
@@ -91,8 +101,8 @@ class FixtureHarnessTest {
         val content = stream.bufferedReader().use { it.readText() }
         val fixtureFile = json.decodeFromString<FixtureFile>(content)
 
-        assertEquals(32, fixtureFile.cases.size)
-        assertEquals(32, fixtureFile.cases.map { it.caseId }.toSet().size, "duplicate caseId")
+        assertEquals(34, fixtureFile.cases.size)
+        assertEquals(34, fixtureFile.cases.map { it.caseId }.toSet().size, "duplicate caseId")
 
         val catalogue = SeedLoader.loadCatalogue()
         var baseState = SeedLoader.loadOwnerState()
@@ -199,6 +209,24 @@ class FixtureHarnessTest {
             }
             for (w in e.warningsAbsent ?: emptyList()) {
                 assertFalse(actualWarnings.contains(w), "$ctx: unexpected warning $w, actual: $actualWarnings")
+            }
+            for (expectedScore in e.cardScores ?: emptyList()) {
+                val candidate = r.allCandidates.firstOrNull { it.cardId == expectedScore.cardId }
+                assertNotNull(candidate, "$ctx: missing named candidate ${expectedScore.cardId}")
+                candidate!!
+                assertEquals(expectedScore.valueCad, candidate.netValueCad, 0.005, ctx)
+                if (expectedScore.rule != null) {
+                    assertEquals(expectedScore.rule, candidate.appliedRuleId, ctx)
+                }
+                val warnings = candidate.warnings.map { it.rawValue }
+                for (warning in expectedScore.warnings ?: emptyList()) {
+                    assertTrue(warnings.contains(warning),
+                        "$ctx: ${expectedScore.cardId} missing $warning")
+                }
+                for (warning in expectedScore.warningsAbsent ?: emptyList()) {
+                    assertFalse(warnings.contains(warning),
+                        "$ctx: ${expectedScore.cardId} unexpectedly has $warning")
+                }
             }
 
             if (e.valuationSensitive != null) {

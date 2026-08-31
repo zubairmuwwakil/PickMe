@@ -151,6 +151,47 @@ class MultiMarketTest {
     }
 
     @Test
+    fun multipleCapsUseTheTightestRoomAndFirstCapsPostCapEarn() {
+        val multiCapCard = usdCashbackCard.copy(
+            earnRules = listOf(
+                usdCashbackCard.earnRules[0].copy(
+                    ruleId = "grocery-5x-multi-cap",
+                    capId = null,
+                    capIds = listOf("grocery-cap", "global-cap"),
+                ),
+                usdCashbackCard.earnRules[1],
+            ),
+            caps = usdCashbackCard.caps + Cap(
+                capId = "global-cap",
+                measure = CapMeasure.SPEND_NATIVE,
+                limit = 1500.0,
+                period = CapPeriod.CALENDAR_QUARTER,
+                resetTimeZone = "UTC",
+                // Deliberately differs from the first cap; the first cap's 1% fallback binds.
+                postCapEarn = Earn.Cashback(rate = 0.005),
+                proration = true,
+            ),
+        )
+        val purchase = PurchaseContext(
+            amountCad = 274.0,
+            currency = "CAD",
+            usdEquivalent = 200.0,
+            category = "grocery",
+        )
+        val state = ownerState(cardStates = mapOf(
+            "usd-cashback-test" to CardState(capProgress = mapOf(
+                "grocery-cap" to 1400.0,
+                "global-cap" to 1490.0,
+            )),
+        ))
+        val score = Scorer.score(multiCapCard, purchase, state, asOf)
+        val expected = (10.0 * 0.05 + 190.0 * 0.01) * (1.0 / Scorer.FALLBACK_CAD_TO_USD)
+        assertTrue(abs(score.rewardUnits - expected) < 1e-6,
+            "expected $expected, got ${score.rewardUnits}")
+        assertEquals(1, score.warnings.count { it.rawValue == "capNearlyExhausted" })
+    }
+
+    @Test
     fun excludesADraftCardEvenWhenOwned() {
         val draftCard = usdCashbackCard.copy(status = CardStatus.DRAFT)
         val purchase = PurchaseContext(amountCad = 100.0, currency = "CAD", category = "grocery")

@@ -38,6 +38,14 @@ private struct FixtureCase: Decodable {
     }
 
     struct Expected: Decodable {
+        struct CardScore: Decodable {
+            let cardId: String
+            let valueCad: Double
+            let rule: String?
+            let warnings: [String]?
+            let warningsAbsent: [String]?
+        }
+
         let winner: String
         let winnerValueCad: Double
         let winnerRule: String?
@@ -53,6 +61,9 @@ private struct FixtureCase: Decodable {
         /// signal is a warning — e.g. an announced FX record being ignored before its
         /// `effectiveFrom`, which is dollar-identical to the record it replaces.
         let warningsAbsent: [String]?
+        /// Assertions for a named non-winning candidate. Some card-local semantics cannot be
+        /// made the wallet winner without falsifying network acceptance or owner state.
+        let cardScores: [CardScore]?
         let valuationSensitive: Bool?
         let valuationDirection: String?
         let alternateWinner: String?
@@ -71,7 +82,7 @@ final class FixtureHarnessTests: XCTestCase {
                                                   withExtension: "json",
                                                   subdirectory: "Fixtures"))
         let file = try JSONDecoder().decode(FixtureFile.self, from: Data(contentsOf: url))
-        XCTAssertEqual(file.cases.count, 32)
+        XCTAssertEqual(file.cases.count, 34)
         XCTAssertEqual(Set(file.cases.map(\.caseId)).count, file.cases.count, "duplicate caseId")
 
         let catalogue = try SeedLoader.loadCatalogue()
@@ -156,6 +167,25 @@ final class FixtureHarnessTests: XCTestCase {
             }
             for w in e.warningsAbsent ?? [] {
                 XCTAssertFalse(actualWarnings.contains(w), "\(ctx): unexpected \(w)")
+            }
+            for expectedScore in e.cardScores ?? [] {
+                let candidate = try XCTUnwrap(
+                    r.allCandidates.first { $0.cardId == expectedScore.cardId },
+                    "\(ctx): missing named candidate \(expectedScore.cardId)"
+                )
+                XCTAssertEqual(candidate.netValueCad, expectedScore.valueCad, accuracy: 0.005, ctx)
+                if let rule = expectedScore.rule {
+                    XCTAssertEqual(candidate.appliedRuleId, rule, ctx)
+                }
+                let warnings = candidate.warnings.map(\.rawValue)
+                for warning in expectedScore.warnings ?? [] {
+                    XCTAssertTrue(warnings.contains(warning),
+                                  "\(ctx): \(expectedScore.cardId) missing \(warning)")
+                }
+                for warning in expectedScore.warningsAbsent ?? [] {
+                    XCTAssertFalse(warnings.contains(warning),
+                                   "\(ctx): \(expectedScore.cardId) unexpectedly has \(warning)")
+                }
             }
             if let s = e.valuationSensitive { XCTAssertEqual(r.valuationSensitive, s, ctx) }
             if let d = e.valuationDirection {

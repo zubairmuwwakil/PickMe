@@ -61,6 +61,28 @@ final class MultiMarketTests: XCTestCase {
                    valuationsCad: Valuations(programs: ["cashback": .cashback(CashBackValuation(cadPerDollar: 1))]))
     }
 
+    /// A synthetic two-meter rule. The first cap's post-cap rate is intentionally different
+    /// from the second's so the test also pins which fallback earn binds.
+    private func multiCapUsdCashbackCard() -> CardProduct {
+        var card = usdCashbackCard()
+        card.earnRules[0] = EarnRule(
+            ruleId: "grocery-5x-multi-cap", status: .current,
+            sourceType: .issuerConfirmed,
+            earn: .cashback(rate: 0.05, rewardCurrency: nil),
+            predicate: {
+                var p = Predicate()
+                p.categories = ["grocery"]
+                return p
+            }(),
+            capIds: ["grocery-cap", "global-cap"])
+        card.caps.append(
+            Cap(capId: "global-cap", measure: .spendNative, limit: 1500,
+                period: .calendarQuarter, anchor: nil, resetTimeZone: "UTC",
+                postCapEarn: .cashback(rate: 0.005, rewardCurrency: nil), proration: true)
+        )
+        return card
+    }
+
     func testEarnsOnTheUsdEquivalentAmountNotTheCadAmount() {
         let purchase = PurchaseContext(amountCad: 137, currency: "CAD", usdEquivalent: 100, category: "grocery")
         let score = Scorer.score(card: usdCashbackCard(), purchase: purchase, ownerState: ownerState(), asOf: asOf)
@@ -104,6 +126,22 @@ final class MultiMarketTests: XCTestCase {
         let score = Scorer.score(card: usdCashbackCard(), purchase: purchase, ownerState: owner, asOf: asOf)
         let expected = (100 * 0.05 + 100 * 0.01) * ReportingCurrency.pinnedUsdToCad
         XCTAssertEqual(score.rewardUnits, expected, accuracy: 0.000001)
+    }
+
+    func testMultipleCapsUseTheTightestRoomAndFirstCapsPostCapEarn() {
+        let purchase = PurchaseContext(amountCad: 274, currency: "CAD",
+                                       usdEquivalent: 200, category: "grocery")
+        var state = CardState()
+        // Both meters are nearly exhausted; grocery has $100 room, global only $10. The global
+        // meter therefore constrains the accelerated portion, while the FIRST cap supplies the
+        // post-cap 1% fallback (the second deliberately says 0.5%).
+        state.capProgress = ["grocery-cap": 1400, "global-cap": 1490]
+        let owner = ownerState(cardStates: ["usd-cashback-test": state])
+        let score = Scorer.score(card: multiCapUsdCashbackCard(), purchase: purchase,
+                                 ownerState: owner, asOf: asOf)
+        let expected = (10 * 0.05 + 190 * 0.01) * ReportingCurrency.pinnedUsdToCad
+        XCTAssertEqual(score.rewardUnits, expected, accuracy: 0.000001)
+        XCTAssertEqual(score.warnings.filter { $0 == .capNearlyExhausted }.count, 1)
     }
 
     func testExcludesADraftCardEvenWhenOwned() {
