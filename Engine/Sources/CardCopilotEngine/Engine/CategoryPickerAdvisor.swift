@@ -24,10 +24,6 @@ public enum CategoryPickerAdvisor {
                      reason: "The catch-all for unaccelerated spend — every wallet needs an "
                             + "answer for 'nothing special applies here,' even though no "
                             + "earnRule predicate names it."),
-        CuratedEntry(category: "wholesaleClub",
-                     reason: "Costco's winner is decided by its Mastercard-only acceptance "
-                            + "gate, not an accelerator — no earnRule predicate lists this "
-                            + "category."),
     ]
 
     /// Predicate-side vocabulary that names a rule condition, not a real spending category.

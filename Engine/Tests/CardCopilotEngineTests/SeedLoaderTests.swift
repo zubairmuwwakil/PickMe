@@ -7,7 +7,7 @@ final class SeedLoaderTests: XCTestCase {
         // Every supported product, not just the seed owner's wallet (one corpus, 2026-08-24).
         // Counted as PUBLISHED rather than total since catalogue 2.2 added US drafts: a bare
         // total would move on every import and stop asserting anything about the corpus.
-        XCTAssertEqual(catalogue.cards.filter(\.isPublished).count, 58)
+        XCTAssertEqual(catalogue.cards.filter(\.isPublished).count, 66)
         XCTAssertFalse(catalogue.cards.allSatisfy(\.isPublished), "expected drafts in 2.2+")
         let cobalt = try XCTUnwrap(catalogue.cards.first { $0.cardId == "amex-cobalt" })
         XCTAssertEqual(ReportingCurrency.toReporting(cobalt.fee.annual), 191.88, accuracy: 0.005)

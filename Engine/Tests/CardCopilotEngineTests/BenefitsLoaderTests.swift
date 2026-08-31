@@ -4,7 +4,7 @@ import XCTest
 final class BenefitsLoaderTests: XCTestCase {
     func testLoadsBenefitsCatalogue() throws {
         let benefits = try SeedLoader.loadBenefitsCatalogue()
-        XCTAssertEqual(benefits.cards.count, 46)
+        XCTAssertEqual(benefits.cards.count, 55)
         XCTAssertGreaterThan(benefits.triggers.bigTicketThresholdCad, 0)
         XCTAssertFalse(benefits.triggers.consumableCategories.isEmpty)
     }
@@ -27,7 +27,7 @@ final class BenefitsLoaderTests: XCTestCase {
             "american-express-blue-business-plus", "american-express-gold-card",
             "american-express-the-platinum-card", "chase-freedom-flex",
             "chase-freedom-unlimited", "chase-sapphire-preferred-card",
-            "chase-sapphire-reserve", "citi-double-cash-card",
+            "chase-sapphire-reserve",
             "walmart-rewards-mastercard",
             "neo-financial-neo-world-mastercard", "mbna-true-line-mastercard",
             "capital-one-canada-capital-one-guaranteed",
@@ -59,10 +59,10 @@ final class BenefitsLoaderTests: XCTestCase {
                            "\(card.cardId) is \(certificate.verificationStatus) but has no lastVerifiedAt")
         }
 
-        XCTAssertEqual(statusCounts["stub", default: 0], 1,
-                       "expected only cryptocom-royal-indigo to remain stub")
-        XCTAssertEqual(statusCounts["issuerPage", default: 0], 45,
-                       "expected the forty-five issuer-sourced cards to be issuerPage")
+        XCTAssertEqual(statusCounts["stub", default: 0], 2,
+                       "expected cryptocom-royal-indigo and comenity-aaa-daily-advantage-visa-signature to remain stub")
+        XCTAssertEqual(statusCounts["issuerPage", default: 0], 53,
+                       "expected the fifty-three issuer-sourced cards to be issuerPage")
         XCTAssertEqual(statusCounts["certificateVerified", default: 0], 0,
                        "a card claims certificateVerified, but no card has had Zubair's own " +
                        "cardholder-document check yet — update this test's counts once one does")
