@@ -231,6 +231,27 @@ final class CopilotEnvironment {
         }
     }
 
+    /// Stores the one date needed to resolve account-anniversary credit windows. This remains
+    /// aggregate card state; PickMe does not import statements or maintain a transaction ledger.
+    @discardableResult
+    func setAccountOpenedAt(_ openedAt: String, cardId: String) -> Bool {
+        guard let graph, graph.ownerState.ownedCardIds.contains(cardId) else { return false }
+        var owner = graph.ownerState
+        var cardState = owner.cardStates[cardId] ?? CardState()
+        cardState.accountOpenedAt = openedAt
+        owner.cardStates[cardId] = cardState
+        do {
+            try sync.accountOwnerStateStore.updateActive(owner)
+            if let userID = sync.accountOwnerStateStore.activeUserID {
+                try sync.ownerStateUploadQueue.enqueue(owner, forUserID: userID)
+            }
+            rebuild(ownerState: owner)
+            return true
+        } catch {
+            return false
+        }
+    }
+
     /// Completes the first-run gateway without forcing the owner into a separate wallet setup screen.
     /// The initial owner state is saved to the local store and derived session state is refreshed.
     func continuePrivately(session: CopilotSession) {

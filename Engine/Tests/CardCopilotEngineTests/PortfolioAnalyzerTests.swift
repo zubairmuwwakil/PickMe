@@ -338,7 +338,7 @@ final class PortfolioAnalyzerTests: XCTestCase {
         let run = PortfolioAnalyzer(catalogue: catalogue, ownerState: owner)
             .run(distribution, excluding: [], asOf: "2026-08-01")
         XCTAssertEqual(run.totalValueCad, 24, accuracy: 0.001)
-        XCTAssertEqual(run.valueByCard["two-percent"], 24, accuracy: 0.001)
+        XCTAssertEqual(run.valueByCard["two-percent"] ?? -1, 24, accuracy: 0.001)
         XCTAssertNil(run.valueByCard["credit-card"])
     }
 }

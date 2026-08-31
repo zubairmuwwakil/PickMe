@@ -74,6 +74,14 @@ public struct WalletAuditMarkdownExporter {
                 md += "- **Recommendation:** \(portfolioVerdictLabel(contribution.verdict))\n"
                 md += String(format: "- **Marginal Value vs Next Best Card:** C$%.2f / year\n",
                              contribution.marginalValueCad)
+                if contribution.realizedCreditValueCad > 0.01 {
+                    md += String(format: "- **Confirmed Credits Recovered:** C$%.2f / year (counted)\n",
+                                 contribution.realizedCreditValueCad)
+                }
+                if contribution.unspentCreditPotentialCad > 0.01 {
+                    md += String(format: "- **Unused Credit Potential:** C$%.2f (not counted until posted)\n",
+                                 contribution.unspentCreditPotentialCad)
+                }
                 if contribution.requiredBenefitValueCad > 0 {
                     md += String(format: "- **Unpriced Benefits Needed to Break Even:** C$%.2f / year\n",
                                  contribution.requiredBenefitValueCad)

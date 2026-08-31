@@ -23,6 +23,9 @@ struct WalletCardDetailSheet: View {
 
     @State private var showingRemoveAlert = false
     @State private var isDefaultLocal: Bool = false
+    @State private var accountOpenedDate = Date()
+    @State private var hasAccountOpenedDate = false
+    @State private var accountDateSaveFailed = false
 
     private var style: CardVisualTheme.CardStyle {
         CardVisualTheme.style(for: card.cardId)
@@ -87,6 +90,11 @@ struct WalletCardDetailSheet: View {
             }
             .onAppear {
                 isDefaultLocal = isDefault
+                if let openedAt = environment.graph?.ownerState.cardStates[card.cardId]?.accountOpenedAt,
+                   let date = parseISODate(openedAt) {
+                    accountOpenedDate = date
+                    hasAccountOpenedDate = true
+                }
             }
             .alert("Remove Card?", isPresented: $showingRemoveAlert) {
                 Button("Cancel", role: .cancel) {}
@@ -311,6 +319,40 @@ struct WalletCardDetailSheet: View {
                 .font(.system(size: 16, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
 
+            if credits.contains(where: { $0.effectiveSchedule?.basis == .accountAnniversary }) {
+                VStack(alignment: .leading, spacing: 8) {
+                    DatePicker("Account opened",
+                               selection: $accountOpenedDate,
+                               in: ...Date(), displayedComponents: .date)
+                        .font(.subheadline.weight(.medium))
+                    HStack {
+                        Text(hasAccountOpenedDate
+                             ? "Used to calculate anniversary-year credit windows."
+                             : "Required for anniversary-year expiry dates.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button(hasAccountOpenedDate ? "Update" : "Save") {
+                            accountDateSaveFailed = !environment.setAccountOpenedAt(
+                                isoDate(accountOpenedDate), cardId: card.cardId
+                            )
+                            if !accountDateSaveFailed { hasAccountOpenedDate = true }
+                        }
+                        .font(.caption.weight(.semibold))
+                    }
+                    if accountDateSaveFailed {
+                        Text("Couldn’t save the date. Your wallet was not changed.")
+                            .font(.caption2)
+                            .foregroundStyle(.red)
+                    }
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.orange.opacity(0.08))
+                )
+            }
+
             VStack(spacing: 8) {
                 ForEach(credits) { credit in
                     HStack(spacing: 12) {
@@ -361,6 +403,24 @@ struct WalletCardDetailSheet: View {
         case (.rolling, _, let months?): return "Every \(months) months"
         default: return "Recurring"
         }
+    }
+
+    private func parseISODate(_ value: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: value)
+    }
+
+    private func isoDate(_ value: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: value)
     }
 
     // MARK: - 5. Metadata & Settings Shortcuts

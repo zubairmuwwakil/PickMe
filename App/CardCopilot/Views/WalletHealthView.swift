@@ -545,6 +545,14 @@ private struct CardContributionRow: View {
                     stateLine(icon: "questionmark.circle.fill", color: .orange,
                               text: "Fee waiver status unknown — this verdict assumes the stated fee applies.")
                 }
+                if contribution.realizedCreditValueCad > 0.01 {
+                    stateLine(icon: "checkmark.seal.fill", color: .green,
+                              text: "Confirmed credits recovered: \(WalletHealthFormatting.cad(contribution.realizedCreditValueCad))/yr (counted).")
+                }
+                if contribution.unspentCreditPotentialCad > 0.01 {
+                    stateLine(icon: "clock.badge.exclamationmark", color: .orange,
+                              text: "Unused current-window credits: \(WalletHealthFormatting.cad(contribution.unspentCreditPotentialCad)) potential (not counted until posted).")
+                }
                 if contribution.requiredBenefitValueCad > 0 {
                     Text("Keep only if its benefits are worth ≥ \(WalletHealthFormatting.cad(contribution.requiredBenefitValueCad))/yr to you.")
                         .font(.footnote.weight(.medium))
