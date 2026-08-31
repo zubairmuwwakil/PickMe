@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import CardCopilotEngine
 
 /// Whether a confirmed row can be — and was — checked against the catalogue math.
 public enum ArithmeticVerdict: Equatable, Sendable {
@@ -220,6 +221,7 @@ public struct PredictionLog {
                         observedCategory: String, observedRewardUnits: Double? = nil,
                         missClass: MissClass?,
                         note: String?, confirmedAt: Date = Date()) throws {
+        let observedCategory = CategoryTaxonomy.canonicalID(observedCategory)
         let observation = StoredObservation(observedCategory: observedCategory,
                                             observedRewardUnits: observedRewardUnits,
                                             missClass: missClass, note: note,
@@ -258,6 +260,7 @@ public struct PredictionLog {
     /// stamp is what lets the accuracy math exclude the row instead of silently counting it.
     public func updateCategory(for prediction: StoredPrediction, to newCategory: String,
                                correctedAt: Date = Date()) throws {
+        let newCategory = CategoryTaxonomy.canonicalID(newCategory)
         prediction.predictedCategory = newCategory
         prediction.categoryCorrectedAt = correctedAt
         if let purchase = prediction.purchase {
@@ -281,6 +284,7 @@ public struct PredictionLog {
     /// prefers that observation, while the original machine evidence remains auditable.
     public func updateCategory(for purchase: StoredPurchase, to newCategory: String,
                                correctedAt: Date = Date()) throws {
+        let newCategory = CategoryTaxonomy.canonicalID(newCategory)
         if let prediction = purchase.prediction {
             try updateCategory(for: prediction, to: newCategory, correctedAt: correctedAt)
             return

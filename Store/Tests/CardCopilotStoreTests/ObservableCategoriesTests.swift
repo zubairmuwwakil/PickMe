@@ -39,13 +39,14 @@ final class ObservableCategoriesTests: XCTestCase {
     }
 
     func testRuleSideMarkersAreNotOffered() {
-        XCTAssertFalse(observableCategories(in: catalogue).contains("ownerSelectedTangerineCategory"),
-                       "that is a stand-in for whichever categories the owner picked on Tangerine — no statement ever shows it")
+        let offered = Set(observableCategories(in: catalogue))
+        XCTAssertTrue(offered.isDisjoint(with: CategoryTaxonomy.ruleSideCategoryIDs),
+                      "rule predicates are not merchant categories a statement can show")
     }
 
     func testCategoryTokensRenderAsHumanLabels() {
-        XCTAssertEqual(categoryDisplayName("grocery"), "Grocery")
-        XCTAssertEqual(categoryDisplayName("gasStation"), "Gas station")
+        XCTAssertEqual(categoryDisplayName("grocery"), "Groceries")
+        XCTAssertEqual(categoryDisplayName("gasStation"), "Gas")
         XCTAssertEqual(categoryDisplayName("ctFamily"), "Canadian Tire family")
         XCTAssertEqual(categoryDisplayName("other"), "General merchandise",
                        "'other' is what the app tells the owner a Walmart might code as — the label has to say that")
@@ -54,6 +55,18 @@ final class ObservableCategoriesTests: XCTestCase {
     func testAnUnknownCategoryStillReadsAsEnglish() {
         // A catalogue that grows a category must not surface a raw token in the picker.
         XCTAssertEqual(categoryDisplayName("homeImprovement"), "Home improvement")
+    }
+
+    func testCurrentStoreModelsCanonicalizeCategoryAliasesOnWrite() {
+        let observation = StoredObservation(observedCategory: " groceries ")
+        XCTAssertEqual(observation.observedCategory, "grocery")
+
+        let merchant = StoredMerchant(name: "Corner store", latitude: 0, longitude: 0,
+                                      confirmedCategory: "gas")
+        XCTAssertEqual(merchant.confirmedCategory, "gasStation")
+
+        let purchase = StoredPurchase(categoryAtPurchase: "bills")
+        XCTAssertEqual(purchase.categoryAtPurchase, "householdUtilities")
     }
 
     func testTheListIsStableAndDeduplicated() {

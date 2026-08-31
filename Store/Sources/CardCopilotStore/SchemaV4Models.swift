@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import CardCopilotEngine
 
 /// How a purchase entered the unified activity log.
 public enum PurchaseActivitySource: String, Codable, Sendable, CaseIterable {
@@ -56,7 +57,7 @@ extension CardCopilotSchemaV4 {
             self.recordedAt = recordedAt
             self.merchantName = merchantName
             self.merchantIdentifier = merchantIdentifier
-            self.predictedCategory = predictedCategory
+            self.predictedCategory = CategoryTaxonomy.canonicalID(predictedCategory)
             self.confidenceSourceRaw = confidenceSource.rawValue
             self.winnerCardId = winnerCardId
             self.winnerValueCad = winnerValueCad
@@ -130,7 +131,7 @@ extension CardCopilotSchemaV4 {
             self.merchantIdentifier = merchantIdentifier
             self.merchantLatitude = merchantLatitude
             self.merchantLongitude = merchantLongitude
-            self.categoryAtPurchase = categoryAtPurchase
+            self.categoryAtPurchase = categoryAtPurchase.map(CategoryTaxonomy.canonicalID)
             self.categoryConfidenceRaw = categoryConfidence?.rawValue
             self.bestCardId = bestCardId
             self.bestCardValueCad = bestCardValueCad
@@ -155,7 +156,7 @@ extension CardCopilotSchemaV4 {
                     confirmedAt: Date = Date()) {
             self.id = UUID()
             self.confirmedAt = confirmedAt
-            self.observedCategory = observedCategory
+            self.observedCategory = CategoryTaxonomy.canonicalID(observedCategory)
             self.observedRewardUnits = observedRewardUnits
             self.missClassRaw = missClass?.rawValue
             self.note = note
@@ -183,7 +184,7 @@ extension CardCopilotSchemaV4 {
             self.poiCategoryRaw = poiCategoryRaw
             self.latitude = latitude
             self.longitude = longitude
-            self.confirmedCategory = confirmedCategory
+            self.confirmedCategory = confirmedCategory.map(CategoryTaxonomy.canonicalID)
             self.confirmationCount = confirmationCount
             self.lastSeenAt = lastSeenAt
         }

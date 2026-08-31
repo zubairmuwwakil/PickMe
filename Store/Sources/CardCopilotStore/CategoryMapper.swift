@@ -152,7 +152,7 @@ private let unscoredPredictableCategories = [
 /// same marker, generalized 2026-08-26 for non-Tangerine selectable-category cards); no
 /// statement ever shows either, so offering them in the reconcile picker would invite a
 /// meaningless answer.
-private let ruleSideMarkers: Set<String> = ["ownerSelectedTangerineCategory", "ownerSelectedCategory"]
+private let ruleSideMarkers = CategoryTaxonomy.ruleSideCategoryIDs
 
 /// Every category the reconcile picker may offer: what the catalogue can score, plus what the
 /// mapper can predict. Derived from the catalogue rather than hand-listed, because the failure
@@ -170,17 +170,5 @@ public func observableCategories(in catalogue: Catalogue) -> [String] {
 
 /// Human-readable form of an engine category token, for pickers and summaries.
 public func categoryDisplayName(_ category: String) -> String {
-    switch category {
-    case "ctFamily": return "Canadian Tire family"
-    case "marriottDirect": return "Marriott direct"
-    case "other": return "General merchandise"
-    default:
-        // camelCase -> "Camel case", so a catalogue that grows a category still reads properly
-        // in the picker instead of surfacing a raw token.
-        let spaced = category.reduce(into: "") { out, character in
-            if character.isUppercase, !out.isEmpty { out.append(" ") }
-            out.append(character)
-        }
-        return spaced.prefix(1).uppercased() + spaced.dropFirst().lowercased()
-    }
+    CategoryTaxonomy.displayName(for: category)
 }

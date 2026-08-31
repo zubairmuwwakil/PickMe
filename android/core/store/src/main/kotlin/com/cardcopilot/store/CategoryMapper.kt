@@ -1,6 +1,7 @@
 package com.cardcopilot.store
 
 import com.cardcopilot.engine.models.Catalogue
+import com.cardcopilot.engine.models.CategoryTaxonomy
 import com.cardcopilot.engine.models.Network
 import com.cardcopilot.store.db.StoredMerchantEntity
 import com.cardcopilot.store.models.CategoryPrediction
@@ -61,10 +62,11 @@ object CategoryMapper {
     fun predictionForKnownMerchant(merchant: StoredMerchantEntity): CategoryPrediction {
         val confirmed = merchant.confirmedCategory
         if (confirmed != null) {
+            val category = CategoryTaxonomy.canonicalId(confirmed)
             return CategoryPrediction(
-                category = confirmed,
+                category = category,
                 confidenceSource = if (merchant.confirmationCount >= 2) ConfidenceSource.REPEATED_TERMINAL else ConfidenceSource.OWNER_CONFIRMED_TERMINAL,
-                candidates = listOf(confirmed)
+                candidates = listOf(category)
             )
         }
         return predict(merchant.poiCategoryRaw, merchant.name)
@@ -134,27 +136,15 @@ object CategoryMapper {
         "other", "wholesaleClub", "drugStore", "entertainment", "fitness"
     )
 
-    private val ruleSideMarkers = setOf("ownerSelectedTangerineCategory")
+    private val ruleSideMarkers = CategoryTaxonomy.ruleSideCategoryIds
 
     fun observableCategories(catalogue: Catalogue): List<String> {
-        val fromRules = catalogue.cards.flatMap { it.earnRules }.mapNotNull { it.predicate.categories }.flatten()
+        val fromRules = catalogue.cards.flatMap { it.earnRules }.mapNotNull { it.predicate.categories }
+            .flatten().map(CategoryTaxonomy::canonicalId)
         return (fromRules + unscoredPredictableCategories - ruleSideMarkers).toSet().toList().sorted()
     }
 
     fun categoryDisplayName(category: String): String {
-        return when (category) {
-            "ctFamily" -> "Canadian Tire family"
-            "marriottDirect" -> "Marriott direct"
-            "other" -> "General merchandise"
-            else -> {
-                val sb = StringBuilder()
-                for (ch in category) {
-                    if (ch.isUpperCase() && sb.isNotEmpty()) sb.append(' ')
-                    sb.append(ch)
-                }
-                val s = sb.toString()
-                s.take(1).uppercase() + s.drop(1).lowercase()
-            }
-        }
+        return CategoryTaxonomy.displayName(category)
     }
 }

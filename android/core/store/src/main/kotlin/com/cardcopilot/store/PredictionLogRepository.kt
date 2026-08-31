@@ -1,6 +1,7 @@
 package com.cardcopilot.store
 
 import com.cardcopilot.engine.models.Recommendation
+import com.cardcopilot.engine.models.CategoryTaxonomy
 import com.cardcopilot.store.db.CardCopilotDatabase
 import com.cardcopilot.store.db.PredictionRecord
 import com.cardcopilot.store.db.StoredMerchantEntity
@@ -75,7 +76,7 @@ class PredictionLogRepository(private val db: CardCopilotDatabase) {
         val prediction = StoredPredictionEntity(
             merchantName = merchant.name,
             merchantIdentifier = merchant.id,
-            predictedCategory = predictedCategory,
+            predictedCategory = CategoryTaxonomy.canonicalId(predictedCategory),
             confidenceSourceRaw = confidenceSource.rawValue,
             winnerCardId = recommendation.winner.cardId,
             winnerValueCad = recommendation.winner.netValueCad,
@@ -142,9 +143,10 @@ class PredictionLogRepository(private val db: CardCopilotDatabase) {
         missClass: MissClass? = null,
         note: String? = null
     ) {
+        val canonicalObservedCategory = CategoryTaxonomy.canonicalId(observedCategory)
         val obs = StoredObservationEntity(
             purchaseId = purchaseId,
-            observedCategory = observedCategory,
+            observedCategory = canonicalObservedCategory,
             observedRewardUnits = observedRewardUnits,
             missClassRaw = missClass?.rawValue,
             note = note
@@ -157,7 +159,7 @@ class PredictionLogRepository(private val db: CardCopilotDatabase) {
         val merchant = (prediction.merchantIdentifier?.let { db.merchantDao().findByIdentifier(it) }
             ?: db.merchantDao().findByName(prediction.merchantName)) ?: return
 
-        merchant.confirmedCategory = observedCategory
+        merchant.confirmedCategory = canonicalObservedCategory
         merchant.confirmationCount += 1
         merchant.lastSeenAt = System.currentTimeMillis()
         db.merchantDao().insertOrUpdate(merchant)
