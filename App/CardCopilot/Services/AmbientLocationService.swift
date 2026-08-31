@@ -3,6 +3,7 @@ import CardCopilotEngine
 import CardCopilotStore
 import Foundation
 import SwiftData
+import SwiftUI
 @preconcurrency import UserNotifications
 
 /// A counter model that can start empty and be summed across days. Both ambient logs already had
@@ -215,7 +216,8 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         authorizationStatus = manager.authorizationStatus
         super.init()
         manager.delegate = self
-        notificationCenter.delegate = self
+        let openCapture = UNNotificationAction(identifier: "OPEN_CAPTURE_STATUS", title: "Open Capture Status", options: [.foreground])
+        let diagnosticCapture = UNNotificationAction(identifier: "OPEN_DIAGNOSTIC", title: "Prepare Diagnostic", options: [.foreground])
         notificationCenter.setNotificationCategories([
             UNNotificationCategory(
                 identifier: Self.notificationCategoryIdentifier,
@@ -248,6 +250,16 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                                   textInputPlaceholder: "0.00"),
                 ],
                 intentIdentifiers: [], options: []),
+            UNNotificationCategory(
+                identifier: "WALLET_CAPTURE_RECONNECT",
+                actions: [openCapture],
+                intentIdentifiers: [],
+                options: []),
+            UNNotificationCategory(
+                identifier: "WALLET_CAPTURE_REVIEW",
+                actions: [openCapture, diagnosticCapture],
+                intentIdentifiers: [],
+                options: []),
         ])
     }
 
@@ -629,6 +641,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     /// The other half of dwell. Everything the exit decides is in `dwellDecision`; this only
     /// carries the outcome out to a notification.
     private func evaluateExit(regionId: String) {
+        LiveActivityManager.shared.endActivity()
         guard let visit = visitStore.visit(forRegionId: regionId) else { return }
         let outcome = dwellDecision(enteredAt: visit.enteredAt, exitedAt: .now,
                                     didEngage: visit.didEngage)
@@ -645,14 +658,34 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                              catalogue: Catalogue,
                                              regionId: String) {
         guard let card = catalogue.cards.first(where: { $0.cardId == recommendation.winner.cardId }) else { return }
+        let headline = rewardReason(card, recommendation)
+        let advantageCad = recommendation.advantageOverDefaultCad ?? 0
+        let advantageText = advantageCad > 0 ? String(format: "+$%.2f", advantageCad) : ""
+        let meta = CategoryVisuals.meta(for: arrival.prediction.category)
+
+        LiveActivityManager.shared.startRecommendationActivity(
+            merchantName: arrival.merchant.name,
+            merchantLocation: nil,
+            cardName: Self.shortCardName(card),
+            cardId: card.cardId,
+            multiplierHeadline: headline,
+            advantageDescription: advantageText,
+            categoryDisplayName: meta.displayName,
+            categoryIcon: meta.icon,
+            isFork: false
+        )
+
         let content = UNMutableNotificationContent()
         let titleTemplate = String(localized: "ambient.notification.title",
                                    defaultValue: "%@ — use %@ (%@)")
         content.title = String(format: titleTemplate, locale: .current,
                                notificationMerchantName(arrival.merchant.name), Self.shortCardName(card),
-                               rewardReason(card, recommendation))
-        content.body = String(localized: "ambient.notification.body",
-                              defaultValue: "On-device advice for this saved merchant.")
+                               headline)
+        if advantageCad > 0.005 {
+            content.body = String(format: "Earns %@ more than your default card at %@.", advantageText, notificationMerchantName(arrival.merchant.name))
+        } else {
+            content.body = String(format: "Your best card for %@ purchases.", meta.displayName)
+        }
         content.sound = .default
         content.interruptionLevel = .timeSensitive
         content.categoryIdentifier = Self.notificationCategoryIdentifier
@@ -696,15 +729,28 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         let action = response.actionIdentifier
         let typed = (response as? UNTextInputNotificationResponse)?.userText
 
+        if info["route"] as? String == "walletCaptureStatus" ||
+           action == "OPEN_CAPTURE_STATUS" || action == "OPEN_DIAGNOSTIC" {
+            WalletCaptureDeepLinkStore.markPending()
+            NotificationCenter.default.post(name: .openWalletCaptureStatus, object: nil)
+            return
+        }
+
         await MainActor.run {
             self.handle(action: action, userInfo: info, typedText: typed)
         }
+    }
+
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                            willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+        [.banner, .sound, .badge, .list]
     }
 
     /// Notification actions are the ONLY place an ambient record is created. A geofence entry
     /// writes nothing: without this rule a walk through a plaza would manufacture purchases the
     /// owner never made, and the metrics would measure footfall.
     private func handle(action: String, userInfo: [AnyHashable: Any], typedText: String?) {
+        LiveActivityManager.shared.endActivity()
         switch action {
         case Self.muteActionIdentifier:
             if let key = userInfo["muteKey"] as? String { muteStore.mute(key) }
@@ -803,8 +849,6 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         guard manager.authorizationStatus == .authorizedAlways else { return }
         // Significant-change monitoring is the only location stream. Region events supply the
         // arrival and exit wakes; this avoids continuous GPS by construction.
-        manager.allowsBackgroundLocationUpdates = true
-        manager.pausesLocationUpdatesAutomatically = true
         manager.startMonitoringSignificantLocationChanges()
     }
 

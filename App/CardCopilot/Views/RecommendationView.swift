@@ -11,6 +11,7 @@ struct RecommendationView: View {
     @Environment(CopilotSession.self) private var session
     @Environment(CheckoutRouter.self) private var router
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         if let graph = environment.graph {
@@ -40,20 +41,42 @@ struct RecommendationView: View {
                     )
                 }
 
-                Button {
-                    LiveActivityManager.shared.endActivity()
-                    session.refresh(using: graph)
-                    router.resetToIdle()
-                    dismiss()
-                } label: {
-                    Text("Done")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                VStack(spacing: 10) {
+                    Button {
+                        LiveActivityManager.shared.endActivity()
+                        session.refresh(using: graph)
+                        router.resetToIdle()
+                        dismiss()
+                        if let walletURL = URL(string: "shoebox://") {
+                            openURL(walletURL)
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "wallet.pass.fill")
+                                .font(.system(size: 18, weight: .semibold))
+                            Text("Pay with Apple Wallet")
+                                .font(.system(size: 17, weight: .bold, design: .rounded))
+                        }
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(Color.blue)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                         .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                    }
+
+                    Button {
+                        LiveActivityManager.shared.endActivity()
+                        session.refresh(using: graph)
+                        router.resetToIdle()
+                        dismiss()
+                    } label: {
+                        Text("Done")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                    }
                 }
                 .padding(.top, 4)
             }
@@ -118,6 +141,58 @@ struct RecommendationView: View {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Color(.secondarySystemGroupedBackground))
             )
+
+            // Dopamine Callout: Instant micro-gain over default card
+            if recommendation.switchedFromDefault,
+               let advantage = recommendation.advantageOverDefaultCad,
+               advantage > 0.005 {
+                let defaultName = graph.catalogue.cards.first { $0.cardId == graph.ownerState.defaultCardId }?.officialName ?? "default card"
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.green.opacity(0.18))
+                            .frame(width: 38, height: 38)
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(.green)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(String(format: "+$%.2f EARNED OVER DEFAULT", advantage))
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundStyle(.green)
+                            .tracking(0.6)
+                        Text("Extra cash recovered vs tapping \(defaultName)")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.green.opacity(0.10))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(Color.green.opacity(0.35), lineWidth: 1)
+                        )
+                )
+            } else if !recommendation.switchedFromDefault, !graph.ownerState.defaultCardId.isEmpty {
+                HStack(spacing: 10) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.blue)
+                    Text("Your default card is already the optimal pick here.")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundStyle(.primary)
+                    Spacer()
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.blue.opacity(0.08))
+                )
+            }
 
             // Chip Mascot Contextual Voice & Rule Insights
             let purchase = ambientPurchaseContext(merchant: result.merchant, category: result.prediction.category)

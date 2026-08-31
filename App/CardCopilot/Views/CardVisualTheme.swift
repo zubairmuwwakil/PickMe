@@ -832,7 +832,6 @@ enum CardVisualTheme {
         )
     }
 }
-
 /// Helper for category-related icons, colors, and human formatting.
 enum CategoryVisuals {
     struct Meta {
@@ -941,5 +940,106 @@ enum CategoryVisuals {
         } else {
             return date.formatted(.dateTime.month(.abbreviated).day())
         }
+    }
+}
+
+// MARK: - iOS 26 Liquid Glass Modifiers
+
+/// An iOS 26-inspired Liquid Glass view modifier providing optical refraction borders,
+/// multi-layered specular reflections, and reactive lighting.
+public struct LiquidGlassModifier: ViewModifier {
+    public var cornerRadius: CGFloat
+    public var tintColor: Color?
+    public var isHighlighted: Bool
+    public var intensity: Double
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    public init(
+        cornerRadius: CGFloat = 16,
+        tintColor: Color? = nil,
+        isHighlighted: Bool = false,
+        intensity: Double = 1.0
+    ) {
+        self.cornerRadius = cornerRadius
+        self.tintColor = tintColor
+        self.isHighlighted = isHighlighted
+        self.intensity = intensity
+    }
+
+    public func body(content: Content) -> some View {
+        content
+            .background(
+                ZStack {
+                    // 1. Ultra-thin refractive glass material
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(.ultraThinMaterial)
+
+                    // 2. Dynamic glass tint
+                    if let tint = tintColor {
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .fill(tint.opacity(colorScheme == .dark ? 0.08 * intensity : 0.12 * intensity))
+                    } else {
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .fill(
+                                colorScheme == .dark
+                                    ? Color.white.opacity(0.04 * intensity)
+                                    : Color.white.opacity(0.40 * intensity)
+                            )
+                    }
+
+                    // 3. Specular refraction top highlight
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(colorScheme == .dark ? 0.16 * intensity : 0.45 * intensity),
+                                    Color.clear
+                                ],
+                                startPoint: .top,
+                                endPoint: .center
+                            )
+                        )
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(
+                // 4. Liquid Glass refractive rim
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(colorScheme == .dark ? 0.35 * intensity : 0.70 * intensity),
+                                Color.white.opacity(colorScheme == .dark ? 0.08 * intensity : 0.20 * intensity),
+                                Color.black.opacity(colorScheme == .dark ? 0.20 * intensity : 0.05 * intensity)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: isHighlighted ? 1.5 : 1.0
+                    )
+            )
+            .shadow(
+                color: (tintColor ?? Color.black).opacity(colorScheme == .dark ? 0.28 : 0.07),
+                radius: isHighlighted ? 14 : 10,
+                x: 0,
+                y: isHighlighted ? 6 : 4
+            )
+    }
+}
+
+public extension View {
+    func liquidGlass(
+        cornerRadius: CGFloat = 16,
+        tint: Color? = nil,
+        isHighlighted: Bool = false,
+        intensity: Double = 1.0
+    ) -> some View {
+        modifier(LiquidGlassModifier(
+            cornerRadius: cornerRadius,
+            tintColor: tint,
+            isHighlighted: isHighlighted,
+            intensity: intensity
+        ))
     }
 }

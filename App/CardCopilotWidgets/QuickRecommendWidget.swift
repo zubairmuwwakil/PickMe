@@ -71,6 +71,7 @@ public struct QuickRecommendProvider: TimelineProvider {
 }
 
 public struct QuickRecommendWidgetView: View {
+    @Environment(\.widgetFamily) var family
     let entry: QuickRecommendEntry
 
     public init(entry: QuickRecommendEntry) {
@@ -78,6 +79,23 @@ public struct QuickRecommendWidgetView: View {
     }
 
     public var body: some View {
+        switch family {
+        case .systemSmall:
+            smallView
+        case .systemMedium:
+            mediumView
+        case .accessoryRectangular:
+            accessoryRectangularView
+        case .accessoryInline:
+            accessoryInlineView
+        case .accessoryCircular:
+            accessoryCircularView
+        default:
+            mediumView
+        }
+    }
+
+    private var mediumView: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Label("PickMe: Best Card Quick Sheet", systemImage: "sparkles")
@@ -113,6 +131,87 @@ public struct QuickRecommendWidgetView: View {
         }
         .padding(14)
     }
+
+    private var smallView: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label("PickMe", systemImage: "creditcard.fill")
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundStyle(.blue)
+
+            Spacer()
+
+            ForEach(entry.categories.prefix(2), id: \.name) { item in
+                HStack(spacing: 6) {
+                    Image(systemName: item.icon)
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.blue)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(item.name)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                        Text(item.card)
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .lineLimit(1)
+                    }
+                }
+                .padding(5)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 6))
+            }
+        }
+        .padding(10)
+    }
+
+    private var accessoryRectangularView: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 4) {
+                Image(systemName: "sparkles")
+                    .font(.caption2)
+                Text("PICKME TOP CARDS")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+            }
+            .foregroundStyle(.secondary)
+
+            if let first = entry.categories.first {
+                HStack(spacing: 4) {
+                    Text("\(first.name):")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                    Text(first.card)
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                }
+                .lineLimit(1)
+            }
+
+            if entry.categories.count > 1 {
+                let second = entry.categories[1]
+                HStack(spacing: 4) {
+                    Text("\(second.name):")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                    Text(second.card)
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                }
+                .lineLimit(1)
+            }
+        }
+    }
+
+    private var accessoryInlineView: some View {
+        if let top = entry.categories.first {
+            Text("🛒 \(top.name): \(top.card)")
+        } else {
+            Text("💳 PickMe Active")
+        }
+    }
+
+    private var accessoryCircularView: some View {
+        ZStack {
+            AccessoryWidgetBackground()
+            Image(systemName: "creditcard.fill")
+                .font(.system(size: 20, weight: .bold))
+        }
+    }
 }
 
 public struct QuickRecommendWidget: Widget {
@@ -126,7 +225,13 @@ public struct QuickRecommendWidget: Widget {
                 .containerBackground(for: .widget) { Color(.secondarySystemBackground) }
         }
         .configurationDisplayName("Quick Card Advisor")
-        .description("Glance at the top cards for Groceries, Dining, Gas, and Transit.")
-        .supportedFamilies([.systemMedium])
+        .description("Glance at top cards for Groceries, Dining, Gas, and Transit from Home or Lock Screen.")
+        .supportedFamilies([
+            .systemMedium,
+            .systemSmall,
+            .accessoryRectangular,
+            .accessoryInline,
+            .accessoryCircular
+        ])
     }
 }

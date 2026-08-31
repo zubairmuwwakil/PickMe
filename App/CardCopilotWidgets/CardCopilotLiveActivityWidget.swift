@@ -53,8 +53,8 @@ public struct CardCopilotLiveActivityWidget: Widget {
                                 .foregroundStyle(.green)
                         }
                         Spacer()
-                        Text("Tap to pay")
-                            .font(.caption2)
+                        Label("PickMe Optimal", systemImage: "sparkles")
+                            .font(.caption2.weight(.medium))
                             .foregroundStyle(.secondary)
                     }
                     .padding(.horizontal, 12)
@@ -69,10 +69,11 @@ public struct CardCopilotLiveActivityWidget: Widget {
                     .font(.caption.weight(.bold).monospaced())
                     .foregroundStyle(.teal)
             } minimal: {
-                Image(systemName: "creditcard.fill")
+                Image(systemName: context.state.categoryIcon.isEmpty ? "creditcard.fill" : context.state.categoryIcon)
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(.blue)
             }
         }
+        .supplementalActivityFamilies([.small, .medium])
     }
 }

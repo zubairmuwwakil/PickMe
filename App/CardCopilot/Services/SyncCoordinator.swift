@@ -19,6 +19,7 @@ public final class SyncCoordinator {
     public var accountSetupUserID: String?
     public var walletFeedback: [WalletFeedback] = []
     public var walletInstallations: [WalletInstallation] = []
+    public let peerSyncService: PeerSyncService
 
     public let ownerStateLocalStore: OwnerStateLocalStore
     public let accountOwnerStateStore: AccountOwnerStateStore
@@ -31,13 +32,15 @@ public final class SyncCoordinator {
         accountOwnerStateStore: AccountOwnerStateStore = AccountOwnerStateStore(),
         ownerStateUploadQueue: OwnerStateUploadQueue = OwnerStateUploadQueue(),
         syncMetadataStore: SyncMetadataStore = SyncMetadataStore(),
-        cardRequestQueue: CardRequestQueue = CardRequestQueue()
+        cardRequestQueue: CardRequestQueue = CardRequestQueue(),
+        peerSyncService: PeerSyncService = PeerSyncService()
     ) {
         self.ownerStateLocalStore = ownerStateLocalStore
         self.accountOwnerStateStore = accountOwnerStateStore
         self.ownerStateUploadQueue = ownerStateUploadQueue
         self.syncMetadataStore = syncMetadataStore
         self.cardRequestQueue = cardRequestQueue
+        self.peerSyncService = peerSyncService
     }
 
     /// Automatically syncs if signed in, configured, and last synced longer than `maxAge` ago.

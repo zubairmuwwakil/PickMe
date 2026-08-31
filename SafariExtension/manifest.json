@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "PickMe — Smart Card Copilot",
+  "version": "1.0",
+  "description": "Recommends the highest-earning credit card at checkout across Canadian and US online merchants.",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "PickMe: Best Card for this Merchant"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.amazon.ca/*",
+        "*://*.amazon.com/*",
+        "*://*.walmart.ca/*",
+        "*://*.walmart.com/*",
+        "*://*.bestbuy.ca/*",
+        "*://*.bestbuy.com/*",
+        "*://*.costco.ca/*",
+        "*://*.costco.com/*",
+        "*://*.doordash.com/*",
+        "*://*.ubereats.com/*",
+        "*://*.uber.com/*",
+        "*://*.instacart.ca/*",
+        "*://*.instacart.com/*",
+        "*://*.aircanada.com/*",
+        "*://*.westjet.com/*",
+        "*://*.apple.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

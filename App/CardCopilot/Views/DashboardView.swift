@@ -44,11 +44,51 @@ struct DashboardView: View {
         .navigationTitle("Experiment")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                if let reportURL = temporaryReportURL {
+                    ShareLink(
+                        item: reportURL,
+                        preview: SharePreview("PickMe Experiment Scoreboard", image: Image(systemName: "doc.text.fill"))
+                    ) {
+                        Label("Export", systemImage: "square.and.arrow.up")
+                    }
+                }
+            }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done", action: onDone)
                     .font(.headline)
             }
         }
+    }
+
+    private var experimentMarkdown: String {
+        var md = "# PickMe MVP Experiment Scoreboard\n\n"
+        let dateStr = Date().formatted(date: .long, time: .shortened)
+        md += "> Generated on \(dateStr) by **PickMe**\n\n"
+        md += "## Summary Metrics\n\n"
+        md += "- **Progress:** \(metrics.progressToTarget) / \(metrics.targetCheckouts) checkouts\n"
+        if let categoryAccuracy = metrics.categoryAccuracy {
+            md += String(format: "- **Category Accuracy:** %.1f%% (%d of %d confirmed)\n",
+                         categoryAccuracy * 100.0, metrics.categoryCorrectCount, metrics.confirmedCount)
+        } else {
+            md += "- **Category Accuracy:** Not measured yet\n"
+        }
+        if let arithmeticCorrectRate = metrics.arithmeticCorrectRate {
+            md += String(format: "- **Arithmetic Correctness:** %.1f%% (%d of %d checkable)\n",
+                         arithmeticCorrectRate * 100.0, metrics.arithmeticCorrectCount, metrics.arithmeticEligibleCount)
+        } else {
+            md += "- **Arithmetic Correctness:** Not enough eligible checkouts yet\n"
+        }
+        md += String(format: "- **Confirmed Value Recovered:** C$%.2f\n", valueRecoveredCad)
+        md += String(format: "- **Pending Value:** C$%.2f\n\n", pendingValueCad)
+        return md
+    }
+
+    private var temporaryReportURL: URL? {
+        let tempDir = FileManager.default.temporaryDirectory
+        let fileURL = tempDir.appendingPathComponent("PickMe_Experiment_Scoreboard.md")
+        try? experimentMarkdown.write(to: fileURL, atomically: true, encoding: .utf8)
+        return fileURL
     }
 
     private var progressCard: some View {

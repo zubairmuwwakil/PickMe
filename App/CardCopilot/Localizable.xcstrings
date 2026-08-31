@@ -951,7 +951,7 @@
       }
     },
     "ambient.notification.body" : {
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2666,6 +2666,12 @@
     "Expires %@" : {
 
     },
+    "Export" : {
+
+    },
+    "Extra cash recovered vs tapping %@" : {
+
+    },
     "fee" : {
       "localizations" : {
         "fr-CA" : {
@@ -4036,6 +4042,9 @@
     "Pay with" : {
 
     },
+    "Pay with Apple Wallet" : {
+
+    },
     "Payment condition marked complete — still check the certificate exclusions." : {
 
     },
@@ -4113,6 +4122,9 @@
     "PickMe Cloud Active" : {
 
     },
+    "PickMe Experiment Scoreboard" : {
+
+    },
     "PickMe for iOS · Version 1.0 (Build 42)" : {
 
     },
@@ -4142,6 +4154,9 @@
           }
         }
       }
+    },
+    "PickMe Wallet Audit Report" : {
+
     },
     "PickMe's highest earning card advised for this purchase." : {
 
@@ -6041,6 +6056,9 @@
           }
         }
       }
+    },
+    "Your default card is already the optimal pick here." : {
+
     },
     "Your Inunity sign-in. You will not be able to sign in again, here or on the web." : {
       "comment" : "human review before public launch",

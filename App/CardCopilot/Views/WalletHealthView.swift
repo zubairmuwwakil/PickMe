@@ -98,6 +98,21 @@ struct WalletHealthView: View {
             .navigationTitle("Wallet Health")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    if let reportURL = WalletAuditMarkdownExporter.createTemporaryReportFile(
+                        portfolioAnalysis: analysis,
+                        acquisitionAnalysis: acquisitionAnalysis,
+                        catalogue: graph.catalogue,
+                        distributionName: selectedProfile.rawValue
+                    ) {
+                        ShareLink(
+                            item: reportURL,
+                            preview: SharePreview("PickMe Wallet Audit Report", image: Image(systemName: "doc.text.fill"))
+                        ) {
+                            Label("Export", systemImage: "square.and.arrow.up")
+                        }
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                         .font(.headline)

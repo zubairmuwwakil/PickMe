@@ -49,28 +49,42 @@ struct FloatingGlassNavBar: View {
         .padding(.vertical, 8)
         .background(
             ZStack {
-                // Frosted Glass Material
+                // 1. Frosted Liquid Glass Material
                 Capsule()
                     .fill(.ultraThinMaterial)
 
-                // Adaptive Subtle Glass Tint
+                // 2. Adaptive Subtle Glass Tint
                 Capsule()
                     .fill(
                         colorScheme == .dark
-                            ? Color.white.opacity(0.04)
-                            : Color.white.opacity(0.45)
+                            ? Color.white.opacity(0.05)
+                            : Color.white.opacity(0.48)
                     )
 
-                // Specular Glass Rim / Border
+                // 3. Specular refraction top highlight
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(colorScheme == .dark ? 0.15 : 0.45),
+                                Color.clear
+                            ],
+                            startPoint: .top,
+                            endPoint: .center
+                        )
+                    )
+
+                // 4. Specular Glass Rim / Border
                 Capsule()
                     .strokeBorder(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(colorScheme == .dark ? 0.30 : 0.70),
-                                Color.white.opacity(colorScheme == .dark ? 0.08 : 0.20)
+                                Color.white.opacity(colorScheme == .dark ? 0.35 : 0.75),
+                                Color.white.opacity(colorScheme == .dark ? 0.10 : 0.25),
+                                Color.black.opacity(colorScheme == .dark ? 0.25 : 0.05)
                             ],
-                            startPoint: .top,
-                            endPoint: .bottom
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         ),
                         lineWidth: 1
                     )

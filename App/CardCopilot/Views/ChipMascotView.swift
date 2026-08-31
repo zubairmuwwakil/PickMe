@@ -946,9 +946,12 @@ enum ChipInsightFormatter {
                 mood: .alert,
                 tag: "DCC TRAP"
             )
-        case .switchFromDefault(let fromId, let toId, let advantage):
+        case .switchFromDefault(_, let toId, let advantage):
+            let formattedName = toId.contains("-")
+                ? toId.split(separator: "-").map(\.capitalized).joined(separator: " ")
+                : toId
             return ChipBanterItem(
-                text: "This is why you hired me! Put your default card away and tap the \(toId). You're up $\(String(format: "%.2f", advantage)) just for listening to me.",
+                text: "This is why you hired me! Put your default card away and tap \(formattedName). You're up $\(String(format: "%.2f", advantage)) just for listening to me.",
                 mood: .celebrating,
                 tag: "SMART SWITCH"
             )

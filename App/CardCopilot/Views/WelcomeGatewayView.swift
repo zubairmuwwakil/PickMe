@@ -97,22 +97,22 @@ struct WelcomeGatewayView: View {
                     featureRow(
                         icon: "bolt.fill",
                         iconColor: .orange,
-                        title: "Smart Card Recommendations",
-                        subtitle: "Instant multiplier matching, advantage math, and certificate benefits at checkout."
+                        title: "30-Second Setup",
+                        subtitle: "Select your cards from the visual gallery and start using PickMe immediately. No complex logins or manual rules."
+                    )
+
+                    featureRow(
+                        icon: "dollarsign.circle.fill",
+                        iconColor: .green,
+                        title: "Instant Value Recovered",
+                        subtitle: "See the exact extra cash you earn over your default card at every checkout, with verified monthly totals."
                     )
 
                     featureRow(
                         icon: "lock.shield.fill",
-                        iconColor: .green,
-                        title: "100% On-Device Privacy",
-                        subtitle: "Calculations run locally on your iPhone. Your financial choices never leave your device unless you choose to sync."
-                    )
-
-                    featureRow(
-                        icon: "arrow.triangle.2.circlepath.icloud.fill",
                         iconColor: .blue,
-                        title: "Optional Cloud Sync",
-                        subtitle: "Sign in to keep cap limits in sync and connect Apple Wallet transaction shortcuts across devices."
+                        title: "100% On-Device Privacy",
+                        subtitle: "All card math and ambient arrival intelligence run locally on your iPhone. Your financial choices never leave your device."
                     )
                 }
                 .padding(18)

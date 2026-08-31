@@ -22,6 +22,11 @@ final class CardCopilotAppDelegate: NSObject, UIApplicationDelegate, @MainActor 
             NotificationCenter.default.post(name: .openWalletCaptureStatus, object: nil)
         }
     }
+
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                            willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+        [.banner, .sound, .badge, .list]
+    }
 }
 
 extension Notification.Name {
