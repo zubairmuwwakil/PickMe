@@ -37,8 +37,8 @@ public struct CreditOpportunity: Codable, Equatable, Identifiable, Sendable {
 }
 
 /// Converts issuer credit rules plus aggregate owner state into the handful of actions PickMe can
-/// defend: enroll, use, confirm, or wait. It does not infer transactions and does not price a
-/// benefit for keep/cancel; those require reconciled financial facts from the purchase spine.
+/// defend: enroll, use, confirm, or wait. It does not infer transactions. Keep/cancel counts only
+/// the posted recoveries the owner explicitly confirms and discloses unused amounts as upside.
 public enum CreditAdvisor {
     private static let isoFormatter: DateFormatter = {
         let formatter = DateFormatter()

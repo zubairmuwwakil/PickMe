@@ -4,12 +4,18 @@ import com.cardcopilot.engine.engine.PortfolioAnalyzer
 import com.cardcopilot.engine.models.Cap
 import com.cardcopilot.engine.models.CapMeasure
 import com.cardcopilot.engine.models.CapPeriod
+import com.cardcopilot.engine.models.CardCredit
 import com.cardcopilot.engine.models.CardKind
 import com.cardcopilot.engine.models.CardProduct
 import com.cardcopilot.engine.models.Carry
 import com.cardcopilot.engine.models.CashBackValuation
 import com.cardcopilot.engine.models.Catalogue
 import com.cardcopilot.engine.models.Currency
+import com.cardcopilot.engine.models.CreditEnrollment
+import com.cardcopilot.engine.models.CreditRedemptionMethod
+import com.cardcopilot.engine.models.CreditSchedule
+import com.cardcopilot.engine.models.CreditScheduleBasis
+import com.cardcopilot.engine.models.CreditScheduleUnit
 import com.cardcopilot.engine.models.Earn
 import com.cardcopilot.engine.models.EarnRule
 import com.cardcopilot.engine.models.Fee
@@ -26,6 +32,8 @@ import com.cardcopilot.engine.models.SpendDistribution
 import com.cardcopilot.engine.models.SwitchThreshold
 import com.cardcopilot.engine.models.Valuations
 import kotlin.math.abs
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -128,5 +136,52 @@ class PortfolioAnalyzerMultiMarketTest {
             abs(run.totalValueCad - expected) < 0.01,
             "expected $expected, got ${run.totalValueCad}",
         )
+    }
+
+    /** Checkout urgency is a one-window decision input, never repeatable annual reward yield. */
+    @Test
+    fun portfolioSimulationDoesNotReplayCheckoutCreditAcrossTheYear() {
+        val credit = CardCredit(
+            creditId = "monthly-dining", label = "Monthly dining credit",
+            value = com.cardcopilot.engine.models.Money(10.0, Currency.CAD),
+            schedule = CreditSchedule(CreditScheduleBasis.CALENDAR, CreditScheduleUnit.MONTH),
+            redemptionMethod = CreditRedemptionMethod.STATEMENT_CREDIT,
+            purchasePredicate = Predicate(categories = listOf("dining")),
+            allowsPartialUse = true, enrollment = CreditEnrollment(required = false),
+            sourceType = SourceType.ISSUER_CONFIRMED, lastVerifiedAt = "2026-08-31",
+        )
+        fun card(id: String, rate: Double, credits: List<CardCredit>? = null) = CardProduct(
+            cardId = id, officialName = id, issuer = "Test Bank", network = Network.VISA,
+            kind = CardKind.CREDIT, fee = Fee(), program = Program("cashback", "cashback"),
+            fxRules = listOf(FxRule(status = RuleStatus.CURRENT, rate = 0.0)),
+            earnRules = listOf(EarnRule(
+                ruleId = "base", status = RuleStatus.CURRENT,
+                sourceType = SourceType.ISSUER_CONFIRMED,
+                earn = Earn.Cashback(rate = rate), predicate = Predicate(),
+            )),
+            perTransactionRewardVisibility = "issuerConfirmed",
+            lastVerifiedAt = "2026-08-31", credits = credits,
+        )
+        val catalogue = Catalogue("2.18", "CAD", listOf(
+            card("credit-card", 0.0, listOf(credit)), card("two-percent", 0.02),
+        ))
+        val owner = OwnerState(
+            ownerStateVersion = "test", ownedCardIds = listOf("credit-card", "two-percent"),
+            defaultCardId = "two-percent", switchThreshold = SwitchThreshold(0.0, 0.0, "either"),
+            carry = Carry(),
+            cardStates = mapOf("credit-card" to com.cardcopilot.engine.models.CardState()),
+            valuationsCad = Valuations(programs = mapOf(
+                "cashback" to CashBackValuation(cadPerDollar = 1.0),
+            )),
+        )
+        val distribution = SpendDistribution(
+            "credit-isolation", "synthetic",
+            listOf(SpendDistribution.Bucket("Dining", 1200.0, "dining")),
+        )
+
+        val run = PortfolioAnalyzer(catalogue, owner).run(distribution, emptySet(), "2026-08-01")
+        assertEquals(24.0, run.totalValueCad, 0.001)
+        assertEquals(24.0, run.valueByCard["two-percent"]!!, 0.001)
+        assertNull(run.valueByCard["credit-card"])
     }
 }

@@ -292,4 +292,53 @@ final class PortfolioAnalyzerTests: XCTestCase {
         let expected = (quarterlyUnitsUsd * 4 - quarterlyFxUsd * 4) * ReportingCurrency.pinnedUsdToCad
         XCTAssertEqual(run.totalValueCad, expected, accuracy: 0.01)
     }
+
+    /// A current-window checkout credit may choose a card for one real purchase, but it must not
+    /// be replayed over every synthetic month in keep/cancel's forward year.
+    func testPortfolioSimulationDoesNotReplayCheckoutCreditAcrossTheYear() {
+        var dining = Predicate()
+        dining.categories = ["dining"]
+        let credit = CardCredit(
+            creditId: "monthly-dining", label: "Monthly dining credit",
+            value: Money(amount: 10, currency: .cad),
+            schedule: CreditSchedule(basis: .calendar, unit: .month),
+            redemptionMethod: .statementCredit, purchasePredicate: dining,
+            allowsPartialUse: true, enrollment: CreditEnrollment(required: false),
+            sourceType: .issuerConfirmed, lastVerifiedAt: "2026-08-31")
+
+        func card(_ id: String, rate: Double, credits: [CardCredit]? = nil) -> CardProduct {
+            CardProduct(
+                cardId: id, officialName: id, issuer: "Test Bank", network: .visa, kind: .credit,
+                fee: Fee(), program: Program(programId: "cashback", unit: "cashback"),
+                fxRules: [FxRule(status: .current, effectiveFrom: nil, effectiveTo: nil, rate: 0,
+                                 freeAllowanceCadPerCalendarMonth: nil, postAllowanceRate: nil)],
+                earnRules: [EarnRule(ruleId: "base", status: .current,
+                                     sourceType: .issuerConfirmed,
+                                     earn: .cashback(rate: rate, rewardCurrency: nil),
+                                     predicate: Predicate())],
+                caps: [], perTransactionRewardVisibility: "issuerConfirmed",
+                lastVerifiedAt: "2026-08-31", credits: credits)
+        }
+
+        let catalogue = Catalogue(cards: [card("credit-card", rate: 0, credits: [credit]),
+                                          card("two-percent", rate: 0.02)])
+        let owner = OwnerState(
+            ownerStateVersion: "test", ownedCardIds: ["credit-card", "two-percent"],
+            defaultCardId: "two-percent",
+            switchThreshold: SwitchThreshold(minAdvantagePercentagePoints: 0,
+                                             minAdvantageCad: 0, semantics: "either"),
+            carry: Carry(drawerCards: []), cardStates: ["credit-card": CardState()],
+            valuationsCad: Valuations(programs: [
+                "cashback": .cashback(CashBackValuation(cadPerDollar: 1))
+            ]))
+        let distribution = SpendDistribution(
+            profileId: "credit-isolation", basis: "synthetic",
+            buckets: [.init(label: "Dining", annualCad: 1_200, category: "dining")])
+
+        let run = PortfolioAnalyzer(catalogue: catalogue, ownerState: owner)
+            .run(distribution, excluding: [], asOf: "2026-08-01")
+        XCTAssertEqual(run.totalValueCad, 24, accuracy: 0.001)
+        XCTAssertEqual(run.valueByCard["two-percent"], 24, accuracy: 0.001)
+        XCTAssertNil(run.valueByCard["credit-card"])
+    }
 }

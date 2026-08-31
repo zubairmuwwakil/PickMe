@@ -186,7 +186,9 @@ class PortfolioAnalyzer(
                     continue
                 }
 
-                val engine = RecommendationEngine(subCatalogue, state)
+                // A checkout credit is a one-window opportunity, not repeatable reward yield.
+                // Portfolio simulation values it separately from confirmed posted recovery.
+                val engine = RecommendationEngine(subCatalogue, state, includeCheckoutCredits = false)
                 val candidates = engine.recommendOrNull(purchase, monthAsOf)?.allCandidates ?: emptyList()
                 scorable.addAll(candidates.map { it.cardId })
                 val best = candidates.firstOrNull() ?: continue

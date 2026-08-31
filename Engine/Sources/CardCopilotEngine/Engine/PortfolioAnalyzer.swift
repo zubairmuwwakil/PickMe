@@ -1,15 +1,15 @@
 import Foundation
 
-/// What to do with a card, given only what the engine can honestly measure: earn value.
+/// What to do with a card, given only what the engine can honestly measure: marginal earn value
+/// plus issuer credits the owner confirmed actually posted.
 ///
-/// Every verdict below is about *rewards on spend*. Non-earn benefits — lounge access, annual
-/// free-night awards, elite nights, insurance, statement credits — are deliberately not valued
-/// (decision #14). Where they matter, `requiredBenefitValueCad` states the threshold the owner
-/// has to clear from their own judgement, exactly as `breakevenCentsPerPoint` does for points.
+/// Unused credits and non-cash benefits — lounge access, free-night awards, elite nights and
+/// insurance — are deliberately not valued. `requiredBenefitValueCad` states the remaining
+/// threshold the owner must clear from their own judgement.
 public enum PortfolioVerdict: String, Codable, Equatable, Sendable {
     /// No annual fee. Holding it costs nothing, so there is nothing to decide.
     case freeToKeep
-    /// Marginal earn value alone covers the annual fee.
+    /// Marginal earn value plus confirmed posted credits cover the annual fee.
     case keep
     /// The fee is not earned, but this card is the wallet's only access to its rewards program —
     /// so the move is a cheaper product in the same family, not walking away from the currency.
@@ -211,7 +211,10 @@ public struct PortfolioAnalyzer {
                     purchase.acceptedNetworks.contains($0.network)
                 }) else { continue }
 
-                let engine = RecommendationEngine(catalogue: subCatalogue, ownerState: state)
+                // A checkout credit is a one-window opportunity, not repeatable reward yield.
+                // Portfolio simulation values it separately from confirmed posted recovery.
+                let engine = RecommendationEngine(catalogue: subCatalogue, ownerState: state,
+                                                  includeCheckoutCredits: false)
                 let candidates = engine.recommendOrNil(purchase, asOf: monthAsOf)?.allCandidates ?? []
                 scorable.formUnion(candidates.map(\.cardId))
                 guard let best = candidates.first else { continue }

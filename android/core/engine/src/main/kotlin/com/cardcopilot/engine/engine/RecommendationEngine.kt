@@ -12,7 +12,8 @@ import kotlin.math.abs
 
 class RecommendationEngine(
     val catalogue: Catalogue,
-    ownerState: OwnerState
+    ownerState: OwnerState,
+    private val includeCheckoutCredits: Boolean = true
 ) {
     /**
      * Catalogue valuation defaults are merged in here, beneath anything the owner has declared.
@@ -46,7 +47,7 @@ class RecommendationEngine(
         }
         val scored = candidateCards.map { card ->
             val score = Scorer.score(card, purchase, ownerState, asOf)
-            if (score.excluded) score else score.copy(
+            if (score.excluded || !includeCheckoutCredits) score else score.copy(
                 checkoutCredit = CreditCheckoutAdvisor.bestMatch(card, purchase, ownerState, asOf)
             )
         }

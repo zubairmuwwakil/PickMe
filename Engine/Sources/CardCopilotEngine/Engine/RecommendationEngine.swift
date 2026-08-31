@@ -36,14 +36,17 @@ public enum RecommendationOutcome: Sendable, Equatable {
 public struct RecommendationEngine {
     let catalogue: Catalogue
     public let ownerState: OwnerState
+    private let includeCheckoutCredits: Bool
 
     /// Catalogue valuation defaults are merged in here, beneath anything the owner has declared.
     /// This is the single funnel every scoring path reaches — including owner states restored
     /// from a device, which never touch SeedLoader. Without it contracts/programs.json would be
     /// data nothing reads.
-    public init(catalogue: Catalogue, ownerState: OwnerState) {
+    public init(catalogue: Catalogue, ownerState: OwnerState,
+                includeCheckoutCredits: Bool = true) {
         self.catalogue = catalogue
         self.ownerState = ownerState.applyingCatalogueValuationDefaults()
+        self.includeCheckoutCredits = includeCheckoutCredits
     }
 
     private struct Verdict {
@@ -68,7 +71,7 @@ public struct RecommendationEngine {
         let scored = candidateCards.map { card -> CandidateScore in
             var score = Scorer.score(card: card, purchase: purchase,
                                      ownerState: ownerState, asOf: asOf)
-            if !score.excluded {
+            if includeCheckoutCredits && !score.excluded {
                 score.checkoutCredit = CreditCheckoutAdvisor.bestMatch(
                     card: card, purchase: purchase, ownerState: ownerState, asOf: asOf
                 )
