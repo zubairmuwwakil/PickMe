@@ -55,8 +55,9 @@ public struct InstantRepeatEvaluation: Equatable, Sendable {
 /// Evaluates real-time checkout advice for Instant Repeat merchants.
 public enum InstantRepeatAdvisor {
 
-    /// Default amounts offered on the interactive quick-selector bar.
-    public static let presetAmounts: [Double] = [10, 25, 50, 100]
+    /// A stable comparison basis for choosing one card without interrupting checkout for an amount.
+    /// It is never displayed, persisted as a purchase, or treated as transaction evidence.
+    public static let comparisonAmountCad: Double = 50
 
     public static func evaluate(
         merchant: StoredMerchant,

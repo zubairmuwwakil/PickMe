@@ -360,6 +360,7 @@ public struct OwnerState: Codable, Equatable, Sendable {
     /// only wallet products, while acquisition analysis also receives non-owned candidates; this
     /// explicit boundary prevents a candidate from silently becoming a checkout option.
     public var ownedCardIds: [String]
+    public var deletedCardIds: [String]?
     public var defaultCardId: String
     public var switchThreshold: SwitchThreshold
     public var carry: Carry
@@ -380,11 +381,12 @@ public struct OwnerState: Codable, Equatable, Sendable {
     /// output and the empty-wallet browse default — see `AcquisitionCandidate.eligibleForResident`.
     public var market: String?
 
-    public init(ownerStateVersion: String, ownedCardIds: [String], defaultCardId: String,
+    public init(ownerStateVersion: String, ownedCardIds: [String], deletedCardIds: [String]? = nil, defaultCardId: String,
                 switchThreshold: SwitchThreshold, carry: Carry, cardStates: [String: CardState],
                 valuationsCad: Valuations, market: String? = nil) {
         self.ownerStateVersion = ownerStateVersion
         self.ownedCardIds = ownedCardIds
+        self.deletedCardIds = deletedCardIds
         self.defaultCardId = defaultCardId
         self.switchThreshold = switchThreshold
         self.carry = carry

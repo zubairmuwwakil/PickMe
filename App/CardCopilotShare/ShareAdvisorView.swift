@@ -170,7 +170,7 @@ public struct ShareAdvisorView: View {
 
     private func evaluateWinner() -> (cardName: String, headline: String, advantageCad: Double?) {
         let catalogue = (try? SeedLoader.loadCatalogue()) ?? Catalogue.empty
-        let ownerState = OwnerStateLocalStore().load()
+        let ownerState = OwnerStateLocalStore().loadForRecommendation()
 
         guard let ownerState else {
             return ("Add cards in PickMe", "Open app to set up wallet", nil)

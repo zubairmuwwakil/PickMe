@@ -68,18 +68,31 @@ public struct MerchantBrandIconView: View {
     }
 }
 
-/// A Concept A Apple-grade Instant Repeat card featuring full physical card art,
-/// merchant logo, live spend statistics, and dynamic return badges.
+enum InstantRepeatContext: Equatable {
+    case nearby
+    case recent
+
+    var eyebrow: String {
+        switch self {
+        case .nearby: return "NEAR YOU"
+        case .recent: return "RECENT PLACE"
+        }
+    }
+}
+
+/// A read-only recommendation for a remembered merchant.
+///
+/// This view deliberately exposes no checkout action. Looking at advice is not evidence that a
+/// purchase happened; the Wallet tap remains the only event that belongs in Activity.
 struct InstantRepeatCardView: View {
-    @Environment(CopilotSession.self) private var session
     let merchant: StoredMerchant
     let deps: DependencyGraph
-    let onSelect: (StoredMerchant) -> Void
+    let context: InstantRepeatContext
 
     private var evaluation: InstantRepeatEvaluation? {
         InstantRepeatAdvisor.evaluate(
             merchant: merchant,
-            amountCad: 50,
+            amountCad: InstantRepeatAdvisor.comparisonAmountCad,
             catalogue: deps.catalogue,
             ownerState: deps.ownerState,
             engine: deps.engine
@@ -94,163 +107,107 @@ struct InstantRepeatCardView: View {
         return CategoryVisuals.meta(for: prediction.category)
     }
 
-    private var cardDisplayName: String {
-        guard let eval = evaluation else { return "Card" }
+    private var cardDisplayName: String? {
+        guard let eval = evaluation else { return nil }
         let short = CardVisualTheme.style(for: eval.winnerCardId).shortName
         return short.isEmpty ? eval.winnerCardName : short
     }
 
-    private var activityStats: (headline: String, caption: String) {
-        if let recent = session.recentPurchases.first(where: { prediction in
-            prediction.merchantName.localizedCaseInsensitiveContains(merchant.name) ||
-            merchant.name.localizedCaseInsensitiveContains(prediction.merchantName)
-        }), let amount = recent.purchase?.amountCad ?? recent.scoredAmountCad, amount > 0 {
-            return (WalletHealthFormatting.cad(amount), "Last Spend")
-        } else if merchant.confirmationCount > 0 {
-            return ("\(merchant.confirmationCount)x", "Confirmed")
-        } else {
-            let relative = CategoryVisuals.relativeTime(from: merchant.lastSeenAt)
-            return (relative, "Last Seen")
-        }
+    private var confidenceLabel: String {
+        merchant.confirmedCategory == nil ? "Best available pick" : "Confirmed here"
     }
 
-    private var returnBadgeInfo: (text: String, subtext: String, isCash: Bool) {
-        guard let eval = evaluation else {
-            return ("Top", "Card", true)
-        }
-        let mult = eval.multiplierText
-        let isCash = mult.localizedCaseInsensitiveContains("cash")
-        let isPoints = mult.localizedCaseInsensitiveContains("point") || mult.localizedCaseInsensitiveContains("pts")
-
-        if isCash {
-            let num = mult
-                .replacingOccurrences(of: " Cash Back", with: "", options: .caseInsensitive)
-                .replacingOccurrences(of: " Cash", with: "", options: .caseInsensitive)
-                .trimmingCharacters(in: .whitespaces)
-            let formatted = num.hasPrefix("+") ? num : "+\(num)"
-            return (formatted, "Cash Back", true)
-        } else if isPoints {
-            let num = mult
-                .replacingOccurrences(of: " points", with: "", options: .caseInsensitive)
-                .replacingOccurrences(of: " pts", with: "", options: .caseInsensitive)
-                .trimmingCharacters(in: .whitespaces)
-            let formatted = num.hasPrefix("+") ? num : "+\(num)"
-            return (formatted, "Points", false)
-        } else {
-            return (mult, "Reward", false)
-        }
+    private var confidenceIcon: String {
+        merchant.confirmedCategory == nil ? "sparkles" : "checkmark.seal.fill"
     }
 
     var body: some View {
-        Button {
-            let impact = UIImpactFeedbackGenerator(style: .light)
-            impact.impactOccurred()
-            onSelect(merchant)
-        } label: {
-            VStack(alignment: .leading, spacing: 10) {
-                // 1. Full Physical Credit Card Art (Aspect Ratio 85.60 / 53.98)
-                if let eval = evaluation {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 10) {
+                MerchantBrandIconView(
+                    merchantName: merchant.name,
+                    category: meta.displayName,
+                    size: 38
+                )
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(context.eyebrow)
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(context == .nearby ? Color.green : Color.secondary)
+
+                    Text(merchant.name)
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 8)
+
+                Label(confidenceLabel, systemImage: confidenceIcon)
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(merchant.confirmedCategory == nil ? Color.secondary : Color.green)
+                    .lineLimit(1)
+            }
+
+            Divider()
+
+            if let eval = evaluation,
+               let cardDisplayName {
+                HStack(spacing: 14) {
                     CardArtView(
                         cardId: eval.winnerCardId,
                         officialName: eval.winnerCardName,
                         isHero: true,
                         cleanArtwork: true
                     )
-                    .frame(maxWidth: .infinity)
+                    .frame(width: 112)
                     .shadow(color: Color.black.opacity(0.10), radius: 6, x: 0, y: 3)
-                } else {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.blue, Color.purple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .aspectRatio(85.60 / 53.98, contentMode: .fit)
-                }
 
-                // 2. Merchant Brand Icon & Name
-                HStack(spacing: 7) {
-                    MerchantBrandIconView(
-                        merchantName: merchant.name,
-                        category: meta.displayName,
-                        size: 22
-                    )
-
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(merchant.name)
-                            .font(.system(size: 13, weight: .bold, design: .rounded))
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-
-                        Text(meta.displayName)
-                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("USE THIS CARD")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundStyle(.secondary)
-                            .lineLimit(1)
+
+                        Text(cardDisplayName)
+                            .font(.system(size: 19, weight: .bold, design: .rounded))
+                            .foregroundStyle(.primary)
+                            .lineLimit(2)
+
+                        Text(eval.multiplierText)
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color.green)
+
+                        if let networkBadge = eval.networkBadge {
+                            Label(networkBadge, systemImage: "creditcard.trianglebadge.exclamationmark")
+                                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.secondary)
+                        }
                     }
 
                     Spacer(minLength: 0)
                 }
-
-                // 3. Bottom Row: Real Live Activity Stats & Dynamic Return Badge
-                HStack(alignment: .bottom, spacing: 4) {
-                    let stats = activityStats
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(stats.headline)
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-
-                        Text(stats.caption)
-                            .font(.system(size: 10, weight: .medium, design: .rounded))
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Spacer(minLength: 2)
-
-                    // Dynamic Return Badge from Catalogue Rules
-                    let badge = returnBadgeInfo
-                    VStack(spacing: 0) {
-                        Text(badge.text)
-                            .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
-
-                        Text(badge.subtext)
-                            .font(.system(size: 8, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.92))
-                    }
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 4)
-                    .background(
-                        badge.isCash
-                            ? Color(red: 0.08, green: 0.48, blue: 0.98) // Apple Blue
-                            : Color(red: 0.14, green: 0.72, blue: 0.38), // Apple Green
-                        in: RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    )
-                    .shadow(
-                        color: (badge.isCash ? Color.blue : Color.green).opacity(0.25),
-                        radius: 4,
-                        x: 0,
-                        y: 1.5
-                    )
-                }
+            } else {
+                Label("Recommendation unavailable", systemImage: "exclamationmark.triangle.fill")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.secondary)
             }
-            .padding(10)
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
-                    .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
-            )
         }
-        .buttonStyle(PlainPressableGridButtonStyle())
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilitySummary)
     }
-}
 
-private struct PlainPressableGridButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
-            .animation(.easeInOut(duration: 0.14), value: configuration.isPressed)
+    private var accessibilitySummary: String {
+        guard let evaluation,
+              let cardDisplayName else {
+            return "No recommendation available for \(merchant.name)"
+        }
+        return "At \(merchant.name), use \(cardDisplayName). \(evaluation.multiplierText). \(confidenceLabel)."
     }
 }

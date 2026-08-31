@@ -16,6 +16,9 @@ final class CheckoutRouter {
     /// the previous one, which is why this is not part of `path`.
     var step: CheckoutStep = .idle
 
+    /// Controls full-screen presentation of the Add Card catalogue sheet.
+    var showingAddCard: Bool = false
+
     private(set) var selectedTab: AppTab = .copilot
 
     func push(_ destination: Destination) {

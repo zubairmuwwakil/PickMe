@@ -103,4 +103,20 @@ final class SyncCoordinatorTests: XCTestCase {
         XCTAssertFalse(WalletCaptureSettingsStore().load().isEnabled)
         XCTAssertNil(WalletCaptureSettingsStore().load().connectionVerifiedAt)
     }
+
+    func testEnableAndPauseWalletCapture() async {
+        let coordinator = SyncCoordinator()
+        let settingsStore = WalletCaptureSettingsStore(suiteName: "ca.pickme.tests.pause-settings-\(UUID().uuidString)")
+        settingsStore.markConnectionVerified(boundUserID: "user_456")
+        XCTAssertTrue(settingsStore.load().isEnabled)
+        XCTAssertNotNil(settingsStore.load().connectionVerifiedAt)
+
+        // Pausing disables without deleting connection
+        coordinator.pauseWalletCapture()
+        XCTAssertFalse(WalletCaptureSettingsStore().load().isEnabled)
+
+        // Enabling restores enabled state
+        await coordinator.enableWalletCapture()
+        XCTAssertTrue(WalletCaptureSettingsStore().load().isEnabled)
+    }
 }

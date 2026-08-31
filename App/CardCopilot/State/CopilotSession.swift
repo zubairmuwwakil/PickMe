@@ -33,6 +33,53 @@ struct CachedLocation: Equatable {
     var isRecent: Bool {
         Date().timeIntervalSince(capturedAt) < 15 * 60
     }
+
+    init(_ fix: CheckoutLocationFix) {
+        latitude = fix.latitude
+        longitude = fix.longitude
+        capturedAt = fix.capturedAt
+    }
+}
+
+enum NearbyPreparationState: Equatable {
+    case idle
+    case permissionRequired
+    case preparing
+    case ready(merchantCount: Int)
+    case unavailable
+}
+
+private enum NearbyLookupFailure: LocalizedError {
+    case nearbyTimedOut
+    case searchTimedOut
+
+    var errorDescription: String? {
+        switch self {
+        case .nearbyTimedOut: return "Nearby merchants took too long to respond."
+        case .searchTimedOut: return "Merchant search took too long to respond."
+        }
+    }
+}
+
+/// A MapKit result and the exact fix it was queried around. Time alone cannot validate this
+/// cache: every foreground preflight compares a new fix with this origin before reusing it.
+private struct NearbySnapshot {
+    let outcome: FlowOutcome
+    let location: CheckoutLocationFix
+    let fetchedAt: Date
+
+    var isRecent: Bool {
+        Date().timeIntervalSince(fetchedAt) < 60
+    }
+
+    func canReuse(at fix: CheckoutLocationFix) -> Bool {
+        guard isRecent,
+              location.horizontalAccuracyMeters <= 100,
+              fix.horizontalAccuracyMeters <= 100 else { return false }
+        let accuracyAllowance = min(100, max(50,
+            (location.horizontalAccuracyMeters + fix.horizontalAccuracyMeters) / 2))
+        return fix.distance(from: location) <= accuracyAllowance
+    }
 }
 
 /// Whether the card used was PickMe's best material choice for this purchase.
@@ -170,8 +217,33 @@ final class CopilotSession {
     private(set) var homeMerchants: [StoredMerchant] = []
     private(set) var cachedLocation: CachedLocation?
     private(set) var locationDenied = false
+    private(set) var nearbyPreparationState: NearbyPreparationState = .idle
+    private(set) var nearbyMetrics: NearbyLookupMetrics
+
+    private let locationProvider: any CheckoutLocationProviding
+    private let nearbyMetricsStore: NearbyLookupMetricsStore
+    private var nearbySnapshot: NearbySnapshot?
+    private var preparedNearbyOutcome: FlowOutcome?
+    private var preparedLocationFix: CheckoutLocationFix?
+    private var nearbyPreparationTask: Task<FlowOutcome?, Never>?
+    private var nearbyExpiryTask: Task<Void, Never>?
+    private var nearbyPreparationGeneration = 0
 
     var lastError: FlowError?
+
+    init() {
+        let metricsStore = NearbyLookupMetricsStore()
+        locationProvider = LocationProvider()
+        nearbyMetricsStore = metricsStore
+        nearbyMetrics = metricsStore.snapshot
+    }
+
+    init(locationProvider: any CheckoutLocationProviding,
+         nearbyMetricsStore: NearbyLookupMetricsStore) {
+        self.locationProvider = locationProvider
+        self.nearbyMetricsStore = nearbyMetricsStore
+        nearbyMetrics = nearbyMetricsStore.snapshot
+    }
 
     /// Every real purchase, regardless of whether PickMe was asked before payment. Kept as a UI
     /// read model rather than changing `PredictionLog.recentPurchases`, whose prediction-only
@@ -180,6 +252,21 @@ final class CopilotSession {
 
     func report(_ error: FlowError) { lastError = error }
     func clearError() { lastError = nil }
+
+    func forgetNearbyHistory() {
+        nearbyPreparationGeneration &+= 1
+        nearbyPreparationTask?.cancel()
+        nearbyPreparationTask = nil
+        nearbyExpiryTask?.cancel()
+        nearbyExpiryTask = nil
+        nearbySnapshot = nil
+        preparedNearbyOutcome = nil
+        preparedLocationFix = nil
+        cachedLocation = nil
+        nearbyPreparationState = .idle
+        nearbyMetricsStore.forgetAll()
+        nearbyMetrics = NearbyLookupMetrics()
+    }
 
     /// One fetch, four answers. Calling the individual accessors here ran three unfiltered
     /// fetches per screen refresh, each walking the same rows again.
@@ -242,24 +329,250 @@ final class CopilotSession {
         }
     }
 
-    /// Finds shops near the owner. Returns an outcome rather than setting navigation, so the
-    /// mapping to a step stays a pure function that tests can exercise.
+    var preparedNearestMerchant: NearbyMerchant? {
+        guard nearbySnapshot?.isRecent == true,
+              case .ready = nearbyPreparationState,
+              case .found(let merchants) = preparedNearbyOutcome else { return nil }
+        return merchants.first
+    }
+
+    /// A direct shortcut is offered only when the fix itself is reasonably accurate, the first
+    /// result is close, and the runner-up is far enough away not to describe a crowded plaza.
+    var confidentPreparedMerchant: NearbyMerchant? {
+        guard let fix = preparedLocationFix,
+              fix.horizontalAccuracyMeters <= 100,
+              case .found(let merchants) = preparedNearbyOutcome,
+              let first = merchants.first,
+              let firstDistance = first.distanceMeters,
+              firstDistance <= 100 else { return nil }
+        guard merchants.count > 1 else { return first }
+        guard let secondDistance = merchants[1].distanceMeters,
+              secondDistance - firstDistance >= 60 else { return nil }
+        return first
+    }
+
+    /// Returns the already prepared result synchronously and records a zero-wait Radar tap. The
+    /// view uses this before entering a loading state, eliminating the cache-hit spinner flash.
+    func preparedOutcomeForTap() -> FlowOutcome? {
+        guard nearbySnapshot?.isRecent == true,
+              case .ready = nearbyPreparationState,
+              let preparedNearbyOutcome else { return nil }
+        recordNearbyMetric(.tap(prepared: true, durationMilliseconds: 0))
+        return preparedNearbyOutcome
+    }
+
+    /// Warms both the one-shot fix and MapKit results as soon as the app becomes active. This
+    /// never asks for new permission: first-time owners still make that choice by tapping Radar.
+    /// A shared task lets a tap join an in-flight launch lookup instead of starting a duplicate.
+    func prefetchNearby(using graph: DependencyGraph) async {
+        if let existing = nearbyPreparationTask {
+            _ = await existing.value
+            return
+        }
+
+        nearbyPreparationState = .preparing
+        recordNearbyMetric(.prefetchAttempt)
+        let generation = nearbyPreparationGeneration
+        let task: Task<FlowOutcome?, Never> = Task { @MainActor [weak self] in
+            guard let self else { return nil }
+            return await self.loadNearby(promptForAuthorization: false, using: graph,
+                                         generation: generation)
+        }
+        nearbyPreparationTask = task
+        _ = await task.value
+        if nearbyPreparationGeneration == generation {
+            nearbyPreparationTask = nil
+        }
+    }
+
+    /// Finds shops near the owner. A fresh launch prefetch returns immediately; an in-flight one
+    /// is awaited. Only a first-use miss takes the permission-and-fetch path.
     func findNearby(using graph: DependencyGraph) async -> FlowOutcome {
+        let started = ContinuousClock.now
+        if let outcome = preparedOutcomeForTap() { return outcome }
+        if let preparation = nearbyPreparationTask {
+            let preparationGeneration = nearbyPreparationGeneration
+            if let outcome = await preparation.value {
+                if nearbyPreparationGeneration == preparationGeneration {
+                    recordTapLatency(since: started, prepared: true)
+                }
+                return outcome
+            }
+            guard nearbyPreparationGeneration == preparationGeneration else {
+                return await findNearby(using: graph)
+            }
+            // A best-effort launch prefetch can finish without a result (for example, before
+            // permission has been granted). Clear that completed miss before starting the
+            // owner-requested permission path below.
+            nearbyPreparationTask = nil
+        }
+        nearbyPreparationState = .preparing
+        let generation = nearbyPreparationGeneration
+        let task: Task<FlowOutcome?, Never> = Task { @MainActor [weak self] in
+            guard let self else { return nil }
+            return await self.loadNearby(promptForAuthorization: true, using: graph,
+                                         generation: generation)
+        }
+        nearbyPreparationTask = task
+        let outcome = await task.value ?? .failed("Location is temporarily unavailable.")
+        if nearbyPreparationGeneration == generation {
+            nearbyPreparationTask = nil
+            recordTapLatency(since: started, prepared: false)
+        }
+        return outcome
+    }
+
+    private func loadNearby(promptForAuthorization: Bool,
+                            using graph: DependencyGraph,
+                            generation: Int) async -> FlowOutcome? {
         do {
-            let location = try await LocationProvider().requestLocation()
-            cachedLocation = CachedLocation(latitude: location.latitude,
-                                            longitude: location.longitude,
-                                            capturedAt: Date())
+            let fix: CheckoutLocationFix
+            if promptForAuthorization {
+                fix = try await locationProvider.requestLocation()
+            } else {
+                guard let authorizedFix = try await locationProvider.requestLocationIfAuthorized()
+                else {
+                    guard generation == nearbyPreparationGeneration else { return nil }
+                    preparedNearbyOutcome = nil
+                    preparedLocationFix = nil
+                    nearbyPreparationState = .permissionRequired
+                    return nil
+                }
+                fix = authorizedFix
+            }
+
+            guard generation == nearbyPreparationGeneration else { return nil }
+            locationDenied = false
+            cachedLocation = CachedLocation(fix)
             refresh(using: graph)
-            let merchants = try await graph.provider.nearby(latitude: location.latitude,
-                                                            longitude: location.longitude)
-            return merchants.isEmpty ? .nothingFound(query: nil) : .found(merchants)
-        } catch is LocationUnavailable {
-            // Permission declined: Apple requires the manual path to stand on its own.
-            locationDenied = true
-            return .locationDenied
+
+            if let snapshot = nearbySnapshot, snapshot.canReuse(at: fix) {
+                let outcome = rebase(snapshot.outcome, around: fix)
+                publishPrepared(outcome, fix: fix)
+                recordNearbyMetric(.movementCacheHit)
+                return outcome
+            }
+
+            let merchants = rankNearbyMerchants(try await nearbyMerchants(
+                latitude: fix.latitude, longitude: fix.longitude, using: graph.provider))
+            guard generation == nearbyPreparationGeneration else { return nil }
+            let outcome: FlowOutcome = merchants.isEmpty
+                ? .nothingFound(query: nil)
+                : .found(merchants)
+            if merchants.isEmpty { recordNearbyMetric(.emptyResult) }
+            nearbySnapshot = NearbySnapshot(outcome: outcome, location: fix, fetchedAt: Date())
+            publishPrepared(outcome, fix: fix)
+            return outcome
+        } catch let unavailable as LocationUnavailable {
+            guard generation == nearbyPreparationGeneration else { return nil }
+            switch unavailable {
+            case .permissionDenied, .permissionRestricted:
+                locationDenied = true
+                nearbyPreparationState = .permissionRequired
+                return .locationDenied
+            case .timedOut:
+                recordNearbyMetric(.locationTimeout)
+                nearbyPreparationState = .unavailable
+                return promptForAuthorization ? .failed(unavailable.localizedDescription) : nil
+            case .fixFailed:
+                recordNearbyMetric(.failure)
+                nearbyPreparationState = .unavailable
+                return promptForAuthorization ? .failed(unavailable.localizedDescription) : nil
+            }
+        } catch is NearbyLookupFailure {
+            guard generation == nearbyPreparationGeneration else { return nil }
+            recordNearbyMetric(.merchantTimeout)
+            nearbyPreparationState = .unavailable
+            return promptForAuthorization
+                ? .failed(NearbyLookupFailure.nearbyTimedOut.localizedDescription) : nil
         } catch {
-            return .failed(error.localizedDescription)
+            guard generation == nearbyPreparationGeneration else { return nil }
+            // Background prefetch is best effort. A tap retries instead of surfacing an error
+            // caused before the owner asked for nearby results.
+            recordNearbyMetric(.failure)
+            nearbyPreparationState = .unavailable
+            return promptForAuthorization ? .failed(error.localizedDescription) : nil
+        }
+    }
+
+    private func nearbyMerchants(latitude: Double, longitude: Double,
+                                 using provider: any MerchantProviding) async throws -> [NearbyMerchant] {
+        try await withThrowingTaskGroup(of: [NearbyMerchant].self) { group in
+            group.addTask {
+                try await provider.nearby(latitude: latitude, longitude: longitude)
+            }
+            group.addTask {
+                try await Task.sleep(for: .seconds(4))
+                throw NearbyLookupFailure.nearbyTimedOut
+            }
+            defer { group.cancelAll() }
+            guard let result = try await group.next() else {
+                throw NearbyLookupFailure.nearbyTimedOut
+            }
+            return result
+        }
+    }
+
+    private func publishPrepared(_ outcome: FlowOutcome, fix: CheckoutLocationFix) {
+        preparedNearbyOutcome = outcome
+        preparedLocationFix = fix
+        let count = if case .found(let merchants) = outcome { merchants.count } else { 0 }
+        nearbyPreparationState = .ready(merchantCount: count)
+        schedulePreparedExpiry()
+    }
+
+    private func schedulePreparedExpiry() {
+        nearbyExpiryTask?.cancel()
+        guard let fetchedAt = nearbySnapshot?.fetchedAt else { return }
+        let remaining = max(0, 60 - Date().timeIntervalSince(fetchedAt))
+        nearbyExpiryTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(remaining))
+            guard !Task.isCancelled,
+                  self?.nearbySnapshot?.fetchedAt == fetchedAt else { return }
+            self?.preparedNearbyOutcome = nil
+            self?.preparedLocationFix = nil
+            self?.nearbyPreparationState = .idle
+        }
+    }
+
+    private func rebase(_ outcome: FlowOutcome, around fix: CheckoutLocationFix) -> FlowOutcome {
+        guard case .found(let merchants) = outcome else { return outcome }
+        let origin = CLLocation(latitude: fix.latitude, longitude: fix.longitude)
+        let rebased = merchants.map { merchant in
+            NearbyMerchant(
+                id: merchant.id, name: merchant.name, poiCategoryRaw: merchant.poiCategoryRaw,
+                latitude: merchant.latitude, longitude: merchant.longitude,
+                distanceMeters: origin.distance(from: CLLocation(latitude: merchant.latitude,
+                                                                  longitude: merchant.longitude)))
+        }
+        return .found(rankNearbyMerchants(rebased))
+    }
+
+    private func recordTapLatency(since start: ContinuousClock.Instant, prepared: Bool) {
+        let duration = start.duration(to: .now)
+        let milliseconds = Int(duration.components.seconds * 1_000)
+            + Int(duration.components.attoseconds / 1_000_000_000_000_000)
+        recordNearbyMetric(.tap(prepared: prepared, durationMilliseconds: milliseconds))
+    }
+
+    private func recordNearbyMetric(_ event: NearbyLookupMetricsStore.Event) {
+        nearbyMetricsStore.record(event)
+        nearbyMetrics = nearbyMetricsStore.snapshot
+    }
+
+    private func searchMerchants(_ text: String,
+                                 using provider: any MerchantProviding) async throws -> [NearbyMerchant] {
+        try await withThrowingTaskGroup(of: [NearbyMerchant].self) { group in
+            group.addTask { try await provider.search(text: text) }
+            group.addTask {
+                try await Task.sleep(for: .seconds(4))
+                throw NearbyLookupFailure.searchTimedOut
+            }
+            defer { group.cancelAll() }
+            guard let result = try await group.next() else {
+                throw NearbyLookupFailure.searchTimedOut
+            }
+            return result
         }
     }
 
@@ -268,7 +581,7 @@ final class CopilotSession {
     func search(_ text: String, using graph: DependencyGraph) async -> FlowOutcome {
         guard !text.isEmpty else { return .nothingFound(query: text) }
         do {
-            let merchants = try await graph.provider.search(text: text)
+            let merchants = try await searchMerchants(text, using: graph.provider)
             return merchants.isEmpty ? .nothingFound(query: text) : .found(merchants)
         } catch {
             return .failed(error.localizedDescription)
@@ -338,75 +651,6 @@ final class CopilotSession {
                    uniquingKeysWith: { first, _ in first })
     }
 
-    /// This is the point of instant repeats: local row -> amount capture, with no location
-    /// request and no MapKit lookup.
-    func startInstantRepeat(_ merchant: StoredMerchant) -> CheckoutStep {
-        .amount(NearbyMerchant(id: merchant.identifier ?? merchant.id.uuidString,
-                               name: merchant.name,
-                               poiCategoryRaw: merchant.poiCategoryRaw,
-                               latitude: merchant.latitude,
-                               longitude: merchant.longitude,
-                               distanceMeters: nil))
-    }
-
-    func startInstantRepeatWithAmount(_ merchant: StoredMerchant, amount: Double,
-                                      using graph: DependencyGraph) -> CheckoutStep {
-        let nearby = NearbyMerchant(id: merchant.identifier ?? merchant.id.uuidString,
-                                    name: merchant.name,
-                                    poiCategoryRaw: merchant.poiCategoryRaw,
-                                    latitude: merchant.latitude,
-                                    longitude: merchant.longitude,
-                                    distanceMeters: nil)
-        return recommend(merchant: nearby, amount: amount, using: graph)
-    }
-
-    /// The 1-tap path: score and record in the same call, with no intermediate recommendation
-    /// screen. A write failure here is an alert, not a full-screen error (Design Decision 3) —
-    /// the owner is mid-checkout, not on a dedicated reconcile screen, but losing their place to
-    /// report a write failure is still the wrong trade.
-    func logInstantPurchase(_ merchant: StoredMerchant, amount: Double, using graph: DependencyGraph) {
-        let nearby = NearbyMerchant(id: merchant.identifier ?? merchant.id.uuidString,
-                                    name: merchant.name,
-                                    poiCategoryRaw: merchant.poiCategoryRaw,
-                                    latitude: merchant.latitude,
-                                    longitude: merchant.longitude,
-                                    distanceMeters: nil)
-        do {
-            let today = Date().formatted(.iso8601.year().month().day())
-            let result = try graph.service.recommend(merchant: nearby, amountCad: amount, asOf: today)
-            let winnerCardId: String = {
-                switch result.outcome {
-                case .single(let rec): return rec.winner.cardId
-                case .fork(let branches): return branches.first?.recommendation.winner.cardId ?? ""
-                }
-            }()
-            let allPredictions = try graph.service.log.allPredictions()
-            if let stored = allPredictions.first(where: { $0.id == result.storedPredictionId }) {
-                let purchase = try graph.service.log.recordPurchase(for: stored, cardUsedId: winnerCardId,
-                                                                    cardSource: .atTill)
-                try graph.service.log.recordAmount(amount, source: .atTill, on: purchase)
-                try graph.service.assessPurchase(purchase)
-                recordPatronage(purchase)
-            }
-            refresh(using: graph)
-
-            let cardName = graph.catalogue.cards.first { $0.cardId == winnerCardId }?.officialName ?? winnerCardId
-            let meta = CategoryVisuals.meta(for: result.prediction.category)
-            LiveActivityManager.shared.startRecommendationActivity(
-                merchantName: merchant.name,
-                cardName: cardName,
-                cardId: winnerCardId,
-                multiplierHeadline: String(format: "$%.2f logged", amount),
-                advantageDescription: "1-Tap Checkout",
-                categoryDisplayName: meta.displayName,
-                categoryIcon: meta.icon,
-                isFork: false
-            )
-        } catch {
-            report(FlowError(error))
-        }
-    }
-
     /// The prediction is never touched — the store offers no way to touch it — this corrects the
     /// statement-derived category on the purchase's observation. Silent on failure, matching the
     /// original `try?`: a mis-tapped category correction is low-stakes and the owner has no
@@ -443,7 +687,7 @@ final class CopilotSession {
     }
 
     /// Records the card used for a purchase and re-evaluates card assessment.
-    func recordCard(_ cardUsedId: String, for purchase: StoredPurchase,
+    func recordCard(_ cardUsedId: String?, for purchase: StoredPurchase,
                     using graph: DependencyGraph) {
         do {
             try graph.service.log.recordCard(cardUsedId, source: .recalledLater, on: purchase)

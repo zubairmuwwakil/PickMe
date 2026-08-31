@@ -1,11 +1,49 @@
 import XCTest
 import SwiftData
+import CoreLocation
 import CardCopilotEngine
 import CardCopilotStore
 @testable import CardCopilot
 
 @MainActor
 final class CopilotSessionTests: XCTestCase {
+
+    private final class StubLocationProvider: CheckoutLocationProviding {
+        var authorizedLocation: CheckoutLocationFix?
+        var promptedLocation = CheckoutLocationFix(latitude: 43.6532, longitude: -79.3832,
+                                                    horizontalAccuracyMeters: 10)
+        private(set) var authorizedRequestCount = 0
+        private(set) var promptedRequestCount = 0
+
+        func requestLocation() async throws -> CheckoutLocationFix {
+            promptedRequestCount += 1
+            return promptedLocation
+        }
+
+        func requestLocationIfAuthorized() async throws -> CheckoutLocationFix? {
+            authorizedRequestCount += 1
+            return authorizedLocation
+        }
+    }
+
+    private actor StubMerchantProvider: MerchantProviding {
+        var nearbyResult: [NearbyMerchant]
+        var delay: Duration?
+        private(set) var nearbyRequestCount = 0
+
+        init(nearbyResult: [NearbyMerchant], delay: Duration? = nil) {
+            self.nearbyResult = nearbyResult
+            self.delay = delay
+        }
+
+        func nearby(latitude: Double, longitude: Double) async throws -> [NearbyMerchant] {
+            nearbyRequestCount += 1
+            if let delay { try await Task.sleep(for: delay) }
+            return nearbyResult
+        }
+
+        func search(text: String) async throws -> [NearbyMerchant] { [] }
+    }
 
     private func makeContext() throws -> ModelContext {
         let schema = Schema(versionedSchema: CardCopilotSchema.current)
@@ -16,7 +54,13 @@ final class CopilotSessionTests: XCTestCase {
         return ModelContext(container)
     }
 
-    private func makeGraph(context: ModelContext) throws -> DependencyGraph {
+    private func makeMetricsStore() -> NearbyLookupMetricsStore {
+        let defaults = UserDefaults(suiteName: "CopilotSessionNearby.\(UUID().uuidString)")!
+        return NearbyLookupMetricsStore(defaults: defaults)
+    }
+
+    private func makeGraph(context: ModelContext,
+                           provider: any MerchantProviding = LiveMerchantProvider()) throws -> DependencyGraph {
         let catalogue = try SeedLoader.loadCatalogue()
         let owner = try SeedLoader.loadOwnerState()
         return DependencyGraph(
@@ -27,7 +71,7 @@ final class CopilotSessionTests: XCTestCase {
             service: CheckoutService(catalogue: catalogue, ownerState: owner, context: context),
             explainer: RecommendationExplainer(catalogue: catalogue),
             engine: RecommendationEngine(catalogue: catalogue, ownerState: owner),
-            provider: LiveMerchantProvider())
+            provider: provider)
     }
 
     func testRefreshOnAnEmptyStoreProducesZeroesNotNil() throws {
@@ -113,6 +157,148 @@ final class CopilotSessionTests: XCTestCase {
         // sortedHomeMerchants is exercised through refresh(); this pins the precondition that
         // no location means no distance sort.
         XCTAssertFalse(session.cachedLocation?.isRecent ?? false)
+    }
+
+    func testAuthorizedLaunchPrefetchServesRadarWithoutASecondLookup() async throws {
+        let location = StubLocationProvider()
+        location.authorizedLocation = CheckoutLocationFix(latitude: 43.6532, longitude: -79.3832,
+                                                           horizontalAccuracyMeters: 10)
+        let merchants = [NearbyMerchant(id: "nearby-loblaws", name: "Loblaws",
+                                        poiCategoryRaw: nil, latitude: 43.6532,
+                                        longitude: -79.3832, distanceMeters: 12)]
+        let provider = StubMerchantProvider(nearbyResult: merchants)
+        let graph = try makeGraph(context: makeContext(), provider: provider)
+        let session = CopilotSession(locationProvider: location,
+                                     nearbyMetricsStore: makeMetricsStore())
+
+        await session.prefetchNearby(using: graph)
+        let outcome = await session.findNearby(using: graph)
+
+        XCTAssertEqual(outcome, .found(merchants))
+        XCTAssertEqual(location.authorizedRequestCount, 1)
+        XCTAssertEqual(location.promptedRequestCount, 0)
+        let nearbyRequestCount = await provider.nearbyRequestCount
+        XCTAssertEqual(nearbyRequestCount, 1)
+        XCTAssertEqual(session.nearbyMetrics.preparedTaps, 1)
+        XCTAssertEqual(session.nearbyPreparationState, .ready(merchantCount: 1))
+    }
+
+    func testLaunchPrefetchDoesNotPromptBeforeFirstRadarTap() async throws {
+        let location = StubLocationProvider()
+        let merchants = [NearbyMerchant(id: "nearby-metro", name: "Metro",
+                                        poiCategoryRaw: nil, latitude: 43.6532,
+                                        longitude: -79.3832, distanceMeters: 20)]
+        let provider = StubMerchantProvider(nearbyResult: merchants)
+        let graph = try makeGraph(context: makeContext(), provider: provider)
+        let session = CopilotSession(locationProvider: location,
+                                     nearbyMetricsStore: makeMetricsStore())
+
+        await session.prefetchNearby(using: graph)
+        XCTAssertEqual(location.authorizedRequestCount, 1)
+        XCTAssertEqual(location.promptedRequestCount, 0)
+        let prefetchRequestCount = await provider.nearbyRequestCount
+        XCTAssertEqual(prefetchRequestCount, 0)
+        XCTAssertEqual(session.nearbyPreparationState, .permissionRequired)
+
+        let outcome = await session.findNearby(using: graph)
+
+        XCTAssertEqual(outcome, .found(merchants))
+        XCTAssertEqual(location.promptedRequestCount, 1)
+        let finalRequestCount = await provider.nearbyRequestCount
+        XCTAssertEqual(finalRequestCount, 1)
+    }
+
+    func testForegroundPrefetchReusesCacheOnlyWhenDeviceHasNotMoved() async throws {
+        let location = StubLocationProvider()
+        location.authorizedLocation = CheckoutLocationFix(latitude: 43.6532, longitude: -79.3832,
+                                                           horizontalAccuracyMeters: 10)
+        let merchants = [NearbyMerchant(id: "nearby", name: "Nearby",
+                                        poiCategoryRaw: nil, latitude: 43.6533,
+                                        longitude: -79.3832, distanceMeters: 12)]
+        let provider = StubMerchantProvider(nearbyResult: merchants)
+        let graph = try makeGraph(context: makeContext(), provider: provider)
+        let session = CopilotSession(locationProvider: location,
+                                     nearbyMetricsStore: makeMetricsStore())
+
+        await session.prefetchNearby(using: graph)
+        await session.prefetchNearby(using: graph)
+        var requestCount = await provider.nearbyRequestCount
+        XCTAssertEqual(requestCount, 1)
+        XCTAssertEqual(session.nearbyMetrics.movementCacheHits, 1)
+
+        location.authorizedLocation = CheckoutLocationFix(latitude: 43.6632, longitude: -79.3832,
+                                                           horizontalAccuracyMeters: 10)
+        await session.prefetchNearby(using: graph)
+        requestCount = await provider.nearbyRequestCount
+        XCTAssertEqual(requestCount, 2, "moving about 1 km must invalidate a 200 m result")
+    }
+
+    func testConfidentShortcutRequiresASeparatedRunnerUp() async throws {
+        let location = StubLocationProvider()
+        location.authorizedLocation = CheckoutLocationFix(latitude: 43.6532, longitude: -79.3832,
+                                                           horizontalAccuracyMeters: 10)
+        let first = NearbyMerchant(id: "first", name: "First", poiCategoryRaw: nil,
+                                   latitude: 43.6532, longitude: -79.3832, distanceMeters: 10)
+        let closeSecond = NearbyMerchant(id: "second", name: "Second", poiCategoryRaw: nil,
+                                         latitude: 43.6533, longitude: -79.3832, distanceMeters: 30)
+        let provider = StubMerchantProvider(nearbyResult: [closeSecond, first])
+        let graph = try makeGraph(context: makeContext(), provider: provider)
+        let session = CopilotSession(locationProvider: location,
+                                     nearbyMetricsStore: makeMetricsStore())
+
+        await session.prefetchNearby(using: graph)
+
+        XCTAssertEqual(session.preparedNearestMerchant?.id, "first")
+        XCTAssertNil(session.confidentPreparedMerchant,
+                     "two storefronts 20 m apart must retain exact-merchant confirmation")
+    }
+
+    func testMerchantLookupTimesOutAndRecordsOnlyASafeCounter() async throws {
+        let location = StubLocationProvider()
+        let provider = StubMerchantProvider(nearbyResult: [], delay: .seconds(10))
+        let graph = try makeGraph(context: makeContext(), provider: provider)
+        let session = CopilotSession(locationProvider: location,
+                                     nearbyMetricsStore: makeMetricsStore())
+
+        let outcome = await session.findNearby(using: graph)
+
+        guard case .failed(let message) = outcome else { return XCTFail("expected timeout") }
+        XCTAssertTrue(message.contains("too long"), "got: \(message)")
+        XCTAssertEqual(session.nearbyMetrics.merchantTimeouts, 1)
+        XCTAssertEqual(session.nearbyPreparationState, .unavailable)
+    }
+
+    func testLocationFixRejectsStaleAndInaccurateSamples() {
+        XCTAssertFalse(CheckoutLocationFix(latitude: 43.65, longitude: -79.38,
+                                           horizontalAccuracyMeters: 10,
+                                           capturedAt: Date().addingTimeInterval(-61)).isUsable())
+        XCTAssertFalse(CheckoutLocationFix(latitude: 43.65, longitude: -79.38,
+                                           horizontalAccuracyMeters: 300).isUsable())
+        XCTAssertTrue(CheckoutLocationFix(latitude: 43.65, longitude: -79.38,
+                                          horizontalAccuracyMeters: 20).isUsable())
+    }
+
+    func testForgettingNearbyHistoryClearsPreparedMerchantAndLocalCounters() async throws {
+        let location = StubLocationProvider()
+        location.authorizedLocation = CheckoutLocationFix(latitude: 43.6532, longitude: -79.3832,
+                                                           horizontalAccuracyMeters: 10)
+        let merchant = NearbyMerchant(id: "nearby", name: "Nearby", poiCategoryRaw: nil,
+                                      latitude: 43.6532, longitude: -79.3832, distanceMeters: 12)
+        let provider = StubMerchantProvider(nearbyResult: [merchant])
+        let graph = try makeGraph(context: makeContext(), provider: provider)
+        let session = CopilotSession(locationProvider: location,
+                                     nearbyMetricsStore: makeMetricsStore())
+
+        await session.prefetchNearby(using: graph)
+        XCTAssertNotNil(session.preparedNearestMerchant)
+        XCTAssertGreaterThan(session.nearbyMetrics.prefetchAttempts, 0)
+
+        session.forgetNearbyHistory()
+
+        XCTAssertNil(session.preparedNearestMerchant)
+        XCTAssertNil(session.cachedLocation)
+        XCTAssertEqual(session.nearbyMetrics, NearbyLookupMetrics())
+        XCTAssertEqual(session.nearbyPreparationState, .idle)
     }
 
     /// An empty query must not reach MapKit. The old code guarded with

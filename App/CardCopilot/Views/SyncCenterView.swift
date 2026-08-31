@@ -38,105 +38,345 @@ struct SyncCenterView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                if !MoneyTalksConfiguration.isConfigured { configurationRequired }
-                else if !isSignedIn { signInRequired }
-                else if sync.isPreparingAccount { preparingAccount }
-                else if sync.readySyncUserID != Clerk.shared.user?.id { accountUnavailable }
-                else { connectedContent }
-            }.padding(16)
+            VStack(alignment: .leading, spacing: 18) {
+                if !MoneyTalksConfiguration.isConfigured {
+                    configurationRequired
+                } else if !isSignedIn {
+                    signInRequired
+                } else if sync.isPreparingAccount {
+                    preparingAccount
+                } else if sync.readySyncUserID != Clerk.shared.user?.id {
+                    accountUnavailable
+                } else {
+                    connectedContent
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Sync & Capture")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: { dismiss() }).font(.headline) } }
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done", action: { dismiss() })
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+            }
+        }
         .sheet(isPresented: $authIsPresented) { AuthView() }
-        .alert("Revoke this old connection?", isPresented: .init(
-            get: { pendingRevocation != nil }, set: { if !$0 { pendingRevocation = nil } }),
-            presenting: pendingRevocation) { item in
-            Button("Revoke", role: .destructive) { Task { await revokeInstallation(item) } }
+        .alert("Revoke this connection?", isPresented: .init(
+            get: { pendingRevocation != nil },
+            set: { if !$0 { pendingRevocation = nil } }
+        ), presenting: pendingRevocation) { item in
+            Button("Revoke Connection", role: .destructive) { Task { await revokeInstallation(item) } }
             Button("Cancel", role: .cancel) { pendingRevocation = nil }
         } message: { _ in
-            Text("Only the selected server credential is revoked. Purchases already saved on this iPhone are not deleted.")
+            Text("Only the selected server credential is revoked. Purchases already saved on this iPhone are never deleted.")
         }
     }
 
+    // MARK: - Configuration Required
+
     private var configurationRequired: some View {
-        ContentUnavailableView("Sync setup required", systemImage: "key.horizontal",
-                               description: Text("Checkout stays available. Add the dedicated Inunity Clerk key and API URL to MoneyTalksConfiguration.swift, then return here to sign in."))
+        ContentUnavailableView(
+            "Sync Setup Required",
+            systemImage: "key.horizontal",
+            description: Text("Checkout stays fully offline-capable. Add the Inunity Clerk key and API URL in configuration to enable cross-device cloud sync.")
+        )
     }
 
+    // MARK: - Sign In Required (Hero Presentation)
+
     private var signInRequired: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            VStack(alignment: .leading, spacing: 16) {
-                Label("Keep your caps in sync", systemImage: "arrow.triangle.2.circlepath").font(.title3.weight(.bold))
-                Text("Sign in only to sync cap usage, view capture feedback, and create a Wallet Capture connection. Checkout recommendations work without an account or connection.").foregroundStyle(.secondary)
-                Button("Sign in to Inunity") { authIsPresented = true }.buttonStyle(.borderedProminent)
-            }.padding(18).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+        VStack(alignment: .leading, spacing: 18) {
+            // Apple-grade Promotional & Educational Hero Card
+            VStack(alignment: .leading, spacing: 18) {
+                // Header with Gradient Squircle
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.blue, Color(red: 0.2, green: 0.35, blue: 0.95)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 48, height: 48)
+                            .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
+
+                        Image(systemName: "arrow.triangle.2.circlepath.icloud.fill")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Cloud Sync & Capture")
+                            .font(.system(size: 19, weight: .bold, design: .rounded))
+                            .foregroundStyle(.primary)
+
+                        Text("Optional multi-device power tools")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                // Value Propositions
+                VStack(alignment: .leading, spacing: 12) {
+                    valuePropRow(
+                        icon: "chart.bar.xaxis",
+                        iconColor: .blue,
+                        title: "Spend Cap Tracking",
+                        subtitle: "Keep monthly category limits synchronized across all your devices."
+                    )
+
+                    valuePropRow(
+                        icon: "wallet.pass.fill",
+                        iconColor: .purple,
+                        title: "Apple Wallet Shortcuts",
+                        subtitle: "Instantly capture transactions when you tap your card at payment terminals."
+                    )
+
+                    valuePropRow(
+                        icon: "lock.shield.fill",
+                        iconColor: .green,
+                        title: "Privacy by Design",
+                        subtitle: "100% on-device matching. Checkout always works offline without an account."
+                    )
+                }
+                .padding(.vertical, 4)
+
+                // Action Button
+                Button {
+                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                    generator.impactOccurred()
+                    authIsPresented = true
+                } label: {
+                    HStack {
+                        Spacer()
+                        Image(systemName: "person.crop.circle.fill")
+                        Text("Sign In with Inunity")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                        Spacer()
+                    }
+                    .padding(.vertical, 14)
+                    .background(Color.blue, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .foregroundStyle(.white)
+                    .shadow(color: Color.blue.opacity(0.25), radius: 8, x: 0, y: 3)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+                    .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
+            )
+
+            // Live On-Device Status
             nativeCaptureStatusSection
         }
     }
 
+    private func valuePropRow(icon: String, iconColor: Color, title: String, subtitle: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(iconColor.opacity(0.15))
+                    .frame(width: 28, height: 28)
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(iconColor)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
+                Text(subtitle)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(1.5)
+            }
+        }
+    }
+
+    // MARK: - Preparing Account
+
     private var preparingAccount: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             ProgressView()
+                .controlSize(.regular)
+
             VStack(alignment: .leading, spacing: 3) {
-                Text("Loading this account's wallet").font(.headline)
-                Text("PickMe keeps account wallets separate on this iPhone.")
-                    .font(.subheadline).foregroundStyle(.secondary)
+                Text("Loading Account Wallet…")
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                Text("PickMe isolates account wallets on this iPhone.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+        )
     }
+
+    // MARK: - Account Unavailable
 
     private var accountUnavailable: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Wallet not loaded", systemImage: "person.crop.circle.badge.exclamationmark")
-                .font(.headline)
+            HStack(spacing: 10) {
+                Image(systemName: "person.crop.circle.badge.exclamationmark")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(.orange)
+                Text("Wallet Not Loaded")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+            }
+
             Text(sync.syncIssue?.message ?? "PickMe could not safely load this account's wallet.")
-                .font(.subheadline).foregroundStyle(.secondary)
-            Button("Retry") { Task { await onSync() } }.buttonStyle(.borderedProminent)
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+
+            Button {
+                Task { await onSync() }
+            } label: {
+                Text("Retry Loading")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.blue, in: Capsule())
+            }
+            .buttonStyle(.plain)
         }
         .padding(18)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
+        )
     }
 
+    // MARK: - Connected Content
+
     private var connectedContent: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            VStack(alignment: .leading, spacing: 8) {
-                Label("Sync", systemImage: "checkmark.icloud").font(.title3.weight(.bold))
-                Text(sync.lastSyncedAt.map { "Last synced \($0.formatted(date: .abbreviated, time: .shortened))" } ?? "Not synced yet — stored cap data remains in use until a sync succeeds.")
-                    .font(.subheadline).foregroundStyle(.secondary)
-                if let syncIssue = sync.syncIssue {
-                    Label {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(syncIssue.message)
-                            Text("Last attempt \(syncIssue.occurredAt.formatted(date: .abbreviated, time: .shortened))")
-                                .font(.caption)
-                        }
-                    } icon: {
-                        Image(systemName: syncIssue.kind == .warning ? "exclamationmark.triangle.fill" : "xmark.octagon.fill")
-                    }
-                    .font(.subheadline)
-                    .foregroundStyle(syncIssue.kind == .warning ? .orange : .red)
-                }
-                Button(sync.isSyncing ? "Syncing…" : "Sync now") { Task { await onSync() } }
-                    .buttonStyle(.borderedProminent).disabled(sync.isSyncing)
-            }.padding(18).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+        VStack(alignment: .leading, spacing: 18) {
+            // 1. Cloud Sync Hero Card
+            cloudSyncHeroCard
+
+            // 2. Installation & Shortcuts Credential Section
             installationSection
+
+            // 3. Native Wallet Capture Dashboard
             nativeCaptureStatusSection
+
+            // 4. Recent Capture Feedback Receipts
             if !sync.walletFeedback.isEmpty {
                 feedbackSection
             }
-        }.task { await onSync() }
+        }
+        .task { await onSync() }
+    }
+
+    private var cloudSyncHeroCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.blue, Color(red: 0.15, green: 0.45, blue: 0.95)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 42, height: 42)
+                        .shadow(color: Color.blue.opacity(0.25), radius: 5, x: 0, y: 2)
+
+                    Image(systemName: "checkmark.icloud.fill")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Cloud Sync Engine")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+
+                    Text(sync.lastSyncedAt.map { "Last synced \($0.formatted(date: .abbreviated, time: .shortened))" }
+                         ?? "Stored cap data remains active until sync completes")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                Button {
+                    let generator = UIImpactFeedbackGenerator(style: .light)
+                    generator.impactOccurred()
+                    Task { await onSync() }
+                } label: {
+                    HStack(spacing: 5) {
+                        if sync.isSyncing {
+                            ProgressView()
+                                .controlSize(.mini)
+                                .tint(.white)
+                        }
+                        Text(sync.isSyncing ? "Syncing…" : "Sync Now")
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(Color.blue, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .disabled(sync.isSyncing)
+            }
+
+            if let syncIssue = sync.syncIssue {
+                HStack(spacing: 8) {
+                    Image(systemName: syncIssue.kind == .warning ? "exclamationmark.triangle.fill" : "xmark.octagon.fill")
+                        .foregroundStyle(syncIssue.kind == .warning ? .orange : .red)
+                        .font(.caption)
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(syncIssue.message)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(syncIssue.kind == .warning ? .orange : .red)
+                        Text("Last attempt \(syncIssue.occurredAt.formatted(date: .abbreviated, time: .shortened))")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(
+                    (syncIssue.kind == .warning ? Color.orange : Color.red).opacity(0.08),
+                    in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                )
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
+        )
     }
 
     private var nativeCaptureStatusSection: some View {
-        CaptureStatusView(boundAccountLabel: boundAccountLabel,
+        CaptureStatusView(
+            boundAccountLabel: boundAccountLabel,
             canAssignUnassigned: isCaptureBoundToCurrentAccount,
-            onRetry: { await onSync() }, onTestConnection: {
+            onRetry: { await onSync() },
+            onTestConnection: {
                 let result = await sync.testWalletCaptureConnection()
                 if result.isConnected { connectionNotice = nil }
                 return result
@@ -144,82 +384,378 @@ struct SyncCenterView: View {
             onAssignUnassigned: { try await sync.assignUnassignedCaptures() },
             onDeleteUnassigned: { try await sync.deleteUnassignedCaptures() },
             onDisable: { delete in try await sync.disableWalletCapture(deleteUnsent: delete) },
+            onEnable: { await sync.enableWalletCapture() },
             onSubmitDiagnostic: { report in try await sync.submitDiagnostic(report) },
             onDeleteSubmittedDiagnostic: { id in try await sync.deleteSubmittedDiagnostic(id: id) },
-            onListSubmittedDiagnostics: { try await sync.listSubmittedDiagnostics() })
+            onListSubmittedDiagnostics: { try await sync.listSubmittedDiagnostics() }
+        )
     }
 
-    private var feedbackSection: some View {
+    // MARK: - Installation Section
+
+    private var installationSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Recent capture feedback").font(.headline)
-            ForEach(sync.walletFeedback.prefix(5)) { item in
-                feedbackRow(for: item)
-                if item.id != sync.walletFeedback.prefix(5).last?.id {
-                    Divider()
+            HStack(spacing: 8) {
+                Image(systemName: "key.fill")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(.purple)
+                Text("DEVICE CREDENTIAL")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.8)
+            }
+
+            if sync.isSyncing && activeInstallations.isEmpty && !hasLocalCredential {
+                ProgressView("Checking active credentials…")
+                    .font(.footnote)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 6)
+            } else if sync.syncIssue != nil && activeInstallations.isEmpty && !hasLocalCredential {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Could not verify active credentials. Retry sync before creating a new token.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    Button("Retry Token Check") { Task { await onSync() } }
+                        .font(.caption.weight(.bold))
                 }
+            } else if hasLocalCredential && isCaptureBoundToCurrentAccount && !isShowingCreateForm {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "lock.shield.fill")
+                            .foregroundStyle(Color(red: 0.13, green: 0.77, blue: 0.37))
+                            .font(.system(size: 16))
+
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Connection Active on This iPhone")
+                                .font(.system(size: 14, weight: .bold, design: .rounded))
+                            Text("Device secret secured in Keychain")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Link(destination: URL(string: "shortcuts://")!) {
+                            HStack(spacing: 3) {
+                                Text("Shortcuts")
+                                Image(systemName: "arrow.up.right")
+                                    .font(.system(size: 9, weight: .bold))
+                            }
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundStyle(.blue)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 5)
+                            .background(Color.blue.opacity(0.12), in: Capsule())
+                        }
+                    }
+
+                    if !otherActiveInstallations.isEmpty {
+                        Divider().padding(.top, 4)
+                        DisclosureGroup("Other Active Connections (\(otherActiveInstallations.count))") {
+                            installationRows(otherActiveInstallations, allowRevocation: true)
+                                .padding(.top, 6)
+                        }
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(12)
+                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            } else if (hasLocalCredential || !activeInstallations.isEmpty) && !isShowingCreateForm {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 8) {
+                        Image(systemName: hasLocalCredential ? "person.crop.circle.badge.exclamationmark" : "icloud")
+                            .foregroundStyle(hasLocalCredential ? .orange : .secondary)
+                            .font(.system(size: 16))
+
+                        Text(hasLocalCredential ? "Relink This iPhone" : "Old Server Connections Found")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                    }
+
+                    Text(!hasLocalCredential
+                         ? "These records cannot restore secrets after reinstall. Create a replacement connection; saved taps remain on this iPhone."
+                         : "The device credential belongs to another Inunity account. Creating a connection here replaces it safely.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+
+                    installationRows(activeInstallations, allowRevocation: false)
+
+                    Button {
+                        withAnimation(.spring(response: 0.3)) { isShowingCreateForm = true }
+                    } label: {
+                        Text(hasLocalCredential ? "Relink to This Account" : "Create Replacement Connection")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 7)
+                            .background(Color.blue, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 2)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            } else {
+                VStack(alignment: .leading, spacing: 10) {
+                    TextField("Installation Name (e.g. My iPhone)", text: $installationName)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 14))
+
+                    HStack(spacing: 8) {
+                        Button {
+                            Task { await createInstallationToken() }
+                        } label: {
+                            HStack(spacing: 5) {
+                                if isCreatingToken {
+                                    ProgressView().controlSize(.mini).tint(.white)
+                                }
+                                Text(isCreatingToken ? "Connecting…" : "Connect Wallet Capture")
+                                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                            }
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(Color.blue, in: Capsule())
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isCreatingToken || sync.isSyncing || installationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                        if !activeInstallations.isEmpty {
+                            Button("Cancel") {
+                                withAnimation { isShowingCreateForm = false }
+                            }
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.leading, 6)
+                        }
+                    }
+                }
+            }
+
+            if let tokenError {
+                Text(tokenError).font(.caption).foregroundStyle(.red)
+            }
+            if let connectionNotice {
+                Text(connectionNotice).font(.caption).foregroundStyle(.orange)
             }
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
+        )
+    }
+
+    private func createInstallationToken() async {
+        isCreatingToken = true
+        tokenError = nil
+        connectionNotice = nil
+        defer { isCreatingToken = false }
+        do {
+            let result = try await sync.createInstallation(label: installationName)
+            installationWasCreated = true
+            isShowingCreateForm = false
+            installationName = "My iPhone"
+            if !result.isConnected {
+                connectionNotice = "Connection saved, but test failed: \(result.failureReason ?? "Try the connection test below.")"
+            }
+        } catch {
+            #if DEBUG
+            print("❌ createInstallationToken error: \(error)")
+            #endif
+            tokenError = error.localizedDescription
+        }
+    }
+
+    @ViewBuilder
+    private func installationRows(_ values: [WalletInstallation], allowRevocation: Bool) -> some View {
+        ForEach(values) { item in
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.label)
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                    Text("Created \(item.createdAt.formatted(date: .abbreviated, time: .shortened))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if allowRevocation {
+                    Button("Revoke", role: .destructive) {
+                        pendingRevocation = item
+                    }
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.red)
+                }
+            }
+            if item.id != values.last?.id {
+                Divider()
+            }
+        }
+    }
+
+    private func revokeInstallation(_ item: WalletInstallation) async {
+        pendingRevocation = nil
+        do {
+            try await sync.revokeWalletInstallation(id: item.id)
+            tokenError = nil
+        } catch {
+            tokenError = error.localizedDescription
+        }
+    }
+
+    // MARK: - Recent Capture Feedback Section (Apple Pay Style)
+
+    private var feedbackSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                HStack(spacing: 6) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.blue)
+                    Text("RECENT CAPTURE FEEDBACK")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .tracking(0.8)
+                }
+
+                Spacer()
+
+                Text("\(sync.walletFeedback.count) recorded")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+
+            VStack(spacing: 0) {
+                let items = Array(sync.walletFeedback.prefix(5))
+                ForEach(items) { item in
+                    feedbackRow(for: item)
+                    if item.id != items.last?.id {
+                        Divider().padding(.leading, 46)
+                    }
+                }
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color(.tertiarySystemFill))
+            )
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
+        )
     }
 
     private func feedbackRow(for item: WalletFeedback) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline) {
-                feedbackVerdictLabel(for: item)
-                Spacer()
-                Text(item.capturedAt.formatted(date: .abbreviated, time: .shortened))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        HStack(spacing: 12) {
+            // Receipt / Merchant Squircle
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(feedbackIconColor(for: item).opacity(0.15))
+                    .frame(width: 36, height: 36)
+                Image(systemName: feedbackIconName(for: item))
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(feedbackIconColor(for: item))
             }
 
-            HStack(spacing: 6) {
-                Text(displayMerchant(for: item))
-                    .font(.subheadline.weight(.semibold))
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text(displayMerchant(for: item))
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
 
-                if let formattedAmount = formattedAmount(for: item) {
-                    Text("·")
+                    Spacer()
+
+                    if let formattedAmount = formattedAmount(for: item) {
+                        Text(formattedAmount)
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundStyle(.primary)
+                    }
+                }
+
+                HStack(spacing: 6) {
+                    feedbackVerdictLabel(for: item)
+
+                    if let cardText = displayCard(for: item) {
+                        Text("•")
+                            .foregroundStyle(.tertiary)
+                        Text(cardText)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+
+                    Spacer()
+
+                    Text(item.capturedAt.formatted(date: .omitted, time: .shortened))
+                        .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.tertiary)
-                    Text(formattedAmount)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
                 }
             }
-
-            if let cardText = displayCard(for: item) {
-                Text(cardText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
         }
-        .padding(.vertical, 2)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
     }
 
     @ViewBuilder
     private func feedbackVerdictLabel(for item: WalletFeedback) -> some View {
         if let warning = item.warning?.trimmingCharacters(in: .whitespacesAndNewlines), !warning.isEmpty {
-            Label(warning, systemImage: "exclamationmark.triangle.fill")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.orange)
+            HStack(spacing: 3) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 9))
+                Text(warning)
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+            }
+            .foregroundStyle(.orange)
         } else {
             switch item.verdict.lowercased() {
             case "best", "optimal":
-                Label("Best card used", systemImage: "checkmark.circle.fill")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.green)
+                HStack(spacing: 3) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 9))
+                    Text("Optimal Card")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                }
+                .foregroundStyle(Color(red: 0.13, green: 0.77, blue: 0.37))
             case "suboptimal", "better_card_available":
-                Label("Better card available", systemImage: "arrow.triangle.2.circlepath")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.orange)
-            case "unknown":
-                Label("Captured", systemImage: "arrow.down.circle.fill")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 3) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 9))
+                    Text("Better Available")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                }
+                .foregroundStyle(.orange)
             default:
-                Text(item.verdict.capitalized)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                Text("Captured")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(.blue)
             }
+        }
+    }
+
+    private func feedbackIconName(for item: WalletFeedback) -> String {
+        if item.warning?.isEmpty == false {
+            return "exclamationmark.triangle.fill"
+        }
+        switch item.verdict.lowercased() {
+        case "best", "optimal": return "checkmark.seal.fill"
+        case "suboptimal", "better_card_available": return "arrow.triangle.2.circlepath"
+        default: return "wallet.pass.fill"
+        }
+    }
+
+    private func feedbackIconColor(for item: WalletFeedback) -> Color {
+        if item.warning?.isEmpty == false {
+            return .orange
+        }
+        switch item.verdict.lowercased() {
+        case "best", "optimal": return Color(red: 0.13, green: 0.77, blue: 0.37)
+        case "suboptimal", "better_card_available": return .orange
+        default: return .blue
         }
     }
 
@@ -230,7 +766,7 @@ struct SyncCenterView: View {
         if let raw = item.merchantRaw?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty {
             return raw
         }
-        return "Wallet transaction"
+        return "Wallet Transaction"
     }
 
     private func formattedAmount(for item: WalletFeedback) -> String? {
@@ -245,116 +781,8 @@ struct SyncCenterView: View {
 
     private func displayCard(for item: WalletFeedback) -> String? {
         if let cardRaw = item.cardRaw?.trimmingCharacters(in: .whitespacesAndNewlines), !cardRaw.isEmpty {
-            return "Card: \(cardRaw)"
+            return cardRaw
         }
         return nil
-    }
-
-    private var installationSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Native Wallet Capture", systemImage: "wallet.pass").font(.headline)
-            Text("Create one secure connection for this iPhone, then add “Send Wallet Purchase to Inunity” directly to your Wallet Transaction automation and map Merchant, Amount, Name, Currency Code, and Card or Pass. PickMe saves each tap locally before syncing it.").font(.footnote).foregroundStyle(.secondary)
-            if sync.isSyncing && activeInstallations.isEmpty && !hasLocalCredential {
-                ProgressView("Checking connected tokens…")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 8)
-            } else if sync.syncIssue != nil && activeInstallations.isEmpty && !hasLocalCredential {
-                Text("PickMe could not verify whether this account already has a token. Retry sync before creating another one.")
-                    .font(.footnote).foregroundStyle(.secondary)
-                Button("Retry token check") { Task { await onSync() } }.buttonStyle(.bordered)
-            } else if hasLocalCredential && isCaptureBoundToCurrentAccount && !isShowingCreateForm {
-                Label("Connection saved on this iPhone", systemImage: "lock.shield.fill")
-                    .font(.subheadline.weight(.semibold))
-                Text("The write-only installation credential is protected on this iPhone. Verification and delivery status appear below.")
-                    .font(.caption).foregroundStyle(.secondary)
-                Link("Open Shortcuts", destination: URL(string: "shortcuts://")!).buttonStyle(.bordered)
-                if !otherActiveInstallations.isEmpty {
-                    DisclosureGroup("Other active connections (\(otherActiveInstallations.count))") {
-                        installationRows(otherActiveInstallations, allowRevocation: true)
-                            .padding(.top, 8)
-                    }.font(.caption)
-                }
-            } else if (hasLocalCredential || !activeInstallations.isEmpty) && !isShowingCreateForm {
-                VStack(alignment: .leading, spacing: 10) {
-                    Label(hasLocalCredential ? "Relink this iPhone" : "Old server connections found",
-                          systemImage: hasLocalCredential ? "person.crop.circle.badge.exclamationmark" : "icloud")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(hasLocalCredential ? .orange : .secondary)
-                    Text(!hasLocalCredential
-                         ? "These records cannot restore their device-only secrets after a reinstall. Create a replacement connection; saved purchases stay on this iPhone until you approve their account."
-                         : "The device credential belongs to another Inunity account. Creating a connection here replaces it safely.")
-                        .font(.caption).foregroundStyle(.secondary)
-                    installationRows(activeInstallations, allowRevocation: false)
-                    Button(hasLocalCredential ? "Relink to this account" : "Create replacement connection") {
-                        withAnimation { isShowingCreateForm = true }
-                    }
-                    .buttonStyle(.bordered)
-                    .padding(.top, 4)
-                }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10))
-            } else {
-                TextField("Installation name", text: $installationName).textFieldStyle(.roundedBorder)
-                HStack {
-                    Button(isCreatingToken ? "Connecting…" : "Connect native Wallet Capture") { Task { await createInstallationToken() } }
-                        .buttonStyle(.bordered).disabled(isCreatingToken || sync.isSyncing || installationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    if !activeInstallations.isEmpty {
-                        Button("Cancel") {
-                            withAnimation { isShowingCreateForm = false }
-                        }
-                        .buttonStyle(.borderless)
-                        .padding(.leading, 8)
-                    }
-                }
-            }
-            if let tokenError { Text(tokenError).font(.caption).foregroundStyle(.red) }
-            if let connectionNotice { Text(connectionNotice).font(.caption).foregroundStyle(.orange) }
-        }.padding(16).background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
-    }
-
-    private func createInstallationToken() async {
-        isCreatingToken = true; tokenError = nil; connectionNotice = nil
-        defer { isCreatingToken = false }
-        do {
-            let result = try await sync.createInstallation(label: installationName)
-            installationWasCreated = true
-            isShowingCreateForm = false
-            installationName = "My iPhone"
-            if !result.isConnected {
-                connectionNotice = "Connection saved, but verification failed. \(result.failureReason ?? "Try the secure connection test again.")"
-            }
-        }
-        catch {
-            #if DEBUG
-            print("❌ createInstallationToken error: \(error)")
-            #endif
-            tokenError = error.localizedDescription
-        }
-    }
-
-    @ViewBuilder
-    private func installationRows(_ values: [WalletInstallation], allowRevocation: Bool) -> some View {
-        ForEach(values) { item in
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(item.label).font(.subheadline.weight(.semibold))
-                    Text("Created \(item.createdAt.formatted(date: .abbreviated, time: .shortened))")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer()
-                if allowRevocation {
-                    Button("Revoke", role: .destructive) { pendingRevocation = item }
-                        .font(.caption).buttonStyle(.borderless)
-                }
-            }
-            if item.id != values.last?.id { Divider() }
-        }
-    }
-
-    private func revokeInstallation(_ item: WalletInstallation) async {
-        pendingRevocation = nil
-        do { try await sync.revokeWalletInstallation(id: item.id); tokenError = nil }
-        catch { tokenError = error.localizedDescription }
     }
 }

@@ -77,7 +77,9 @@ struct CardArtView: View {
             CardPhotoView(
                 cardId: cardId,
                 cornerRadius: 18,
-                fallback: AnyView(Color.clear)   // transparent — gradient already showing
+                fallback: AnyView(
+                    cleanArtwork ? AnyView(proceduralHeroOverlay.padding(16)) : AnyView(Color.clear)
+                )
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -92,7 +94,7 @@ struct CardArtView: View {
                 endPoint: .bottomTrailing
             )
 
-            // Layer 4: card text overlay (hidden if cleanArtwork and photo is present, or styled cleanly)
+            // Layer 4: card text overlay (only shown when cleanArtwork is false)
             if !cleanArtwork {
                 // subtle bottom gradient scrim so text stays legible
                 LinearGradient(
@@ -103,10 +105,6 @@ struct CardArtView: View {
 
                 heroTextOverlay
                     .padding(18)
-            } else if !hasLocalPhoto {
-                // When cleanArtwork is requested but no photo exists, show a sleek procedural luxury layout
-                proceduralHeroOverlay
-                    .padding(16)
             }
         }
         .aspectRatio(physicalCardAspectRatio, contentMode: .fit)

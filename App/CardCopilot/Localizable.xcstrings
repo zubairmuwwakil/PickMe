@@ -10,9 +10,6 @@
     "!" : {
 
     },
-    "·" : {
-
-    },
     "/ %lld checkouts" : {
       "localizations" : {
         "fr-CA" : {
@@ -235,6 +232,16 @@
     "%lld · no card advice was available" : {
 
     },
+    "%lld action%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld action%2$@"
+          }
+        }
+      }
+    },
     "%lld active" : {
 
     },
@@ -391,6 +398,9 @@
         }
       }
     },
+    "%lld recorded" : {
+
+    },
     "%lld source%@ need a refresh" : {
       "localizations" : {
         "en" : {
@@ -491,6 +501,9 @@
     "•••• 8808" : {
 
     },
+    "+ ADD" : {
+
+    },
     "≈ $%@ return" : {
 
     },
@@ -514,12 +527,28 @@
         }
       }
     },
+    "0" : {
+
+    },
     "0.00" : {
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "0,00"
+          }
+        }
+      }
+    },
+    "0% (No FX Fee)" : {
+
+    },
+    "1 %@ ≈ %@ CAD benchmark exchange rate." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "1 %1$@ ≈ %2$@ CAD benchmark exchange rate."
           }
         }
       }
@@ -545,15 +574,6 @@
       }
     },
     "1-Tap Check" : {
-
-    },
-    "1. Allow notifications so a background Wallet tap can confirm it was saved." : {
-
-    },
-    "2. Location is optional. When allowed, PickMe tries for a fresh fix for at most two seconds." : {
-
-    },
-    "3. In Shortcuts, create a Wallet Transaction automation that runs immediately. Add “Send Wallet Purchase to Inunity” and map Merchant, Amount, Name, Currency Code, and Card or Pass." : {
 
     },
     "10/26" : {
@@ -672,6 +692,9 @@
     "Add Amount" : {
 
     },
+    "Add Amount & Currency" : {
+
+    },
     "Add Another Card" : {
 
     },
@@ -681,13 +704,13 @@
     "Add card or amount" : {
 
     },
-    "Add Purchase Amount" : {
-
-    },
     "Add Tax:" : {
 
     },
     "Add the amount to compare cards" : {
+
+    },
+    "Add to Wallet" : {
 
     },
     "Add your cards" : {
@@ -707,6 +730,9 @@
 
     },
     "Add Your First Card" : {
+
+    },
+    "ADDED" : {
 
     },
     "Adds this card to your wallet" : {
@@ -769,10 +795,10 @@
     "All indexed sources checked within the last year" : {
 
     },
-    "Allow notifications" : {
+    "All other purchases" : {
 
     },
-    "Allow optional location" : {
+    "All recorded Wallet tap events have synced successfully." : {
 
     },
     "Already in your wallet" : {
@@ -1183,6 +1209,9 @@
         }
       }
     },
+    "Annual Fee" : {
+
+    },
     "Answer 1 question about %@" : {
       "localizations" : {
         "fr-CA" : {
@@ -1207,6 +1236,12 @@
           }
         }
       }
+    },
+    "Apple Shortcuts Guide" : {
+
+    },
+    "Apple Wallet Capture" : {
+
     },
     "Appliance & Furniture" : {
       "localizations" : {
@@ -1249,6 +1284,9 @@
     "Arrival Detection" : {
 
     },
+    "Assign to This Account" : {
+
+    },
     "At least %.1f percentage points better" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1271,7 +1309,7 @@
         }
       }
     },
-    "Attempts" : {
+    "Attempt Count" : {
 
     },
     "Audit" : {
@@ -1303,7 +1341,10 @@
     "Backed by official issuer certificates (Chubb, Belair, Allianz, Desjardins)." : {
 
     },
-    "Bank or Issuer (e.g. Scotiabank, Chase)" : {
+    "Bank / Issuer (e.g. Scotiabank, Chase)" : {
+
+    },
+    "Base Purchases" : {
 
     },
     "Based on a typical ~$%lld purchase. Exact amounts you enter feed your value-recovered scoreboard." : {
@@ -1332,6 +1373,9 @@
     "Benefits unavailable" : {
 
     },
+    "Best" : {
+
+    },
     "Best card" : {
 
     },
@@ -1358,7 +1402,7 @@
         }
       }
     },
-    "Better card available" : {
+    "Better Available" : {
 
     },
     "Better card potential" : {
@@ -1377,6 +1421,9 @@
           }
         }
       }
+    },
+    "Billing Currency" : {
+
     },
     "Both" : {
       "localizations" : {
@@ -1415,10 +1462,7 @@
         }
       }
     },
-    "Can't find your card? Request it" : {
-
-    },
-    "Can't find your card? Request it below and we'll add it." : {
+    "Can't find your card?" : {
 
     },
     "Canada" : {
@@ -1450,9 +1494,6 @@
           }
         }
       }
-    },
-    "Capture is disabled" : {
-
     },
     "Captured" : {
 
@@ -1504,6 +1545,9 @@
     "Card Condition" : {
 
     },
+    "Card Details" : {
+
+    },
     "Card Details & Multipliers" : {
 
     },
@@ -1528,6 +1572,9 @@
 
     },
     "Card tap" : {
+
+    },
+    "Card Type" : {
 
     },
     "Card Used" : {
@@ -1637,6 +1684,9 @@
     "Change" : {
 
     },
+    "Change Card" : {
+
+    },
     "Change Card Tapped" : {
 
     },
@@ -1650,13 +1700,17 @@
         }
       }
     },
+    "CHARGE (%@)" : {
+
+    },
     "Charged" : {
 
     },
-    "Checking connected tokens…" : {
+    "Checking active credentials…" : {
 
     },
     "Checkout stays available. Add the dedicated Inunity Clerk key and API URL to MoneyTalksConfiguration.swift, then return here to sign in." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -1665,6 +1719,9 @@
           }
         }
       }
+    },
+    "Checkout stays fully offline-capable. Add the Inunity Clerk key and API URL in configuration to enable cross-device cloud sync." : {
+
     },
     "CHECKOUT TARGET" : {
 
@@ -1731,9 +1788,6 @@
     "Choose when this card should be recommended over your default card based on transaction amount." : {
 
     },
-    "Choose where saved captures go" : {
-
-    },
     "Choose whether PickMe should recognize every branch or only this exact store." : {
 
     },
@@ -1757,6 +1811,18 @@
 
     },
     "Clear predictions, confirmations & cached places" : {
+
+    },
+    "Clear Recorded Card" : {
+
+    },
+    "Closest nearby" : {
+
+    },
+    "Cloud Sync & Capture" : {
+
+    },
+    "Cloud Sync Engine" : {
 
     },
     "Coded As" : {
@@ -1790,6 +1856,9 @@
 
     },
     "Compare Wallet" : {
+
+    },
+    "Complete" : {
 
     },
     "Conditions (per certificate)" : {
@@ -1847,7 +1916,7 @@
         }
       }
     },
-    "Connect native Wallet Capture" : {
+    "Connect Wallet Capture" : {
 
     },
     "Connected to Inunity Cloud" : {
@@ -1856,7 +1925,7 @@
     "Connecting…" : {
 
     },
-    "Connection saved on this iPhone" : {
+    "Connection Active on This iPhone" : {
 
     },
     "Continue" : {
@@ -1894,6 +1963,9 @@
           }
         }
       }
+    },
+    "Could not verify active credentials. Retry sync before creating a new token." : {
+
     },
     "Counted only where you used the recommended card and recorded what it actually cost, scaled from the amount the engine scored. Reconciled purchases only — the pending figure is not included, because until a statement confirms how a charge coded, the return is an assumption." : {
       "localizations" : {
@@ -1936,9 +2008,6 @@
         }
       }
     },
-    "Create one secure connection for this iPhone, then add “Send Wallet Purchase to Inunity” directly to your Wallet Transaction automation and map Merchant, Amount, Name, Currency Code, and Card or Pass. PickMe saves each tap locally before syncing it." : {
-
-    },
     "Create one token for this device, copy it once, then paste it into the shared Wallet Capture Shortcut. The Shortcut’s assembly contract is in MoneyTalks/docs/plans/2026-08-16-wallet-capture-spec.md." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1950,7 +2019,7 @@
         }
       }
     },
-    "Create replacement connection" : {
+    "Create Replacement Connection" : {
 
     },
     "Created %@" : {
@@ -1966,9 +2035,6 @@
           }
         }
       }
-    },
-    "Credentials, authorization headers, device identifiers, network names, and precise coordinates are never included." : {
-
     },
     "Crypto.com Royal Indigo" : {
       "extractionState" : "stale",
@@ -2098,16 +2164,16 @@
     "Delete Purchase" : {
 
     },
-    "Delete submitted report now" : {
-
-    },
-    "Delete these unsent captures" : {
+    "Delete Submitted Report" : {
 
     },
     "Delete this local capture?" : {
 
     },
     "Delete this purchase?" : {
+
+    },
+    "Delete Unsent" : {
 
     },
     "Delete unsent purchases and disable" : {
@@ -2159,13 +2225,19 @@
         }
       }
     },
-    "Diagnostic" : {
+    "Delivery State" : {
 
     },
-    "Diagnostic preview" : {
+    "DEVICE CREDENTIAL" : {
 
     },
-    "Disable Wallet Capture" : {
+    "Device secret secured in Keychain" : {
+
+    },
+    "Diagnostic Preview" : {
+
+    },
+    "Disable or Pause Wallet Capture" : {
 
     },
     "Documents" : {
@@ -2229,6 +2301,9 @@
     "Earn Multipliers" : {
 
     },
+    "Earn Rates & Multipliers" : {
+
+    },
     "Earn rewards and certificate protections are evaluated separately — the highest earning card may not offer the best insurance coverage." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2271,6 +2346,9 @@
 
     },
     "Edit Amount" : {
+
+    },
+    "Edit Amount & Currency" : {
 
     },
     "Edit cards and rewards" : {
@@ -2332,7 +2410,13 @@
     "Enable automatic arrival card alerts for this location." : {
 
     },
-    "Enter the total from your receipt or bank app." : {
+    "Enable Wallet Capture" : {
+
+    },
+    "Enter the bank and card name. Our pipeline will research official issuer terms." : {
+
+    },
+    "Enter the charge amount from your receipt, terminal, or card statement." : {
 
     },
     "Enter transaction details to simulate limits and compare rewards against insurance coverage." : {
@@ -2425,10 +2509,13 @@
         }
       }
     },
-    "Estimated · Tap to enter exact amount" : {
+    "Estimated · Tap to enter exact amount & currency" : {
 
     },
     "Estimated Amount" : {
+
+    },
+    "ESTIMATED HOME CONVERSION" : {
 
     },
     "ESTIMATED RETURN" : {
@@ -2451,7 +2538,7 @@
         }
       }
     },
-    "Event" : {
+    "Event ID" : {
 
     },
     "Every purchase has the card you used and what it cost." : {
@@ -2622,9 +2709,6 @@
         }
       }
     },
-    "Finish setup" : {
-
-    },
     "Finish This Purchase" : {
 
     },
@@ -2632,6 +2716,9 @@
 
     },
     "Fitness and Sports Clubs" : {
+
+    },
+    "Fix" : {
 
     },
     "Flight" : {
@@ -2644,7 +2731,13 @@
         }
       }
     },
+    "Follow these 3 quick steps to automate Apple Wallet card capture." : {
+
+    },
     "Foreign Currency Spend" : {
+
+    },
+    "Found %lld taps saved before this account was signed in." : {
 
     },
     "Frequent Store: %@" : {
@@ -2667,6 +2760,9 @@
 
     },
     "Furniture" : {
+
+    },
+    "FX Fee" : {
 
     },
     "Gas" : {
@@ -2705,6 +2801,9 @@
       }
     },
     "Guest Mode" : {
+
+    },
+    "Guide" : {
 
     },
     "Haptic Feedback" : {
@@ -2810,10 +2909,16 @@
         }
       }
     },
-    "Include transaction details in report" : {
+    "In Wallet" : {
 
     },
-    "Included by your choice" : {
+    "In Your Wallet" : {
+
+    },
+    "Include Transaction Metadata" : {
+
+    },
+    "Included by User Choice" : {
 
     },
     "Included Statement Credits" : {
@@ -2823,6 +2928,7 @@
 
     },
     "Installation name" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -2832,10 +2938,14 @@
         }
       }
     },
+    "Installation Name (e.g. My iPhone)" : {
+
+    },
     "Instant Matrix" : {
 
     },
     "Instant Repeats" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -2849,9 +2959,6 @@
 
     },
     "Inunity Cloud Active" : {
-
-    },
-    "Inunity owns purchase history; PickMe saves each Wallet tap locally before syncing it." : {
 
     },
     "Issuer" : {
@@ -2943,6 +3050,7 @@
       }
     },
     "Keep your caps in sync" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3113,10 +3221,16 @@
         }
       }
     },
+    "Likely here" : {
+
+    },
     "Live" : {
 
     },
     "Live evaluation using your active cards and customized point valuations." : {
+
+    },
+    "Loading Account Wallet…" : {
 
     },
     "Loading protection data…" : {
@@ -3125,10 +3239,10 @@
     "Loading this account's wallet" : {
 
     },
-    "LOCATION & MERCHANT" : {
+    "Local on-device tap ingestion" : {
 
     },
-    "Location allowed (%@)" : {
+    "LOCATION & MERCHANT" : {
 
     },
     "Location is used only for arrival detection at your saved merchants." : {
@@ -3163,6 +3277,9 @@
 
     },
     "Manage in iOS Settings" : {
+
+    },
+    "MANAGEMENT & TOOLS" : {
 
     },
     "marginal" : {
@@ -3234,6 +3351,9 @@
         }
       }
     },
+    "Merchant & amount for diagnosing parse issues" : {
+
+    },
     "Merchant Conditions" : {
 
     },
@@ -3289,11 +3409,7 @@
     "Name" : {
 
     },
-    "Native Wallet Capture" : {
-
-    },
     "Nearby" : {
-      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3303,7 +3419,10 @@
         }
       }
     },
-    "Nearby Places" : {
+    "Needs Attention" : {
+
+    },
+    "NEEDS ATTENTION" : {
 
     },
     "net / yr" : {
@@ -3346,6 +3465,9 @@
 
     },
     "No account required to use PickMe. You can sign in anytime from Settings." : {
+
+    },
+    "No Annual Fee" : {
 
     },
     "No Applicable Coverage" : {
@@ -3452,9 +3574,6 @@
     "No Purchases Logged Yet" : {
 
     },
-    "No queued captures" : {
-
-    },
     "No relevant insurance coverage found in your wallet for this category." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3476,9 +3595,6 @@
           }
         }
       }
-    },
-    "No Repeats Yet" : {
-
     },
     "No results for \"%@\"" : {
 
@@ -3562,6 +3678,7 @@
       }
     },
     "Not synced yet — stored cap data remains in use until a sync succeeds." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3601,9 +3718,6 @@
         }
       }
     },
-    "Notifications allowed" : {
-
-    },
     "Off" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3618,7 +3732,7 @@
     "Official insurance policy certificate for %@" : {
 
     },
-    "Old server connections found" : {
+    "Old Server Connections Found" : {
 
     },
     "On" : {
@@ -3677,10 +3791,13 @@
         }
       }
     },
-    "Only the selected server credential is revoked. Purchases already saved on this iPhone are not deleted." : {
+    "Only the selected server credential is revoked. Purchases already saved on this iPhone are never deleted." : {
 
     },
     "Only this location" : {
+
+    },
+    "Open" : {
 
     },
     "Open certificate source" : {
@@ -3701,10 +3818,10 @@
     "Open PickMe at checkout or specify a store like Costco, Tim Hortons, or Groceries." : {
 
     },
-    "Open Shortcuts" : {
+    "Open Purchases in Inunity" : {
 
     },
-    "Open transactions in Inunity" : {
+    "Open Shortcuts App" : {
 
     },
     "Opens the item that needs an answer" : {
@@ -3716,6 +3833,9 @@
           }
         }
       }
+    },
+    "Optimal Card" : {
+
     },
     "OPTIMAL CARD" : {
 
@@ -3737,6 +3857,9 @@
         }
       }
     },
+    "Optional multi-device power tools" : {
+
+    },
     "Optional: Enter points or cash back posted on your statement to verify arithmetic accuracy." : {
       "localizations" : {
         "fr-CA" : {
@@ -3757,10 +3880,13 @@
         }
       }
     },
-    "Other active connections (%lld)" : {
+    "Other Active Connections (%lld)" : {
 
     },
     "Other benefit document" : {
+
+    },
+    "Outbox Up to Date" : {
 
     },
     "Outside Canada" : {
@@ -3869,10 +3995,19 @@
     "Patronage memory & arrival confidence" : {
 
     },
+    "Pause Wallet Capture" : {
+
+    },
+    "Paused" : {
+
+    },
     "Pay with" : {
 
     },
     "Payment condition marked complete — still check the certificate exclusions." : {
+
+    },
+    "Payment Network" : {
 
     },
     "Per Card" : {
@@ -3943,10 +4078,7 @@
         }
       }
     },
-    "PickMe could not load card rules. Open PickMe to verify your wallet." : {
-
-    },
-    "PickMe could not verify whether this account already has a token. Retry sync before creating another one." : {
+    "PickMe could not load card rules. Open PickMe to try again." : {
 
     },
     "PickMe for iOS · Version 1.0 (Build 42)" : {
@@ -3955,7 +4087,7 @@
     "PickMe is actively monitoring when you arrive at your saved merchants to suggest the best card before you pay." : {
 
     },
-    "PickMe keeps account wallets separate on this iPhone." : {
+    "PickMe isolates account wallets on this iPhone." : {
 
     },
     "PickMe only recommends cards you add here." : {
@@ -3978,6 +4110,9 @@
           }
         }
       }
+    },
+    "PickMe's highest earning card advised for this purchase." : {
+
     },
     "Planned Amount" : {
       "extractionState" : "stale",
@@ -4062,7 +4197,7 @@
     "PREFERENCES" : {
 
     },
-    "Prepare diagnostic report" : {
+    "Preview recommendation for %@" : {
 
     },
     "PRIVACY & LOCAL DATA" : {
@@ -4155,13 +4290,16 @@
     "PURCHASES" : {
 
     },
-    "Queued captures" : {
+    "Queued Captures" : {
 
     },
-    "Queued purchases are never discarded without your choice." : {
+    "Queued purchases are saved locally on this iPhone and are never discarded without your choice." : {
 
     },
     "Quick Category Peek" : {
+
+    },
+    "Quick Pick" : {
 
     },
     "QUICK PRESETS" : {
@@ -4174,6 +4312,9 @@
         }
       }
     },
+    "QUICK PRESETS (%@)" : {
+
+    },
     "Ranked by recurring net value" : {
       "localizations" : {
         "fr-CA" : {
@@ -4185,7 +4326,6 @@
       }
     },
     "Recent" : {
-      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4199,6 +4339,7 @@
 
     },
     "Recent capture feedback" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4208,13 +4349,19 @@
         }
       }
     },
-    "Recent Places" : {
+    "RECENT CAPTURE FEEDBACK" : {
+
+    },
+    "Recent places" : {
 
     },
     "Recent Purchases" : {
 
     },
     "Reclassify Category" : {
+
+    },
+    "Recommendation unavailable" : {
 
     },
     "Recommended" : {
@@ -4237,6 +4384,9 @@
         }
       }
     },
+    "Recommended Winner" : {
+
+    },
     "Reconcile" : {
       "localizations" : {
         "fr-CA" : {
@@ -4253,6 +4403,9 @@
     "Reconciled" : {
 
     },
+    "Recorded in PickMe" : {
+
+    },
     "Recurring Bill Payments" : {
 
     },
@@ -4267,19 +4420,16 @@
         }
       }
     },
-    "Redacted by default" : {
+    "Redacted by Default (Privacy Shield)" : {
 
     },
     "Reference" : {
 
     },
-    "Relink this iPhone" : {
+    "Relink This iPhone" : {
 
     },
-    "Relink to this account" : {
-
-    },
-    "Relink Wallet Capture to the signed-in account before assigning these captures." : {
+    "Relink to This Account" : {
 
     },
     "Remove" : {
@@ -4327,9 +4477,6 @@
     "Rental Length" : {
 
     },
-    "Replace the old Dictionary + Run Wallet Capture V2 actions only after the first native capture succeeds." : {
-
-    },
     "Replaces %@ on %@ of annual spend." : {
       "localizations" : {
         "en" : {
@@ -4346,7 +4493,7 @@
         }
       }
     },
-    "Request sent. Thank you!" : {
+    "Request a Missing Card" : {
 
     },
     "Request sent. Thank you." : {
@@ -4360,7 +4507,11 @@
         }
       }
     },
+    "Request submitted! We'll research and catalogue it." : {
+
+    },
     "Request this card" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4373,16 +4524,22 @@
     "Research status" : {
 
     },
+    "Resets this purchase to card unrecorded status." : {
+
+    },
     "Restaurants" : {
+
+    },
+    "Retest" : {
 
     },
     "Retry" : {
 
     },
-    "Retry now" : {
+    "Retry Loading" : {
 
     },
-    "Retry token check" : {
+    "Retry Token Check" : {
 
     },
     "Review issuer sources, import your own certificates, and keep claim instructions close at hand." : {
@@ -4398,13 +4555,13 @@
         }
       }
     },
-    "Review queued events" : {
-
-    },
     "Revoke" : {
 
     },
-    "Revoke this old connection?" : {
+    "Revoke Connection" : {
+
+    },
+    "Revoke this connection?" : {
 
     },
     "Reward Currency Valuations" : {
@@ -4422,6 +4579,9 @@
           }
         }
       }
+    },
+    "Rewards Program" : {
+
     },
     "Rogers Red World Elite" : {
       "extractionState" : "stale",
@@ -4448,7 +4608,7 @@
         }
       }
     },
-    "Safe error" : {
+    "Safe Error" : {
 
     },
     "Save" : {
@@ -4462,6 +4622,9 @@
       }
     },
     "Save Amount" : {
+
+    },
+    "Save Amount (%@)" : {
 
     },
     "Save changes" : {
@@ -4496,6 +4659,9 @@
         }
       }
     },
+    "Saved locally on this device." : {
+
+    },
     "Saved on this iPhone. Sign in from Settings to send it." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4506,9 +4672,6 @@
           }
         }
       }
-    },
-    "Saved on this iPhone. Sign in from Settings to submit." : {
-
     },
     "Saves a Wallet transaction locally, then securely syncs it to Inunity." : {
 
@@ -4529,9 +4692,6 @@
         }
       }
     },
-    "Search a merchant once or tap GPS Radar, and I'll build live reward checkout tiles right here inside your screen!" : {
-
-    },
     "Search All Card Benefits" : {
 
     },
@@ -4549,7 +4709,7 @@
     "Search cards or benefits" : {
 
     },
-    "Search cards or issuers" : {
+    "Search cards, issuers, or perks" : {
 
     },
     "Search categories" : {
@@ -4585,13 +4745,16 @@
     "Search perks, insurance, or cards…" : {
 
     },
+    "Secrets, authorization tokens, device identifiers, and precise location coordinates are never included." : {
+
+    },
     "See All (%lld)" : {
 
     },
     "Select Card" : {
 
     },
-    "Select which card you tapped at checkout. PickMe will update reward calculations accordingly." : {
+    "Select which card you tapped at checkout. Rewards calculations update automatically." : {
 
     },
     "Select your location" : {
@@ -4617,19 +4780,13 @@
         }
       }
     },
-    "Send diagnostic report" : {
+    "Send Diagnostic Report" : {
 
     },
     "Send queued purchases, then disable" : {
 
     },
-    "Send them to this account" : {
-
-    },
     "Send Wallet Purchase to Inunity" : {
-
-    },
-    "Sending…" : {
 
     },
     "Sent securely; expires %@" : {
@@ -4686,6 +4843,12 @@
     "Setup" : {
 
     },
+    "SETUP CHECKLIST" : {
+
+    },
+    "Setup Ready" : {
+
+    },
     "Share file" : {
 
     },
@@ -4696,6 +4859,12 @@
 
     },
     "Share Transaction" : {
+
+    },
+    "Shortcuts" : {
+
+    },
+    "Shortcuts Setup" : {
 
     },
     "Showing cards from" : {
@@ -4713,9 +4882,6 @@
 
     },
     "Sign In" : {
-
-    },
-    "Sign in only to sync cap usage, view capture feedback, and create a Wallet Capture connection. Checkout recommendations work without an account or connection." : {
 
     },
     "Sign in only to sync cap usage, view capture feedback, and create a Wallet Shortcut installation token. Checkout recommendations work without an account or connection." : {
@@ -4743,6 +4909,9 @@
       }
     },
     "Sign in to sync cap limits across your devices and enable automated Apple Wallet Shortcuts capture." : {
+
+    },
+    "Sign In with Inunity" : {
 
     },
     "Sign Out" : {
@@ -4845,6 +5014,9 @@
     "Spend Rules & Condition Triggers" : {
 
     },
+    "Standard (2.5%)" : {
+
+    },
     "Start claim" : {
 
     },
@@ -4871,9 +5043,6 @@
     "Start with a scenario" : {
 
     },
-    "State" : {
-
-    },
     "Statement observation" : {
       "localizations" : {
         "fr-CA" : {
@@ -4894,10 +5063,16 @@
         }
       }
     },
+    "Stored cap data remains active until sync completes" : {
+
+    },
     "Stored only on this iPhone. Importing does not verify coverage until you confirm the document belongs to this card." : {
 
     },
-    "Submitted diagnostics" : {
+    "Submit Card Request" : {
+
+    },
+    "SUBMITTED DIAGNOSTIC PACKETS" : {
 
     },
     "Suggests the optimal credit card for a given merchant or category." : {
@@ -4915,6 +5090,7 @@
       }
     },
     "Sync" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4959,6 +5135,7 @@
 
     },
     "Sync now" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4972,6 +5149,7 @@
 
     },
     "Sync setup required" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4980,6 +5158,9 @@
           }
         }
       }
+    },
+    "Sync Setup Required" : {
+
     },
     "Sync Status" : {
 
@@ -5014,6 +5195,9 @@
         }
       }
     },
+    "Tap to preview" : {
+
+    },
     "Tap to set as your primary card" : {
 
     },
@@ -5046,7 +5230,10 @@
         }
       }
     },
-    "Test secure connection" : {
+    "Tell us and our research team will add it." : {
+
+    },
+    "Test Link" : {
 
     },
     "Testing…" : {
@@ -5140,12 +5327,6 @@
         }
       }
     },
-    "The write-only installation credential is protected on this iPhone. Verification and delivery status appear below." : {
-
-    },
-    "These captures arrived while no account was connected or a different account was signed in. They will not be sent until you choose." : {
-
-    },
     "These published benchmarks are starting points. PickMe assumes the cents-per-point values above; recommendations disclose when the answer flips." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5157,7 +5338,7 @@
         }
       }
     },
-    "These records cannot restore their device-only secrets after a reinstall. Create a replacement connection; saved purchases stay on this iPhone until you approve their account." : {
+    "These records cannot restore secrets after reinstall. Create a replacement connection; saved taps remain on this iPhone." : {
 
     },
     "This cannot be undone, and it cannot be restored for you." : {
@@ -5230,13 +5411,13 @@
         }
       }
     },
+    "This permanently removes the unsent capture and its local diagnostic evidence from this iPhone." : {
+
+    },
     "This removes the record from your purchase history." : {
 
     },
     "This removes the record from your purchase history. Reconcile calculations will update accordingly." : {
-
-    },
-    "This removes the unsent capture and its local diagnostic evidence." : {
 
     },
     "Threshold: %@%.2f" : {
@@ -5268,16 +5449,19 @@
         }
       }
     },
-    "TOTAL CHARGE (CAD)" : {
-
-    },
     "Total tracked spending in PickMe" : {
 
     },
     "Track net reward gains & experiment calibration" : {
 
     },
+    "TRANSACTION CURRENCY" : {
+
+    },
     "TRANSACTION DETAILS" : {
+
+    },
+    "Transmitting…" : {
 
     },
     "Trip / Vacation" : {
@@ -5300,6 +5484,9 @@
 
     },
     "Try selecting another category or clear the filter to view all purchases." : {
+
+    },
+    "Unassigned Captures Pending" : {
 
     },
     "under %@" : {
@@ -5373,6 +5560,9 @@
         }
       }
     },
+    "Use" : {
+
+    },
     "Use by default" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5383,6 +5573,12 @@
           }
         }
       }
+    },
+    "Use nearby merchant %@" : {
+
+    },
+    "USE THIS CARD" : {
+
     },
     "Used when no card is clearly better." : {
       "localizations" : {
@@ -5443,10 +5639,16 @@
     "Verification" : {
 
     },
+    "View" : {
+
+    },
     "View All %lld Purchases" : {
 
     },
     "View Details" : {
+
+    },
+    "View nearby merchants, closest is %@" : {
 
     },
     "View the %lld %@ categories" : {
@@ -5507,12 +5709,6 @@
     "Wallet Capture is disabled. Open PickMe to enable it again." : {
 
     },
-    "Wallet Capture status" : {
-
-    },
-    "Wallet Cards" : {
-
-    },
     "WALLET COVERAGE RADAR" : {
 
     },
@@ -5527,6 +5723,9 @@
       }
     },
     "Wallet not loaded" : {
+
+    },
+    "Wallet Not Loaded" : {
 
     },
     "Wallet Shortcut token" : {
@@ -5552,6 +5751,9 @@
           }
         }
       }
+    },
+    "We might not have catalogued this card yet.\nRequest it below and we'll source it." : {
+
     },
     "Welcome bonuses, first-year fee rebates, approval odds, credit-score effects, insurance, lounges and statement credits are excluded. Income eligibility is not assessed." : {
       "localizations" : {
@@ -5804,6 +6006,9 @@
     "Your location is processed on-device and never leaves this phone." : {
 
     },
+    "Your PickMe wallet is empty. Open PickMe to add your cards first." : {
+
+    },
     "Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected." : {
       "comment" : "human review before public launch",
       "localizations" : {
@@ -5825,6 +6030,9 @@
           }
         }
       }
+    },
+    "Your Wallet Cards" : {
+
     },
     "YYYY-MM-DD" : {
 

@@ -17,6 +17,7 @@ struct HomeView: View {
     @State private var searchText = ""
     @FocusState private var isSearchFocused: Bool
     @State private var isFindingNearbyPressed = false
+    @State private var selectedRepeatMerchantID: UUID?
 
     private var timeGreeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
@@ -38,12 +39,34 @@ struct HomeView: View {
     private var companionStatusText: String {
         if session.locationDenied {
             return "Location access disabled"
-        } else if let cached = session.cachedLocation, cached.isRecent {
+        } else if let nearest = session.preparedNearestMerchant {
+            return "Nearby: \(nearest.name)"
+        } else if case .preparing = session.nearbyPreparationState {
             return "GPS Ready · Scanning nearby"
         } else if let top = session.homeMerchants.first {
             return "Nearby: Ready at \(top.name)"
         } else {
             return "Ready to maximize rewards"
+        }
+    }
+
+    private var radarStatus: (text: String, icon: String, color: Color) {
+        if session.locationDenied {
+            return ("Location access disabled · Search still works", "location.slash", .secondary)
+        }
+        switch session.nearbyPreparationState {
+        case .idle:
+            return ("Radar starts when needed", "location", .secondary)
+        case .permissionRequired:
+            return ("Tap Radar to allow location", "hand.tap", .blue)
+        case .preparing:
+            return ("Preparing nearby merchants…", "location.magnifyingglass", .blue)
+        case .ready(let count):
+            return count == 0
+                ? ("Radar ready · No places within 200 m", "checkmark.circle", .secondary)
+                : ("Radar ready · \(count) nearby", "checkmark.circle.fill", .green)
+        case .unavailable:
+            return ("Radar couldn't prepare · Tap to retry", "arrow.clockwise", .orange)
         }
     }
 
@@ -184,7 +207,22 @@ struct HomeView: View {
                     impact.impactOccurred()
                     onFindNearby()
                 } label: {
-                    RadarTargetIconView(size: 36)
+                    ZStack(alignment: .topTrailing) {
+                        RadarTargetIconView(size: 36)
+                            .opacity(session.nearbyPreparationState == .preparing ? 0.45 : 1)
+
+                        if case .preparing = session.nearbyPreparationState {
+                            ProgressView()
+                                .controlSize(.mini)
+                                .frame(width: 36, height: 36)
+                        } else if case .ready = session.nearbyPreparationState {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(.white, .green)
+                                .background(Circle().fill(.white).padding(1))
+                                .offset(x: 2, y: -2)
+                        }
+                    }
                         .shadow(
                             color: session.locationDenied
                                 ? Color.clear
@@ -214,6 +252,19 @@ struct HomeView: View {
                     )
                     .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
             )
+
+            HStack(spacing: 5) {
+                Image(systemName: radarStatus.icon)
+                Text(radarStatus.text)
+            }
+            .font(.system(size: 11, weight: .semibold, design: .rounded))
+            .foregroundStyle(radarStatus.color)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 10)
+
+            if searchText.isEmpty, let nearest = session.preparedNearestMerchant {
+                nearbyMerchantShortcut(nearest)
+            }
 
             // Instant Offline Pre-Index Autocomplete Dropdown
             if !searchText.isEmpty {
@@ -278,108 +329,173 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - 4. Instant Repeats Section (Concept A 2-Column Grid)
-
-    private var instantRepeatsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Instant Repeats")
-                    .font(.system(size: 19, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
-
-                Spacer()
-
-                if !session.homeMerchants.isEmpty {
-                    Label(
-                        session.cachedLocation?.isRecent == true ? "Nearby Places" : "Recent Places",
-                        systemImage: session.cachedLocation?.isRecent == true ? "location.fill" : "clock.fill"
-                    )
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Color(.tertiarySystemFill), in: Capsule())
-                }
-            }
-
-            if session.homeMerchants.isEmpty {
-                emptyRepeatsCard
-            } else {
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                    ForEach(session.homeMerchants) { merchant in
-                        if let graph = environment.graph {
-                            InstantRepeatCardView(
-                                merchant: merchant,
-                                deps: graph,
-                                onSelect: { merchant in
-                                    router.step = session.startInstantRepeatWithAmount(
-                                        merchant,
-                                        amount: 50,
-                                        using: graph
-                                    )
-                                }
-                            )
-                        } else {
-                            fallbackMerchantRow(merchant)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private var emptyRepeatsCard: some View {
-        VStack(spacing: 12) {
-            ChipMascotView(mood: .cool, size: 52, isWaving: true, enable3DTilt: true)
-
-            VStack(spacing: 4) {
-                Text("No Repeats Yet")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
-
-                Text("Search a merchant once or tap GPS Radar, and I'll build live reward checkout tiles right here inside your screen!")
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(2)
-            }
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
-        )
-    }
-
-    private func fallbackMerchantRow(_ merchant: StoredMerchant) -> some View {
-        let prediction = predictionForKnownMerchant(merchant)
-        let meta = CategoryVisuals.meta(for: prediction.category)
+    private func nearbyMerchantShortcut(_ merchant: NearbyMerchant) -> some View {
+        let isConfident = session.confidentPreparedMerchant?.id == merchant.id
+        let prediction = CardCopilotStore.predict(poiCategoryRaw: merchant.poiCategoryRaw,
+                                                  merchantName: merchant.name)
+        let distance = merchant.distanceMeters.map { "\(Int($0.rounded())) m away" }
 
         return Button {
-            router.step = session.startInstantRepeat(merchant)
+            let impact = UIImpactFeedbackGenerator(style: .light)
+            impact.impactOccurred()
+            if isConfident {
+                _ = session.preparedOutcomeForTap()
+                router.step = .amount(merchant)
+            } else {
+                onFindNearby()
+            }
         } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(meta.color.opacity(0.18))
-                    .aspectRatio(85.60 / 53.98, contentMode: .fit)
+            HStack(spacing: 10) {
+                MerchantBrandIconView(merchantName: merchant.name,
+                                      category: prediction.category, size: 28)
 
-                HStack(spacing: 6) {
-                    MerchantBrandIconView(merchantName: merchant.name, category: meta.displayName, size: 20)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(isConfident ? "Likely here" : "Closest nearby")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(.blue)
+                        .textCase(.uppercase)
                     Text(merchant.name)
                         .font(.system(size: 13, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                 }
+
+                Spacer()
+
+                if let distance {
+                    Text(distance)
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                Text(isConfident ? "Use" : "View")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(.blue)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.tertiary)
             }
-            .padding(10)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 14,
+                                                                       style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isConfident
+            ? "Use nearby merchant \(merchant.name)"
+            : "View nearby merchants, closest is \(merchant.name)")
+    }
+
+    // MARK: - 4. Quick Pick
+
+    private var selectedRepeatMerchant: StoredMerchant? {
+        if let selectedRepeatMerchantID,
+           let selected = session.homeMerchants.first(where: { $0.id == selectedRepeatMerchantID }) {
+            return selected
+        }
+        return session.homeMerchants.first
+    }
+
+    private var instantRepeatsSection: some View {
+        Group {
+            if let merchant = selectedRepeatMerchant,
+               let graph = environment.graph {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Quick Pick")
+                            .font(.system(size: 19, weight: .bold, design: .rounded))
+                            .foregroundStyle(.primary)
+
+                        Spacer()
+
+                        Label(
+                            repeatContext(for: merchant) == .nearby ? "Nearby" : "Recent",
+                            systemImage: repeatContext(for: merchant) == .nearby ? "location.fill" : "clock.fill"
+                        )
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    }
+
+                    InstantRepeatCardView(
+                        merchant: merchant,
+                        deps: graph,
+                        context: repeatContext(for: merchant)
+                    )
+                    .id(merchant.id)
+                    .transition(.opacity.combined(with: .scale(scale: 0.985)))
+
+                    if session.homeMerchants.count > 1 {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Recent places")
+                                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                                    .foregroundStyle(.secondary)
+
+                                Spacer()
+
+                                Text("Tap to preview")
+                                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                                    .foregroundStyle(.tertiary)
+                            }
+
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(session.homeMerchants.prefix(8)) { recentMerchant in
+                                        recentMerchantButton(recentMerchant)
+                                    }
+                                }
+                            }
+                            .contentMargins(.horizontal, 1, for: .scrollContent)
+                        }
+                    }
+                }
+                .animation(.easeInOut(duration: 0.18), value: merchant.id)
+            }
+        }
+    }
+
+    private func repeatContext(for merchant: StoredMerchant) -> InstantRepeatContext {
+        if session.cachedLocation?.isRecent == true,
+           session.homeMerchants.first?.id == merchant.id {
+            return .nearby
+        }
+        return .recent
+    }
+
+    private func recentMerchantButton(_ merchant: StoredMerchant) -> some View {
+        let prediction = predictionForKnownMerchant(merchant)
+        let meta = CategoryVisuals.meta(for: prediction.category)
+        let isSelected = selectedRepeatMerchant?.id == merchant.id
+
+        return Button {
+            let impact = UISelectionFeedbackGenerator()
+            impact.selectionChanged()
+            selectedRepeatMerchantID = merchant.id
+        } label: {
+            HStack(spacing: 7) {
+                MerchantBrandIconView(
+                    merchantName: merchant.name,
+                    category: meta.displayName,
+                    size: 24
+                )
+
+                Text(merchant.name)
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(isSelected ? Color.blue : Color.primary)
+                    .lineLimit(1)
+            }
+            .padding(.leading, 7)
+            .padding(.trailing, 10)
+            .padding(.vertical, 7)
             .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                isSelected ? Color.blue.opacity(0.12) : Color(.tertiarySystemFill),
+                in: Capsule()
             )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("Preview recommendation for \(merchant.name)")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     // MARK: - 5. Ambient Arrival Alert Section

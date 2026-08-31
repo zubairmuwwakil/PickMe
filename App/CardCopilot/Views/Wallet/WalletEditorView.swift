@@ -124,6 +124,7 @@ struct WalletEditorView: View {
         }
         .navigationTitle("Edit Wallet")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden()
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
@@ -524,6 +525,7 @@ struct WalletEditorView: View {
     private func add(_ cardId: String) {
         guard !setup.ownedCardIds.contains(cardId) else { return }
         setup.ownedCardIds.append(cardId)
+        setup.deletedCardIds?.removeAll { $0 == cardId }
         selectedCardId = cardId
         normalizeDefault()
         commit()
@@ -532,6 +534,12 @@ struct WalletEditorView: View {
     private func remove(_ cardId: String) {
         let before = setup
         setup.ownedCardIds.removeAll { $0 == cardId }
+        if setup.deletedCardIds == nil {
+            setup.deletedCardIds = []
+        }
+        if setup.deletedCardIds?.contains(cardId) == false {
+            setup.deletedCardIds?.append(cardId)
+        }
         setup.conditionAnswers[cardId] = nil
         normalizeDefault()
         if let next = setup.ownedCardIds.first {

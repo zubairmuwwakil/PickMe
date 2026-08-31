@@ -17,7 +17,7 @@ public struct WatchRecommendationView: View {
 
     private var recommendation: (cardName: String, multiplier: String, advantage: String) {
         let catalogue = (try? SeedLoader.loadCatalogue()) ?? Catalogue.empty
-        let ownerState = OwnerStateLocalStore().load()
+        let ownerState = OwnerStateLocalStore().loadForRecommendation()
 
         guard let ownerState else {
             return ("Open iPhone App", "Set up cards", "")

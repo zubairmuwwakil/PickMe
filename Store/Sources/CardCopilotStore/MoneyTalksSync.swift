@@ -276,7 +276,9 @@ public actor OwnerStateSyncService {
     public func sync(ownerState: OwnerState, catalogue: Catalogue, now: Date = Date()) async throws -> OwnerStateSyncResult {
         async let snapshot = client.fetchSnapshot()
         async let installations = client.fetchWalletInstallations()
+        async let remoteStateCall = client.fetchOwnerState()
         let snap = try await snapshot
+        let remoteState = try? await remoteStateCall
         let inst: [WalletInstallation]?
         let installationError: String?
         do {
@@ -286,16 +288,75 @@ public actor OwnerStateSyncService {
             inst = nil
             installationError = error.localizedDescription
         }
-        return OwnerStateSyncResult(ownerState: Self.merging(snap.caps, into: ownerState, catalogue: catalogue),
+        return OwnerStateSyncResult(ownerState: Self.merging(snap.caps, remoteState: remoteState, into: ownerState, catalogue: catalogue),
                                     feedback: snap.feedback,
                                     installations: inst,
                                     installationRefreshError: installationError,
                                     lastSyncedAt: now)
     }
 
-    public static func merging(_ remoteCaps: [String: SpineCap], into ownerState: OwnerState,
+    public static func merging(_ remoteCaps: [String: SpineCap], remoteState: OwnerState?, into ownerState: OwnerState,
                                catalogue: Catalogue) -> OwnerState {
         var merged = ownerState
+        
+        if let remote = remoteState {
+            var newDeleted = Set(merged.deletedCardIds ?? [])
+            if let remoteDeleted = remote.deletedCardIds {
+                newDeleted.formUnion(remoteDeleted)
+            }
+            
+            var newIds = merged.ownedCardIds
+            let existingSet = Set(newIds)
+            for id in remote.ownedCardIds {
+                if !existingSet.contains(id) {
+                    newIds.append(id)
+                }
+            }
+            
+            // Remove newly added cards from tombstones (so they can be resurrected)
+            for id in newIds {
+                if !existingSet.contains(id) {
+                    newDeleted.remove(id)
+                }
+            }
+            // Remove anything deleted from the final ownedCardIds
+            newIds.removeAll { newDeleted.contains($0) }
+            
+            merged.ownedCardIds = newIds
+            if !newDeleted.isEmpty {
+                merged.deletedCardIds = Array(newDeleted)
+            } else {
+                merged.deletedCardIds = nil
+            }
+            
+            for (cardId, remoteCardState) in remote.cardStates {
+                var localState = merged.cardStates[cardId] ?? CardState()
+                let localCaps = localState.capProgress
+                
+                localState = remoteCardState
+                if let lc = localCaps {
+                    if localState.capProgress == nil {
+                        localState.capProgress = lc
+                    } else {
+                        for (k, v) in lc {
+                            localState.capProgress?[k] = v
+                        }
+                    }
+                }
+                merged.cardStates[cardId] = localState
+            }
+            
+            // Remove state for deleted cards
+            for deletedId in newDeleted {
+                merged.cardStates.removeValue(forKey: deletedId)
+            }
+            
+            // Repoint defaultCardId if the current default was deleted
+            if !merged.ownedCardIds.contains(merged.defaultCardId) {
+                merged.defaultCardId = merged.ownedCardIds.first ?? ""
+            }
+        }
+        
         for card in catalogue.cards {
             let capIDs = Set(card.caps.map(\.capId))
             let matching = remoteCaps.filter { capIDs.contains($0.key) }

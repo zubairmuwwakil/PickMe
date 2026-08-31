@@ -1,6 +1,6 @@
 import CardCopilotStore
 import CoreLocation
-import MapKit
+@preconcurrency import MapKit
 
 /// MapKit-backed `MerchantProviding`. `nearby` stays inside a small radius, so a result
 /// means "the place you're standing in," not "the whole block." `search` carries no
@@ -13,8 +13,14 @@ final class LiveMerchantProvider: MerchantProviding {
         let center = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         let request = MKLocalPointsOfInterestRequest(center: center, radius: Self.nearbyRadiusMeters)
         let search = MKLocalSearch(request: request)
-        let response = try await search.start()
-        return response.mapItems.map { Self.nearbyMerchant(from: $0, referenceCoordinate: center) }
+        let response = try await withTaskCancellationHandler {
+            try await search.start()
+        } onCancel: {
+            search.cancel()
+        }
+        return rankNearbyMerchants(response.mapItems.map {
+            Self.nearbyMerchant(from: $0, referenceCoordinate: center)
+        })
     }
 
     func search(text: String) async throws -> [NearbyMerchant] {
@@ -23,7 +29,11 @@ final class LiveMerchantProvider: MerchantProviding {
         request.resultTypes = .pointOfInterest
         let search = MKLocalSearch(request: request)
         do {
-            let response = try await search.start()
+            let response = try await withTaskCancellationHandler {
+                try await search.start()
+            } onCancel: {
+                search.cancel()
+            }
             let results = response.mapItems.map { Self.nearbyMerchant(from: $0, referenceCoordinate: nil) }
             if !results.isEmpty { return results }
             let fallback = Self.fallbackSearch(text)
@@ -70,3 +80,4 @@ final class LiveMerchantProvider: MerchantProviding {
         "\(name)@\(coordinate.latitude),\(coordinate.longitude)"
     }
 }
+

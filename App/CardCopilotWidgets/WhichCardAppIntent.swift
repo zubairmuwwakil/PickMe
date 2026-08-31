@@ -26,9 +26,11 @@ public struct WhichCardIntent: AppIntent {
         }
 
         // Try to load engine dependencies
-        guard let catalogue = try? SeedLoader.loadCatalogue(),
-              let ownerState = OwnerStateLocalStore().load() ?? (try? SeedLoader.loadOwnerState()) else {
-            return .result(dialog: "PickMe could not load card rules. Open PickMe to verify your wallet.")
+        guard let catalogue = try? SeedLoader.loadCatalogue() else {
+            return .result(dialog: "PickMe could not load card rules. Open PickMe to try again.")
+        }
+        guard let ownerState = OwnerStateLocalStore().loadForRecommendation() else {
+            return .result(dialog: "Your PickMe wallet is empty. Open PickMe to add your cards first.")
         }
         let today = Date().formatted(.iso8601.year().month().day())
         let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)

@@ -10,6 +10,7 @@ import CardCopilotEngine
 /// conditional bonus.
 public struct WalletSetup: Equatable, Sendable {
     public var ownedCardIds: [String]
+    public var deletedCardIds: [String]?
     public var defaultCardId: String
     /// Boolean owner-condition answers, keyed cardId → conditionId. An absent key is UNANSWERED,
     /// which `RuleMatcher` fails closed on. Never default a missing answer to `false`: "no" and
@@ -23,13 +24,14 @@ public struct WalletSetup: Equatable, Sendable {
     /// resetting every owner to Canada on save.
     public var market: Market?
 
-    public init(ownedCardIds: [String], defaultCardId: String,
+    public init(ownedCardIds: [String], deletedCardIds: [String]? = nil, defaultCardId: String,
                 conditionAnswers: [String: [String: Bool]] = [:],
                 tangerineSelectedCategories: [String]? = nil,
                 switchThreshold: SwitchThreshold,
                 valuationsCad: Valuations,
                 market: Market? = nil) {
         self.ownedCardIds = ownedCardIds
+        self.deletedCardIds = deletedCardIds
         self.defaultCardId = defaultCardId
         self.conditionAnswers = conditionAnswers
         self.tangerineSelectedCategories = tangerineSelectedCategories
@@ -52,6 +54,23 @@ public enum OwnerStateBuilder {
                                                                minAdvantageCad: 0.25,
                                                                semantics: "both")
 
+    /// A real first-run wallet. `owner-state.json` is an executable engine fixture containing a
+    /// test portfolio; it must never become ownership data merely because device storage is empty.
+    /// Catalogue defaults are product-level starting assumptions and are safe to copy underneath
+    /// future owner overrides.
+    public static func empty(catalogue: Catalogue, market: Market? = nil,
+                             version: String = "wallet-setup-1") -> OwnerState {
+        firstRun(
+            setup: WalletSetup(
+                ownedCardIds: [],
+                defaultCardId: "",
+                switchThreshold: defaultSwitchThreshold,
+                valuationsCad: Valuations(programs: SeedLoader.programValuationDefaults),
+                market: market),
+            catalogue: catalogue,
+            version: version)
+    }
+
     public static func setup(from ownerState: OwnerState) -> WalletSetup {
         var answers: [String: [String: Bool]] = [:]
         for (cardId, state) in ownerState.cardStates {
@@ -60,6 +79,7 @@ public enum OwnerStateBuilder {
         }
         return WalletSetup(
             ownedCardIds: ownerState.ownedCardIds,
+            deletedCardIds: ownerState.deletedCardIds,
             defaultCardId: ownerState.defaultCardId,
             conditionAnswers: answers,
             tangerineSelectedCategories:
@@ -118,6 +138,7 @@ public enum OwnerStateBuilder {
 
         return OwnerState(ownerStateVersion: existing?.ownerStateVersion ?? version,
                           ownedCardIds: owned,
+                          deletedCardIds: setup.deletedCardIds,
                           defaultCardId: defaultCardId,
                           switchThreshold: setup.switchThreshold,
                           carry: existing?.carry ?? Carry(drawerCards: []),
@@ -159,6 +180,28 @@ public final class OwnerStateLocalStore: @unchecked Sendable {
     public func load() -> OwnerState? {
         guard let data = defaults.data(forKey: key) else { return nil }
         return try? JSONDecoder().decode(OwnerState.self, from: data)
+    }
+
+    /// The first-run bug persisted the bundled engine fixture verbatim for some private users.
+    /// Reject only an exact value match: card count, ordering, ownership fields, conditions,
+    /// progress, carry, and valuations must all match. Any owner edit makes the state distinct and
+    /// therefore authoritative. Keeping this check at the storage boundary also protects widgets
+    /// that may run before the upgraded app has opened.
+    public func loadUserWallet() -> OwnerState? {
+        guard let owner = load() else { return nil }
+        if let bundledFixture = try? SeedLoader.loadOwnerState(), owner == bundledFixture {
+            return nil
+        }
+        return owner
+    }
+
+    /// Recommendation-only consumers (Siri, widgets, Wallet Capture) must have confirmed owned
+    /// cards. Passing an empty owner to `RecommendationEngine` intentionally activates its
+    /// catalogue-browsing fallback, which is useful in-app but would make an extension claim that
+    /// an unowned card is "your best card."
+    public func loadForRecommendation() -> OwnerState? {
+        guard let owner = loadUserWallet(), !owner.ownedCardIds.isEmpty else { return nil }
+        return owner
     }
 
     public func save(_ ownerState: OwnerState) throws {

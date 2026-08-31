@@ -63,7 +63,7 @@ struct WalletCaptureIntent: AppIntent {
             MoneyTalksConfiguration.apiBaseURL.map { WalletCaptureHTTPUploader(baseURL: $0, token: credential.token) }
         }
         let catalogue = try? SeedLoader.loadCatalogue()
-        let ownerState = OwnerStateLocalStore().load() ?? (try? SeedLoader.loadOwnerState())
+        let ownerState = OwnerStateLocalStore().loadForRecommendation()
         let aliases = WalletCardAliasStore()
         let capSyncAt = usableCredential.flatMap { SyncMetadataStore().lastSyncedAt(forUserID: $0.boundUserID) }
         let coordinator = WalletCaptureCoordinator(

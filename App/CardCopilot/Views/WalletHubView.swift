@@ -690,6 +690,7 @@ struct WalletHubView: View {
         var setup = OwnerStateBuilder.setup(from: graph.ownerState)
         guard !setup.ownedCardIds.contains(cardId) else { return }
         setup.ownedCardIds.append(cardId)
+        setup.deletedCardIds?.removeAll { $0 == cardId }
         if setup.defaultCardId.isEmpty {
             setup.defaultCardId = cardId
         }
@@ -701,6 +702,12 @@ struct WalletHubView: View {
         guard let graph = environment.graph else { return }
         var setup = OwnerStateBuilder.setup(from: graph.ownerState)
         setup.ownedCardIds.removeAll { $0 == cardId }
+        if setup.deletedCardIds == nil {
+            setup.deletedCardIds = []
+        }
+        if setup.deletedCardIds?.contains(cardId) == false {
+            setup.deletedCardIds?.append(cardId)
+        }
         setup.conditionAnswers[cardId] = nil
         if setup.defaultCardId == cardId {
             setup.defaultCardId = setup.ownedCardIds.first ?? ""

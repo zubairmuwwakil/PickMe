@@ -6,6 +6,18 @@ final class OwnerStateSetupTests: XCTestCase {
     private func catalogue() throws -> Catalogue { try SeedLoader.loadCatalogue() }
     private func seed() throws -> OwnerState { try SeedLoader.loadOwnerState() }
 
+    func testEmptyWalletDoesNotAdoptBundledOwnerFixture() throws {
+        let state = OwnerStateBuilder.empty(catalogue: try catalogue())
+
+        XCTAssertTrue(state.ownedCardIds.isEmpty)
+        XCTAssertEqual(state.defaultCardId, "")
+        XCTAssertTrue(state.cardStates.isEmpty)
+        XCTAssertTrue(state.carry.drawerCards.isEmpty)
+        XCTAssertEqual(state.valuationsCad.programs, SeedLoader.programValuationDefaults,
+                       "A new owner starts from catalogue defaults, not personal fixture values")
+        XCTAssertNotEqual(state, try seed())
+    }
+
     func testBuildsOnlySelectedCardsAndNeverImportsBundledOwnerProgress() throws {
         let setup = WalletSetup(ownedCardIds: ["amex-cobalt", "rogers-red-we"], defaultCardId: "rogers-red-we",
                                 conditionAnswers: [:],
@@ -40,5 +52,42 @@ final class OwnerStateSetupTests: XCTestCase {
         let state = OwnerStateBuilder.firstRun(setup: OwnerStateBuilder.setup(from: try seed()), catalogue: try catalogue())
         try store.save(state)
         XCTAssertEqual(store.load(), state)
+    }
+
+    func testRecommendationLoadRequiresAtLeastOneOwnedCard() throws {
+        let defaults = UserDefaults(suiteName: "OwnerStateSetupTests.\(UUID().uuidString)")!
+        let store = OwnerStateLocalStore(defaults: defaults, key: "owner")
+
+        XCTAssertNil(store.loadForRecommendation())
+
+        try store.save(OwnerStateBuilder.empty(catalogue: try catalogue()))
+        XCTAssertNotNil(store.load(), "An empty wallet is still valid persisted owner state")
+        XCTAssertNil(store.loadForRecommendation(),
+                     "Extensions must not activate the engine's catalogue fallback")
+
+        let owned = OwnerStateBuilder.firstRun(
+            setup: WalletSetup(ownedCardIds: ["amex-cobalt"], defaultCardId: "amex-cobalt",
+                               switchThreshold: OwnerStateBuilder.defaultSwitchThreshold,
+                               valuationsCad: Valuations()),
+            catalogue: try catalogue())
+        try store.save(owned)
+        XCTAssertEqual(store.loadForRecommendation(), owned)
+    }
+
+    func testExactBundledFixtureIsRejectedButAnEditedWalletIsPreserved() throws {
+        let defaults = UserDefaults(suiteName: "OwnerStateSetupTests.\(UUID().uuidString)")!
+        let store = OwnerStateLocalStore(defaults: defaults, key: "owner")
+        let fixture = try seed()
+
+        try store.save(fixture)
+        XCTAssertEqual(store.load(), fixture, "Raw decoding remains a lossless storage primitive")
+        XCTAssertNil(store.loadUserWallet(), "The exact historically persisted fixture is poisoned")
+        XCTAssertNil(store.loadForRecommendation())
+
+        var edited = fixture
+        edited.ownedCardIds.removeLast()
+        try store.save(edited)
+        XCTAssertEqual(store.loadUserWallet(), edited,
+                       "Even a one-card edit proves this is owner data and must be preserved")
     }
 }

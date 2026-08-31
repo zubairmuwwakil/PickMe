@@ -84,7 +84,11 @@ public struct SyncStatusToolbarButton: View {
     }
 
     public var body: some View {
-        Button(action: action) {
+        Button {
+            let impact = UIImpactFeedbackGenerator(style: .light)
+            impact.impactOccurred()
+            action()
+        } label: {
             ZStack(alignment: .topTrailing) {
                 // Main Icon with subtle circular background
                 ZStack {
@@ -119,7 +123,16 @@ public struct SyncStatusToolbarButton: View {
             }
             .contentShape(Circle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SyncToolbarPressStyle())
         .accessibilityLabel(accessibilityText)
     }
 }
+
+private struct SyncToolbarPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
+            .animation(.easeInOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+

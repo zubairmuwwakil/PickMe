@@ -49,7 +49,7 @@ public struct CapTrackerProvider: TimelineProvider {
     }
 
     private func loadEntry() -> CapTrackerEntry {
-        let ownerState = OwnerStateLocalStore().load()
+        let ownerState = OwnerStateLocalStore().loadUserWallet()
         let catalogue = (try? SeedLoader.loadCatalogue()) ?? Catalogue.empty
 
         var allCaps: [(card: String, name: String, spent: Double, limit: Double, remaining: Double)] = []

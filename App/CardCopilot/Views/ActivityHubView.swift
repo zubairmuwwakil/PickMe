@@ -12,6 +12,7 @@ struct ActivityHubView: View {
     @Environment(SyncCoordinator.self) private var sync
 
     @State private var selectedCategory: String? = nil
+    @State private var filterNeedsAttention = false
     @State private var isShowingAllPurchases = false
     @State private var inspectingPurchase: StoredPurchase? = nil
     @State private var quickAmountPurchase: StoredPurchase? = nil
@@ -39,7 +40,21 @@ struct ActivityHubView: View {
         return unique
     }
 
+    private var needsAttentionPurchases: [StoredPurchase] {
+        session.recentPurchaseItems.filter { item in
+            PurchaseAttentionEvaluator.needsAttention(
+                item,
+                graph: environment.graph,
+                knownMerchants: session.homeMerchants,
+                walletFeedback: walletFeedback(for: item)
+            )
+        }
+    }
+
     private var filteredItems: [StoredPurchase] {
+        if filterNeedsAttention {
+            return needsAttentionPurchases
+        }
         if let selectedCategory {
             return session.recentPurchaseItems.filter { category(for: $0) == selectedCategory }
         }
@@ -258,7 +273,7 @@ struct ActivityHubView: View {
         .sheet(item: $quickAmountPurchase) { purchase in
             PurchaseAmountEntrySheetView(
                 merchantName: purchase.displayMerchant,
-                initialAmount: purchase.amountCad,
+                initialAmountCad: purchase.amountCad,
                 onSave: { amount in
                     updateAmount(purchase, amount)
                     quickAmountPurchase = nil
@@ -279,6 +294,7 @@ struct ActivityHubView: View {
         .sheet(item: $quickCardPurchase) { purchase in
             CardChangeSheetView(
                 currentCardId: purchase.cardUsedId,
+                recommendedCardId: purchase.bestCardId ?? purchase.prediction?.winnerCardId,
                 cards: environment.graph?.walletCards ?? [],
                 onSelectCard: { newCardId in
                     updateCard(purchase, newCardId)
@@ -601,6 +617,7 @@ struct ActivityHubView: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
                         selectedCategory = nil
+                        filterNeedsAttention = false
                     }
                 } label: {
                     HStack(spacing: 5) {
@@ -612,33 +629,74 @@ struct ActivityHubView: View {
                             .font(.system(size: 10, weight: .bold, design: .rounded))
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1.5)
-                            .background(selectedCategory == nil ? Color.white.opacity(0.25) : Color(.tertiarySystemFill), in: Capsule())
+                            .background(selectedCategory == nil && !filterNeedsAttention ? Color.white.opacity(0.25) : Color(.tertiarySystemFill), in: Capsule())
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .background(
-                        selectedCategory == nil
+                        selectedCategory == nil && !filterNeedsAttention
                             ? Color.blue
                             : Color(.secondarySystemGroupedBackground),
                         in: Capsule()
                     )
-                    .foregroundStyle(selectedCategory == nil ? .white : .primary)
+                    .foregroundStyle(selectedCategory == nil && !filterNeedsAttention ? .white : .primary)
                     .overlay(
                         Capsule()
-                            .strokeBorder(selectedCategory == nil ? Color.clear : Color.primary.opacity(0.06), lineWidth: 1)
+                            .strokeBorder(selectedCategory == nil && !filterNeedsAttention ? Color.clear : Color.primary.opacity(0.06), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
+
+                // "Needs Attention" Pill (if any issues exist)
+                if !needsAttentionPurchases.isEmpty {
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                            filterNeedsAttention.toggle()
+                            if filterNeedsAttention {
+                                selectedCategory = nil
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(filterNeedsAttention ? .white : .orange)
+                            Text("Needs Attention")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            Text("\(needsAttentionPurchases.count)")
+                                .font(.system(size: 10, weight: .bold, design: .rounded))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1.5)
+                                .background(filterNeedsAttention ? Color.white.opacity(0.25) : Color.orange.opacity(0.18), in: Capsule())
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            filterNeedsAttention
+                                ? Color.orange
+                                : Color(.secondarySystemGroupedBackground),
+                            in: Capsule()
+                        )
+                        .foregroundStyle(filterNeedsAttention ? .white : .primary)
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(filterNeedsAttention ? Color.clear : Color.orange.opacity(0.25), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
 
                 // Individual Category Pills
                 ForEach(availableCategories, id: \.self) { category in
                     let meta = CategoryVisuals.meta(for: category)
                     let count = session.recentPurchaseItems.filter { self.category(for: $0) == category }.count
-                    let isSelected = selectedCategory == category
+                    let isSelected = selectedCategory == category && !filterNeedsAttention
 
                     Button {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                            filterNeedsAttention = false
                             selectedCategory = isSelected ? nil : category
                         }
                     } label: {
@@ -1129,6 +1187,29 @@ struct ActivityHubView: View {
                 .fill(Color(.secondarySystemGroupedBackground))
                 .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 1)
         )
+        .contextMenu {
+            Button {
+                quickCardPurchase = item
+            } label: {
+                Label("Change Card", systemImage: "creditcard")
+            }
+            Button {
+                quickAmountPurchase = item
+            } label: {
+                Label(item.amountCad == nil ? "Add Amount & Currency" : "Edit Amount & Currency", systemImage: "dollarsign.circle")
+            }
+            Button {
+                quickCategoryPurchase = item
+            } label: {
+                Label("Reclassify Category", systemImage: "tag")
+            }
+            Divider()
+            Button(role: .destructive) {
+                quickDeletePurchase = item
+            } label: {
+                Label("Delete Purchase", systemImage: "trash")
+            }
+        }
     }
 
     @ViewBuilder
@@ -1351,7 +1432,7 @@ struct ActivityHubView: View {
         }
     }
 
-    private func updateCard(_ purchase: StoredPurchase, _ cardId: String) {
+    private func updateCard(_ purchase: StoredPurchase, _ cardId: String?) {
         if let graph = environment.graph {
             session.recordCard(cardId, for: purchase, using: graph)
         }
@@ -1525,6 +1606,7 @@ struct AllPurchasesSheetView: View {
     var onQuickAmount: ((StoredPurchase) -> Void)? = nil
 
     @State private var selectedCategory: String?
+    @State private var filterNeedsAttention: Bool = false
     @State private var searchQuery: String = ""
     @Environment(\.dismiss) private var dismiss
     @Environment(SyncCoordinator.self) private var sync
@@ -1557,10 +1639,31 @@ struct AllPurchasesSheetView: View {
         return unique
     }
 
+    private var needsAttentionPurchases: [StoredPurchase] {
+        purchases.filter { item in
+            PurchaseAttentionEvaluator.needsAttention(
+                item,
+                graph: graph,
+                knownMerchants: knownMerchants,
+                walletFeedback: walletFeedback(for: item)
+            )
+        }
+    }
+
     private var filteredPurchases: [StoredPurchase] {
         purchases.filter { item in
             let itemCategory = category(for: item)
-            let matchesCategory = selectedCategory == nil || itemCategory == selectedCategory
+            let matchesCategory: Bool = {
+                if filterNeedsAttention {
+                    return PurchaseAttentionEvaluator.needsAttention(
+                        item,
+                        graph: graph,
+                        knownMerchants: knownMerchants,
+                        walletFeedback: walletFeedback(for: item)
+                    )
+                }
+                return selectedCategory == nil || itemCategory == selectedCategory
+            }()
             let matchesSearch = searchQuery.isEmpty
                 || item.displayMerchant.localizedCaseInsensitiveContains(searchQuery)
                 || (itemCategory?.localizedCaseInsensitiveContains(searchQuery) ?? false)
@@ -1584,23 +1687,59 @@ struct AllPurchasesSheetView: View {
                         HStack(spacing: 8) {
                             Button {
                                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                withAnimation { selectedCategory = nil }
+                                withAnimation {
+                                    selectedCategory = nil
+                                    filterNeedsAttention = false
+                                }
                             } label: {
                                 Text("All (\(purchases.count))")
                                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 7)
-                                    .background(selectedCategory == nil ? Color.blue : Color(.secondarySystemGroupedBackground), in: Capsule())
-                                    .foregroundStyle(selectedCategory == nil ? .white : .primary)
+                                    .background(selectedCategory == nil && !filterNeedsAttention ? Color.blue : Color(.secondarySystemGroupedBackground), in: Capsule())
+                                    .foregroundStyle(selectedCategory == nil && !filterNeedsAttention ? .white : .primary)
                             }
                             .buttonStyle(.plain)
 
-                            ForEach(availableCategories, id: \.self) { category in
-                                let meta = CategoryVisuals.meta(for: category)
-                                let isSelected = selectedCategory == category
+                            if !needsAttentionPurchases.isEmpty {
                                 Button {
                                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                    withAnimation { selectedCategory = isSelected ? nil : category }
+                                    withAnimation {
+                                        filterNeedsAttention.toggle()
+                                        if filterNeedsAttention {
+                                            selectedCategory = nil
+                                        }
+                                    }
+                                } label: {
+                                    HStack(spacing: 5) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .font(.system(size: 11))
+                                            .foregroundStyle(filterNeedsAttention ? .white : .orange)
+                                        Text("Needs Attention")
+                                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                        Text("\(needsAttentionPurchases.count)")
+                                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                                            .padding(.horizontal, 5)
+                                            .padding(.vertical, 1.5)
+                                            .background(filterNeedsAttention ? Color.white.opacity(0.25) : Color.orange.opacity(0.18), in: Capsule())
+                                    }
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 7)
+                                    .background(filterNeedsAttention ? Color.orange : Color(.secondarySystemGroupedBackground), in: Capsule())
+                                    .foregroundStyle(filterNeedsAttention ? .white : .primary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+
+                            ForEach(availableCategories, id: \.self) { category in
+                                let meta = CategoryVisuals.meta(for: category)
+                                let isSelected = selectedCategory == category && !filterNeedsAttention
+                                Button {
+                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                    withAnimation {
+                                        filterNeedsAttention = false
+                                        selectedCategory = isSelected ? nil : category
+                                    }
                                 } label: {
                                     HStack(spacing: 5) {
                                         Image(systemName: meta.icon)
@@ -1722,7 +1861,18 @@ struct AllPurchasesSheetView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                if let graph {
+                if let primary = PurchaseAttentionEvaluator.primaryIssue(for: item, graph: graph, knownMerchants: knownMerchants, walletFeedback: walletFeedback(for: item)), primary.isActionableNow {
+                    HStack(spacing: 3) {
+                        Image(systemName: primary.icon)
+                            .font(.system(size: 9))
+                        Text(primary.title)
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                    }
+                    .foregroundStyle(primary.tintColor)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1.5)
+                    .background(primary.tintColor.opacity(0.12), in: Capsule())
+                } else if let graph {
                     assessmentLabel(PurchaseActivityEvaluator.cardAssessment(
                         for: item, graph: graph, knownMerchants: knownMerchants,
                         walletFeedback: walletFeedback(for: item)))
@@ -1730,6 +1880,22 @@ struct AllPurchasesSheetView: View {
             }
         }
         .padding(.vertical, 2)
+        .contextMenu {
+            Button {
+                dismiss()
+                onSelectPurchase(item)
+            } label: {
+                Label("Purchase Details", systemImage: "info.circle")
+            }
+            if let onQuickAmount {
+                Button {
+                    dismiss()
+                    onQuickAmount(item)
+                } label: {
+                    Label(item.amountCad == nil ? "Add Amount & Currency" : "Edit Amount & Currency", systemImage: "dollarsign.circle")
+                }
+            }
+        }
     }
 
     @ViewBuilder

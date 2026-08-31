@@ -3,6 +3,30 @@ import MapKit
 import CardCopilotEngine
 import CardCopilotStore
 
+// MARK: - Supported Transaction Currencies
+
+public struct TransactionCurrency: Identifiable, Hashable, Sendable {
+    public let code: String
+    public let symbol: String
+    public let flag: String
+    public let name: String
+    public let defaultCadRate: Double
+
+    public var id: String { code }
+
+    public static let all: [TransactionCurrency] = [
+        TransactionCurrency(code: "CAD", symbol: "$", flag: "🇨🇦", name: "Canadian Dollar", defaultCadRate: 1.0),
+        TransactionCurrency(code: "USD", symbol: "$", flag: "🇺🇸", name: "US Dollar", defaultCadRate: 1.36),
+        TransactionCurrency(code: "EUR", symbol: "€", flag: "🇪🇺", name: "Euro", defaultCadRate: 1.48),
+        TransactionCurrency(code: "GBP", symbol: "£", flag: "🇬🇧", name: "British Pound", defaultCadRate: 1.75),
+        TransactionCurrency(code: "JPY", symbol: "¥", flag: "🇯🇵", name: "Japanese Yen", defaultCadRate: 0.0092),
+        TransactionCurrency(code: "MXN", symbol: "$", flag: "🇲🇽", name: "Mexican Peso", defaultCadRate: 0.070),
+        TransactionCurrency(code: "AUD", symbol: "$", flag: "🇦🇺", name: "Australian Dollar", defaultCadRate: 0.89)
+    ]
+
+    public static let cad = all[0]
+}
+
 /// Inspection sheet showing the comprehensive purchase breakdown, card optimization scorecard,
 /// recommendation advice, location context, and 1-tap correction controls.
 struct PurchaseDetailSheetView: View {
@@ -13,7 +37,7 @@ struct PurchaseDetailSheetView: View {
     let onReconcile: () -> Void
     let onUpdateCategory: (StoredPurchase, String) -> Void
     let onUpdateAmount: (StoredPurchase, Double) -> Void
-    var onUpdateCard: ((StoredPurchase, String) -> Void)? = nil
+    var onUpdateCard: ((StoredPurchase, String?) -> Void)? = nil
     var onDeletePurchase: ((StoredPurchase) -> Void)? = nil
 
     @State private var currentCategory: String
@@ -35,7 +59,7 @@ struct PurchaseDetailSheetView: View {
         onReconcile: @escaping () -> Void,
         onUpdateCategory: @escaping (StoredPurchase, String) -> Void,
         onUpdateAmount: @escaping (StoredPurchase, Double) -> Void,
-        onUpdateCard: ((StoredPurchase, String) -> Void)? = nil,
+        onUpdateCard: ((StoredPurchase, String?) -> Void)? = nil,
         onDeletePurchase: ((StoredPurchase) -> Void)? = nil
     ) {
         self.purchase = purchase
@@ -83,6 +107,14 @@ struct PurchaseDetailSheetView: View {
         return .unavailable(reason: purchase.cardUsedId == nil ? "Card not recorded" : "Comparison pending")
     }
 
+    private var attentionIssues: [PurchaseAttentionIssue] {
+        PurchaseAttentionEvaluator.issues(
+            for: purchase,
+            graph: graph,
+            walletFeedback: walletFeedback(for: purchase)
+        )
+    }
+
     private func walletFeedback(for item: StoredPurchase) -> WalletFeedback? {
         guard let eventId = item.walletEventId else { return nil }
         return sync.walletFeedback.first { $0.eventId == eventId }
@@ -92,6 +124,11 @@ struct PurchaseDetailSheetView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 18) {
+                    // 0. Proactive Attention Banner (if items need resolution)
+                    if !attentionIssues.filter(\.isActionableNow).isEmpty {
+                        attentionResolutionCard
+                    }
+
                     // 1. Hero Header & Amount Summary
                     heroHeaderCard
 
@@ -151,7 +188,7 @@ struct PurchaseDetailSheetView: View {
                         Button {
                             isEnteringAmount = true
                         } label: {
-                            Label(purchase.amountCad == nil ? "Add Amount" : "Edit Amount", systemImage: "dollarsign.circle")
+                            Label(purchase.amountCad == nil ? "Add Amount & Currency" : "Edit Amount & Currency", systemImage: "dollarsign.circle")
                         }
 
                         if onDeletePurchase != nil {
@@ -184,6 +221,7 @@ struct PurchaseDetailSheetView: View {
                 if let onUpdateCard {
                     CardChangeSheetView(
                         currentCardId: purchase.cardUsedId,
+                        recommendedCardId: recommendedCardId,
                         cards: cards,
                         onSelectCard: { newCardId in
                             onUpdateCard(purchase, newCardId)
@@ -195,7 +233,7 @@ struct PurchaseDetailSheetView: View {
             .sheet(isPresented: $isEnteringAmount) {
                 PurchaseAmountEntrySheetView(
                     merchantName: purchase.displayMerchant,
-                    initialAmount: purchase.amountCad,
+                    initialAmountCad: purchase.amountCad,
                     onSave: { amount in
                         onUpdateAmount(purchase, amount)
                         isEnteringAmount = false
@@ -217,6 +255,90 @@ struct PurchaseDetailSheetView: View {
                 Text("This removes the record from your purchase history. Reconcile calculations will update accordingly.")
             }
         }
+    }
+
+    // MARK: - 0. Proactive Attention Banner
+
+    private var attentionResolutionCard: some View {
+        let actionable = attentionIssues.filter(\.isActionableNow)
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.orange)
+                Text("NEEDS ATTENTION")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .tracking(0.6)
+                    .foregroundStyle(.orange)
+
+                Spacer()
+
+                Text("\(actionable.count) action\(actionable.count == 1 ? "" : "s")")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2.5)
+                    .background(Color.orange.opacity(0.14), in: Capsule())
+            }
+
+            ForEach(actionable) { issue in
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(issue.tintColor.opacity(0.15))
+                            .frame(width: 32, height: 32)
+                        Image(systemName: issue.icon)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(issue.tintColor)
+                    }
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(issue.title)
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .foregroundStyle(.primary)
+                        Text(issue.subtitle)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+
+                    Spacer()
+
+                    Button {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        switch issue {
+                        case .missingAmount:
+                            isEnteringAmount = true
+                        case .missingCard:
+                            isChangingCard = true
+                        case .uncertainCategory:
+                            isChangingCategory = true
+                        default:
+                            break
+                        }
+                    } label: {
+                        Text("Fix")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(issue.tintColor, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(10)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.orange.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(Color.orange.opacity(0.25), lineWidth: 1.5)
+                )
+        )
     }
 
     // MARK: - 1. Hero Header Card
@@ -257,7 +379,7 @@ struct PurchaseDetailSheetView: View {
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
 
-                // Interactive Amount Display
+                // Interactive Amount & Currency Display
                 Button {
                     isEnteringAmount = true
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -275,7 +397,7 @@ struct PurchaseDetailSheetView: View {
                                 Text(String(format: "~$%.2f CAD", scored))
                                     .font(.system(size: 26, weight: .bold, design: .rounded))
                                     .foregroundStyle(.secondary)
-                                Text("Estimated · Tap to enter exact amount")
+                                Text("Estimated · Tap to enter exact amount & currency")
                                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                                     .foregroundStyle(.blue)
                             }
@@ -283,7 +405,7 @@ struct PurchaseDetailSheetView: View {
                             HStack(spacing: 6) {
                                 Image(systemName: "plus.circle.fill")
                                     .font(.system(size: 16, weight: .semibold))
-                                Text("Add Purchase Amount")
+                                Text("Add Amount & Currency")
                                     .font(.system(size: 16, weight: .semibold, design: .rounded))
                             }
                             .padding(.horizontal, 14)
@@ -503,7 +625,7 @@ struct PurchaseDetailSheetView: View {
 
                 Spacer()
 
-                if let onUpdateCard {
+                if onUpdateCard != nil {
                     Button {
                         isChangingCard = true
                     } label: {
@@ -696,7 +818,7 @@ struct PurchaseDetailSheetView: View {
                             if let conf = purchase.categoryConfidence {
                                 Text(confidenceLabel(conf))
                                     .font(.system(size: 11, weight: .medium))
-                                    .foregroundStyle(.tertiary)
+                                    .foregroundStyle(conf == .fallback ? Color.orange : Color.secondary)
                             }
                         }
 
@@ -984,73 +1106,76 @@ struct PurchaseDetailSheetView: View {
     }
 }
 
-// MARK: - Card Switcher Sheet Modal
+// MARK: - Enhanced Card Switcher Sheet Modal
 
 struct CardChangeSheetView: View {
     let currentCardId: String?
+    var recommendedCardId: String? = nil
     let cards: [CardProduct]
-    let onSelectCard: (String) -> Void
+    let onSelectCard: (String?) -> Void
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
             List {
+                // 1. Recommended Card (if known)
+                if let recommendedCardId,
+                   let recProduct = cards.first(where: { $0.cardId == recommendedCardId }) {
+                    Section {
+                        cardRow(
+                            card: recProduct,
+                            isRecommended: true,
+                            isSelected: recProduct.cardId == currentCardId
+                        )
+                    } header: {
+                        Label("Recommended Winner", systemImage: "sparkles")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundStyle(.green)
+                    } footer: {
+                        Text("PickMe's highest earning card advised for this purchase.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                // 2. All Wallet Cards
                 Section {
                     ForEach(cards, id: \.cardId) { card in
-                        let isSelected = card.cardId == currentCardId
-                        let style = CardVisualTheme.style(for: card.cardId)
-
-                        Button {
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                            onSelectCard(card.cardId)
-                        } label: {
-                            HStack(spacing: 14) {
-                                ZStack {
-                                    LinearGradient(
-                                        colors: style.gradientColors,
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                    Image(systemName: "creditcard.fill")
-                                        .font(.system(size: 13, weight: .bold))
-                                        .foregroundStyle(style.textColor.opacity(0.9))
-                                }
-                                .frame(width: 48, height: 32)
-                                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                                        .strokeBorder(Color.white.opacity(0.3), lineWidth: 0.5)
-                                )
-
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(card.officialName)
-                                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                                        .foregroundStyle(.primary)
-
-                                    Text("\(style.issuer) · \(style.network.rawValue)")
-                                        .font(.system(size: 12))
-                                        .foregroundStyle(.secondary)
-                                }
-
-                                Spacer()
-
-                                if isSelected {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .font(.system(size: 20))
-                                        .foregroundStyle(.blue)
-                                }
-                            }
-                            .padding(.vertical, 4)
+                        if card.cardId != recommendedCardId {
+                            cardRow(
+                                card: card,
+                                isRecommended: false,
+                                isSelected: card.cardId == currentCardId
+                            )
                         }
-                        .buttonStyle(.plain)
                     }
                 } header: {
-                    Text("Wallet Cards")
+                    Text("Your Wallet Cards")
                         .font(.system(size: 12, weight: .bold, design: .rounded))
                 } footer: {
-                    Text("Select which card you tapped at checkout. PickMe will update reward calculations accordingly.")
+                    Text("Select which card you tapped at checkout. Rewards calculations update automatically.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+
+                // 3. Clear option
+                if currentCardId != nil {
+                    Section {
+                        Button(role: .destructive) {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            onSelectCard(nil)
+                        } label: {
+                            HStack {
+                                Image(systemName: "xmark.circle")
+                                Text("Clear Recorded Card")
+                            }
+                            .font(.system(size: 14, weight: .medium))
+                        }
+                    } footer: {
+                        Text("Resets this purchase to card unrecorded status.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             .listStyle(.insetGrouped)
@@ -1063,122 +1188,347 @@ struct CardChangeSheetView: View {
             }
         }
     }
+
+    private func cardRow(card: CardProduct, isRecommended: Bool, isSelected: Bool) -> some View {
+        let style = CardVisualTheme.style(for: card.cardId)
+
+        return Button {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            onSelectCard(card.cardId)
+        } label: {
+            HStack(spacing: 14) {
+                // Card Artwork Thumbnail
+                ZStack {
+                    LinearGradient(
+                        colors: style.gradientColors,
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    Image(systemName: "creditcard.fill")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(style.textColor.opacity(0.9))
+                }
+                .frame(width: 48, height: 32)
+                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.3), lineWidth: 0.5)
+                )
+
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text(card.officialName)
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.primary)
+
+                        if isRecommended {
+                            Text("Best")
+                                .font(.system(size: 10, weight: .bold, design: .rounded))
+                                .foregroundStyle(.green)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 1.5)
+                                .background(Color.green.opacity(0.14), in: Capsule())
+                        }
+                    }
+
+                    Text("\(style.issuer) · \(style.network.rawValue)")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.blue)
+                }
+            }
+            .padding(.vertical, 4)
+        }
+        .buttonStyle(.plain)
+    }
 }
 
-// MARK: - Amount Entry Sheet Modal
+// MARK: - Multi-Currency Amount Entry Sheet Modal
 
 struct PurchaseAmountEntrySheetView: View {
     let merchantName: String
-    var initialAmount: Double? = nil
+    var initialAmountCad: Double? = nil
     let onSave: (Double) -> Void
     let onCancel: () -> Void
 
+    @State private var selectedCurrency: TransactionCurrency = .cad
     @State private var amountText: String = ""
+    @State private var customFxRateText: String = ""
+    @State private var isEnteringExactCad: Bool = false
+    @State private var exactCadText: String = ""
     @FocusState private var isAmountFocused: Bool
-
-    private let presets: [Double] = [10, 25, 50, 100, 200]
 
     init(
         merchantName: String,
-        initialAmount: Double? = nil,
+        initialAmountCad: Double? = nil,
         onSave: @escaping (Double) -> Void,
         onCancel: @escaping () -> Void
     ) {
         self.merchantName = merchantName
-        self.initialAmount = initialAmount
+        self.initialAmountCad = initialAmountCad
         self.onSave = onSave
         self.onCancel = onCancel
-        if let initialAmount, initialAmount > 0 {
-            _amountText = State(initialValue: String(format: "%.2f", initialAmount))
+        if let initialAmountCad, initialAmountCad > 0 {
+            _amountText = State(initialValue: String(format: "%.2f", initialAmountCad))
         }
+    }
+
+    private var presets: [Double] {
+        if selectedCurrency.code == "JPY" {
+            return [1000, 2500, 5000, 10000, 20000]
+        }
+        return [10, 25, 50, 100, 200]
+    }
+
+    private var parsedEnteredAmount: Double? {
+        let cleaned = amountText
+            .replacingOccurrences(of: ",", with: ".")
+            .filter { $0.isNumber || $0 == "." }
+        guard let value = Double(cleaned), value > 0 else { return nil }
+        return value
+    }
+
+    private var parsedFxRate: Double {
+        if let custom = Double(customFxRateText.trimmingCharacters(in: .whitespaces)), custom > 0 {
+            return custom
+        }
+        return selectedCurrency.defaultCadRate
+    }
+
+    private var effectiveCadAmount: Double? {
+        if isEnteringExactCad {
+            let cleaned = exactCadText
+                .replacingOccurrences(of: ",", with: ".")
+                .filter { $0.isNumber || $0 == "." }
+            guard let val = Double(cleaned), val > 0 else { return nil }
+            return val
+        }
+        guard let entered = parsedEnteredAmount else { return nil }
+        if selectedCurrency.code == "CAD" {
+            return entered
+        }
+        return (entered * parsedFxRate * 100).rounded() / 100.0
     }
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                // Preset Quick Chips
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("QUICK PRESETS")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .tracking(0.6)
-                        .foregroundStyle(.secondary)
-
-                    HStack(spacing: 8) {
-                        ForEach(presets, id: \.self) { amount in
-                            Button {
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                amountText = String(format: "%.2f", amount)
-                            } label: {
-                                Text(String(format: "$%.0f", amount))
-                                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 10)
-                                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                                    .foregroundStyle(.primary)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-
-                // Custom Amount Input Card
-                VStack(spacing: 8) {
-                    Text("TOTAL CHARGE (CAD)")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .tracking(0.6)
-                        .foregroundStyle(.secondary)
-
-                    HStack(spacing: 4) {
-                        Text("$")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Currency Selector Carousel
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("TRANSACTION CURRENCY")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .tracking(0.6)
                             .foregroundStyle(.secondary)
 
-                        TextField("0.00", text: $amountText)
-                            .font(.system(size: 40, weight: .bold, design: .rounded))
-                            .keyboardType(.decimalPad)
-                            .focused($isAmountFocused)
-                            .multilineTextAlignment(.leading)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(TransactionCurrency.all) { currency in
+                                    let isSelected = currency.code == selectedCurrency.code
+                                    Button {
+                                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                                            selectedCurrency = currency
+                                            customFxRateText = String(format: "%.4f", currency.defaultCadRate)
+                                        }
+                                    } label: {
+                                        HStack(spacing: 5) {
+                                            Text(currency.flag)
+                                                .font(.system(size: 15))
+                                            Text(currency.code)
+                                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                            Text(currency.symbol)
+                                                .font(.system(size: 11, weight: .semibold))
+                                                .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
+                                        }
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .background(
+                                            isSelected ? Color.blue : Color(.secondarySystemGroupedBackground),
+                                            in: Capsule()
+                                        )
+                                        .foregroundStyle(isSelected ? .white : .primary)
+                                        .overlay(
+                                            Capsule()
+                                                .strokeBorder(isSelected ? Color.clear : Color.primary.opacity(0.08), lineWidth: 1)
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color(.secondarySystemGroupedBackground))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .strokeBorder(Color.blue.opacity(0.4), lineWidth: 1.5)
-                            )
-                    )
-                }
-                .padding(.horizontal, 16)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
 
-                Text("Enter the total from your receipt or bank app.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
+                    // Preset Quick Chips
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("QUICK PRESETS (\(selectedCurrency.code))")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .tracking(0.6)
+                            .foregroundStyle(.secondary)
 
-                Spacer()
-
-                // Save CTA
-                Button {
-                    if let amount {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        onSave(amount)
+                        HStack(spacing: 8) {
+                            ForEach(presets, id: \.self) { amount in
+                                Button {
+                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                    if selectedCurrency.code == "JPY" {
+                                        amountText = String(format: "%.0f", amount)
+                                    } else {
+                                        amountText = String(format: "%.2f", amount)
+                                    }
+                                } label: {
+                                    Text(formatPreset(amount))
+                                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 10)
+                                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                        .foregroundStyle(.primary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
                     }
-                } label: {
-                    Text("Save Amount")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .padding(.horizontal, 16)
+
+                    // Custom Amount Input Card
+                    VStack(spacing: 10) {
+                        HStack {
+                            Text("CHARGE (\(selectedCurrency.code))")
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
+                                .tracking(0.6)
+                                .foregroundStyle(.secondary)
+
+                            Spacer()
+
+                            Text(selectedCurrency.name)
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        }
+
+                        HStack(spacing: 6) {
+                            Text(selectedCurrency.symbol)
+                                .font(.system(size: 34, weight: .bold, design: .rounded))
+                                .foregroundStyle(.secondary)
+
+                            TextField(selectedCurrency.code == "JPY" ? "0" : "0.00", text: $amountText)
+                                .font(.system(size: 38, weight: .bold, design: .rounded))
+                                .keyboardType(.decimalPad)
+                                .focused($isAmountFocused)
+                                .multilineTextAlignment(.leading)
+                        }
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 14)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(Color(.secondarySystemGroupedBackground))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .strokeBorder(Color.blue.opacity(0.4), lineWidth: 1.5)
+                                )
+                        )
+
+                        // Foreign Currency Conversion Box (if not CAD)
+                        if selectedCurrency.code != "CAD" {
+                            VStack(spacing: 8) {
+                                HStack {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "arrow.triangle.2.circlepath")
+                                            .font(.system(size: 11, weight: .bold))
+                                        Text("ESTIMATED HOME CONVERSION")
+                                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                                    }
+                                    .foregroundStyle(.blue)
+
+                                    Spacer()
+
+                                    if let effective = effectiveCadAmount {
+                                        Text(String(format: "$%.2f CAD", effective))
+                                            .font(.system(size: 15, weight: .black, design: .rounded))
+                                            .foregroundStyle(.primary)
+                                    }
+                                }
+
+                                Text("1 \(selectedCurrency.code) ≈ \(String(format: "%.4f", parsedFxRate)) CAD benchmark exchange rate.")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .padding(12)
+                            .background(Color.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+                    }
+                    .padding(.horizontal, 16)
+
+                    Text("Enter the charge amount from your receipt, terminal, or card statement.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
+
+                    // Final Converted CAD Summary Banner (when amount is entered)
+                    if let cad = effectiveCadAmount {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.green.opacity(0.15))
+                                    .frame(width: 36, height: 36)
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundStyle(.green)
+                            }
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Recorded in PickMe")
+                                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                                    .foregroundStyle(.secondary)
+                                Text(String(format: "$%.2f CAD", cad))
+                                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                                    .foregroundStyle(.primary)
+                            }
+
+                            Spacer()
+
+                            if selectedCurrency.code != "CAD" {
+                                Text(String(format: "%@ %.2f", selectedCurrency.symbol, parsedEnteredAmount ?? 0))
+                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(12)
+                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .padding(.horizontal, 16)
+                    }
+
+                    // Save CTA Button
+                    Button {
+                        if let cad = effectiveCadAmount {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            onSave(cad)
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 14, weight: .bold))
+                            Text(effectiveCadAmount != nil ? "Save Amount (\(String(format: "$%.2f CAD", effectiveCadAmount!)))" : "Save Amount")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                        }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 15)
-                        .background(amount != nil ? Color.blue : Color.secondary.opacity(0.3), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .background(effectiveCadAmount != nil ? Color.blue : Color.secondary.opacity(0.3), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         .foregroundStyle(.white)
+                    }
+                    .disabled(effectiveCadAmount == nil)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 20)
                 }
-                .disabled(amount == nil)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Purchase Amount")
@@ -1194,12 +1544,11 @@ struct PurchaseAmountEntrySheetView: View {
         }
     }
 
-    private var amount: Double? {
-        let cleaned = amountText
-            .replacingOccurrences(of: ",", with: ".")
-            .filter { $0.isNumber || $0 == "." }
-        guard let value = Double(cleaned), value > 0 else { return nil }
-        return value
+    private func formatPreset(_ amount: Double) -> String {
+        if selectedCurrency.code == "JPY" {
+            return String(format: "¥%.0f", amount)
+        }
+        return String(format: "%@%.0f", selectedCurrency.symbol, amount)
     }
 }
 

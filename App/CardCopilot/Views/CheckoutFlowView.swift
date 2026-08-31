@@ -26,6 +26,7 @@ struct CheckoutFlowView: View {
     @State private var environment: CopilotEnvironment?
     @State private var walletBannerCenter = WalletCaptureBannerCenter.shared
     @State private var attemptedWalletEnrichmentIDs: Set<String> = []
+    @State private var isCompletingPrivateOnboarding = false
 
     private var rootTitle: String {
         switch router.selectedTab {
@@ -50,7 +51,6 @@ struct CheckoutFlowView: View {
     }
 
     var body: some View {
-        @Bindable var router = router
         Group {
             if let environment {
                 if let loadFailure = environment.loadFailure {
@@ -59,29 +59,8 @@ struct CheckoutFlowView: View {
                 } else if environment.graph == nil {
                     ProgressView()
                 } else {
-                    NavigationStack(path: $router.path) {
-                        rootContent(environment: environment)
-                            .navigationTitle(isAtRoot ? rootTitle : "PickMe")
-                            .navigationBarTitleDisplayMode(.inline)
-                            .navigationDestination(for: Destination.self) { destination in
-                                destinationView(destination, environment: environment)
-                            }
-                            .toolbar {
-                                if isAtRoot, !environment.isFirstRun, router.selectedTab != .copilot {
-                                    ToolbarItem(placement: .topBarTrailing) {
-                                        SyncStatusToolbarButton(
-                                            isSyncing: sync.isSyncing || sync.isPreparingAccount,
-                                            lastSyncedAt: sync.lastSyncedAt,
-                                            syncIssue: sync.syncIssue,
-                                            action: { router.show(.sync) }
-                                        )
-                                    }
-                                }
-                            }
-                    }
-                    // Injected here rather than in `CardCopilotApp` because the graph owner needs
-                    // `\.modelContext`, which only exists once this view is in the hierarchy.
-                    .environment(environment)
+                    loadedNavigationStack(environment: environment)
+                        .environment(environment)
                 }
             } else {
                 ProgressView()
@@ -104,6 +83,13 @@ struct CheckoutFlowView: View {
             await sync.drainWalletCaptures()
             await ingestAutomaticCaptures()
             if WalletCaptureDeepLinkStore.consume() { router.show(.sync) }
+        }
+        .task(id: scenePhase) {
+            guard scenePhase == .active else { return }
+            let environment = ensureEnvironment()
+            environment.load(session: session)
+            guard let graph = environment.graph else { return }
+            await session.prefetchNearby(using: graph)
         }
         .task(id: Clerk.shared.user?.id) {
             await ensureEnvironment().prepareAccount(forUserID: Clerk.shared.user?.id,
@@ -130,6 +116,70 @@ struct CheckoutFlowView: View {
         }
     }
 
+    @ViewBuilder
+    private func loadedNavigationStack(environment: CopilotEnvironment) -> some View {
+        @Bindable var router = router
+        NavigationStack(path: $router.path) {
+            rootContent(environment: environment)
+                .navigationTitle(isAtRoot ? rootTitle : "PickMe")
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationDestination(for: Destination.self) { destination in
+                    destinationView(destination, environment: environment)
+                }
+                .toolbar {
+                    if isAtRoot, !environment.isFirstRun, router.selectedTab != .copilot {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            SyncStatusToolbarButton(
+                                isSyncing: sync.isSyncing || sync.isPreparingAccount,
+                                lastSyncedAt: sync.lastSyncedAt,
+                                syncIssue: sync.syncIssue,
+                                action: { router.show(.sync) }
+                            )
+                        }
+                    }
+                }
+        }
+        .fullScreenCover(isPresented: $router.showingAddCard, onDismiss: {
+            isCompletingPrivateOnboarding = false
+        }) {
+            addCardModal(environment: environment)
+        }
+    }
+
+    @ViewBuilder
+    private func addCardModal(environment: CopilotEnvironment) -> some View {
+        if let graph = environment.graph {
+            AddCardSheet(
+                catalogue: graph.catalogue,
+                ownedCardIds: graph.ownerState.ownedCardIds,
+                residency: graph.ownerState.market.flatMap(Market.init(rawValue:)) ?? .ca,
+                onAdd: { cardId in
+                    var setup = OwnerStateBuilder.setup(from: graph.ownerState)
+                    guard !setup.ownedCardIds.contains(cardId) else { return }
+                    setup.ownedCardIds.append(cardId)
+                    setup.deletedCardIds?.removeAll { $0 == cardId }
+                    if setup.defaultCardId.isEmpty {
+                        setup.defaultCardId = cardId
+                    }
+                    environment.applyWalletEdit(setup, session: session, router: router)
+                },
+                onRequestCard: { request in
+                    await environment.requestCard(request)
+                },
+                onDismiss: {
+                    router.showingAddCard = false
+                }
+            )
+            // Keep the welcome gateway underneath the cover while it animates in. Clearing
+            // first-run state from the button action exposes Home during that transition.
+            .onAppear {
+                if environment.isFirstRun {
+                    environment.continuePrivately(session: session)
+                }
+            }
+        }
+    }
+
     /// Lazily builds the dependency graph owner. Deferred to `.task` rather than `init` because
     /// it needs `\.modelContext`, which is only available once this view is in the hierarchy.
     /// Both `.task` handlers below call this rather than assuming the other one already has —
@@ -150,7 +200,7 @@ struct CheckoutFlowView: View {
     /// without signing in.
     @ViewBuilder
     private func rootContent(environment: CopilotEnvironment) -> some View {
-        if environment.isFirstRun {
+        if environment.isFirstRun || isCompletingPrivateOnboarding {
             WelcomeGatewayView(
                 isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
                 isPreparingAccount: sync.isPreparingAccount,
@@ -159,7 +209,10 @@ struct CheckoutFlowView: View {
                     Task { await environment.prepareAccount(forUserID: Clerk.shared.user?.id,
                                                             session: session, router: router) }
                 },
-                onContinuePrivately: { router.show(.walletSetup) }
+                onContinuePrivately: {
+                    isCompletingPrivateOnboarding = true
+                    router.showingAddCard = true
+                }
             )
         } else {
             checkoutStepContent(environment: environment)
@@ -204,7 +257,7 @@ struct CheckoutFlowView: View {
             Group {
                 switch router.selectedTab {
                 case .copilot:
-                    HomeView(onFindNearby: { Task { await findNearby() } },
+                    HomeView(onFindNearby: { findNearby() },
                              onSearch: { text in Task { await search(text) } })
                 case .activity:
                     ActivityHubView()
@@ -305,8 +358,8 @@ struct CheckoutFlowView: View {
             if let graph = environment.graph {
                 WalletEditorView(
                     catalogue: graph.catalogue,
-                    existing: environment.walletIsFirstRun ? nil : graph.ownerState,
-                    isFirstRun: environment.walletIsFirstRun,
+                    existing: graph.ownerState,
+                    isFirstRun: false,
                     onChange: { setup in
                         environment.applyWalletEdit(setup, session: session, router: router)
                     },
@@ -336,11 +389,23 @@ struct CheckoutFlowView: View {
         }
     }
 
-    private func findNearby() async {
+    private func findNearby() {
         guard let graph = environment?.graph else { return }
-        router.step = .locating
-        let outcome = await session.findNearby(using: graph)
-        router.step = CheckoutFlowRouting.step(for: outcome)
+        if let prepared = session.preparedOutcomeForTap() {
+            router.step = CheckoutFlowRouting.step(for: prepared)
+            return
+        }
+
+        Task {
+            let delayedSpinner = Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(200))
+                guard !Task.isCancelled else { return }
+                router.step = .locating
+            }
+            let outcome = await session.findNearby(using: graph)
+            delayedSpinner.cancel()
+            router.step = CheckoutFlowRouting.step(for: outcome)
+        }
     }
 
     private func search(_ text: String) async {

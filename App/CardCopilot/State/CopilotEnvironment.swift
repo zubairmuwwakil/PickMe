@@ -17,18 +17,18 @@ struct DependencyGraph {
     let service: CheckoutService
     let explainer: RecommendationExplainer
     let engine: RecommendationEngine
-    let provider: LiveMerchantProvider
+    let provider: any MerchantProviding
 
     var walletCards: [CardProduct] {
         if ownerState.ownedCardIds.isEmpty {
-            return catalogue.cards
+            return []
         }
         let owned = Set(ownerState.ownedCardIds)
         return catalogue.cards.filter { owned.contains($0.cardId) }
     }
 
     var walletCardIds: [String] {
-        ownerState.ownedCardIds.isEmpty ? catalogue.cards.map(\.cardId) : ownerState.ownedCardIds
+        ownerState.ownedCardIds.isEmpty ? [] : ownerState.ownedCardIds
     }
 }
 
@@ -41,7 +41,6 @@ struct DependencyGraph {
 @MainActor
 final class CopilotEnvironment {
     private(set) var graph: DependencyGraph?
-    private(set) var seedOwnerState: OwnerState?
     private(set) var isFirstRun = false
     /// Set when seed data cannot be read at all. Distinct from an operational error: the app
     /// has nothing to show, so this is a full-screen state, not an alert.
@@ -79,12 +78,10 @@ final class CopilotEnvironment {
         do {
             let catalogue = try SeedLoader.loadCatalogue()
             let candidates = try SeedLoader.loadCandidateCatalogue().cardIds
-            let seedOwner = try SeedLoader.loadOwnerState()
-            let localOwner = sync.ownerStateLocalStore.load()
-            let owner = localOwner ?? seedOwner
+            let localOwner = sync.ownerStateLocalStore.loadUserWallet()
+            let owner = localOwner ?? OwnerStateBuilder.empty(catalogue: catalogue)
             let benefits = try SeedLoader.loadBenefitsCatalogue()
 
-            seedOwnerState = seedOwner
             canonicalBenefits = benefits
             isFirstRun = localOwner == nil
             walletIsFirstRun = localOwner == nil
@@ -210,6 +207,16 @@ final class CopilotEnvironment {
         ambient.refreshNow()
         refreshAmbientDiagnostics()
     }
+
+    /// Completes the first-run gateway without forcing the owner into a separate wallet setup screen.
+    /// The initial owner state is saved to the local store and derived session state is refreshed.
+    func continuePrivately(session: CopilotSession) {
+        guard let graph else { return }
+        try? sync.ownerStateLocalStore.save(graph.ownerState)
+        isFirstRun = false
+        walletIsFirstRun = false
+        session.refresh(using: graph)
+    }
 }
 
 // MARK: - Account lifecycle
@@ -273,8 +280,13 @@ extension CopilotEnvironment {
             }
             let shouldClaimUnscopedRequests = sync.accountOwnerStateStore.activeUserID == nil
             let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
-            if let remote = try await OwnerStateSyncService(client: client).seedFromRemote(),
-               !remote.ownedCardIds.isEmpty {
+            let remote: OwnerState?
+            do {
+                remote = try await OwnerStateSyncService(client: client).seedFromRemote()
+            } catch {
+                remote = nil
+            }
+            if let remote, !remote.ownedCardIds.isEmpty {
                 try sync.accountOwnerStateStore.activate(remote, forUserID: userID)
                 if shouldClaimUnscopedRequests {
                     sync.cardRequestQueue.claimUnscopedRequests(forUserID: userID)
@@ -284,15 +296,14 @@ extension CopilotEnvironment {
                 walletIsFirstRun = false
                 if router.path.last == .walletSetup { router.pop() }
             } else {
-                let emptySetup = WalletSetup(ownedCardIds: [], defaultCardId: "",
-                                             switchThreshold: OwnerStateBuilder.defaultSwitchThreshold,
-                                             valuationsCad: graph.ownerState.valuationsCad)
-                let empty = OwnerStateBuilder.firstRun(setup: emptySetup, catalogue: graph.catalogue)
+                let empty = OwnerStateBuilder.empty(catalogue: graph.catalogue,
+                                                    market: graph.ownerState.market.flatMap(Market.init(rawValue:)))
+                try? sync.accountOwnerStateStore.activate(empty, forUserID: userID)
                 rebuild(ownerState: empty)
                 session.refresh(using: self.graph!)
-                walletIsFirstRun = true
-                sync.accountSetupUserID = userID
-                router.show(.walletSetup)
+                walletIsFirstRun = false
+                if router.path.last == .walletSetup { router.pop() }
+                router.showingAddCard = true
             }
             sync.readySyncUserID = userID
         } catch {
@@ -405,6 +416,7 @@ extension CopilotEnvironment {
     func eraseLocalHistory(session: CopilotSession) {
         try? LocalDataEraser(context: modelContext).eraseLocalHistory()
         ambient.forgetLocalHistory()
+        session.forgetNearbyHistory()
         benefitsDocumentVault.clearAll()
         refreshBenefits()
         refreshAmbientDiagnostics()
@@ -456,6 +468,9 @@ extension CopilotEnvironment {
     /// store, while the per-account timestamp can be restored if this account signs in again.
     func resetSyncedState(session: CopilotSession) {
         sync.resetSyncedState()
+        // Nearby results and their local counters are account-independent presentation state;
+        // never carry a previous owner's merchant context into the next signed-in session.
+        session.forgetNearbyHistory()
         reload(session: session)
     }
 

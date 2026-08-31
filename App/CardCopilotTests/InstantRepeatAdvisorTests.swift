@@ -1,9 +1,45 @@
 import XCTest
+import SwiftData
 import CardCopilotEngine
 import CardCopilotStore
 @testable import CardCopilot
 
 final class InstantRepeatAdvisorTests: XCTestCase {
+
+    func testEvaluationIsReadOnlyAndCreatesNoActivityRecord() throws {
+        let container = try ModelContainer(
+            for: StoredPrediction.self, StoredPurchase.self, StoredObservation.self, StoredMerchant.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+        let merchant = StoredMerchant(
+            name: "Metro",
+            identifier: "preindex:metro",
+            poiCategoryRaw: "FoodMarket",
+            latitude: 43.65,
+            longitude: -79.38,
+            confirmedCategory: "grocery",
+            confirmationCount: 2
+        )
+        context.insert(merchant)
+        try context.save()
+
+        let catalogue = try SeedLoader.loadCatalogue()
+        let ownerState = try SeedLoader.loadOwnerState()
+        let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
+
+        _ = InstantRepeatAdvisor.evaluate(
+            merchant: merchant,
+            amountCad: InstantRepeatAdvisor.comparisonAmountCad,
+            catalogue: catalogue,
+            ownerState: ownerState,
+            engine: engine
+        )
+
+        XCTAssertTrue(try context.fetch(FetchDescriptor<StoredPrediction>()).isEmpty)
+        XCTAssertTrue(try context.fetch(FetchDescriptor<StoredPurchase>()).isEmpty,
+                      "previewing a Quick Pick must never create an Activity purchase")
+    }
 
     func testNoFrillsEnforcesNetworkConstraintExcludingAmex() throws {
         let catalogue = try SeedLoader.loadCatalogue()

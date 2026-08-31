@@ -374,6 +374,25 @@ public final class SyncCoordinator {
         WalletCaptureSettingsStore().clearConnection()
     }
 
+    public func enableWalletCapture() async {
+        let settings = WalletCaptureSettingsStore()
+        settings.setEnabled(true)
+        if let credential = WalletCaptureCredentialStore().load() {
+            if settings.load().connectionVerifiedAt == nil {
+                settings.markConnectionVerified(boundUserID: credential.boundUserID)
+            }
+            await drainWalletCaptures(forUserID: credential.boundUserID)
+        } else if let userID = Clerk.shared.user?.id {
+            if settings.load().boundUserID == nil {
+                settings.markConnectionPending(boundUserID: userID)
+            }
+        }
+    }
+
+    public func pauseWalletCapture() {
+        WalletCaptureSettingsStore().setEnabled(false)
+    }
+
     public func submitDiagnostic(_ report: WalletCaptureDiagnosticReport) async throws -> WalletSubmittedDiagnostic {
         guard let baseURL = MoneyTalksConfiguration.apiBaseURL else { throw MoneyTalksAPIError.unavailableConfiguration }
         return try await WalletCaptureDiagnosticsHTTPClient(baseURL: baseURL) {

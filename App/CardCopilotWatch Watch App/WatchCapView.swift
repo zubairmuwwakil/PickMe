@@ -7,7 +7,7 @@ public struct WatchCapView: View {
 
     private var activeCaps: [(card: String, name: String, spent: Double, limit: Double, remaining: Double)] {
         let catalogue = (try? SeedLoader.loadCatalogue()) ?? Catalogue.empty
-        let ownerState = OwnerStateLocalStore().load()
+        let ownerState = OwnerStateLocalStore().loadUserWallet()
         guard let ownerState else { return [] }
 
         var list: [(card: String, name: String, spent: Double, limit: Double, remaining: Double)] = []

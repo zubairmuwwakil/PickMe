@@ -21,7 +21,7 @@ final class MoneyTalksSyncTests: XCTestCase {
 
         let merged = OwnerStateSyncService.merging(
             ["cobalt-eats-monthly": SpineCap(usedMinor: 249_975, periodKey: "2026-08")],
-            into: owner, catalogue: catalogue)
+            remoteState: nil, into: owner, catalogue: catalogue)
 
         XCTAssertEqual(merged.cardStates["amex-cobalt"]?.capProgress?["cobalt-eats-monthly"], 2499.75)
     }
@@ -31,9 +31,45 @@ final class MoneyTalksSyncTests: XCTestCase {
         let owner = try SeedLoader.loadOwnerState()
         let before = owner.cardStates["amex-cobalt"]?.capProgress
 
-        let merged = OwnerStateSyncService.merging([:], into: owner, catalogue: catalogue)
+        let merged = OwnerStateSyncService.merging([:], remoteState: nil, into: owner, catalogue: catalogue)
 
         XCTAssertEqual(merged.cardStates["amex-cobalt"]?.capProgress, before)
+    }
+    
+    func testMergeIncludesNewCardsAndCardStatesFromRemote() throws {
+        let catalogue = try SeedLoader.loadCatalogue()
+        var localOwner = try SeedLoader.loadOwnerState()
+        localOwner.ownedCardIds = ["amex-cobalt"]
+        
+        var remoteOwner = localOwner
+        remoteOwner.ownedCardIds = ["amex-cobalt", "bmo-eclipse-visa-infinite"]
+        var bmoState = CardState()
+        bmoState.feeWaiverActive = true
+        remoteOwner.cardStates["bmo-eclipse-visa-infinite"] = bmoState
+        
+        let merged = OwnerStateSyncService.merging([:], remoteState: remoteOwner, into: localOwner, catalogue: catalogue)
+        
+        XCTAssertEqual(merged.ownedCardIds, ["amex-cobalt", "bmo-eclipse-visa-infinite"])
+        XCTAssertEqual(merged.cardStates["bmo-eclipse-visa-infinite"]?.feeWaiverActive, true)
+    }
+
+    func testMergeRespectsTombstonesAndDropsDeletedCards() throws {
+        let catalogue = try SeedLoader.loadCatalogue()
+        var localOwner = try SeedLoader.loadOwnerState()
+        localOwner.ownedCardIds = ["amex-cobalt", "rogers-red-we"]
+        localOwner.deletedCardIds = ["td-aeroplan"]
+        
+        var remoteOwner = localOwner
+        remoteOwner.ownedCardIds = ["amex-cobalt", "td-aeroplan"] // remote re-added td-aeroplan (meaning it removed it from deletedCardIds locally)
+        remoteOwner.deletedCardIds = ["rogers-red-we"] // remote deleted rogers-red-we
+        
+        let merged = OwnerStateSyncService.merging([:], remoteState: remoteOwner, into: localOwner, catalogue: catalogue)
+        
+        // amex-cobalt is untouched
+        // rogers-red-we is in remote's tombstones, so it is removed
+        // td-aeroplan is explicitly in remote's owned array (and not in remote's tombstones), so it's resurrected.
+        XCTAssertEqual(merged.ownedCardIds, ["amex-cobalt", "td-aeroplan"])
+        XCTAssertEqual(merged.deletedCardIds?.sorted(), ["rogers-red-we"])
     }
 
     func testWalletInstallationDecodesCorrectly() throws {

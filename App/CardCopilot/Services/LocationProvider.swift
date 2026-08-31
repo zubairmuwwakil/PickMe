@@ -6,14 +6,74 @@ import CoreLocation
 enum LocationUnavailable: Error, Sendable, Equatable {
     case permissionDenied
     case permissionRestricted
+    case timedOut
     case fixFailed(String)
 }
 
-/// A single, on-demand location fix. Always `requestLocation()`, never
-/// `startUpdatingLocation` — location is off by default and only sampled for the moment the
-/// owner asks "where am I", per the Quebec Law 25 posture (design doc, decision table).
+extension LocationUnavailable: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .permissionDenied: return "Location access is disabled."
+        case .permissionRestricted: return "Location access is restricted on this device."
+        case .timedOut: return "Location took too long to respond."
+        case .fixFailed(let detail): return "Location is unavailable: \(detail)."
+        }
+    }
+}
+
+/// A validated fix rather than a bare coordinate. Accuracy and age are required to decide
+/// whether a 200 m merchant result is safe to reuse after the app becomes active again.
+struct CheckoutLocationFix: Equatable, Sendable {
+    let latitude: Double
+    let longitude: Double
+    let horizontalAccuracyMeters: Double
+    let capturedAt: Date
+
+    init(latitude: Double, longitude: Double, horizontalAccuracyMeters: Double,
+         capturedAt: Date = .now) {
+        self.latitude = latitude
+        self.longitude = longitude
+        self.horizontalAccuracyMeters = horizontalAccuracyMeters
+        self.capturedAt = capturedAt
+    }
+
+    init(_ location: CLLocation) {
+        self.init(latitude: location.coordinate.latitude,
+                  longitude: location.coordinate.longitude,
+                  horizontalAccuracyMeters: location.horizontalAccuracy,
+                  capturedAt: location.timestamp)
+    }
+
+    func isUsable(now: Date = .now) -> Bool {
+        CLLocationCoordinate2DIsValid(coordinate)
+            && horizontalAccuracyMeters >= 0
+            && horizontalAccuracyMeters <= 250
+            && abs(now.timeIntervalSince(capturedAt)) <= 60
+    }
+
+    func distance(from other: CheckoutLocationFix) -> CLLocationDistance {
+        CLLocation(latitude: latitude, longitude: longitude)
+            .distance(from: CLLocation(latitude: other.latitude, longitude: other.longitude))
+    }
+
+    var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+}
+
+/// The narrow location surface used by checkout. The preflight variant never presents a
+/// permission prompt, which lets a returning, already-authorized owner warm checkout at launch
+/// without turning app launch itself into a request for new consent.
 @MainActor
-final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate {
+protocol CheckoutLocationProviding: AnyObject {
+    func requestLocation() async throws -> CheckoutLocationFix
+    func requestLocationIfAuthorized() async throws -> CheckoutLocationFix?
+}
+
+/// A one-shot location fix. Always `requestLocation()`, never `startUpdatingLocation` — even the
+/// launch preflight samples once and stops, preserving the app's no-continuous-tracking posture.
+@MainActor
+final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate, CheckoutLocationProviding {
     private lazy var manager: CLLocationManager = {
         let manager = CLLocationManager()
         manager.delegate = self
@@ -21,9 +81,10 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate {
     }()
 
     private var authorizationContinuation: CheckedContinuation<CLAuthorizationStatus, Never>?
-    private var locationContinuation: CheckedContinuation<CLLocationCoordinate2D, Error>?
+    private var locationContinuation: CheckedContinuation<CheckoutLocationFix, Error>?
+    private var locationTimeoutTask: Task<Void, Never>?
 
-    func requestLocation() async throws -> CLLocationCoordinate2D {
+    func requestLocation() async throws -> CheckoutLocationFix {
         let status = manager.authorizationStatus
         let resolvedStatus = status == .notDetermined ? await requestAuthorization() : status
 
@@ -39,6 +100,23 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate {
         }
     }
 
+    /// Returns `nil` when the owner has not made a permission choice yet. Denied and restricted
+    /// remain explicit failures so the home screen can keep its manual-search fallback visible.
+    func requestLocationIfAuthorized() async throws -> CheckoutLocationFix? {
+        switch manager.authorizationStatus {
+        case .authorizedWhenInUse, .authorizedAlways:
+            return try await fetchOneShotLocation()
+        case .notDetermined:
+            return nil
+        case .restricted:
+            throw LocationUnavailable.permissionRestricted
+        case .denied:
+            throw LocationUnavailable.permissionDenied
+        @unknown default:
+            throw LocationUnavailable.permissionDenied
+        }
+    }
+
     private func requestAuthorization() async -> CLAuthorizationStatus {
         await withCheckedContinuation { continuation in
             authorizationContinuation = continuation
@@ -46,11 +124,30 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate {
         }
     }
 
-    private func fetchOneShotLocation() async throws -> CLLocationCoordinate2D {
-        try await withCheckedThrowingContinuation { continuation in
+    private func fetchOneShotLocation() async throws -> CheckoutLocationFix {
+        if let warm = manager.location.map(CheckoutLocationFix.init), warm.isUsable() {
+            return warm
+        }
+
+        return try await withCheckedThrowingContinuation { continuation in
             locationContinuation = continuation
+            locationTimeoutTask?.cancel()
+            locationTimeoutTask = Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(3))
+                guard !Task.isCancelled else { return }
+                self?.finishLocation(.failure(LocationUnavailable.timedOut))
+            }
             manager.requestLocation()
         }
+    }
+
+    private func finishLocation(_ result: Result<CheckoutLocationFix, Error>) {
+        guard let continuation = locationContinuation else { return }
+        locationContinuation = nil
+        locationTimeoutTask?.cancel()
+        locationTimeoutTask = nil
+        manager.stopUpdatingLocation()
+        continuation.resume(with: result)
     }
 
     // MARK: - CLLocationManagerDelegate
@@ -76,18 +173,17 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let continuation = locationContinuation else { return }
-        locationContinuation = nil
-        guard let location = locations.last else {
-            continuation.resume(throwing: LocationUnavailable.fixFailed("no location in update"))
+        guard locationContinuation != nil else { return }
+        guard let fix = locations.map(CheckoutLocationFix.init)
+            .filter({ $0.isUsable() })
+            .max(by: { $0.capturedAt < $1.capturedAt }) else {
+            finishLocation(.failure(LocationUnavailable.fixFailed("no recent accurate fix")))
             return
         }
-        continuation.resume(returning: location.coordinate)
+        finishLocation(.success(fix))
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        guard let continuation = locationContinuation else { return }
-        locationContinuation = nil
-        continuation.resume(throwing: error)
+        finishLocation(.failure(error))
     }
 }

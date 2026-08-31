@@ -38,7 +38,7 @@ public struct QuickRecommendProvider: TimelineProvider {
     }
 
     private func loadEntry() -> QuickRecommendEntry {
-        let ownerState = OwnerStateLocalStore().load()
+        let ownerState = OwnerStateLocalStore().loadForRecommendation()
         let catalogue = (try? SeedLoader.loadCatalogue()) ?? Catalogue.empty
 
         guard let ownerState else { return .placeholder }
