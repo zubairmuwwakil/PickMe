@@ -3,7 +3,7 @@
 // Xcode's "Manage version and build number" remains an upload-time fallback.
 // Change APP_MARKETING_VERSION only when creating a new public release.
 APP_MARKETING_VERSION = 2.0
-APP_BUILD_NUMBER = 30
+APP_BUILD_NUMBER = 31
 
 // iOS 18 pairs with watchOS 11. Keep the app and embedded targets aligned.
 APP_IOS_DEPLOYMENT_TARGET = 18.0

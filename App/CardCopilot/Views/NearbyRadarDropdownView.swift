@@ -322,16 +322,21 @@ struct NearbyRadarDropdownView: View {
 
     @ViewBuilder
     private func recommendationCardContent(for merchant: NearbyMerchant) -> some View {
-        let eval = InstantRepeatAdvisor.evaluate(
-            merchant: merchant,
-            amountCad: selectedAmount,
-            catalogue: deps.catalogue,
-            ownerState: deps.ownerState,
-            engine: deps.engine
-        )
-
         VStack(alignment: .leading, spacing: 12) {
-            if let eval {
+            if deps.walletCards.isEmpty {
+                ContentUnavailableView(
+                    "Add a card to get a pick",
+                    systemImage: "creditcard.badge.plus",
+                    description: Text("PickMe only recommends cards you add to your wallet."))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+            } else if let eval = InstantRepeatAdvisor.evaluate(
+                merchant: merchant,
+                amountCad: selectedAmount,
+                catalogue: deps.catalogue,
+                ownerState: deps.ownerState,
+                engine: deps.engine
+            ) {
                 let cardDisplayName = CardVisualTheme.style(for: eval.winnerCardId).shortName.isEmpty
                     ? eval.winnerCardName
                     : CardVisualTheme.style(for: eval.winnerCardId).shortName

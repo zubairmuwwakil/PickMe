@@ -60,14 +60,14 @@ public struct RecommendationEngine {
     }
 
     public func recommend(_ purchase: PurchaseContext, asOf: String) -> RecommendationOutcome {
-        // The empty-wallet fallback ("no cards recorded yet, show what a typical wallet could do")
-        // is scoped to the owner's own market — without this, a multi-market catalogue would
-        // recommend a Chase card to a new Canadian user who hasn't recorded a wallet yet. A
-        // non-empty wallet is NEVER market-filtered: an owned card is an owned card regardless of
-        // where it was issued (see OwnerState.market's doc comment).
-        let candidateCards = ownerState.ownedCardIds.isEmpty
-            ? catalogue.cards.filter { $0.market == ownerState.resolvedMarket }
-            : catalogue.cards.filter { ownerState.ownedCardIds.contains($0.cardId) }
+        // Checkout advice is limited to cards the owner says they have. An empty wallet is an
+        // explicit refusal, not permission to turn the catalogue into an unsolicited card pick.
+        // Product discovery belongs to AcquisitionAnalyzer, whose results are labelled as such.
+        guard !ownerState.ownedCardIds.isEmpty else {
+            return .cannotAdvise(reasons: ["Add a card to your wallet to get checkout advice."])
+        }
+        let ownedCardIds = Set(ownerState.ownedCardIds)
+        let candidateCards = catalogue.cards.filter { ownedCardIds.contains($0.cardId) }
         let scored = candidateCards.map { card -> CandidateScore in
             var score = Scorer.score(card: card, purchase: purchase,
                                      ownerState: ownerState, asOf: asOf)

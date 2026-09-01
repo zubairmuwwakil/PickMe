@@ -324,4 +324,17 @@ class CapabilityGatingTest {
             ?: throw AssertionError("expected CannotAdvise, got $outcome")
         assertTrue(refusal.reasons.isNotEmpty(), "a refusal must say why")
     }
+
+    @Test
+    fun emptyWalletCannotAdviseFromTheCatalogue() {
+        val catalogue = SeedLoader.loadCatalogue()
+        val owner = SeedLoader.loadOwnerState().copy(ownedCardIds = emptyList(), defaultCardId = "")
+
+        val outcome = RecommendationEngine(catalogue, owner)
+            .recommend(PurchaseContext(amountCad = 50.0, category = "grocery"), asOf)
+
+        val refusal = outcome as? RecommendationOutcome.CannotAdvise
+            ?: throw AssertionError("expected CannotAdvise, got $outcome")
+        assertEquals(listOf("Add a card to your wallet to get checkout advice."), refusal.reasons)
+    }
 }

@@ -199,4 +199,18 @@ extension CapabilityGatingTests {
         else { return XCTFail("expected .cannotAdvise, got \(outcome)") }
         XCTAssertFalse(reasons.isEmpty, "a refusal must say why")
     }
+
+    func testEmptyWalletCannotAdviseFromTheCatalogue() throws {
+        let catalogue = try SeedLoader.loadCatalogue()
+        var owner = try SeedLoader.loadOwnerState()
+        owner.ownedCardIds = []
+        owner.defaultCardId = ""
+
+        let outcome = RecommendationEngine(catalogue: catalogue, ownerState: owner)
+            .recommend(PurchaseContext(amountCad: 50, category: "grocery"), asOf: "2026-09-01")
+
+        guard case .cannotAdvise(let reasons) = outcome
+        else { return XCTFail("expected .cannotAdvise, got \(outcome)") }
+        XCTAssertEqual(reasons, ["Add a card to your wallet to get checkout advice."])
+    }
 }
