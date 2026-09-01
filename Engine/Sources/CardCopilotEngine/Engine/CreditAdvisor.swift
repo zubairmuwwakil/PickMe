@@ -72,7 +72,8 @@ public enum CreditAdvisor {
 
     public static func opportunity(cardId: String, credit: CardCredit, cardState: CardState,
                                    asOf: String) -> CreditOpportunity? {
-        guard isLive(credit, asOf: asOf),
+        guard credit.sourceType == .issuerConfirmed,
+              isLive(credit, asOf: asOf),
               let window = currentWindow(for: credit, cardState: cardState, asOf: asOf) else {
             return nil
         }

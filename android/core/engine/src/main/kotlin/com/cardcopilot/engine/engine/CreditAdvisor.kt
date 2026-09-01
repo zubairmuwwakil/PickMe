@@ -9,6 +9,7 @@ import com.cardcopilot.engine.models.CreditScheduleUnit
 import com.cardcopilot.engine.models.CreditState
 import com.cardcopilot.engine.models.Money
 import com.cardcopilot.engine.models.OwnerState
+import com.cardcopilot.engine.models.SourceType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.time.LocalDate
@@ -62,6 +63,7 @@ object CreditAdvisor {
 
     fun opportunity(cardId: String, credit: CardCredit, cardState: CardState,
                     asOf: String): CreditOpportunity? {
+        if (credit.sourceType != SourceType.ISSUER_CONFIRMED) return null
         if (!isLive(credit, asOf)) return null
         val window = currentWindow(credit, cardState, asOf) ?: return null
         val creditState = cardState.creditStates?.get(credit.creditId) ?: CreditState()

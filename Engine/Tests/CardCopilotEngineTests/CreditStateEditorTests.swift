@@ -45,6 +45,14 @@ final class CreditStateEditorTests: XCTestCase {
         ))
     }
 
+    func testInferredCatalogueCreditNeverBecomesAnOwnerOpportunity() {
+        var inferred = credit
+        inferred.sourceType = .inferred
+        XCTAssertNil(CreditAdvisor.opportunity(
+            cardId: "card", credit: inferred, cardState: CardState(), asOf: "2026-08-25"
+        ))
+    }
+
     func testPortfolioCountsPostedCreditButOnlyDisclosesUnspentPotential() throws {
         let initial = owner()
         let before = CreditPortfolioRecoveryCalculator.recovery(

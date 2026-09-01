@@ -63,6 +63,13 @@ class CreditStateEditorTest {
     }
 
     @Test
+    fun inferredCatalogueCreditNeverBecomesAnOwnerOpportunity() {
+        assertNull(CreditAdvisor.opportunity(
+            "card", credit.copy(sourceType = SourceType.INFERRED), CardState(), "2026-08-25"
+        ))
+    }
+
+    @Test
     fun portfolioCountsPostedCreditButOnlyDisclosesUnspentPotential() {
         val initial = owner()
         val before = CreditPortfolioRecoveryCalculator.recovery(
