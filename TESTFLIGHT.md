@@ -27,7 +27,7 @@ graph TD
 
 > [!IMPORTANT]
 > **THE DOGFOOD-WEEK GATE IS A HARD STOP.**
-> Do not invite external testers until the owner has completed **30 physical checkouts** with the app, verified that ambient notifications fire according to Rule A3 (advantage > threshold, merchant confidence high, not muted), and confirmed that the local SwiftData store maintains zero data-loss bugs.
+> Do not invite external testers until the owner has completed **30 physical checkouts** with the app, verified that ambient notifications *interrupt* according to Rule A3 (advantage > threshold, merchant confidence high, not muted) and that quieter arrivals still appear as silent Live Activities, and confirmed that the local SwiftData store maintains zero data-loss bugs.
 
 ---
 
@@ -179,7 +179,7 @@ Run the **Phase-3 Dogfood Week** on the owner device before opening external tes
 | :--- | :--- | :--- |
 | **Physical Checkouts** | 30 real-world store visits | Run checkout recommendations across grocery, dining, gas, pharmacy, etc. |
 | **Recommendation Accuracy** | ≥ 85% category precision | Compare recommended card vs truth graph actual earn rate |
-| **Ambient Firing Rule (A3)** | Silence is default; fires only when advantage > threshold & confidence high | Verify geofence pings fire at saved spots and do not spam |
+| **Ambient Firing Rule (A3)** | Governs *interruption*, not visibility. PickMe is visible on every arrival it can speak to; it interrupts only when advantage > threshold & confidence high & not muted. A muted store gets nothing at all. | Verify geofence pings fire at saved spots and do not spam; verify a default-card win still shows a silent Lock Screen card |
 | **Exit Dwell Capture** | Dwell > 2 min triggers exit amount prompt | Confirm exit capture notification attaches to arrival visit |
 | **Local Data Integrity** | Zero crashes, zero SwiftData data loss | Check prediction logs, wallet setup state, and sync status |
 

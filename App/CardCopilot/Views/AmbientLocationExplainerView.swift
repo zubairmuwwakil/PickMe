@@ -364,29 +364,32 @@ extension AmbientRegionTier {
 }
 
 extension AmbientSuppressionReason {
-    /// Why an arrival stayed silent, in the owner's terms. Deliberately names the cause rather
-    /// than the rule: the counters exist to be acted on, and "advantageBelowUnverifiedThreshold"
-    /// tells an owner nothing they can act on.
+    /// Why an arrival did not interrupt, in the owner's terms — and what they got instead.
+    ///
+    /// Deliberately names the cause rather than the rule: the counters exist to be acted on, and
+    /// "advantageBelowUnverifiedThreshold" tells an owner nothing they can act on. Since the gate
+    /// gained delivery tiers, only `merchantMuted` means the owner saw nothing at all; the rest
+    /// describe an arrival that was visible without being audible.
     var ownerFacingDescription: String {
         switch self {
         case .merchantConfidenceLow:
             return String(localized: "ambient.suppressed.unrecognised",
-                          defaultValue: "the store could not be identified")
+                          defaultValue: "the store could not be identified, so PickMe showed up without naming a card")
         case .recommendedDefaultCard:
             return String(localized: "ambient.suppressed.already-best",
-                          defaultValue: "your usual card was already the best one")
+                          defaultValue: "your usual card was already the best one, so PickMe confirmed it quietly")
         case .advantageBelowSwitchThreshold:
             return String(localized: "ambient.suppressed.below-threshold",
-                          defaultValue: "the gain was below your switch threshold")
+                          defaultValue: "the gain was below your switch threshold, so PickMe confirmed your card quietly")
         case .advantageBelowUnverifiedThreshold:
             return String(localized: "ambient.suppressed.below-unverified",
-                          defaultValue: "the gain was below the higher bar for unconfirmed stores")
+                          defaultValue: "the gain was below the higher bar for unconfirmed stores, so PickMe confirmed your card quietly")
         case .advantageBelowFrequentedThreshold:
             return String(localized: "ambient.suppressed.below-frequented",
-                          defaultValue: "the gain was below your switch threshold at a store you shop at often")
+                          defaultValue: "the gain was below your switch threshold at a store you shop at often, so PickMe confirmed your card quietly")
         case .merchantMuted:
             return String(localized: "ambient.suppressed.muted",
-                          defaultValue: "you muted that store")
+                          defaultValue: "you muted that store, so PickMe stayed out of the way entirely")
         }
     }
 }
