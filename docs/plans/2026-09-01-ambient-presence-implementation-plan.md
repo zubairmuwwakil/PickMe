@@ -952,15 +952,15 @@ Add to `AmbientLocationService`, next to `scheduleArrivalNotification`:
     }
 ```
 
-- [ ] **Step 5: Build and run the full app suite**
+- [x] **Step 5: Build and run the full app suite**
 
 Run: `cd App && xcodebuild test -project CardCopilot.xcodeproj -scheme CardCopilot -configuration Debug -destination "id=<simulator-udid>" CODE_SIGNING_ALLOWED=NO`
 Expected: PASS.
 
-> **2026-09-01 note:** `xcodebuild build` SUCCEEDED with this change. The test suite could
-> not be run: a concurrent session has the auth/config layer (`MoneyTalksSync.swift`,
-> `CopilotEnvironment.swift`) mid-refactor, and the test host crashes at launch with
-> `Clerk has not been configured`. Unrelated to this task. Re-run once the tree is clean.
+> **2026-09-01:** PASS — 140 tests, 0 failures. Running the suite first required fixing an
+> unrelated defect: every `CODE_SIGNING_ALLOWED=NO` build leaves Clerk unconfigured, and ~20
+> unguarded `Clerk.shared` reads trap rather than returning nil, killing the test host before
+> any test ran. Fixed in `2893f7c` by routing reads through `ClerkSession`.
 
 - [ ] **Step 6: Commit**
 
@@ -1035,18 +1035,17 @@ And amend the sentence at `TESTFLIGHT.md:30` so the tester gate matches:
 > Do not invite external testers until the owner has completed **30 physical checkouts** with the app, verified that ambient notifications *interrupt* according to Rule A3 (advantage > threshold, merchant confidence high, not muted) and that quieter arrivals still appear as silent Live Activities, and confirmed that the local SwiftData store maintains zero data-loss bugs.
 ```
 
-- [ ] **Step 3: Build so the string catalogue picks up the new keys**
+- [x] **Step 3: Build so the string catalogue picks up the new keys**
 
 Run: `cd App && xcodebuild build -project CardCopilot.xcodeproj -scheme CardCopilot -configuration Debug -destination "id=<simulator-udid>" CODE_SIGNING_ALLOWED=NO`
 Expected: BUILD SUCCEEDED. `Localizable.xcstrings` gains `ambient.activity.presence.title`, `ambient.activity.presence.body`, `ambient.activity.confirm.advantage`, `ambient.activity.best.advantage`, and the rewritten `ambient.suppressed.*` values.
 
-> **2026-09-01 note:** BUILD SUCCEEDED. Incremental build did not re-extract the new
-> `ambient.activity.*` keys into `Localizable.xcstrings`, and that file already carries
-> unrelated concurrent-session edits, so it was left out of the Task 7 commit. The
-> `String(localized:defaultValue:)` calls resolve at runtime without a catalogue entry;
-> a clean build on a settled tree will backfill the keys for translation.
+> **2026-09-01:** BUILD SUCCEEDED. The incremental build did not re-extract the new
+> `ambient.activity.*` keys into `Localizable.xcstrings`, so they were left out of the Task 7
+> commit. `String(localized:defaultValue:)` resolves at runtime without a catalogue entry;
+> a clean build will backfill the keys for translation.
 
-- [ ] **Step 4: Run the whole gate**
+- [x] **Step 4: Run the whole gate**
 
 ```bash
 (cd Engine && swift test) && (cd android && ./gradlew :core:engine:test)
@@ -1060,9 +1059,8 @@ cd App && xcodebuild test -project CardCopilot.xcodeproj -scheme CardCopilot -co
 
 Expected: all PASS.
 
-> **2026-09-01 note:** Cross-language engine gate PASSED (`swift test` + `:core:engine:test`).
-> App suite blocked by the same `Clerk has not been configured` test-host crash from
-> concurrent auth/config WIP — see Task 6 Step 5. Re-run once the tree is clean.
+> **2026-09-01:** ALL PASS. Cross-language engine gate (`swift test` + `:core:engine:test`),
+> Store suite (368 tests), and the app suite (140 tests) are green.
 
 - [ ] **Step 5: Commit**
 
