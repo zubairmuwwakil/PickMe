@@ -201,4 +201,51 @@ final class CheckoutServiceTests: XCTestCase {
             XCTAssertFalse(reasons.isEmpty)
         }
     }
+
+    // MARK: rescoring (AmountRefineRow) — the day-to-day flow scores an estimate first and
+    // refines it in place, so `rescoreCheckout` must reproduce whatever `recommend` would have
+    // said at the refined amount, without writing to the store itself.
+
+    func testRescoreCheckoutMatchesWhatRecommendWouldHaveSaidAtTheRefinedAmount() throws {
+        let original = try service.recommend(merchant: merchant("Loblaws", poi: "MKPOICategoryFoodMarket"),
+                                             amountCad: nil, asOf: asOf)
+        let refined = try XCTUnwrap(rescoreCheckout(original, amountCad: 140,
+                                                    engine: service.engine, asOf: asOf))
+        guard case .single(let rec) = refined.outcome else {
+            return XCTFail("expected single outcome, got \(refined.outcome)")
+        }
+        XCTAssertEqual(rec.winner.cardId, "amex-cobalt")
+        XCTAssertEqual(rec.winner.netValueCad, 7.00, accuracy: 0.005,
+                       "must match testUnambiguousGroceryProducesSingleOutcomeAndPersists exactly")
+        XCTAssertEqual(refined.effectiveAmountCad, 140, accuracy: 0.005)
+        XCTAssertFalse(refined.amountWasEstimated)
+        XCTAssertEqual(refined.storedPredictionId, original.storedPredictionId,
+                       "refining an answer must not mint a new prediction id")
+    }
+
+    func testRescoreCheckoutReproducesAForkSplit() throws {
+        let original = try service.recommend(merchant: merchant("Walmart Supercentre",
+                                                                 poi: "MKPOICategoryFoodMarket"),
+                                             amountCad: 50, asOf: asOf)
+        let refined = try XCTUnwrap(rescoreCheckout(original, amountCad: 100,
+                                                    engine: service.engine, asOf: asOf))
+        guard case .fork(let branches) = refined.outcome else {
+            return XCTFail("Walmart at $100 must still fork — see testWalmartForkSplitsWhenBranchesDisagree")
+        }
+        XCTAssertEqual(branches.map(\.category), ["grocery", "other"])
+        XCTAssertEqual(branches[0].recommendation.winner.cardId, "amex-cobalt")
+        XCTAssertEqual(branches[1].recommendation.winner.cardId, "wealthsimple-vip")
+    }
+
+    func testRescoreCheckoutNeverWritesToTheStore() throws {
+        let result = try service.recommend(merchant: merchant("Loblaws", poi: "MKPOICategoryFoodMarket"),
+                                          amountCad: nil, asOf: asOf)
+        _ = rescoreCheckout(result, amountCad: 140, engine: service.engine, asOf: asOf)
+
+        XCTAssertEqual(try service.log.allPredictions().count, 1,
+                       "rescoring twice on screen must still be one prediction row")
+        let stored = try XCTUnwrap(try service.log.allPredictions().first)
+        XCTAssertNil(stored.scoredAmountCad,
+                     "rescoring alone must not persist — that is PredictionLog.recordScoredAmount's job")
+    }
 }

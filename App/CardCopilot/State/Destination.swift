@@ -34,11 +34,14 @@ enum Destination: Hashable {
 ///
 /// `recommendation` carries a `CheckoutResult`, which is `Sendable` but not `Hashable` — a
 /// second reason these cannot live in a navigation path.
+///
+/// No `.amount` step (removed 2026-08-31): confirming a merchant scores straight to
+/// `.recommendation` using a category estimate, and the owner refines that estimate in place on
+/// the answer screen (`AmountRefineRow`) rather than at a gate before it.
 enum CheckoutStep {
     case idle
     case locating
     case confirming([NearbyMerchant])
-    case amount(NearbyMerchant)
     case recommendation(CheckoutResult)
     /// Reserved for genuine checkout dead ends — nothing nearby, an empty search. Operational
     /// failures (a SwiftData write, a sync call) go to `CopilotSession.lastError` and surface

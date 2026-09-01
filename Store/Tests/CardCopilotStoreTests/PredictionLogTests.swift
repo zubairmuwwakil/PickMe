@@ -175,4 +175,26 @@ final class PredictionLogTests: XCTestCase {
                         missClass: nil, note: nil)
         XCTAssertEqual(try log.valueRecovered().confirmedCad, 0, accuracy: 0.005)
     }
+
+    // MARK: refining the pre-payment estimate (AmountRefineRow)
+
+    func testRecordScoredAmountRefinesThePredictionButNeverThePurchase() throws {
+        let prediction = try log.record(samplePrediction(amountCad: nil))
+        let purchase = try log.recordPurchase(for: prediction)
+
+        try log.recordScoredAmount(75, forPredictionId: prediction.id)
+
+        let reloaded = try XCTUnwrap(try log.allPredictions().first)
+        XCTAssertEqual(reloaded.scoredAmountCad, 75)
+        XCTAssertNil(purchase.amountCad,
+                     "refining the estimate before payment must never touch the actual charge — "
+                     + "that split is the entire reason scoredAmountCad and amountCad are separate fields")
+    }
+
+    func testRecordScoredAmountIsANoOpForAnUnknownId() throws {
+        // Must tolerate a stale id rather than throw, matching `recordAssessment`'s tolerance
+        // for a reference that no longer resolves.
+        try log.recordScoredAmount(50, forPredictionId: UUID())
+        XCTAssertTrue(try log.allPredictions().isEmpty)
+    }
 }

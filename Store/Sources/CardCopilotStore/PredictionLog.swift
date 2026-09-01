@@ -201,6 +201,20 @@ public struct PredictionLog {
         try context.save()
     }
 
+    /// Refines the pre-payment estimate on an already-answered checkout — the owner adjusting
+    /// the amount on the recommendation screen, before tapping Pay. Deliberately NOT
+    /// `recordAmount`: that records the actual charge on the *purchase*, and conflating the two
+    /// is exactly what `scoredAmountCad`'s split from `StoredPurchase.amountCad` exists to
+    /// prevent. Takes an id rather than the object because the caller (`CopilotSession`, which
+    /// holds no `ModelContext`) only ever has the id a `CheckoutResult` carries. Silent no-op if
+    /// the row is gone, matching `recordAssessment`'s tolerance for a stale reference.
+    public func recordScoredAmount(_ amountCad: Double, forPredictionId id: UUID) throws {
+        guard let prediction = try context.fetch(FetchDescriptor<StoredPrediction>(
+            predicate: #Predicate { $0.id == id })).first else { return }
+        prediction.scoredAmountCad = amountCad
+        try context.save()
+    }
+
     public func recordCard(_ cardUsedId: String?, source: CaptureSource? = .recalledLater,
                            on purchase: StoredPurchase, at date: Date = Date()) throws {
         purchase.cardUsedId = cardUsedId

@@ -232,18 +232,14 @@ struct CheckoutFlowView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .confirming(let merchants):
             MerchantConfirmView(merchants: merchants,
-                                onConfirm: { router.step = .amount($0) },
+                                onConfirm: { merchant in
+                                    if let graph = environment.graph {
+                                        router.step = session.recommend(merchant: merchant, amount: nil,
+                                                                        using: graph)
+                                    }
+                                },
                                 onSearch: { text in Task { await search(text) } },
                                 onCancel: { router.resetToIdle() })
-        case .amount(let merchant):
-            AmountCaptureView(merchantName: merchant.name,
-                              onAmount: { amount in
-                                  if let graph = environment.graph {
-                                      router.step = session.recommend(merchant: merchant, amount: amount,
-                                                                      using: graph)
-                                  }
-                              },
-                              onCancel: { router.resetToIdle() })
         case .recommendation(let result):
             RecommendationView(result: result,
                                onCompare: { kind in router.push(.protectionLens(BenefitContext(kind: kind))) })

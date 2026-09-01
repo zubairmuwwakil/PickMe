@@ -80,6 +80,54 @@ public struct CheckoutResult: Sendable {
     public let storedPredictionId: UUID
 }
 
+/// Re-scores an already-answered checkout at a refined amount, without asking again.
+///
+/// The day-to-day flow no longer collects an amount before showing an answer (2026-08-31): the
+/// owner sees a category-estimate answer first and may refine it in place. A second call to
+/// `CheckoutService.recommend` is the wrong tool for that refinement — it logs a second
+/// `StoredPrediction` and opens a second purchase, which is exactly the duplicate-till problem
+/// that design exists to avoid. This walks the same candidate categories `recommend` would and
+/// calls the engine directly, mirroring its single/fork collapse rule, but touches no store.
+///
+/// Returns nil only if the engine cannot advise at the new amount (e.g. a cap makes every card
+/// ineligible) — the caller keeps showing the prior result rather than an empty one.
+public func rescoreCheckout(_ result: CheckoutResult, amountCad: Double,
+                            engine: RecommendationEngine, asOf: String) -> CheckoutResult? {
+    let brand = canonicalEngineBrand(result.merchant.name)
+    let acceptedNetworks = knownAcceptedNetworks(for: brand, merchantName: result.merchant.name)
+
+    func recommend(for category: String) -> Recommendation? {
+        let outcome = engine.recommend(PurchaseContext(amountCad: amountCad,
+                                                       category: category,
+                                                       mcc: result.prediction.merchantCategoryCode,
+                                                       merchantBrand: brand,
+                                                       acceptedNetworks: acceptedNetworks),
+                                       asOf: asOf)
+        guard case .advised(let rec) = outcome else { return nil }
+        return rec
+    }
+
+    let candidates = result.prediction.candidates
+    let outcome: CheckoutOutcome
+    if candidates.count > 1 {
+        let branches = candidates.compactMap { category in
+            recommend(for: category).map { CheckoutBranch(category: category, recommendation: $0) }
+        }
+        guard !branches.isEmpty else { return nil }
+        let winners = Set(branches.map(\.recommendation.winner.cardId))
+        // Same collapse rule as `recommend`: every branch agreeing makes a fork noise, not signal.
+        outcome = winners.count == 1 ? .single(branches[0].recommendation) : .fork(branches)
+    } else {
+        guard let rec = recommend(for: result.prediction.category) else { return nil }
+        outcome = .single(rec)
+    }
+
+    return CheckoutResult(merchant: result.merchant, prediction: result.prediction, outcome: outcome,
+                          effectiveAmountCad: amountCad, amountWasEstimated: false,
+                          categoryWasAmbiguous: result.categoryWasAmbiguous,
+                          storedPredictionId: result.storedPredictionId)
+}
+
 /// The Task 5 composition layer: merchant + category prediction + amount → engine →
 /// outcome, with the prediction persisted immutably as a side effect of asking.
 public struct CheckoutService {

@@ -22,7 +22,11 @@ extension CardCopilotSchemaV5 {
         public private(set) var winnerRuleId: String?
         public private(set) var runnerUpCardId: String?
         public private(set) var runnerUpValueCad: Double?
-        public private(set) var scoredAmountCad: Double?
+        /// `internal(set)`, not `private(set)`, so `PredictionLog.recordScoredAmount` — same
+        /// module, different file — can refine this after the answer is already shown, the way
+        /// `categoryCorrectedAt` above is refined post-record. Still only ever the pre-payment
+        /// estimate; `StoredPurchase.amountCad` remains the only place the actual charge lives.
+        public internal(set) var scoredAmountCad: Double?
         public private(set) var valuationCentsPerPoint: Double?
         public private(set) var contractRelease: String?
         public private(set) var contractDigest: String?

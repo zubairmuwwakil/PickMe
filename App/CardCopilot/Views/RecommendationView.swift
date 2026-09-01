@@ -5,13 +5,21 @@ import CardCopilotStore
 /// The answer screen. Displays the winning card with a physical card visual,
 /// structured reward breakdown, and honest split-branch scenarios for ambiguous merchants.
 struct RecommendationView: View {
-    let result: CheckoutResult
     let onCompare: ((BenefitContextKind) -> Void)?
+    /// What's on screen. Seeded from the answer `CheckoutFlowView` handed in, then replaced in
+    /// place whenever `AmountRefineRow` re-scores at a different amount — a `CheckoutResult` is
+    /// all-`let`, so refining means holding a second one here rather than mutating the first.
+    @State private var result: CheckoutResult
     @Environment(CopilotEnvironment.self) private var environment
     @Environment(CopilotSession.self) private var session
     @Environment(CheckoutRouter.self) private var router
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
+
+    init(result: CheckoutResult, onCompare: ((BenefitContextKind) -> Void)?) {
+        self._result = State(initialValue: result)
+        self.onCompare = onCompare
+    }
 
     var body: some View {
         if let graph = environment.graph {
@@ -24,21 +32,11 @@ struct RecommendationView: View {
                     forkOutcomeView(branches, graph: graph)
                 }
 
-                if result.amountWasEstimated {
-                    HStack(spacing: 8) {
-                        Image(systemName: "info.circle.fill")
-                            .font(.subheadline)
-                            .foregroundStyle(.blue)
-                        Text("Based on a typical ~$\(Int(result.effectiveAmountCad)) purchase. Exact amounts you enter feed your value-recovered scoreboard.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                AmountRefineRow(effectiveAmountCad: result.effectiveAmountCad,
+                                amountWasEstimated: result.amountWasEstimated) { amountCad in
+                    if let refined = session.refine(result, amountCad: amountCad, using: graph) {
+                        result = refined
                     }
-                    .padding(14)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.blue.opacity(0.08))
-                    )
                 }
 
                 VStack(spacing: 10) {

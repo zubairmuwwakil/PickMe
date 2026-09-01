@@ -276,14 +276,18 @@ struct HomeView: View {
                                 let impact = UIImpactFeedbackGenerator(style: .light)
                                 impact.impactOccurred()
                                 searchText = ""
-                                router.step = .amount(NearbyMerchant(
+                                let merchant = NearbyMerchant(
                                     id: "preindex:\(match.id)",
                                     name: match.name,
                                     poiCategoryRaw: match.category,
                                     latitude: 0,
                                     longitude: 0,
                                     distanceMeters: nil
-                                ))
+                                )
+                                if let graph = environment.graph {
+                                    router.step = session.recommend(merchant: merchant, amount: nil,
+                                                                    using: graph)
+                                }
                             } label: {
                                 HStack(spacing: 8) {
                                     MerchantBrandIconView(merchantName: match.name, category: match.category, size: 22)
@@ -340,7 +344,9 @@ struct HomeView: View {
             impact.impactOccurred()
             if isConfident {
                 _ = session.preparedOutcomeForTap()
-                router.step = .amount(merchant)
+                if let graph = environment.graph {
+                    router.step = session.recommend(merchant: merchant, amount: nil, using: graph)
+                }
             } else {
                 onFindNearby()
             }

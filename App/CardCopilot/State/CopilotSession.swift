@@ -641,6 +641,24 @@ final class CopilotSession {
         }
     }
 
+    /// Refines an already-shown answer at a new amount — `AmountRefineRow` on the recommendation
+    /// screen, still before the owner has tapped Pay. Deliberately does not call `recommend`
+    /// again: that persists a fresh `StoredPrediction` and opens a second purchase, so this
+    /// re-scores in memory via `rescoreCheckout` and only ever updates the ORIGINAL prediction's
+    /// `scoredAmountCad`. Returns nil (leaving the prior result on screen) if the engine cannot
+    /// advise at the new amount, or if refining fails outright.
+    func refine(_ result: CheckoutResult, amountCad: Double, using graph: DependencyGraph) -> CheckoutResult? {
+        let today = Date().formatted(.iso8601.year().month().day())
+        guard let refined = rescoreCheckout(result, amountCad: amountCad, engine: graph.engine, asOf: today)
+        else { return nil }
+        do {
+            try graph.service.log.recordScoredAmount(amountCad, forPredictionId: result.storedPredictionId)
+        } catch {
+            report(FlowError(error))
+        }
+        return refined
+    }
+
     /// What the Apple Wallet Shortcut already answered for the checkouts still in the finish
     /// queue. Recomputed from the two published facts rather than stored, so it can never
     /// disagree with the queue it annotates — a stale proposal would offer to fill a field that
