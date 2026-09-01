@@ -534,11 +534,11 @@ git commit -m "feat(ambient): render a presence Live Activity that names no card
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `LiveActivityManager.endActivity(dismissalPolicy:)` and `startRecommendationActivity(...)` behave correctly after a process death. Adds `public func endAllActivities()`.
+- Produces: `LiveActivityManager.endActivity(dismissalPolicy:)` and `startRecommendationActivity(...)` behave correctly after a process death.
 
 **Why this is not optional.** `currentActivityId` is in-memory on a `@MainActor` singleton. iOS terminates the app between geofence wakes, so after a relaunch the property is `nil` while the real activity is still alive — the system owns it, not our process. `endActivity()` opens with `guard let currentActivityId else { return }` and returns immediately, orphaning the card on the Lock Screen; the next arrival then stacks a second card on top. Today that happens rarely. Once activities fire on every arrival, it is most Saturdays, and the failure mode is three stale PickMe cards — exactly the impression this work exists to prevent.
 
-- [ ] **Step 1: Replace the in-memory guards with a system lookup**
+- [x] **Step 1: Replace the in-memory guards with a system lookup**
 
 In `App/CardCopilot/Services/LiveActivityManager.swift`, replace `endActivity` with:
 
@@ -558,7 +558,7 @@ In `App/CardCopilot/Services/LiveActivityManager.swift`, replace `endActivity` w
     }
 ```
 
-- [ ] **Step 2: Fix the stacking guard in `startRecommendationActivity`**
+- [x] **Step 2: Fix the stacking guard in `startRecommendationActivity`**
 
 Replace the early block:
 
@@ -579,7 +579,7 @@ with:
         }
 ```
 
-- [ ] **Step 3: Fix the same assumption in `updateActivity`**
+- [x] **Step 3: Fix the same assumption in `updateActivity`**
 
 Replace `guard let currentActivityId else { return }` and the detached lookup with a system-first lookup:
 
@@ -594,7 +594,7 @@ Replace `guard let currentActivityId else { return }` and the detached lookup wi
 
 Delete the now-unused `guard let currentActivityId else { return }` line at the top of `updateActivity`.
 
-- [ ] **Step 4: Build the app target**
+- [x] **Step 4: Build the app target**
 
 ```bash
 cd App && xcodebuild build -project CardCopilot.xcodeproj -scheme CardCopilot -configuration Debug -destination "id=<simulator-udid>" CODE_SIGNING_ALLOWED=NO
@@ -612,7 +612,7 @@ Expected: BUILD SUCCEEDED, with no "unused variable" warnings from the removed g
 4. Relaunch and trigger a second arrival.
 5. Expected: exactly **one** PickMe card on the Lock Screen, showing the second merchant. Before this fix there were two.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add App/CardCopilot/Services/LiveActivityManager.swift
