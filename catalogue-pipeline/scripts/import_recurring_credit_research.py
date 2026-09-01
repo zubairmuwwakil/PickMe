@@ -14,7 +14,9 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-RESEARCH = ROOT / "docs/research/issuer-recurring-credit-research-2026-08-31.json"
+BASE_RESEARCH = ROOT / "docs/research/issuer-recurring-credit-research-2026-08-31.json"
+CA_REMAINING_RESEARCH = ROOT / "docs/research/issuer-recurring-credit-research-ca-remaining-2026-08-31.json"
+US_REMAINING_RESEARCH = ROOT / "docs/research/issuer-recurring-credit-research-us-remaining-2026-08-31.json"
 EDGE_RESEARCH = ROOT / "docs/research/recurring-credit-edge-case-resolution-2026-08-31.json"
 CATALOGUE = ROOT / "contracts/card-catalogue.json"
 MERCHANT_PACK = ROOT / "contracts/merchant-pack.json"
@@ -41,6 +43,29 @@ QUARANTINED_CREDITS = {
     ("american-express-the-platinum-card", "amex-plat-us-walmart-plus-monthly"),
     ("chase-sapphire-reserve", "csr-the-edit-credit"),
     ("chase-sapphire-reserve", "csr-doordash-nonrestaurant-monthly"),
+    # US remaining-pack rows whose high-confidence facts cannot be represented without losing
+    # rolling-anchor, per-transaction-cap, or spend-unlock semantics.
+    ("chase-aeroplan-card", "chase-aeroplan-trusted-traveler-credit"),
+    ("chase-sapphire-reserve-for-business", "sapphire-reserve-business-the-edit-credit"),
+    ("chase-sapphire-reserve-for-business", "sapphire-reserve-business-trusted-traveler-credit"),
+    ("chase-sapphire-reserve-for-business", "sapphire-reserve-business-shops-at-chase-credit"),
+    ("chase-sapphire-reserve-for-business", "sapphire-reserve-business-southwest-chase-travel-credit"),
+    ("capital-one-venture-business", "capital-one-venture-business-trusted-traveler-credit"),
+}
+US_REMAINING_PROMOTABLE_CREDITS = {
+    ("american-express-green-card", "amex-green-clear-plus-credit"),
+    ("american-express-the-business-platinum-card", "amex-business-platinum-clear-plus-credit"),
+    ("american-express-delta-skymiles-gold-business", "amex-delta-gold-business-delta-stays-credit"),
+    ("american-express-delta-skymiles-platinum", "amex-delta-platinum-delta-stays-credit"),
+    ("american-express-hilton-honors", "amex-hilton-aspire-clear-plus-credit"),
+    ("chase-sapphire-reserve-for-business", "sapphire-reserve-business-travel-credit"),
+    ("chase-sapphire-reserve-for-business", "sapphire-reserve-business-select-hotels-credit"),
+    ("chase-sapphire-reserve-for-business", "sapphire-reserve-business-google-workspace-credit"),
+    ("chase-sapphire-reserve-for-business", "sapphire-reserve-business-ziprecruiter-credit"),
+    ("chase-sapphire-reserve-for-business", "sapphire-reserve-business-lyft-credit"),
+    ("chase-sapphire-reserve-for-business", "sapphire-reserve-business-gift-card-credit"),
+    ("capital-one-venture-business", "capital-one-venture-business-travel-credit"),
+    ("capital-one-venture-business", "capital-one-venture-business-advertising-software-credit"),
 }
 STABLE_ID_ALIASES = {
     ("american-express-gold-card", "amex-gold-dining-monthly"): "amex-gold-dining-credit",
@@ -61,7 +86,7 @@ CATEGORY_MAP = {
     "vacationPackage": "travel",
     "wellness": "fitness",
 }
-CATEGORY_ONLY_CHECKOUT = {"csr-travel-credit"}
+CATEGORY_ONLY_CHECKOUT = {"csr-travel-credit", "sapphire-reserve-business-travel-credit"}
 ANY_PURCHASE_CHECKOUT = {"bmo-eclipse-lifestyle-credit"}
 NO_CHECKOUT_PREDICATE = {
     "csp-doordash-nonrestaurant-monthly",
@@ -70,6 +95,7 @@ NO_CHECKOUT_PREDICATE = {
 }
 RESET_TIMEZONE_UNSUPPORTED = {"csr-stubhub-halfyear"}
 ACCOUNT_LEVEL_OVERRIDES = {"csr-lyft-monthly"}
+ACCOUNT_LEVEL_OVERRIDES.add("sapphire-reserve-business-lyft-credit")
 TEMPORARY_CREDIT_ENDS = {
     "csp-doordash-nonrestaurant-monthly": "2027-12-31",
     "csr-select-hotels-2026-credit": "2026-12-31",
@@ -97,7 +123,15 @@ ENROLLMENT_CHANNELS = {
     "Add eligible card to Lyft app": "partnerAccount",
     "Activate on Chase.com/Chase Mobile and Peloton": "issuerPortal",
     "Activate DashPass": "partnerAccount",
+    "issuerPortal": "issuerPortal",
+    "partnerAccount": "partnerAccount",
 }
+
+RESEARCH_PACKS = (
+    ("base", BASE_RESEARCH),
+    ("caRemaining", CA_REMAINING_RESEARCH),
+    ("usRemaining", US_REMAINING_RESEARCH),
+)
 
 
 def normalized_lookup(value: str) -> str:
@@ -133,6 +167,16 @@ def canonical_merchants(values: list[str], resolver: dict[str, str]) -> tuple[li
     # Partial merchant lists are more dangerous than no list: they imply excluded partners are
     # ineligible. Only emit the list when every concrete issuer name resolves canonically.
     return (sorted(set(resolved)) if not unresolved else [], sorted(set(unresolved)))
+
+
+def text_items(value: str | list[str] | None) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value]
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise RuntimeError(f"Expected text or text array, got: {value!r}")
+    return value
 
 
 def normalized_schedule(credit_id: str, raw: dict) -> dict:
@@ -173,9 +217,6 @@ def purchase_predicate(card_id: str, credit: dict, resolver: dict[str, str],
     merchants, unresolved = canonical_merchants(credit.get("eligibleMerchants", []), resolver)
     categories = sorted({CATEGORY_MAP.get(value, value)
                          for value in credit.get("eligibleCategories", [])})
-    unknown_categories = set(categories) - known_categories
-    if unknown_categories:
-        raise RuntimeError(f"Unknown purchase categories: {sorted(unknown_categories)}")
     channel = checkout_channel(credit.get("channel"))
     credit_id = STABLE_ID_ALIASES.get((card_id, credit["creditId"]), credit["creditId"])
 
@@ -185,6 +226,10 @@ def purchase_predicate(card_id: str, credit: dict, resolver: dict[str, str],
             and credit_id not in CATEGORY_ONLY_CHECKOUT \
             and credit_id not in ANY_PURCHASE_CHECKOUT:
         return None, unresolved
+    unknown_categories = set(categories) - known_categories
+    if unknown_categories:
+        raise RuntimeError(f"Unknown purchase categories in checkout predicate: "
+                           f"{sorted(unknown_categories)}")
     predicate: dict = {}
     if categories and (merchants or channel or credit_id in CATEGORY_ONLY_CHECKOUT):
         predicate["categories"] = categories
@@ -232,7 +277,7 @@ def normalize_credit(card: dict, raw: dict, reviewed_at: str, resolver: dict[str
             enrollment["channel"] = channel
         if raw.get("enrollmentUrl"):
             enrollment["url"] = raw["enrollmentUrl"]
-        if raw.get("enrollmentChannel"):
+        if raw.get("enrollmentChannel") not in {"issuerPortal", "partnerAccount"}:
             enrollment["instructions"] = raw["enrollmentChannel"]
     out["enrollment"] = enrollment
 
@@ -242,11 +287,13 @@ def normalize_credit(card: dict, raw: dict, reviewed_at: str, resolver: dict[str
         role_values.append("primary")
     if roles.get("additional"):
         role_values.append("additional")
-    terms = " ".join(filter(None, [raw.get("directPurchaseRestrictions"), raw.get("evidence")]))
+    usage_terms = text_items(raw.get("directPurchaseRestrictions"))
+    terms = " ".join([*usage_terms, *text_items(raw.get("evidence"))])
     eligibility: dict = {}
     if role_values:
         eligibility["cardholderRoles"] = role_values
-    if re.search(r"per account|account-level|share(?:d)? the account", terms, re.I):
+    if re.search(r"per account|account-level|account cap|shar(?:e|ed)\b.{0,60}\baccount",
+                 terms, re.I):
         eligibility["accountLevelLimit"] = True
     if credit_id in ACCOUNT_LEVEL_OVERRIDES:
         eligibility["accountLevelLimit"] = True
@@ -259,8 +306,8 @@ def normalize_credit(card: dict, raw: dict, reviewed_at: str, resolver: dict[str
         eligibility["claimDeadlineDays"] = int(deadline.group(1))
     if eligibility:
         out["eligibility"] = eligibility
-    if raw.get("directPurchaseRestrictions"):
-        out["usageTerms"] = [raw["directPurchaseRestrictions"]]
+    if usage_terms:
+        out["usageTerms"] = usage_terms
     if raw.get("effectiveFrom"):
         out["effectiveFrom"] = raw["effectiveFrom"]
     if raw.get("effectiveTo"):
@@ -274,15 +321,31 @@ def normalize_credit(card: dict, raw: dict, reviewed_at: str, resolver: dict[str
 
 
 def transformed() -> tuple[dict, list[str], dict[str, int]]:
-    research = json.loads(RESEARCH.read_text(encoding="utf-8"))
+    missing = [str(path.relative_to(ROOT)) for _, path in RESEARCH_PACKS if not path.exists()]
+    if missing:
+        raise RuntimeError(f"Required recurring-credit research packs are missing: {missing}")
+    research_packs = [(name, json.loads(path.read_text(encoding="utf-8")))
+                      for name, path in RESEARCH_PACKS]
     edge = json.loads(EDGE_RESEARCH.read_text(encoding="utf-8"))
     catalogue = json.loads(CATALOGUE.read_text(encoding="utf-8"))
-    if catalogue["catalogueVersion"] not in {"2.18", "2.19"}:
-        raise RuntimeError("Repair importer is pinned to the reviewed 2.18 catalogue snapshot")
+    if catalogue["catalogueVersion"] not in {"2.19", "2.20"}:
+        raise RuntimeError("Consolidated importer is pinned to catalogue versions 2.19 and 2.20")
     edge_keys = {(claim["cardId"], claim["creditId"])
                  for claim in edge["claims"] if claim["disposition"] != "promote"}
     if not edge_keys.issubset(QUARANTINED_CREDITS):
         raise RuntimeError("Every non-promotable edge resolution must be quarantined explicitly")
+
+    us_pack = next(pack for name, pack in research_packs if name == "usRemaining")
+    us_high = {(card["cardId"], credit["creditId"])
+               for card in us_pack["cards"] for credit in card["credits"]
+               if credit["confidence"] == "high"}
+    us_reviewed = US_REMAINING_PROMOTABLE_CREDITS | {
+        key for key in QUARANTINED_CREDITS if key in us_high
+    }
+    if us_high != us_reviewed:
+        raise RuntimeError("US remaining-pack high-confidence rows changed; conduct a new "
+                           f"promotion review. Unreviewed={sorted(us_high - us_reviewed)} "
+                           f"stale={sorted(us_reviewed - us_high)}")
 
     resolver = merchant_resolver()
     taxonomy = json.loads(CATEGORY_TAXONOMY.read_text(encoding="utf-8"))
@@ -292,53 +355,67 @@ def transformed() -> tuple[dict, list[str], dict[str, int]]:
     notices: list[str] = []
     actions = {"add": 0, "update": 0, "keep": 0, "remove": 0, "block": 0}
 
-    for reviewed in research["cards"]:
-        card_id = reviewed["cardId"]
-        if card_id not in cards:
-            raise RuntimeError(f"Research references unknown cardId: {card_id}")
-        card = cards[card_id]
-        card["creditCoverage"] = {
-            "status": reviewed["creditCoverageStatus"],
-            "lastReviewedAt": reviewed["reviewedAt"],
-        }
-        existing = {credit["creditId"]: credit for credit in card.get("credits", [])}
-        for raw in reviewed["credits"]:
-            key = (card_id, raw["creditId"])
-            stable_id = STABLE_ID_ALIASES.get(key, raw["creditId"])
-            if raw["confidence"] != "high" or raw["value"].get("amount") is None:
-                if stable_id in existing and existing[stable_id].get("sourceType") == "issuerConfirmed":
-                    del existing[stable_id]
-                    actions["remove"] += 1
-                notices.append(f"BLOCK {card_id}/{raw['creditId']}: confidence={raw['confidence']}")
-                actions["block"] += 1
-                continue
-            if key in QUARANTINED_CREDITS:
-                if stable_id in existing:
-                    del existing[stable_id]
-                    actions["remove"] += 1
-                notices.append(f"BLOCK {card_id}/{raw['creditId']}: promotion review quarantine")
-                actions["block"] += 1
-                continue
-            normalized = normalize_credit(card, raw, research["reviewedAt"], resolver,
-                                          known_categories, notices)
-            if stable_id not in existing:
-                actions["add"] += 1
-            elif existing[stable_id] == normalized:
-                actions["keep"] += 1
-            else:
-                actions["update"] += 1
-            existing[stable_id] = normalized
-        if reviewed["credits"]:
-            if existing:
-                card["credits"] = list(existing.values())
-            else:
-                card.pop("credits", None)
+    seen_claims: dict[tuple[str, str], tuple[str, dict]] = {}
+    for pack_name, research in research_packs:
+        for reviewed in research["cards"]:
+            card_id = reviewed["cardId"]
+            if card_id not in cards:
+                raise RuntimeError(f"Research references unknown cardId: {card_id}")
+            card = cards[card_id]
+            card["creditCoverage"] = {
+                "status": reviewed["creditCoverageStatus"],
+                "lastReviewedAt": reviewed["reviewedAt"],
+            }
+            existing = {credit["creditId"]: credit for credit in card.get("credits", [])}
+            for raw in reviewed["credits"]:
+                claim_key = (card_id, raw["creditId"])
+                if claim_key in seen_claims and seen_claims[claim_key][1] != raw:
+                    previous_pack = seen_claims[claim_key][0]
+                    raise RuntimeError(f"Conflicting credit claim {claim_key} in "
+                                       f"{previous_pack} and {pack_name}")
+                seen_claims[claim_key] = (pack_name, raw)
+                if pack_name == "usRemaining" and raw["confidence"] == "high" \
+                        and claim_key not in US_REMAINING_PROMOTABLE_CREDITS \
+                        and claim_key not in QUARANTINED_CREDITS:
+                    raise RuntimeError(f"Unreviewed US high-confidence claim: {claim_key}")
+                key = (card_id, raw["creditId"])
+                stable_id = STABLE_ID_ALIASES.get(key, raw["creditId"])
+                if raw["confidence"] != "high" or raw["value"].get("amount") is None:
+                    if stable_id in existing \
+                            and existing[stable_id].get("sourceType") == "issuerConfirmed":
+                        del existing[stable_id]
+                        actions["remove"] += 1
+                    notices.append(f"BLOCK {card_id}/{raw['creditId']}: "
+                                   f"confidence={raw['confidence']}")
+                    actions["block"] += 1
+                    continue
+                if key in QUARANTINED_CREDITS:
+                    if stable_id in existing:
+                        del existing[stable_id]
+                        actions["remove"] += 1
+                    notices.append(f"BLOCK {card_id}/{raw['creditId']}: promotion review quarantine")
+                    actions["block"] += 1
+                    continue
+                normalized = normalize_credit(card, raw, reviewed["reviewedAt"], resolver,
+                                              known_categories, notices)
+                if stable_id not in existing:
+                    actions["add"] += 1
+                elif existing[stable_id] == normalized:
+                    actions["keep"] += 1
+                else:
+                    actions["update"] += 1
+                existing[stable_id] = normalized
+            if reviewed["credits"]:
+                if existing:
+                    card["credits"] = list(existing.values())
+                else:
+                    card.pop("credits", None)
 
     for card_id, (amount, currency) in FEE_ASSERTIONS.items():
         actual = cards[card_id]["fee"]["annual"]
         if actual != {"amount": amount, "currency": currency}:
             raise RuntimeError(f"Fee assertion failed for {card_id}: {actual}")
-    catalogue["catalogueVersion"] = "2.19"
+    catalogue["catalogueVersion"] = "2.20"
     return catalogue, notices, actions
 
 

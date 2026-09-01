@@ -1,0 +1,4022 @@
+{
+  "reviewedAt": "2026-08-31",
+  "market": "US",
+  "summary": {
+    "cardsReviewed": 74,
+    "highConfidenceCredits": 19,
+    "mediumConfidenceClaims": 33,
+    "refusedClaims": 42,
+    "coverage": {
+      "complete": 37,
+      "partial": 15,
+      "unknown": 22
+    }
+  },
+  "cards": [
+    {
+      "cardId": "alliant-credit-union-alliant-cashback-visa",
+      "officialName": "Alliant Cashback Visa® Signature Credit Card",
+      "issuer": "Alliant Credit Union",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.alliantcreditunion.org/credit-cards/visa-signature-card"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "american-express-blue-from-american-express",
+      "officialName": "Blue from American Express®",
+      "issuer": "American Express",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven. Identity: Legacy card in Amex March 2026 MR terms; no current full benefit page.",
+      "officialIssuerUrlsChecked": [
+        "https://www.americanexpress.com/content/dam/amex/us/rewards/membership-rewards/mr-terms-conditions-march-2026.pdf"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/content/dam/amex/us/rewards/membership-rewards/mr-terms-conditions-march-2026.pdf",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "productIdentityNotes": [
+        "Legacy card in Amex March 2026 MR terms; no current full benefit page."
+      ]
+    },
+    {
+      "cardId": "american-express-business-gold-card",
+      "officialName": "American Express Business Gold Card",
+      "issuer": "American Express",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established.",
+      "officialIssuerUrlsChecked": [
+        "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/64586/"
+      ],
+      "credits": [
+        {
+          "creditId": "amex-business-gold-flexible-business-credit",
+          "label": "Flexible Business Credit",
+          "value": {
+            "amount": 20,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "month",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": null,
+          "enrollmentUrl": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/64586/",
+          "eligibleMerchants": [
+            "FedEx",
+            "Grubhub"
+          ],
+          "eligibleCategories": [
+            "U.S. office supply stores"
+          ],
+          "mccs": [],
+          "country": "US",
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "FedEx purchases qualify only through 2026-10-01; Grubhub and eligible U.S. office-supply-store purchases remain separately listed by the issuer."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $20 in statement credits each month on eligible U.S. FedEx (through 2026-10-01), Grubhub, and office-supply-store purchases after enrollment.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/64586/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-business-gold-chatgpt-business-credit",
+          "label": "ChatGPT Business Credit",
+          "value": {
+            "amount": 300,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": null,
+          "enrollmentUrl": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/64586/",
+          "eligibleMerchants": [
+            "ChatGPT Business"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": "US",
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Eligible U.S. purchases of ChatGPT Business; subscription may auto-renew."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $300 in statement credits per calendar year on U.S. ChatGPT Business purchases after enrollment.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/64586/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-business-gold-squarespace-credit",
+          "label": "Squarespace Credit",
+          "value": {
+            "amount": 150,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": null,
+          "enrollmentUrl": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/64586/",
+          "eligibleMerchants": [
+            "Squarespace"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": "US",
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Eligible U.S. Squarespace purchases; subscription purchases may auto-renew."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $150 in statement credits per calendar year on U.S. Squarespace purchases after enrollment.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/64586/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-business-gold-walmart-plus-credit",
+          "label": "Walmart+ Monthly Membership Credit",
+          "value": {
+            "amount": 12.95,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "month",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": false,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "Walmart+"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": "US",
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "One monthly Walmart+ membership; Plus Ups excluded; applicable local sales tax may also be credited."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "A monthly statement credit up to $12.95 plus applicable local sales tax for one monthly Walmart+ membership paid with the Business Gold Card.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/64586/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": []
+    },
+    {
+      "cardId": "american-express-business-green-rewards-card",
+      "officialName": "Business Green Rewards Card from American Express",
+      "issuer": "American Express",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://global.americanexpress.com/card-benefits/detail/membership-rewards-program/business-green-rewards"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "American Express Venue Collection 10% back",
+          "status": "refused",
+          "reason": "Percentage rebate/discount; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://global.americanexpress.com/card-benefits/detail/membership-rewards-program/business-green-rewards",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "american-express-cash-magnet",
+      "officialName": "Amex Cash Magnet",
+      "issuer": "American Express",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [
+        "https://global.americanexpress.com/card-benefits/detail/plan-it/cash-magnet"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://global.americanexpress.com/card-benefits/detail/plan-it/cash-magnet",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "american-express-everyday-card",
+      "officialName": "American Express EveryDay® Card",
+      "issuer": "American Express",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [
+        "https://www.americanexpress.com/content/dam/amex/us/rewards/membership-rewards/mr-terms-conditions-march-2026.pdf"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/content/dam/amex/us/rewards/membership-rewards/mr-terms-conditions-march-2026.pdf",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "american-express-everyday-preferred",
+      "officialName": "Amex EveryDay Preferred Credit Card",
+      "issuer": "American Express",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [
+        "https://global.americanexpress.com/card-benefits/detail/amex-preferred-spend-bonus/amex-everyday-preferred"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://global.americanexpress.com/card-benefits/detail/amex-preferred-spend-bonus/amex-everyday-preferred",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "american-express-graphite-business-cash",
+      "officialName": "Amex Graphite Business Cash",
+      "issuer": "American Express",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established. Identity: Canonical name differs from current issuer name: Graphite™ Business Cash Unlimited Card.",
+      "officialIssuerUrlsChecked": [
+        "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/graphite-business-cash-unlimited-card/",
+        "https://www.americanexpress.com/content/dam/amex/en-us/company/legal/cardmember-agreements/public-site-adhoc-2026-03-25-graphite/graphite-business-cash-unlimited-03-25-2026.pdf"
+      ],
+      "credits": [
+        {
+          "creditId": "amex-graphite-one-ap-credit",
+          "label": "American Express One AP Statement Credit",
+          "value": {
+            "amount": 2400,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": null,
+          "enrollmentUrl": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/graphite-business-cash-unlimited-card/",
+          "eligibleMerchants": [
+            "American Express One AP"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": "US",
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Unlocks only after $250,000 of eligible purchases in a calendar year.",
+            "Credits are usable January 1 through December 31 of the following calendar year on One AP monthly fees.",
+            "Use requires active check and/or ACH payments in One AP funded by an enrolled bank account and payment of the One AP monthly bill with the eligible Graphite Card."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "After $250,000 of eligible calendar-year Card spend, up to $2,400 in statement credits is available in the following calendar year for One AP monthly fees.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/graphite-business-cash-unlimited-card/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": [],
+      "productIdentityNotes": [
+        "Canonical name differs from current issuer name: Graphite™ Business Cash Unlimited Card."
+      ]
+    },
+    {
+      "cardId": "american-express-green-card",
+      "officialName": "American Express® Green Card",
+      "issuer": "American Express",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established.",
+      "officialIssuerUrlsChecked": [
+        "https://www.americanexpress.com/en-us/travel/benefits/clear/"
+      ],
+      "credits": [
+        {
+          "creditId": "amex-green-clear-plus-credit",
+          "label": "CLEAR+ Credit",
+          "value": {
+            "amount": 219,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": "partnerAccount",
+          "enrollmentUrl": "https://www.americanexpress.com/en-us/travel/benefits/clear/",
+          "eligibleMerchants": [
+            "CLEAR+"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": true
+          },
+          "directPurchaseRestrictions": [
+            "CLEAR+ membership is subject to auto-renewal.",
+            "Electronic-wallet or third-party processing may prevent the purchase from being identified as qualifying."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "high",
+          "evidence": "Up to $219 in statement credits per calendar year for CLEAR+ Membership; Basic and Additional Card purchases are eligible but share one $219 account-level annual cap.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/en-us/travel/benefits/clear/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": []
+    },
+    {
+      "cardId": "american-express-the-business-platinum-card",
+      "officialName": "The Business Platinum Card® from American Express",
+      "issuer": "American Express",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established.",
+      "officialIssuerUrlsChecked": [
+        "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+        "https://global.americanexpress.com/card-benefits/terms/business-platinum",
+        "https://www.americanexpress.com/en-us/business/business-solutions/"
+      ],
+      "credits": [
+        {
+          "creditId": "amex-business-platinum-hotel-credit",
+          "label": "Fine Hotels + Resorts / The Hotel Collection Credit",
+          "value": {
+            "amount": 300,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "halfYear",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "lodging"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": "Amex Travel",
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Eligible prepaid bookings through Amex Travel; The Hotel Collection requires a minimum two-night stay."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $300 in statement credits semi-annually on eligible prepaid Fine Hotels + Resorts or The Hotel Collection bookings through Amex Travel.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-business-platinum-hilton-credit",
+          "label": "Hilton Statement Credit",
+          "value": {
+            "amount": 50,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "quarter",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": null,
+          "enrollmentUrl": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+          "eligibleMerchants": [
+            "Hilton"
+          ],
+          "eligibleCategories": [
+            "lodging"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Eligible purchases must be made directly with a Hilton portfolio property.",
+            "Hilton for Business membership is required; gift cards are excluded."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $50 in statement credits per quarter, up to $200 per calendar year, for eligible direct Hilton purchases after enrollment.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://global.americanexpress.com/card-benefits/terms/business-platinum",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-business-platinum-airline-fee-credit",
+          "label": "Airline Fee Credit",
+          "value": {
+            "amount": 200,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": null,
+          "enrollmentUrl": "https://www.americanexpress.com/airlinechoice",
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "airline incidental fees"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "One qualifying airline must be selected; qualifying incidental fees only."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $200 in statement credits per calendar year for eligible incidental fees charged by one selected qualifying airline.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://global.americanexpress.com/card-benefits/terms/business-platinum",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-business-platinum-clear-plus-credit",
+          "label": "CLEAR+ Credit",
+          "value": {
+            "amount": 219,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": "partnerAccount",
+          "enrollmentUrl": "https://www.americanexpress.com/en-us/travel/benefits/clear/",
+          "eligibleMerchants": [
+            "CLEAR+"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": true
+          },
+          "directPurchaseRestrictions": [
+            "CLEAR+ membership is subject to auto-renewal; taxes and fees are excluded from the stated membership-credit amount."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "high",
+          "evidence": "Up to $219 per calendar year for CLEAR+; Basic and Additional Cards can trigger credits subject to one shared account cap.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://www.americanexpress.com/en-us/travel/benefits/clear/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-business-platinum-trusted-traveler-credit",
+          "label": "Global Entry or TSA PreCheck Application Fee Credit",
+          "value": {
+            "amount": 120,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "rolling",
+            "intervalMonths": 48,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "reimbursement",
+          "partialUseAllowed": false,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "trusted traveler application fee"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Issuer states either a $120 Global Entry credit or up to $85 for TSA PreCheck through an official enrollment provider every four years."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Every four years, the Card can receive either a $120 Global Entry statement credit or up to $85 for TSA PreCheck when the eligible application fee is charged to the Card.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-business-platinum-dell-credit",
+          "label": "Dell Technologies Credit",
+          "value": {
+            "amount": 1150,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": null,
+          "enrollmentUrl": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+          "eligibleMerchants": [
+            "Dell Technologies"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": "US",
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Up to $150 on U.S. purchases directly with Dell Technologies plus an additional $1,000 after $5,000 or more of such purchases in the same calendar year."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $1,150 in calendar-year Dell statement credits: $150 base plus $1,000 after $5,000 of qualifying direct U.S. Dell spend.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-business-platinum-chatgpt-business-credit",
+          "label": "ChatGPT Business Credit",
+          "value": {
+            "amount": 300,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": null,
+          "enrollmentUrl": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+          "eligibleMerchants": [
+            "ChatGPT Business"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": "US",
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Eligible U.S. ChatGPT Business purchases; subscription may auto-renew."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $300 per calendar year in statement credits on U.S. ChatGPT Business purchases after enrollment.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-business-platinum-adobe-credit",
+          "label": "Adobe Credit",
+          "value": {
+            "amount": 250,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": false,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": null,
+          "enrollmentUrl": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+          "eligibleMerchants": [
+            "Adobe"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": "US",
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Requires at least $600 in aggregate U.S. purchases directly with Adobe during the calendar year before the $250 statement credit is earned."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "$250 statement credit per calendar year after at least $600 of direct U.S. Adobe purchases, with enrollment required.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-business-platinum-indeed-credit",
+          "label": "Indeed Credit",
+          "value": {
+            "amount": 90,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "quarter",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": null,
+          "enrollmentUrl": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+          "eligibleMerchants": [
+            "Indeed"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $90 in statement credits each quarter for Indeed purchases, up to $360 per year, after enrollment.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-business-platinum-wireless-credit",
+          "label": "Wireless Credit",
+          "value": {
+            "amount": 10,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "month",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": null,
+          "enrollmentUrl": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "wireless phone service"
+          ],
+          "mccs": [],
+          "country": "US",
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Wireless phone service must be purchased directly from a U.S. wireless telephone service provider."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $10 in statement credits per month for direct U.S. wireless telephone service purchases after enrollment.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-business-platinum-one-ap-credit",
+          "label": "American Express One AP Statement Credit",
+          "value": {
+            "amount": 2400,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "American Express One AP"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Unlocks only after $250,000 in eligible purchases in a calendar year.",
+            "Credits are usable January 1 through December 31 of the following calendar year.",
+            "One AP use requires active check and/or ACH payments funded by an enrolled bank account and payment of the One AP monthly bill with the Business Platinum Card."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "After $250,000 of eligible calendar-year Card spend, up to $2,400 of One AP statement credits is available in the following calendar year.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-business-platinum-amex-travel-flight-credit",
+          "label": "Amex Travel Online Flight Statement Credit",
+          "value": {
+            "amount": 1200,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "airfare"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": "AmexTravel.com",
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Unlocks only after $250,000 in eligible purchases in a calendar year.",
+            "Credits are usable for flights booked on AmexTravel.com from January 1 through December 31 of the following calendar year."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "After $250,000 of eligible calendar-year Card spend, up to $1,200 in statement credits for flights booked on AmexTravel.com is available in the following calendar year.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": [
+        {
+          "claim": "The Hotel Collection $100 property credit",
+          "status": "refused",
+          "reason": "Per-stay property/experience credit; not a periodic recurring credit.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://global.americanexpress.com/card-benefits/terms/business-platinum",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://www.americanexpress.com/en-us/business/business-solutions/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "claim": "35% Pay With Points airline bonus",
+          "status": "refused",
+          "reason": "Points rebate, not a fixed monetary credit; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://global.americanexpress.com/card-benefits/terms/business-platinum",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://www.americanexpress.com/en-us/business/business-solutions/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "bank-of-america-business-advantage-customized",
+      "officialName": "Bank of America® Business Advantage Customized Cash Rewards Mastercard®",
+      "issuer": "Bank of America",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://business.bankofamerica.com/en/credit-cards/business-advantage-customized-cash-rewards"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "citi-secured-mastercard",
+      "officialName": "Citi® Secured Mastercard®",
+      "issuer": "Citi",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.citi.com/credit-cards/citi-secured-credit-card"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "comenity-bread-cashback-american-express",
+      "officialName": "Bread Cashback® American Express® Credit Card",
+      "issuer": "Comenity",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [
+        "https://breadcashback.breadfinancial.com/Bread/cashback/cashback_lp_preapproved.html"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://breadcashback.breadfinancial.com/Bread/cashback/cashback_lp_preapproved.html",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "discover-it-cash-back",
+      "officialName": "Discover it® Cash Back",
+      "issuer": "Discover",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.discover.com/credit-cards/cash-back/it-card/"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "discover-it-chrome",
+      "officialName": "Discover it® Chrome",
+      "issuer": "Discover",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.discover.com/credit-cards/cash-back/chrome/"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "discover-it-chrome-gas-restaurant-credit-card",
+      "officialName": "Discover it Chrome Gas & Restaurant Credit Card",
+      "issuer": "Discover",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found. Identity: Appears to duplicate current Discover it Chrome.",
+      "officialIssuerUrlsChecked": [
+        "https://www.discover.com/credit-cards/cash-back/chrome/"
+      ],
+      "credits": [],
+      "refusals": [],
+      "productIdentityNotes": [
+        "Appears to duplicate current Discover it Chrome."
+      ]
+    },
+    {
+      "cardId": "discover-it-miles",
+      "officialName": "Discover it® Miles",
+      "issuer": "Discover",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.discover.com/credit-cards/travel/"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "discover-it-secured-credit-card",
+      "officialName": "Discover it® Secured Credit Card",
+      "issuer": "Discover",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.discover.com/credit-cards/secured-credit-card/"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "penfed-credit-union-penfed-power-cash-rewards",
+      "officialName": "PenFed Power Cash Rewards® Visa Signature® Card",
+      "issuer": "PenFed Credit Union",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.penfed.org/credit-cards/power-cash-rewards-visa"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "New-account $100 statement credit",
+          "status": "refused",
+          "reason": "Welcome/new-cardmember offer; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.penfed.org/credit-cards/power-cash-rewards-visa",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "pnc-bank-pnc-cash-rewards-visa-credit-card",
+      "officialName": "PNC Cash Rewards® Visa® Credit Card",
+      "issuer": "PNC Bank",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.pnc.com/en/personal-banking/banking/credit-cards/pnc-cash-rewards-visa-credit-card.html"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "u-s-bank-shopper-cash-rewards-visa-signature",
+      "officialName": "U.S. Bank Shopper Cash Rewards® Visa Signature® Card",
+      "issuer": "U.S. Bank",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://rewards.usbank.com/benefits/card/ShopperCashBenefits/faqs",
+        "https://rewards.usbank.com/benefits/card/ShopperCashBenefits/program-rules"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "u-s-bank-triple-cash-rewards-visa-business",
+      "officialName": "U.S. Bank Triple Cash Rewards Visa® Business Card",
+      "issuer": "U.S. Bank",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established.",
+      "officialIssuerUrlsChecked": [
+        "https://www.usbank.com/business-banking/business-credit-cards/business-triple-cash-back-credit-card.html",
+        "https://rewards.usbank.com/benefits/card/BizTripleCashVBenefits/program-rules"
+      ],
+      "credits": [
+        {
+          "creditId": "us-bank-triple-cash-software-credit",
+          "label": "Annual Software Credit",
+          "value": {
+            "amount": 100,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "twelveMonthPeriod",
+            "intervalMonths": 12,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": false,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "software services"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Requires eligible software-service purchases in 11 consecutive months during a 12-month period.",
+            "Purchases must be made directly with an eligible software-service provider; issuer rules identify eligibility by merchant category but do not publish MCC numbers in the reviewed material."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "An automatic $100 statement credit is earned per 12-month period after eligible software-service purchases in 11 consecutive months.",
+          "sources": [
+            {
+              "url": "https://rewards.usbank.com/benefits/card/BizTripleCashVBenefits/program-rules",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": []
+    },
+    {
+      "cardId": "upgrade-triple-cash-rewards-visa",
+      "officialName": "Upgrade Triple Cash Rewards Visa",
+      "issuer": "Upgrade",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.upgrade.com/help/upgrade-cards/upgrade-card/upgrade-triple-cash-rewards-card-details/",
+        "https://www.upgrade.com/help/upgrade-cards/upgrade-card/how-do-i-redeem-my-upgrade-card-rewards/"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "american-express-delta-blue",
+      "officialName": "Amex Delta Blue",
+      "issuer": "American Express",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found. Identity: Canonical short name differs from current Delta SkyMiles Blue Amex naming.",
+      "officialIssuerUrlsChecked": [
+        "https://www.americanexpress.com/en-us/account/get-started/deltablue/uncover-your-benefits"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "20% back on eligible Delta inflight purchases",
+          "status": "refused",
+          "reason": "Percentage rebate/discount; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/en-us/account/get-started/deltablue/uncover-your-benefits",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "productIdentityNotes": [
+        "Canonical short name differs from current Delta SkyMiles Blue Amex naming."
+      ]
+    },
+    {
+      "cardId": "bank-of-america-atmos-rewards-summit-visa",
+      "officialName": "Atmos Rewards Summit Visa Infinite Credit Card",
+      "issuer": "Bank of America",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [
+        "https://www.bankofamerica.com/credit-cards/",
+        "https://newsroom.bankofamerica.com/content/newsroom/press-releases/2025/08/alaska-airlines-and-bank-of-america-present-a-new-premium-credit.html"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.bankofamerica.com/credit-cards/",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://newsroom.bankofamerica.com/content/newsroom/press-releases/2025/08/alaska-airlines-and-bank-of-america-present-a-new-premium-credit.html",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "claim": "Companion fare / travel voucher benefits",
+          "status": "refused",
+          "reason": "Voucher/certificate benefit; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.bankofamerica.com/credit-cards/",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://newsroom.bankofamerica.com/content/newsroom/press-releases/2025/08/alaska-airlines-and-bank-of-america-present-a-new-premium-credit.html",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "bank-of-america-free-spirit-travel-more-world",
+      "officialName": "Free Spirit® Travel More World Elite Mastercard®",
+      "issuer": "Bank of America",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [
+        "https://www.bankofamerica.com/credit-cards/"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.bankofamerica.com/credit-cards/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "claim": "Annual companion flight voucher",
+          "status": "refused",
+          "reason": "Voucher/certificate benefit; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.bankofamerica.com/credit-cards/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "barclays-hawaiian-airlines-world-elite",
+      "officialName": "Hawaiian Airlines World Elite Mastercard®",
+      "issuer": "Barclays",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Current recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": []
+        }
+      ]
+    },
+    {
+      "cardId": "chase-aer-lingus-visa-signature-card",
+      "officialName": "Aer Lingus Visa Signature® Card",
+      "issuer": "Chase",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://creditcards.chase.com/travel-credit-cards/avios/aer-lingus"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Annual Economy Companion Ticket",
+          "status": "refused",
+          "reason": "Voucher/certificate benefit; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/travel-credit-cards/avios/aer-lingus",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "claim": "Quarterly DoorDash $10 off benefit",
+          "status": "refused",
+          "reason": "Checkout discount/promo rather than a fixed monetary account or statement credit; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/travel-credit-cards/avios/aer-lingus",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "chase-british-airways-visa-signature-card",
+      "officialName": "British Airways Visa Signature® Card",
+      "issuer": "Chase",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established.",
+      "officialIssuerUrlsChecked": [
+        "https://creditcards.chase.com/travel-credit-cards/avios/british-airways"
+      ],
+      "credits": [
+        {
+          "creditId": "chase-british-airways-reward-flight-statement-credits",
+          "label": "Reward Flight Statement Credits",
+          "value": {
+            "amount": 600,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "British Airways reward flight taxes and fees"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Eligible British Airways Reward Flights must be transatlantic international itineraries originating in the United States and operated by British Airways.",
+            "Per eligible booking, issuer advertises $100 for Economy/Premium Economy or $200 for Business/First, with up to three individual credits per calendar year and a $600 annual maximum."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $600 per calendar year in Reward Flight statement credits, subject to cabin-specific per-booking amounts and a maximum of three credits.",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/travel-credit-cards/avios/british-airways",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": []
+    },
+    {
+      "cardId": "chase-disney-inspire-visa-card",
+      "officialName": "Disney Inspire Visa Card",
+      "issuer": "Chase",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://creditcards.chase.com/rewards-credit-cards/disney"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "New-cardmember Disney statement credit / bonus",
+          "status": "refused",
+          "reason": "Welcome/new-cardmember offer; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/rewards-credit-cards/disney",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "chase-disney-premier-visa",
+      "officialName": "Disney Premier Visa",
+      "issuer": "Chase",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://creditcards.chase.com/rewards-credit-cards/disney/premier"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "New-cardmember Disney statement credit / bonus",
+          "status": "refused",
+          "reason": "Welcome/new-cardmember offer; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/rewards-credit-cards/disney/premier",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "chase-disney-visa-card",
+      "officialName": "Chase Disney Visa Card",
+      "issuer": "Chase",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://creditcards.chase.com/rewards-credit-cards/disney"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "New-cardmember Disney statement credit / bonus",
+          "status": "refused",
+          "reason": "Welcome/new-cardmember offer; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/rewards-credit-cards/disney",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "citi-aadvantage-business-world-elite",
+      "officialName": "Citi / AAdvantage Business World Elite Mastercard",
+      "issuer": "Citi",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.citi.com/credit-cards/citi-aadvantage-business-credit-card"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Companion Certificate",
+          "status": "refused",
+          "reason": "Voucher/certificate benefit; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.citi.com/credit-cards/citi-aadvantage-business-credit-card",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "citi-aadvantage-executive-world-elite",
+      "officialName": "Citi® / AAdvantage® Executive World Elite Mastercard®",
+      "issuer": "Citi",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established. Identity: Current Citi page is Executive World Legend Mastercard; canonical says World Elite.",
+      "officialIssuerUrlsChecked": [
+        "https://www.citi.com/credit-cards/citi-aadvantage-executive-credit-card/"
+      ],
+      "credits": [
+        {
+          "creditId": "citi-aadvantage-executive-aa-vacations-credit",
+          "label": "American Airlines Vacations Credit",
+          "value": {
+            "amount": 250,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "halfYear",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "American Airlines Vacations"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": "aavacations.com",
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $250 in statement credits January-June and another $250 July-December for eligible American Airlines Vacations purchases.",
+          "sources": [
+            {
+              "url": "https://www.citi.com/credit-cards/citi-aadvantage-executive-credit-card/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "citi-aadvantage-executive-lyft-credit",
+          "label": "Lyft Credit",
+          "value": {
+            "amount": 15,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "month",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "accountCredit",
+          "partialUseAllowed": false,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "Lyft"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "The $15 Lyft credit is earned only after three eligible Lyft rides in the same calendar month."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "$15 in Lyft credit after three eligible rides in a calendar month, up to $180 annually.",
+          "sources": [
+            {
+              "url": "https://www.citi.com/credit-cards/citi-aadvantage-executive-credit-card/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "citi-aadvantage-executive-avis-budget-credit",
+          "label": "Avis/Budget Credit",
+          "value": {
+            "amount": 120,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "Avis",
+            "Budget"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Eligible prepaid car rentals purchased directly with Avis or Budget under issuer terms."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $120 in statement credits per calendar year for eligible prepaid Avis and Budget rentals.",
+          "sources": [
+            {
+              "url": "https://www.citi.com/credit-cards/citi-aadvantage-executive-credit-card/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "citi-aadvantage-executive-trusted-traveler-credit",
+          "label": "Global Entry or TSA PreCheck Credit",
+          "value": {
+            "amount": 120,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "rolling",
+            "intervalMonths": 48,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "reimbursement",
+          "partialUseAllowed": false,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "trusted traveler application fee"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $120 in statement-credit reimbursement for an eligible Global Entry or TSA PreCheck application fee once every four years.",
+          "sources": [
+            {
+              "url": "https://www.citi.com/credit-cards/citi-aadvantage-executive-credit-card/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "citi-aadvantage-executive-inflight-admirals-credit",
+          "label": "American Airlines Inflight and Admirals Club Credit",
+          "value": {
+            "amount": 100,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "American Airlines",
+            "Admirals Club"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Eligible American Airlines inflight and Admirals Club purchases only."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $100 in statement credits per calendar year for eligible American Airlines inflight and Admirals Club purchases.",
+          "sources": [
+            {
+              "url": "https://www.citi.com/credit-cards/citi-aadvantage-executive-credit-card/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": [
+        {
+          "claim": "Omni free-night benefit",
+          "status": "refused",
+          "reason": "Free-night award/certificate; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.citi.com/credit-cards/citi-aadvantage-executive-credit-card/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "productIdentityNotes": [
+        "Current Citi page is Executive World Legend Mastercard; canonical says World Elite."
+      ]
+    },
+    {
+      "cardId": "citi-aadvantage-globe-mastercard",
+      "officialName": "Citi® / AAdvantage® Globe™ Mastercard®",
+      "issuer": "Citi",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established.",
+      "officialIssuerUrlsChecked": [
+        "https://www.citi.com/credit-cards/citi-aadvantage-globe-mastercard",
+        "https://www.citi.com/credit-cards/credit-card-miles/citi-aadvantage-globe-mastercard-benefits"
+      ],
+      "credits": [
+        {
+          "creditId": "citi-aadvantage-globe-turo-credit",
+          "label": "Turo Credit",
+          "value": {
+            "amount": 240,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": "partnerAccount",
+          "enrollmentUrl": "https://turo.com/Globe",
+          "eligibleMerchants": [
+            "Turo"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Card must be linked to the Turo account; up to $30 statement credit per eligible trip, capped at $240 annually."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $30 per eligible Turo trip and up to $240 in statement credits annually after linking the card to Turo.",
+          "sources": [
+            {
+              "url": "https://www.citi.com/credit-cards/credit-card-miles/citi-aadvantage-globe-mastercard-benefits",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "citi-aadvantage-globe-inflight-credit",
+          "label": "American Airlines Inflight Credit",
+          "value": {
+            "amount": 100,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "American Airlines"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Eligible American Airlines inflight purchases only."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $100 in statement credits each calendar year on eligible American Airlines inflight purchases.",
+          "sources": [
+            {
+              "url": "https://www.citi.com/credit-cards/credit-card-miles/citi-aadvantage-globe-mastercard-benefits",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "citi-aadvantage-globe-splurge-credit",
+          "label": "Annual Splurge Credit",
+          "value": {
+            "amount": 100,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "1stDibs",
+            "AAdvantage Hotels",
+            "Future Personal Training",
+            "Live Nation"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Cardmember selects up to two issuer-listed Splurge Credit merchants; current listed choices are 1stDibs, eligible AAdvantage Hotels purchases, Future Personal Training, and Live Nation."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $100 in statement credits per calendar year across up to two selected Splurge Credit merchants.",
+          "sources": [
+            {
+              "url": "https://www.citi.com/credit-cards/credit-card-miles/citi-aadvantage-globe-mastercard-benefits",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "citi-aadvantage-globe-trusted-traveler-credit",
+          "label": "Global Entry or TSA PreCheck Credit",
+          "value": {
+            "amount": 120,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "rolling",
+            "intervalMonths": 48,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "reimbursement",
+          "partialUseAllowed": false,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "trusted traveler application fee"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $120 in statement-credit reimbursement once every four years for an eligible Global Entry or TSA PreCheck application fee.",
+          "sources": [
+            {
+              "url": "https://www.citi.com/credit-cards/credit-card-miles/citi-aadvantage-globe-mastercard-benefits",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": []
+    },
+    {
+      "cardId": "synchrony-cathay-world-elite-mastercard",
+      "officialName": "Cathay World Elite Mastercard",
+      "issuer": "Synchrony",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.synchrony.com/financing/credit-cards",
+        "https://www.synchrony.com/partner/cathay"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "american-express-delta-skymiles-gold-business",
+      "officialName": "Delta SkyMiles® Gold Business American Express Card",
+      "issuer": "American Express",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established.",
+      "officialIssuerUrlsChecked": [
+        "https://www.americanexpress.com/en-us/business/credit-cards/delta-skymiles-gold/",
+        "https://global.americanexpress.com/card-benefits/detail/delta-stays-credit/gold-delta-skymiles"
+      ],
+      "credits": [
+        {
+          "creditId": "amex-delta-gold-business-rideshare-credit",
+          "label": "Rideshare Credit",
+          "value": {
+            "amount": 10,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "month",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "rideshare"
+          ],
+          "mccs": [],
+          "country": "US",
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Available after the first Card renewal; qualifying U.S. rideshare purchases only."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "After the first renewal, up to $10 in statement credits per month on eligible U.S. rideshare purchases after enrollment.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/en-us/business/credit-cards/delta-skymiles-gold/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-delta-gold-business-delta-stays-credit",
+          "label": "Delta Stays Credit",
+          "value": {
+            "amount": 150,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "Delta Stays"
+          ],
+          "eligibleCategories": [
+            "lodging"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": "delta.com/stays",
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": true
+          },
+          "directPurchaseRestrictions": [
+            "Eligible prepaid hotel or vacation-rental bookings through Delta Stays on delta.com/stays."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "high",
+          "evidence": "Up to $150 in statement credits per calendar year for eligible prepaid Delta Stays bookings; Basic and eligible additional/employee Card purchases share the account cap.",
+          "sources": [
+            {
+              "url": "https://global.americanexpress.com/card-benefits/detail/delta-stays-credit/gold-delta-skymiles",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": []
+    },
+    {
+      "cardId": "american-express-delta-skymiles-platinum",
+      "officialName": "Delta SkyMiles® Platinum American Express Card",
+      "issuer": "American Express",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established.",
+      "officialIssuerUrlsChecked": [
+        "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-platinum-american-express-card/",
+        "https://global.americanexpress.com/card-benefits/detail/delta-stays-credit/delta-platinum"
+      ],
+      "credits": [
+        {
+          "creditId": "amex-delta-platinum-rideshare-credit",
+          "label": "Rideshare Credit",
+          "value": {
+            "amount": 10,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "month",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "rideshare"
+          ],
+          "mccs": [],
+          "country": "US",
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $10 in statement credits per month on qualifying U.S. rideshare purchases after enrollment.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-platinum-american-express-card/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-delta-platinum-resy-credit",
+          "label": "Resy Credit",
+          "value": {
+            "amount": 10,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "month",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "Resy restaurants"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": "US",
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $10 in statement credits per month for qualifying purchases at eligible U.S. Resy restaurants after enrollment.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-platinum-american-express-card/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-delta-platinum-delta-stays-credit",
+          "label": "Delta Stays Credit",
+          "value": {
+            "amount": 150,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "Delta Stays"
+          ],
+          "eligibleCategories": [
+            "lodging"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": "delta.com/stays",
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": true
+          },
+          "directPurchaseRestrictions": [
+            "Eligible prepaid hotel or vacation-rental bookings through Delta Stays on delta.com/stays."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "high",
+          "evidence": "Up to $150 in statement credits per calendar year for eligible prepaid Delta Stays bookings, shared across eligible Cards on the account.",
+          "sources": [
+            {
+              "url": "https://global.americanexpress.com/card-benefits/detail/delta-stays-credit/delta-platinum",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": []
+    },
+    {
+      "cardId": "american-express-hilton-honors",
+      "officialName": "Hilton Honors American Express Aspire Card",
+      "issuer": "American Express",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established. Identity: cardId implies generic Hilton Honors; canonical/issuer product is Hilton Honors Aspire.",
+      "officialIssuerUrlsChecked": [
+        "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/",
+        "https://www.americanexpress.com/en-us/travel/benefits/clear/",
+        "https://global.americanexpress.com/card-benefits/terms/hilton-aspire"
+      ],
+      "credits": [
+        {
+          "creditId": "amex-hilton-aspire-resort-credit",
+          "label": "Hilton Resort Credit",
+          "value": {
+            "amount": 200,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "halfYear",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "participating Hilton Resorts"
+          ],
+          "eligibleCategories": [
+            "lodging"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Eligible purchases must be made directly with participating Hilton Resorts under issuer terms."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $200 in statement credits January-June and another $200 July-December for eligible direct purchases at participating Hilton Resorts.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://global.americanexpress.com/card-benefits/terms/hilton-aspire",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-hilton-aspire-flight-credit",
+          "label": "Flight Credit",
+          "value": {
+            "amount": 50,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "quarter",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "airfare"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Eligible flight purchases must be made directly with an airline or through the issuer-listed Amex Travel channels."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "Up to $50 in statement credits per quarter, up to $200 per calendar year, for eligible flight purchases.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://global.americanexpress.com/card-benefits/terms/hilton-aspire",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "amex-hilton-aspire-clear-plus-credit",
+          "label": "CLEAR+ Credit",
+          "value": {
+            "amount": 219,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentChannel": "partnerAccount",
+          "enrollmentUrl": "https://www.americanexpress.com/en-us/travel/benefits/clear/",
+          "eligibleMerchants": [
+            "CLEAR+"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": true
+          },
+          "directPurchaseRestrictions": [
+            "CLEAR+ membership is subject to auto-renewal."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "high",
+          "evidence": "Up to $219 per calendar year for CLEAR+; Basic and Additional Cards can trigger credits subject to one shared account cap.",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/en-us/travel/benefits/clear/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": [],
+      "productIdentityNotes": [
+        "cardId implies generic Hilton Honors; canonical/issuer product is Hilton Honors Aspire."
+      ]
+    },
+    {
+      "cardId": "bank-of-america-alaska-airlines-atmos-ascent",
+      "officialName": "Alaska Airlines Atmos™ Ascent Visa Signature® Card",
+      "issuer": "Bank of America",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [
+        "https://www.bankofamerica.com/credit-cards/"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.bankofamerica.com/credit-cards/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "claim": "Companion fare / travel voucher benefits",
+          "status": "refused",
+          "reason": "Voucher/certificate benefit; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.bankofamerica.com/credit-cards/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "bank-of-america-atmos-rewards-visa-signature",
+      "officialName": "Atmos™ Rewards Visa Signature® Business Credit Card",
+      "issuer": "Bank of America",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found. Identity: cardId omits that this is the Business Credit Card.",
+      "officialIssuerUrlsChecked": [
+        "https://business.bankofamerica.com/en/credit-cards/atmos-rewards"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Alaska Lounge+ membership discount",
+          "status": "refused",
+          "reason": "Merchant discount, not fixed monetary reimbursement; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://business.bankofamerica.com/en/credit-cards/atmos-rewards",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "productIdentityNotes": [
+        "cardId omits that this is the Business Credit Card."
+      ]
+    },
+    {
+      "cardId": "bank-of-america-bankamericard-credit-card",
+      "officialName": "BankAmericard® Credit Card",
+      "issuer": "Bank of America",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.bankofamerica.com/credit-cards/products/bankamericard-credit-card/",
+        "https://www.bankofamerica.com/credit-cards/"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "bank-of-america-bankamericard-credit-card-2",
+      "officialName": "BankAmericard® Credit Card for Students",
+      "issuer": "Bank of America",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [
+        "https://www.bankofamerica.com/credit-cards/"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.bankofamerica.com/credit-cards/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "bank-of-america-bankamericard-secured",
+      "officialName": "BankAmericard® Secured Credit Card",
+      "issuer": "Bank of America",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.bankofamerica.com/credit-cards/products/secured-credit-card/",
+        "https://www.bankofamerica.com/credit-cards/"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "barclays-emirates-skywards-premium-world",
+      "officialName": "Emirates Skywards Premium World Elite Mastercard®",
+      "issuer": "Barclays",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Current recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": []
+        }
+      ]
+    },
+    {
+      "cardId": "barclays-frontier-airlines-world-mastercard",
+      "officialName": "Frontier Airlines World Mastercard®",
+      "issuer": "Barclays",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Current recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": []
+        }
+      ]
+    },
+    {
+      "cardId": "bmo-bank-n-a-bmo-cash-back-credit-card",
+      "officialName": "BMO Cash Back Credit Card",
+      "issuer": "BMO Bank N.A.",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.bmo.com/en-us/main/personal/credit-cards/bmo-cash-back-credit-card/"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "New-cardmember cash bonus",
+          "status": "refused",
+          "reason": "Welcome/new-cardmember offer; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.bmo.com/en-us/main/personal/credit-cards/bmo-cash-back-credit-card/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "capital-one-platinum-from-capital-one",
+      "officialName": "Platinum from Capital One",
+      "issuer": "Capital One",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found. Identity: Canonical short name differs from current Capital One Platinum naming.",
+      "officialIssuerUrlsChecked": [
+        "https://www.capitalone.com/credit-cards/platinum/"
+      ],
+      "credits": [],
+      "refusals": [],
+      "productIdentityNotes": [
+        "Canonical short name differs from current Capital One Platinum naming."
+      ]
+    },
+    {
+      "cardId": "capital-one-platinum-secured-credit-card",
+      "officialName": "Platinum Secured Credit Card from Capital One",
+      "issuer": "Capital One",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.capitalone.com/credit-cards/platinum-secured/"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "capital-one-savor-rewards-for-students",
+      "officialName": "Savor Rewards for Students",
+      "issuer": "Capital One",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.capitalone.com/credit-cards/students/",
+        "https://www.capitalone.com/credit-cards/cash-back/savor/"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Limited-time $100 cash bonus",
+          "status": "refused",
+          "reason": "Welcome/new-cardmember offer; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.capitalone.com/credit-cards/students/",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://www.capitalone.com/credit-cards/cash-back/savor/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "chase-aeroplan-card",
+      "officialName": "Aeroplan Card",
+      "issuer": "Chase",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established.",
+      "officialIssuerUrlsChecked": [
+        "https://creditcards.chase.com/travel-credit-cards/aircanada/aeroplan",
+        "https://creditcards.chase.com/aeroplan/benefits"
+      ],
+      "credits": [
+        {
+          "creditId": "chase-aeroplan-trusted-traveler-credit",
+          "label": "Global Entry, TSA PreCheck, or NEXUS Credit",
+          "value": {
+            "amount": 120,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "rolling",
+            "intervalMonths": 48,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "reimbursement",
+          "partialUseAllowed": false,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "trusted traveler application fee"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": true
+          },
+          "directPurchaseRestrictions": [
+            "Eligible application fee must be charged to the account; issuer terms allow a qualifying primary-cardmember or authorized-user charge subject to the account-level four-year limit."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "high",
+          "evidence": "Up to $120 as a statement-credit reimbursement once every four years for an eligible Global Entry, TSA PreCheck, or NEXUS application fee.",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/travel-credit-cards/aircanada/aeroplan",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": []
+    },
+    {
+      "cardId": "chase-freedom-rise-credit-card",
+      "officialName": "Chase Freedom Rise® Credit Card",
+      "issuer": "Chase",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://creditcards.chase.com/cash-back-credit-cards/freedom/rise"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "chase-sapphire-reserve-for-business",
+      "officialName": "Sapphire Reserve for Business℠ Credit Card",
+      "issuer": "Chase",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established.",
+      "officialIssuerUrlsChecked": [
+        "https://creditcards.chase.com/business-credit-cards/sapphire/reserve"
+      ],
+      "credits": [
+        {
+          "creditId": "sapphire-reserve-business-travel-credit",
+          "label": "Annual Travel Credit",
+          "value": {
+            "amount": 300,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "accountAnniversary",
+            "intervalMonths": 12,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "travel"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": true
+          },
+          "directPurchaseRestrictions": [
+            "Automatic statement credits on issuer-defined eligible travel during the account anniversary year; account-level cap."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "high",
+          "evidence": "Up to $300 in automatic travel statement credits each account-anniversary year; qualifying charges by the authorizing officer or authorized users can count.",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "sapphire-reserve-business-select-hotels-credit",
+          "label": "Select Chase Travel Hotels Credit",
+          "value": {
+            "amount": 250,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "lodging"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": "Chase Travel",
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": false
+          },
+          "directPurchaseRestrictions": [
+            "2026-only benefit; prepaid Pay Now stay of at least two nights at issuer-listed select hotel groups through Chase Travel."
+          ],
+          "effectiveFrom": "2026-01-01",
+          "effectiveTo": "2026-12-31",
+          "confidence": "high",
+          "evidence": "Up to $250 during calendar 2026 for qualifying prepaid two-night-or-longer stays at selected hotel groups through Chase Travel; employee/authorized-user Cards are not eligible for this credit.",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "sapphire-reserve-business-the-edit-credit",
+          "label": "The Edit Hotel Credit",
+          "value": {
+            "amount": 500,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "lodging"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": "Chase Travel",
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": false
+          },
+          "directPurchaseRestrictions": [
+            "Prepaid Pay Now The Edit booking through Chase Travel; minimum two nights; no more than $250 credit per qualifying transaction."
+          ],
+          "effectiveFrom": "2026-01-01",
+          "effectiveTo": null,
+          "confidence": "high",
+          "evidence": "Up to $500 per calendar year, capped at $250 per qualifying prepaid two-night-or-longer The Edit booking; benefit is for the authorizing officer.",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "sapphire-reserve-business-trusted-traveler-credit",
+          "label": "Global Entry, TSA PreCheck, or NEXUS Credit",
+          "value": {
+            "amount": 120,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "rolling",
+            "intervalMonths": 48,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "reimbursement",
+          "partialUseAllowed": false,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "trusted traveler application fee"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": true
+          },
+          "directPurchaseRestrictions": [
+            "First eligible program application fee charged to the account during each four-year benefit period; direct qualifying government/enrollment-provider charges only."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "high",
+          "evidence": "Up to $120 as a statement-credit reimbursement once every four years for an eligible Global Entry, TSA PreCheck, or NEXUS application fee.",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "sapphire-reserve-business-google-workspace-credit",
+          "label": "Google Workspace Credit",
+          "value": {
+            "amount": 200,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "Google Workspace"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": true
+          },
+          "directPurchaseRestrictions": [
+            "Eligible direct Google Workspace purchases under Chase terms."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": "2027-12-31",
+          "confidence": "high",
+          "evidence": "Up to $200 in statement credits per calendar year for qualifying Google Workspace purchases through 2027-12-31.",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "sapphire-reserve-business-ziprecruiter-credit",
+          "label": "ZipRecruiter Credit",
+          "value": {
+            "amount": 200,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "halfYear",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "ZipRecruiter"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": true
+          },
+          "directPurchaseRestrictions": [
+            "Eligible direct ZipRecruiter purchases; separate $200 January-June and $200 July-December caps."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": "2027-12-31",
+          "confidence": "high",
+          "evidence": "Up to $200 in statement credits in each calendar half-year for qualifying direct ZipRecruiter purchases through 2027-12-31.",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "sapphire-reserve-business-lyft-credit",
+          "label": "Lyft Monthly Credit",
+          "value": {
+            "amount": 10,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "month",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "accountCredit",
+          "partialUseAllowed": false,
+          "minimumTransaction": null,
+          "enrollmentRequired": true,
+          "enrollmentUrl": "https://www.lyft.com/",
+          "eligibleMerchants": [
+            "Lyft"
+          ],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": true
+          },
+          "directPurchaseRestrictions": [
+            "The first eligible account user who adds the card to Lyft receives the account's monthly credit; qualifying ride types and issuer exclusions apply."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": "2027-09-30",
+          "confidence": "high",
+          "evidence": "$10 Lyft in-app credit each calendar month through 2027-09-30 after an eligible Reserve for Business card is added to Lyft.",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
+              "reviewedAt": "2026-08-31"
+            }
+          ],
+          "enrollmentChannel": "partnerAccount"
+        },
+        {
+          "creditId": "sapphire-reserve-business-gift-card-credit",
+          "label": "Curated Gift Card Credit",
+          "value": {
+            "amount": 50,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "halfYear",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "eligible gift cards"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": "giftcards.com/reservebusiness",
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": true
+          },
+          "directPurchaseRestrictions": [
+            "Eligible purchases must be made through the issuer-designated curated gift-card storefront."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": "2028-10-31",
+          "confidence": "high",
+          "evidence": "Up to $50 in statement credits January-June and another $50 July-December for eligible curated gift-card purchases through 2028-10-31.",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "sapphire-reserve-business-shops-at-chase-credit",
+          "label": "The Shops at Chase Spend-Unlocked Credit",
+          "value": {
+            "amount": 500,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [],
+          "mccs": [],
+          "country": null,
+          "channel": "The Shops at Chase",
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": false
+          },
+          "directPurchaseRestrictions": [
+            "Unlocks after $120,000 in qualifying calendar-year purchases on the account.",
+            "Once earned, available for the remainder of the qualifying year and the following calendar year; authorizing officer receives the benefit."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "high",
+          "evidence": "After $120,000 in qualifying annual account spend, the authorizing officer unlocks up to $500 in statement credits for The Shops at Chase, usable through the following calendar year.",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "sapphire-reserve-business-southwest-chase-travel-credit",
+          "label": "Southwest via Chase Travel Spend-Unlocked Credit",
+          "value": {
+            "amount": 500,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "calendar",
+            "unit": "year",
+            "interval": 1,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [
+            "Southwest Airlines"
+          ],
+          "eligibleCategories": [
+            "airfare"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": "Chase Travel",
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": false
+          },
+          "directPurchaseRestrictions": [
+            "Unlocks after $120,000 in qualifying calendar-year purchases on the account.",
+            "Eligible Southwest Airlines purchases must be booked through Chase Travel; authorizing officer receives the benefit.",
+            "Once earned, available for the remainder of the qualifying year and the following calendar year."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "high",
+          "evidence": "After $120,000 in qualifying annual account spend, the authorizing officer unlocks up to $500 in statement credits on eligible Southwest bookings through Chase Travel, usable through the following calendar year.",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/business-credit-cards/sapphire/reserve",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": []
+    },
+    {
+      "cardId": "wells-fargo-choice-privileges-mastercard",
+      "officialName": "Choice Privileges Mastercard",
+      "issuer": "Wells Fargo",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [
+        "https://www.wellsfargo.com/credit-cards/agreements/choice-agreement/"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.wellsfargo.com/credit-cards/agreements/choice-agreement/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "american-express-marriott-bonvoy-bevy",
+      "officialName": "Marriott Bonvoy Bevy American Express Card",
+      "issuer": "American Express",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-bevy/"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Free Night Award after annual spend",
+          "status": "refused",
+          "reason": "Free-night award/certificate; out of scope.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-bevy/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "chase-ink-business-cash-credit-card",
+      "officialName": "Ink Business Unlimited® Credit Card",
+      "issuer": "Chase",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven. Identity: cardId says Ink Business Cash; canonical name says Ink Business Unlimited.",
+      "officialIssuerUrlsChecked": [
+        "https://creditcards.chase.com/ink-business-credit-cards/customers"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/ink-business-credit-cards/customers",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "productIdentityNotes": [
+        "cardId says Ink Business Cash; canonical name says Ink Business Unlimited."
+      ]
+    },
+    {
+      "cardId": "chase-slate-credit-card",
+      "officialName": "Slate® Credit Card",
+      "issuer": "Chase",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": []
+        }
+      ]
+    },
+    {
+      "cardId": "chase-slate-edge-credit-card",
+      "officialName": "Slate Edge® Credit Card",
+      "issuer": "Chase",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://creditcards.chase.com/credit-building-credit-cards/slate/edge"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "citi-costco-anywhere-business",
+      "officialName": "Costco Anywhere Visa Card by Citi",
+      "issuer": "Citi",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven. Identity: cardId says business; canonical name is consumer Costco Anywhere Visa.",
+      "officialIssuerUrlsChecked": [
+        "https://www.citi.com/credit-cards/costco-anywhere-visa-card"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.citi.com/credit-cards/costco-anywhere-visa-card",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "productIdentityNotes": [
+        "cardId says business; canonical name is consumer Costco Anywhere Visa."
+      ]
+    },
+    {
+      "cardId": "citi-diamond-preferred-credit-card",
+      "officialName": "Citi® Diamond Preferred® Credit Card",
+      "issuer": "Citi",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.citi.com/credit-cards/citi-diamond-preferred-credit-card"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "column-n-a-bilt-blue-card",
+      "officialName": "Bilt Blue Card",
+      "issuer": "Column N.A.",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Current recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.bilt.com/card/blue",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "nonIssuerOfficialUrlsReviewed": [
+        {
+          "url": "https://www.bilt.com/card/blue",
+          "reviewedAt": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "cardId": "column-n-a-bilt-obsidian-card",
+      "officialName": "Bilt Obsidian Card",
+      "issuer": "Column N.A.",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Current recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.bilt.com/card/obsidian",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://www.bilt.com/terms/bilt-card-offer-terms",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "nonIssuerOfficialUrlsReviewed": [
+        {
+          "url": "https://www.bilt.com/card/obsidian",
+          "reviewedAt": "2026-08-31"
+        },
+        {
+          "url": "https://www.bilt.com/terms/bilt-card-offer-terms",
+          "reviewedAt": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "cardId": "column-n-a-bilt-palladium-card",
+      "officialName": "Bilt Palladium Card",
+      "issuer": "Column N.A.",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Current recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.bilt.com/card/palladium",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://www.bilt.com/terms/bilt-card-offer-terms",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "nonIssuerOfficialUrlsReviewed": [
+        {
+          "url": "https://www.bilt.com/card/palladium",
+          "reviewedAt": "2026-08-31"
+        },
+        {
+          "url": "https://www.bilt.com/terms/bilt-card-offer-terms",
+          "reviewedAt": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "cardId": "fnbo-evergreen-credit-card",
+      "officialName": "Evergreen® Credit Card",
+      "issuer": "FNBO",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.fnbo.com/personal-banking/credit-cards/evergreen"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "fnbo-getaway-credit-card",
+      "officialName": "Getaway• Credit Card",
+      "issuer": "FNBO",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.fnbo.com/personal-banking/credit-cards/getaway"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "fnbo-greenselect-credit-card",
+      "officialName": "GreenSelect™ Credit Card",
+      "issuer": "FNBO",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.fnbo.com/personal-banking/credit-cards/greenselect"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "goldman-sachs-apple-card",
+      "officialName": "Apple Card",
+      "issuer": "Goldman Sachs",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven.",
+      "officialIssuerUrlsChecked": [],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Current recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.apple.com/apple-card/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "nonIssuerOfficialUrlsReviewed": [
+        {
+          "url": "https://www.apple.com/apple-card/",
+          "reviewedAt": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "cardId": "wells-fargo-active-cash-business",
+      "officialName": "Wells Fargo Active Cash Visa Card",
+      "issuer": "Wells Fargo",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven. Identity: cardId says business; canonical name is consumer Active Cash Visa.",
+      "officialIssuerUrlsChecked": [
+        "https://www.wellsfargo.com/credit-cards/active-cash/guide-to-benefits/"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.wellsfargo.com/credit-cards/active-cash/guide-to-benefits/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "productIdentityNotes": [
+        "cardId says business; canonical name is consumer Active Cash Visa."
+      ]
+    },
+    {
+      "cardId": "wells-fargo-autograph-journey",
+      "officialName": "Wells Fargo Autograph Journey Visa Signature Card",
+      "issuer": "Wells Fargo",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established.",
+      "officialIssuerUrlsChecked": [
+        "https://creditcards.wellsfargo.com/autograph-journey-visa-credit-card/"
+      ],
+      "credits": [
+        {
+          "creditId": "wells-fargo-autograph-journey-airline-credit",
+          "label": "Annual Airline Credit",
+          "value": {
+            "amount": 50,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "annualCreditPeriod",
+            "intervalMonths": 12,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": false,
+          "minimumTransaction": {
+            "amount": 50,
+            "currency": "USD"
+          },
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "airlines / air carriers"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": null
+          },
+          "directPurchaseRestrictions": [
+            "Triggered by the first eligible airline purchase of at least $50 in the annual credit period.",
+            "First annual credit period begins at account opening; subsequent periods begin on the first day of the month after the annual fee is assessed and run 12 months."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "medium",
+          "evidence": "$50 statement credit once per annual credit period after the first qualifying airline purchase of at least $50.",
+          "sources": [
+            {
+              "url": "https://creditcards.wellsfargo.com/autograph-journey-visa-credit-card/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": []
+    },
+    {
+      "cardId": "wells-fargo-reflect",
+      "officialName": "Wells Fargo Reflect Visa Card",
+      "issuer": "Wells Fargo",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.wellsfargo.com/credit-cards/reflect-visa/guide-to-benefits/"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "chase-prime-visa-and-amazon-visa",
+      "officialName": "Prime Visa and Amazon Visa",
+      "issuer": "Chase",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "unknown",
+      "reviewNotes": "Insufficient current issuer evidence; absence of credits is not proven. Identity: One row combines distinct Prime Visa and Amazon Visa products.",
+      "officialIssuerUrlsChecked": [
+        "https://creditcards.chase.com/all-credit-cards"
+      ],
+      "credits": [],
+      "refusals": [
+        {
+          "claim": "Complete recurring-credit coverage",
+          "status": "refused",
+          "reason": "Insufficient current issuer-hosted evidence to establish complete recurring-credit coverage.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://creditcards.chase.com/all-credit-cards",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "productIdentityNotes": [
+        "One row combines distinct Prime Visa and Amazon Visa products."
+      ]
+    },
+    {
+      "cardId": "capital-one-venture-business",
+      "officialName": "Venture Business Credit Card",
+      "issuer": "Capital One",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "partial",
+      "reviewNotes": "Verified credits are listed; completeness is not established.",
+      "officialIssuerUrlsChecked": [
+        "https://www.capitalone.com/small-business/credit-cards/venture-business/",
+        "https://www.capitalone.com/help-center/credit-cards/tsa-precheck-global-entry-benefits/"
+      ],
+      "credits": [
+        {
+          "creditId": "capital-one-venture-business-travel-credit",
+          "label": "Capital One Business Travel Credit",
+          "value": {
+            "amount": 50,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "accountAnniversary",
+            "intervalMonths": 12,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "travel"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": "Capital One Business Travel",
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": false
+          },
+          "directPurchaseRestrictions": [
+            "Eligible bookings through Capital One Business Travel; unused credit expires at the next account-open anniversary."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "high",
+          "evidence": "Primary account holder receives up to $50 in annual credit for eligible bookings through Capital One Business Travel, expiring at the next account anniversary.",
+          "sources": [
+            {
+              "url": "https://www.capitalone.com/small-business/credit-cards/venture-business/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "capital-one-venture-business-advertising-software-credit",
+          "label": "Advertising or Software Credit",
+          "value": {
+            "amount": 50,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "accountAnniversary",
+            "intervalMonths": 12,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "statementCredit",
+          "partialUseAllowed": true,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "advertising",
+            "software"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": false
+          },
+          "directPurchaseRestrictions": [
+            "Issuer determines qualifying advertising/software merchants by merchant category; no MCC numbers were published in the reviewed source.",
+            "Unused credit expires at the next account-open anniversary."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "high",
+          "evidence": "Up to $50 in annual statement credits for qualifying advertising or software merchants, with unused value expiring at the account anniversary.",
+          "sources": [
+            {
+              "url": "https://www.capitalone.com/small-business/credit-cards/venture-business/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        },
+        {
+          "creditId": "capital-one-venture-business-trusted-traveler-credit",
+          "label": "Global Entry or TSA PreCheck Credit",
+          "value": {
+            "amount": 120,
+            "currency": "USD"
+          },
+          "schedule": {
+            "basis": "rolling",
+            "intervalMonths": 48,
+            "resetTimeZone": null
+          },
+          "redemptionMethod": "reimbursement",
+          "partialUseAllowed": false,
+          "minimumTransaction": null,
+          "enrollmentRequired": false,
+          "enrollmentChannel": null,
+          "enrollmentUrl": null,
+          "eligibleMerchants": [],
+          "eligibleCategories": [
+            "trusted traveler application fee"
+          ],
+          "mccs": [],
+          "country": null,
+          "channel": null,
+          "primaryAdditionalCardEligibility": {
+            "primary": true,
+            "additional": false
+          },
+          "directPurchaseRestrictions": [
+            "One qualifying application-fee credit per account every four years."
+          ],
+          "effectiveFrom": null,
+          "effectiveTo": null,
+          "confidence": "high",
+          "evidence": "Primary account holder can receive up to $120 as reimbursement for an eligible Global Entry or TSA PreCheck application fee once every four years.",
+          "sources": [
+            {
+              "url": "https://www.capitalone.com/small-business/credit-cards/venture-business/",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://www.capitalone.com/help-center/credit-cards/tsa-precheck-global-entry-benefits/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ],
+      "refusals": [
+        {
+          "claim": "Lifestyle Collection $50 experience credit",
+          "status": "refused",
+          "reason": "Per-stay property/experience credit; not a periodic recurring credit.",
+          "reviewedAt": "2026-08-31",
+          "sources": [
+            {
+              "url": "https://www.capitalone.com/small-business/credit-cards/venture-business/",
+              "reviewedAt": "2026-08-31"
+            },
+            {
+              "url": "https://www.capitalone.com/help-center/credit-cards/tsa-precheck-global-entry-benefits/",
+              "reviewedAt": "2026-08-31"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardId": "capital-one-ventureone-rewards-credit-card",
+      "officialName": "VentureOne Rewards Credit Card",
+      "issuer": "Capital One",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.capitalone.com/credit-cards/ventureone/"
+      ],
+      "credits": [],
+      "refusals": []
+    },
+    {
+      "cardId": "capital-one-ventureone-rewards-for-good",
+      "officialName": "VentureOne Rewards for Good Credit",
+      "issuer": "Capital One",
+      "market": "US",
+      "reviewedAt": "2026-08-31",
+      "creditCoverageStatus": "complete",
+      "reviewNotes": "Issuer benefits checked; no in-scope recurring fixed-value credit found.",
+      "officialIssuerUrlsChecked": [
+        "https://www.capitalone.com/credit-cards/ventureone-good-credit/"
+      ],
+      "credits": [],
+      "refusals": []
+    }
+  ]
+}

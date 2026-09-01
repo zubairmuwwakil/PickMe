@@ -1,5 +1,9 @@
 # Recurring-credit promotion review — 2026-08-31
 
+> The missing-pack conclusion in this review is superseded by
+> [`recurring-credit-us-remaining-promotion-review-2026-08-31.md`](recurring-credit-us-remaining-promotion-review-2026-08-31.md).
+> The row-level decisions for the original base and edge-case packs remain in force.
+
 ## Decision
 
 **Bulk promotion is blocked.** The research that is present contains a useful, mostly defensible fixed-credit set, but the current importer is not safe enough to consolidate the packs without over-promoting several shapes that PickMe cannot yet represent exactly.
