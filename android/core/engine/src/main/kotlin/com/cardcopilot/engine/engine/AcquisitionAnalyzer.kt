@@ -2,6 +2,11 @@ package com.cardcopilot.engine.engine
 
 import com.cardcopilot.engine.models.Catalogue
 import com.cardcopilot.engine.models.CandidateSet
+import com.cardcopilot.engine.models.ApplicationRequirementCatalogue
+import com.cardcopilot.engine.models.ApplicationRequirementEvaluator
+import com.cardcopilot.engine.models.ApplicantIncomeProfile
+import com.cardcopilot.engine.models.IncomeRequirementAssessment
+import com.cardcopilot.engine.models.IncomeRequirementAssessmentStatus
 import com.cardcopilot.engine.models.OwnerState
 import com.cardcopilot.engine.models.ReportingCurrency
 import com.cardcopilot.engine.models.SpendDistribution
@@ -38,7 +43,9 @@ data class AcquisitionCandidate(
      * `card.eligibility?.residency ?: [card.market]`. Does not remove the candidate from
      * [AcquisitionAnalysis.candidates]; it only gates [AcquisitionAnalysis.recommended].
      */
-    val eligibleForResident: Boolean
+    val eligibleForResident: Boolean,
+    /** Assessment against issuer-published income paths only; never an approval prediction. */
+    val incomeAssessment: IncomeRequirementAssessment
 )
 
 data class AcquisitionAnalysis(
@@ -49,7 +56,29 @@ data class AcquisitionAnalysis(
     val candidates: List<AcquisitionCandidate>
 ) {
     val recommended: List<AcquisitionCandidate>
-        get() = candidates.filter { it.verdict == AcquisitionVerdict.WORTH_ADDING && it.eligibleForResident }
+        get() = candidates.filter {
+            it.verdict == AcquisitionVerdict.WORTH_ADDING && it.eligibleForResident &&
+                (it.incomeAssessment.isIncomeReady ||
+                    it.incomeAssessment.status == IncomeRequirementAssessmentStatus.REQUIREMENTS_UNAVAILABLE)
+        }
+
+    val incomeReadyCandidates: List<AcquisitionCandidate>
+        get() = candidates.filter { it.incomeAssessment.isIncomeReady }
+
+    val incomeInformationNeeded: List<AcquisitionCandidate>
+        get() = candidates.filter {
+            it.incomeAssessment.status == IncomeRequirementAssessmentStatus.NEEDS_MORE_INFORMATION
+        }
+
+    val incomeCloseMatches: List<AcquisitionCandidate>
+        get() = candidates.filter {
+            it.incomeAssessment.status == IncomeRequirementAssessmentStatus.BELOW_PUBLISHED_MINIMUM
+        }
+
+    val incomeUnassessedCandidates: List<AcquisitionCandidate>
+        get() = candidates.filter {
+            it.incomeAssessment.status == IncomeRequirementAssessmentStatus.REQUIREMENTS_UNAVAILABLE
+        }
 
     fun candidate(cardId: String): AcquisitionCandidate? = candidates.firstOrNull { it.cardId == cardId }
 }
@@ -57,7 +86,9 @@ data class AcquisitionAnalysis(
 class AcquisitionAnalyzer(
     val catalogue: Catalogue,
     val candidates: CandidateSet,
-    val ownerState: OwnerState
+    val ownerState: OwnerState,
+    val applicationRequirements: ApplicationRequirementCatalogue? = null,
+    val applicantIncomeProfile: ApplicantIncomeProfile = ApplicantIncomeProfile()
 ) {
     fun analyze(distribution: SpendDistribution, asOf: String): AcquisitionAnalysis {
         val owned = ownerState.ownedCardIds.toSet()
@@ -97,6 +128,9 @@ class AcquisitionAnalyzer(
             val net = marginal - fee
             val eligibleMarkets = card.eligibility?.residency ?: listOf(card.market)
             val eligibleForResident = eligibleMarkets.contains(ownerState.resolvedMarket)
+            val incomeAssessment = ApplicationRequirementEvaluator.assess(
+                applicationRequirements?.requirement(card.cardId), applicantIncomeProfile
+            )
 
             val gains = combined.winnersByBucket.keys.mapNotNull { label ->
                 if (combined.winnersByBucket[label]?.contains(card.cardId) != true) return@mapNotNull null
@@ -137,7 +171,8 @@ class AcquisitionAnalyzer(
                     feeWaiverUnresolved = card.fee.waiver != null && ownerState.cardStates[card.cardId]?.feeWaiverActive == null,
                     neverScorable = !scorable,
                     bucketGains = gains,
-                    eligibleForResident = eligibleForResident
+                    eligibleForResident = eligibleForResident,
+                    incomeAssessment = incomeAssessment
                 )
             )
         }

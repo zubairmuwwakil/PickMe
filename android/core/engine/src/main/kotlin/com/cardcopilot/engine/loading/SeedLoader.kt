@@ -1,6 +1,7 @@
 package com.cardcopilot.engine.loading
 
 import com.cardcopilot.engine.models.BenefitsCatalogue
+import com.cardcopilot.engine.models.ApplicationRequirementCatalogue
 import com.cardcopilot.engine.models.CandidateSet
 import com.cardcopilot.engine.models.Catalogue
 import com.cardcopilot.engine.models.OwnerState
@@ -23,6 +24,9 @@ object SeedLoader {
     // candidate-catalogue.json became a list of cardIds in 2.0 (was full card definitions) —
     // mirrors Swift's SeedLoader.supportedCandidateCatalogueMajorVersion.
     const val SUPPORTED_CANDIDATE_CATALOGUE_MAJOR_VERSION = 2
+
+    // Standalone issuer qualification facts evolve independently of reward arithmetic.
+    const val SUPPORTED_APPLICATION_REQUIREMENTS_MAJOR_VERSION = 1
 
     val json = Json {
         ignoreUnknownKeys = true
@@ -53,6 +57,16 @@ object SeedLoader {
             throw SeedLoaderException.UnsupportedCatalogueVersion(candidates.candidateCatalogueVersion)
         }
         return candidates
+    }
+
+    fun loadApplicationRequirements(): ApplicationRequirementCatalogue {
+        val requirements: ApplicationRequirementCatalogue = load("application-requirements")
+        val major = requirements.applicationRequirementsVersion.split(".", limit = 2)
+            .firstOrNull()?.toIntOrNull()
+        if (major != SUPPORTED_APPLICATION_REQUIREMENTS_MAJOR_VERSION) {
+            throw SeedLoaderException.UnsupportedCatalogueVersion(requirements.applicationRequirementsVersion)
+        }
+        return requirements
     }
 
     fun loadOwnerState(): OwnerState {
