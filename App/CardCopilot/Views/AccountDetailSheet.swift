@@ -37,7 +37,7 @@ struct AccountDetailSheet: View {
     }
 
     private var clerkUserID: String? {
-        Clerk.shared.user?.id
+        ClerkSession.currentUserID
     }
 
     var body: some View {
@@ -98,13 +98,13 @@ struct AccountDetailSheet: View {
                         }
                     }
 
-                    LabeledContent("Sync Engine", value: "End-to-End Encrypted")
+                    LabeledContent("Sync Security", value: "Encrypted in Transit")
                 }
 
                 // Section 3: Cloud Sync Health
                 Section("Sync Status") {
                     HStack {
-                        Text("Last Synced")
+                        Text("Caps Updated")
                         Spacer()
                         if let last = sync.lastSyncedAt {
                             Text(last.formatted(date: .abbreviated, time: .shortened))
@@ -116,23 +116,29 @@ struct AccountDetailSheet: View {
                     }
 
                     if let issue = sync.syncIssue {
-                        HStack(spacing: 8) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.orange)
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: issue.kind == .error
+                                  ? "exclamationmark.icloud.fill"
+                                  : "exclamationmark.triangle.fill")
+                                .foregroundStyle(issue.kind == .error ? .red : .orange)
                             Text(issue.message)
                                 .font(.footnote)
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(issue.kind == .error ? .red : .orange)
                         }
                     }
 
                     Button {
                         Task {
                             isSyncingNow = true
-                            if let graph = environment.graph {
-                                _ = await sync.syncCapsSilently(
+                            if let graph = environment.graph,
+                               let result = await sync.syncCapsSilently(
                                     ownerState: graph.ownerState,
                                     catalogue: graph.catalogue
-                                )
+                               ) {
+                                environment.rebuild(ownerState: result.ownerState)
+                                if let refreshed = environment.graph {
+                                    session.refresh(using: refreshed)
+                                }
                             }
                             isSyncingNow = false
                         }

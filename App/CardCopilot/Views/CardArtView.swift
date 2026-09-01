@@ -83,12 +83,25 @@ struct CardArtView: View {
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // Layer 3: specular gloss highlight
+            // Layer 3: Holographic Iridescent Foil Sheen & Specular Gloss
             LinearGradient(
-                colors: [
-                    Color.white.opacity(0.18),
-                    Color.clear,
-                    Color.black.opacity(cleanArtwork ? 0.08 : 0.25)
+                stops: [
+                    .init(color: Color.white.opacity(0.26), location: 0.0),
+                    .init(color: Color.cyan.opacity(0.10), location: 0.20),
+                    .init(color: Color.purple.opacity(0.08), location: 0.45),
+                    .init(color: Color.clear, location: 0.65),
+                    .init(color: Color.black.opacity(cleanArtwork ? 0.08 : 0.25), location: 1.0)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            // Diagonal Light Shimmer Streak
+            LinearGradient(
+                stops: [
+                    .init(color: Color.clear, location: 0.25),
+                    .init(color: Color.white.opacity(0.14), location: 0.35),
+                    .init(color: Color.clear, location: 0.45)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing

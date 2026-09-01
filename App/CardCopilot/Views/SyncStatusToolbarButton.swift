@@ -70,13 +70,13 @@ public struct SyncStatusToolbarButton: View {
         } else if let lastSyncedAt {
             let seconds = Int(Date().timeIntervalSince(lastSyncedAt))
             if seconds < 60 {
-                return "Synced just now"
+                return "Spending caps updated just now"
             } else if seconds < 3600 {
                 let mins = max(1, seconds / 60)
-                return "Synced \(mins) minute\(mins == 1 ? "" : "s") ago"
+                return "Spending caps updated \(mins) minute\(mins == 1 ? "" : "s") ago"
             } else {
                 let hours = seconds / 3600
-                return "Last synced \(hours) hour\(hours == 1 ? "" : "s") ago"
+                return "Spending caps updated \(hours) hour\(hours == 1 ? "" : "s") ago"
             }
         } else {
             return "Sync & Wallet Capture"
@@ -135,4 +135,3 @@ private struct SyncToolbarPressStyle: ButtonStyle {
             .animation(.easeInOut(duration: 0.12), value: configuration.isPressed)
     }
 }
-

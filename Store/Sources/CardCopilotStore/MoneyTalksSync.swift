@@ -240,18 +240,25 @@ public actor MoneyTalksAPIClient {
 public struct OwnerStateSyncResult: Sendable {
     public let ownerState: OwnerState
     public let feedback: [WalletFeedback]
+    /// Raw server cap values are retained so a sync that overlaps a newer local edit can rebase
+    /// only server-owned cap progress onto that edit without restoring stale wallet fields.
+    public let remoteCaps: [String: SpineCap]
     /// `nil` means the installation request failed. An empty array is a successful response that
     /// confirms this account currently has no installations.
     public let installations: [WalletInstallation]?
     public let installationRefreshError: String?
+    public let ownerStateRefreshError: String?
     public let lastSyncedAt: Date
 
-    public init(ownerState: OwnerState, feedback: [WalletFeedback], installations: [WalletInstallation]? = [],
-                installationRefreshError: String? = nil, lastSyncedAt: Date) {
+    public init(ownerState: OwnerState, feedback: [WalletFeedback], remoteCaps: [String: SpineCap] = [:],
+                installations: [WalletInstallation]? = [], installationRefreshError: String? = nil,
+                ownerStateRefreshError: String? = nil, lastSyncedAt: Date) {
         self.ownerState = ownerState
         self.feedback = feedback
+        self.remoteCaps = remoteCaps
         self.installations = installations
         self.installationRefreshError = installationRefreshError
+        self.ownerStateRefreshError = ownerStateRefreshError
         self.lastSyncedAt = lastSyncedAt
     }
 }
@@ -273,12 +280,22 @@ public actor OwnerStateSyncService {
         try await client.fetchOwnerState()
     }
 
-    public func sync(ownerState: OwnerState, catalogue: Catalogue, now: Date = Date()) async throws -> OwnerStateSyncResult {
+    public func sync(ownerState: OwnerState, catalogue: Catalogue,
+                     mergeRemoteOwnerState: Bool = true,
+                     now: Date = Date()) async throws -> OwnerStateSyncResult {
         async let snapshot = client.fetchSnapshot()
         async let installations = client.fetchWalletInstallations()
         async let remoteStateCall = client.fetchOwnerState()
         let snap = try await snapshot
-        let remoteState = try? await remoteStateCall
+        let remoteState: OwnerState?
+        let ownerStateError: String?
+        do {
+            remoteState = try await remoteStateCall
+            ownerStateError = nil
+        } catch {
+            remoteState = nil
+            ownerStateError = error.localizedDescription
+        }
         let inst: [WalletInstallation]?
         let installationError: String?
         do {
@@ -288,10 +305,14 @@ public actor OwnerStateSyncService {
             inst = nil
             installationError = error.localizedDescription
         }
-        return OwnerStateSyncResult(ownerState: Self.merging(snap.caps, remoteState: remoteState, into: ownerState, catalogue: catalogue),
+        return OwnerStateSyncResult(ownerState: Self.merging(snap.caps,
+                                                             remoteState: mergeRemoteOwnerState ? remoteState : nil,
+                                                             into: ownerState, catalogue: catalogue),
                                     feedback: snap.feedback,
+                                    remoteCaps: snap.caps,
                                     installations: inst,
                                     installationRefreshError: installationError,
+                                    ownerStateRefreshError: ownerStateError,
                                     lastSyncedAt: now)
     }
 

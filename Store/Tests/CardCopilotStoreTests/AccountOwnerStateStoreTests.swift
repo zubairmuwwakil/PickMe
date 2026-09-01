@@ -90,6 +90,19 @@ final class AccountOwnerStateStoreTests: XCTestCase {
         XCTAssertEqual(queue.pending(forUserID: "user-two"), other)
     }
 
+    func testAnOlderUploadCompletionCannotDeleteANewerQueuedWallet() throws {
+        let queue = OwnerStateUploadQueue(defaults: defaults, key: "uploads")
+        let uploaded = try owner(defaultCardID: "amex-cobalt")
+        let newer = try owner(defaultCardID: "wealthsimple-vip")
+        try queue.enqueue(uploaded, forUserID: "user-one")
+        try queue.enqueue(newer, forUserID: "user-one")
+
+        XCTAssertFalse(queue.removeIfMatching(uploaded, forUserID: "user-one"))
+        XCTAssertEqual(queue.pending(forUserID: "user-one"), newer)
+        XCTAssertTrue(queue.removeIfMatching(newer, forUserID: "user-one"))
+        XCTAssertNil(queue.pending(forUserID: "user-one"))
+    }
+
     func testFirstRunWalletSavesLocallyWhenSignedInAccountBindingWasNotPrepared() throws {
         let accountStore = AccountOwnerStateStore(defaults: defaults, profilesKey: "profiles",
                                                   activeUserKey: "bound", activeStore: activeStore)

@@ -68,10 +68,56 @@ public enum InstantRepeatAdvisor {
         asOf: String = Date().formatted(.iso8601.year().month().day())
     ) -> InstantRepeatEvaluation? {
         let prediction = predictionForKnownMerchant(merchant)
+        return evaluate(
+            merchantId: merchant.identifier ?? merchant.id.uuidString,
+            merchantName: merchant.name,
+            prediction: prediction,
+            amountCad: amountCad,
+            catalogue: catalogue,
+            ownerState: ownerState,
+            engine: engine,
+            asOf: asOf
+        )
+    }
+
+    public static func evaluate(
+        merchant: NearbyMerchant,
+        amountCad: Double,
+        catalogue: Catalogue,
+        ownerState: OwnerState,
+        engine: RecommendationEngine,
+        asOf: String = Date().formatted(.iso8601.year().month().day())
+    ) -> InstantRepeatEvaluation? {
+        let prediction = CardCopilotStore.predict(
+            poiCategoryRaw: merchant.poiCategoryRaw,
+            merchantName: merchant.name
+        )
+        return evaluate(
+            merchantId: merchant.id,
+            merchantName: merchant.name,
+            prediction: prediction,
+            amountCad: amountCad,
+            catalogue: catalogue,
+            ownerState: ownerState,
+            engine: engine,
+            asOf: asOf
+        )
+    }
+
+    public static func evaluate(
+        merchantId: String,
+        merchantName: String,
+        prediction: CategoryPrediction,
+        amountCad: Double,
+        catalogue: Catalogue,
+        ownerState: OwnerState,
+        engine: RecommendationEngine,
+        asOf: String = Date().formatted(.iso8601.year().month().day())
+    ) -> InstantRepeatEvaluation? {
         let category = prediction.category
         let isAmbiguous = prediction.candidates.count > 1
-        let brand = canonicalEngineBrand(merchant.name)
-        let acceptedNetworks = knownAcceptedNetworks(for: brand, merchantName: merchant.name)
+        let brand = canonicalEngineBrand(merchantName)
+        let acceptedNetworks = knownAcceptedNetworks(for: brand, merchantName: merchantName)
 
         let purchase = PurchaseContext(
             amountCad: amountCad,
@@ -167,8 +213,8 @@ public enum InstantRepeatAdvisor {
         let formattedCat = meta.displayName
 
         return InstantRepeatEvaluation(
-            merchantId: merchant.identifier ?? merchant.id.uuidString,
-            merchantName: merchant.name,
+            merchantId: merchantId,
+            merchantName: merchantName,
             category: category,
             formattedCategory: formattedCat,
             amountCad: amountCad,

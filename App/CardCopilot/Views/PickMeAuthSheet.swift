@@ -34,6 +34,7 @@ struct PickMeAuthSheet: View {
     @State private var shakeOffset: CGFloat = 0
     @State private var resendCountdown = 60
     @State private var isResendActive = false
+    @State private var resendTimerTask: Task<Void, Never>?
     @State private var showingFallbackHostedAuth = false
 
     var onAuthSuccess: (() -> Void)?
@@ -121,7 +122,7 @@ struct PickMeAuthSheet: View {
             .sheet(isPresented: $showingFallbackHostedAuth) {
                 AuthView()
             }
-            .onChange(of: Clerk.shared.user?.id) { _, userID in
+            .onChange(of: ClerkSession.currentUserID) { _, userID in
                 if userID != nil {
                     chipMood = .celebrating
                     triggerSuccessHaptic()
@@ -130,6 +131,10 @@ struct PickMeAuthSheet: View {
                         dismiss()
                     }
                 }
+            }
+            .onDisappear {
+                resendTimerTask?.cancel()
+                resendTimerTask = nil
             }
         }
     }
@@ -584,7 +589,7 @@ struct PickMeAuthSheet: View {
             await MainActor.run {
                 isLoading = false
                 // Check if user is signed in via Clerk
-                if Clerk.shared.user != nil {
+                if ClerkSession.isSignedIn {
                     chipMood = .celebrating
                     triggerSuccessHaptic()
                     dismiss()
@@ -606,13 +611,20 @@ struct PickMeAuthSheet: View {
     }
 
     private func startResendTimer() {
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
-            if resendCountdown > 1 {
+        resendTimerTask?.cancel()
+        resendTimerTask = Task { @MainActor in
+            while resendCountdown > 1, !Task.isCancelled {
+                do {
+                    try await Task.sleep(nanoseconds: 1_000_000_000)
+                } catch {
+                    return
+                }
+                guard !Task.isCancelled else { return }
                 resendCountdown -= 1
-            } else {
-                isResendActive = true
-                timer.invalidate()
             }
+            guard !Task.isCancelled else { return }
+            isResendActive = true
+            resendTimerTask = nil
         }
     }
 

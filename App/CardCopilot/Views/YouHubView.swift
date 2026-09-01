@@ -21,11 +21,11 @@ struct YouHubView: View {
     private static let privacyPolicyURL = URL(string: "https://moneytalks.zubairmuwwakil.com/privacy")!
 
     private var isSignedIn: Bool {
-        MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil
+        ClerkSession.isSignedIn
     }
 
     private var accountEmail: String? {
-        Clerk.shared.user?.primaryEmailAddress?.emailAddress
+        ClerkSession.currentUser?.primaryEmailAddress?.emailAddress
     }
 
     private var userInitials: String {
@@ -586,7 +586,7 @@ struct YouHubView: View {
         if let issue = sync.syncIssue {
             return LocalizedStringKey(issue.message)
         } else if let lastSyncedAt = sync.lastSyncedAt {
-            return "Last synced: \(lastSyncedAt.formatted(date: .abbreviated, time: .shortened))"
+            return "Caps updated: \(lastSyncedAt.formatted(date: .abbreviated, time: .shortened))"
         } else {
             return "Sync wallet state and cap progress across devices"
         }

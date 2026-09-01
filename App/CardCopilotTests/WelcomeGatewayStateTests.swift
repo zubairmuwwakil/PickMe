@@ -1,5 +1,6 @@
 import XCTest
 import Security
+import CardCopilotStore
 @testable import CardCopilot
 
 final class WelcomeGatewayStateTests: XCTestCase {
@@ -8,6 +9,36 @@ final class WelcomeGatewayStateTests: XCTestCase {
         XCTAssertTrue(ClerkStartupPolicy.permitsConfiguration(for: errSecItemNotFound))
         XCTAssertFalse(ClerkStartupPolicy.permitsConfiguration(for: errSecMissingEntitlement))
         XCTAssertFalse(ClerkStartupPolicy.permitsConfiguration(for: errSecNotAvailable))
+    }
+
+    /// `Clerk.shared` calls `fatalError` when `Clerk.configure` was never run, and it is never
+    /// run when `MoneyTalksConfiguration.isConfigured` is false — the state of every
+    /// `CODE_SIGNING_ALLOWED=NO` build, this test process included. Reading it directly killed
+    /// the whole test host at launch, before one test ran.
+    ///
+    /// That this test *executes at all* is most of the regression guard: reintroducing an
+    /// unguarded `Clerk.shared` read on any launch path takes the suite down with it. The
+    /// assertions cover the rest — that the safe accessor reports "signed out" rather than
+    /// trapping when Clerk is absent.
+    @MainActor
+    func testSignedInUserIsReadableWithoutClerkConfigured() {
+        XCTAssertFalse(MoneyTalksConfiguration.isConfigured,
+                       "A signing-disabled test build must not report itself as configured")
+        XCTAssertNil(ClerkSession.currentUserID)
+        XCTAssertNil(ClerkSession.currentUser)
+        XCTAssertFalse(ClerkSession.isSignedIn)
+    }
+
+    /// The token provider throws rather than trapping, so an unconfigured build fails the
+    /// request instead of the process.
+    @MainActor
+    func testTokenProviderThrowsInsteadOfTrappingWhenClerkIsAbsent() async {
+        do {
+            _ = try await ClerkSession.token()
+            XCTFail("An unconfigured build must not vend a token")
+        } catch {
+            XCTAssertTrue(error is MoneyTalksAPIError, "Got \(error)")
+        }
     }
 
     func testConfiguredSignedOutInstallOffersAuthentication() {

@@ -209,7 +209,7 @@ struct CaptureStatusView: View {
                 metricCard(
                     icon: "icloud.fill",
                     iconColor: .blue,
-                    title: "Cloud Sync",
+                    title: "Capture Link",
                     value: connection.connectionVerifiedAt != nil ? "Verified" : "Not Tested",
                     subtitle: connection.connectionVerifiedAt.map { "Tested \($0.formatted(date: .abbreviated, time: .shortened))" } ?? "Tap test below"
                 )
@@ -235,8 +235,8 @@ struct CaptureStatusView: View {
                 metricCard(
                     icon: (snapshot?.pendingCount ?? 0) > 0 ? "tray.and.arrow.up.fill" : "tray.fill",
                     iconColor: (snapshot?.pendingCount ?? 0) > 0 ? .blue : .secondary,
-                    title: "Outbox Queue",
-                    value: "\(snapshot?.pendingCount ?? 0) pending",
+                    title: "Purchase Outbox",
+                    value: "\(snapshot?.pendingCount ?? 0) waiting",
                     subtitle: (snapshot?.quarantinedCount ?? 0) > 0 ? "\(snapshot?.quarantinedCount ?? 0) in review" : "Up to date"
                 )
             }
@@ -647,7 +647,7 @@ struct CaptureStatusView: View {
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundStyle(.blue)
                         }
-                        Text("Open Purchases in Inunity")
+                        Text("Open Purchases in In Unity")
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
                             .foregroundStyle(.blue)
                         Spacer()
@@ -1039,7 +1039,7 @@ struct ShortcutsSetupGuideSheet: View {
                     guideStepCard(
                         number: "3",
                         title: "Add PickMe Action & Map Fields",
-                        bodyText: "Search for “Send Wallet Purchase to Inunity” from PickMe. Tap the input parameters and select the Shortcut variables for Merchant, Amount, Currency Code, and Card or Pass.",
+                        bodyText: "Search for “Send Wallet Purchase to In Unity” from PickMe. Tap the input parameters and select the Shortcut variables for Merchant, Amount, Currency Code, and Card or Pass.",
                         symbol: "arrow.triangle.branch",
                         color: .teal
                     )

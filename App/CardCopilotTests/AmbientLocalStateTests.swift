@@ -7,10 +7,11 @@ import CardCopilotStore
 /// "erase this iPhone's history" choice has to clear: the mute list is keyed to merchant place
 /// identities, the suppression counters are a per-day record of when the app decided to speak up,
 /// and the coverage counters are a per-day record of what it never got the chance to decide.
-@MainActor
 final class AmbientLocalStateTests: XCTestCase {
     private var suiteName: String!
     private var defaults: UserDefaults!
+    private let placeIdentifier = "I2A0F1C6D4B89E37"
+    private let otherPlaceIdentifier = "I7E3B95AC28D064F"
 
     override func setUpWithError() throws {
         // A private suite, never `.standard`: these tests must not read or write the state of a
@@ -24,7 +25,10 @@ final class AmbientLocalStateTests: XCTestCase {
         defaults = nil
         super.tearDown()
     }
+}
 
+@MainActor
+extension AmbientLocalStateTests {
     private func suppressed(_ reason: AmbientSuppressionReason) -> AmbientGateDecision {
         AmbientGateDecision(suppressionReasons: [reason])
     }
@@ -37,9 +41,6 @@ final class AmbientLocalStateTests: XCTestCase {
     // `StoredMerchant.id`. Discovery reaches merchants that have never been stored locally and so
     // have no local UUID, and the place id is the only identity the stored and discovered rungs
     // share. These stand in for what MapKit hands back.
-    private let placeIdentifier = "I2A0F1C6D4B89E37"
-    private let otherPlaceIdentifier = "I7E3B95AC28D064F"
-
     func testAMutedMerchantStaysMutedForALaterReader() {
         AmbientMerchantMuteStore(defaults: defaults).mute(placeIdentifier)
 

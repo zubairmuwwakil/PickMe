@@ -30,7 +30,7 @@ struct HomeView: View {
     }
 
     private var personalizedGreeting: String {
-        if let first = Clerk.shared.user?.firstName, !first.isEmpty {
+        if let first = ClerkSession.currentUser?.firstName, !first.isEmpty {
             return "\(timeGreeting), \(first)!"
         }
         return "\(timeGreeting)!"
@@ -142,15 +142,47 @@ struct HomeView: View {
         )
     }
 
+    private var expiringCreditsCount: Int {
+        guard let graph = environment.graph else { return 0 }
+        let today = Date().formatted(.iso8601.year().month().day())
+        let opportunities = CreditAdvisor.opportunities(
+            catalogue: graph.catalogue,
+            ownerState: graph.ownerState,
+            asOf: today
+        )
+        return opportunities.filter { opp in
+            opp.status == .available && (opp.daysRemaining ?? 999) <= 14
+        }.count
+    }
+
     private var heroCompanionSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            // Top App Bar: PickMe Brand Logo on Left + Cloud Sync Button on Right
-            HStack(alignment: .center) {
+            // Top App Bar: PickMe Brand Logo on Left + Value Recovered & Cloud Sync Button on Right
+            HStack(alignment: .center, spacing: 8) {
                 Text("PickMe")
                     .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundStyle(Color(red: 0.08, green: 0.48, blue: 0.98))
 
                 Spacer()
+
+                if session.valueRecoveredCad > 0.005 {
+                    Button {
+                        router.push(.dashboard)
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 10, weight: .bold))
+                            Text(String(format: "+$%.2f earned", session.valueRecoveredCad))
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
+                        }
+                        .foregroundStyle(Color.green)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.green.opacity(0.12), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("View total value recovered")
+                }
 
                 SyncStatusToolbarButton(
                     isSyncing: sync.isSyncing || sync.isPreparingAccount,
@@ -161,10 +193,38 @@ struct HomeView: View {
             }
             .padding(.top, 2)
 
-            // Dynamic Greeting
-            Text(personalizedGreeting)
-                .font(.system(size: 26, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
+            // Dynamic Greeting & Expiring Credit Banner
+            VStack(alignment: .leading, spacing: 6) {
+                Text(personalizedGreeting)
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+
+                if expiringCreditsCount > 0 {
+                    Button {
+                        router.push(.walletHealth)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "clock.badge.exclamationmark")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(.orange)
+
+                            Text("\(expiringCreditsCount) card credit\(expiringCreditsCount == 1 ? "" : "s") expiring soon")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.primary)
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
 
             // Chip the EMV Micro-Bot Mascot Companion Interactive Card with Pulsing Glow
             ChipCompanionHeaderCard(
@@ -280,8 +340,12 @@ struct HomeView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 10)
 
-            if searchText.isEmpty, let nearest = session.preparedNearestMerchant {
-                nearbyMerchantShortcut(nearest)
+            if searchText.isEmpty, !session.preparedNearbyMerchants.isEmpty, let graph = environment.graph {
+                NearbyRadarDropdownView(
+                    merchants: session.preparedNearbyMerchants,
+                    deps: graph,
+                    onViewAllNearby: { onFindNearby() }
+                )
             }
 
             // Instant Offline Pre-Index Autocomplete Dropdown
@@ -351,65 +415,7 @@ struct HomeView: View {
         }
     }
 
-    private func nearbyMerchantShortcut(_ merchant: NearbyMerchant) -> some View {
-        let isConfident = session.confidentPreparedMerchant?.id == merchant.id
-        let prediction = CardCopilotStore.predict(poiCategoryRaw: merchant.poiCategoryRaw,
-                                                  merchantName: merchant.name)
-        let distance = merchant.distanceMeters.map { "\(Int($0.rounded())) m away" }
 
-        return Button {
-            let impact = UIImpactFeedbackGenerator(style: .light)
-            impact.impactOccurred()
-            if isConfident {
-                _ = session.preparedOutcomeForTap()
-                if let graph = environment.graph {
-                    router.step = session.recommend(merchant: merchant, amount: nil, using: graph)
-                }
-            } else {
-                onFindNearby()
-            }
-        } label: {
-            HStack(spacing: 10) {
-                MerchantBrandIconView(merchantName: merchant.name,
-                                      category: prediction.category, size: 28)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(isConfident ? "Likely here" : "Closest nearby")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(.blue)
-                        .textCase(.uppercase)
-                    Text(merchant.name)
-                        .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                }
-
-                Spacer()
-
-                if let distance {
-                    Text(distance)
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .foregroundStyle(.secondary)
-                }
-
-                Text(isConfident ? "Use" : "View")
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(.blue)
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(Color.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 14,
-                                                                       style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(isConfident
-            ? "Use nearby merchant \(merchant.name)"
-            : "View nearby merchants, closest is \(merchant.name)")
-    }
 
     // MARK: - 4. Quick Pick
 

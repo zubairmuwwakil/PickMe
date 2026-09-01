@@ -329,11 +329,15 @@ final class CopilotSession {
         }
     }
 
-    var preparedNearestMerchant: NearbyMerchant? {
+    var preparedNearbyMerchants: [NearbyMerchant] {
         guard nearbySnapshot?.isRecent == true,
               case .ready = nearbyPreparationState,
-              case .found(let merchants) = preparedNearbyOutcome else { return nil }
-        return merchants.first
+              case .found(let merchants) = preparedNearbyOutcome else { return [] }
+        return merchants
+    }
+
+    var preparedNearestMerchant: NearbyMerchant? {
+        preparedNearbyMerchants.first
     }
 
     /// A direct shortcut is offered only when the fix itself is reasonably accurate, the first

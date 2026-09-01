@@ -43,10 +43,14 @@ struct CheckoutFlowView: View {
         return false
     }
 
+    private var signedInUserID: String? { ClerkSession.currentUserID }
+
     private var captureBoundAccountLabel: String? {
         guard let credential = WalletCaptureCredentialStore().load() else { return nil }
-        guard let current = Clerk.shared.user else { return "Connected account (signed out)" }
-        guard current.id == credential.boundUserID else { return "Different Inunity account — relink required" }
+        guard let current = ClerkSession.currentUser else {
+            return "Connected account (signed out)"
+        }
+        guard current.id == credential.boundUserID else { return "Different In Unity account — relink required" }
         return current.primaryEmailAddress?.emailAddress ?? String(current.id.prefix(12))
     }
 
@@ -91,8 +95,8 @@ struct CheckoutFlowView: View {
             guard let graph = environment.graph else { return }
             await session.prefetchNearby(using: graph)
         }
-        .task(id: Clerk.shared.user?.id) {
-            await ensureEnvironment().prepareAccount(forUserID: Clerk.shared.user?.id,
+        .task(id: signedInUserID) {
+            await ensureEnvironment().prepareAccount(forUserID: signedInUserID,
                                                      session: session, router: router)
         }
         .onChange(of: scenePhase) { _, phase in
@@ -208,11 +212,11 @@ struct CheckoutFlowView: View {
     private func rootContent(environment: CopilotEnvironment) -> some View {
         if environment.isFirstRun || isCompletingPrivateOnboarding {
             WelcomeGatewayView(
-                isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
+                isSignedIn: ClerkSession.isSignedIn,
                 isPreparingAccount: sync.isPreparingAccount,
                 syncIssueMessage: sync.syncIssue?.message,
                 onRetryAccountRestore: {
-                    Task { await environment.prepareAccount(forUserID: Clerk.shared.user?.id,
+                    Task { await environment.prepareAccount(forUserID: signedInUserID,
                                                             session: session, router: router) }
                 },
                 onContinuePrivately: {
@@ -332,14 +336,14 @@ struct CheckoutFlowView: View {
         case .valuationSandbox:
             ValuationSandboxView()
         case .sync:
-            SyncCenterView(isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
+            SyncCenterView(isSignedIn: ClerkSession.isSignedIn,
                            onSync: { await syncFromUI() },
                            boundAccountLabel: captureBoundAccountLabel,
                            isCaptureBoundToCurrentAccount:
-                               WalletCaptureCredentialStore().load()?.boundUserID == Clerk.shared.user?.id)
+                               WalletCaptureCredentialStore().load()?.boundUserID == signedInUserID)
         case .settings:
-            SettingsView(isSignedIn: MoneyTalksConfiguration.isConfigured && Clerk.shared.user != nil,
-                         accountEmail: Clerk.shared.user?.primaryEmailAddress?.emailAddress,
+            SettingsView(isSignedIn: ClerkSession.isSignedIn,
+                         accountEmail: ClerkSession.currentUser?.primaryEmailAddress?.emailAddress,
                          lastSyncedAt: sync.lastSyncedAt,
                          syncIssue: sync.syncIssue,
                          ambientEnabled: environment.ambientReady,
@@ -481,7 +485,7 @@ struct CheckoutFlowView: View {
     }
 
     private func syncFromUI() async {
-        guard let environment, let userID = Clerk.shared.user?.id else { return }
+        guard let environment, let userID = signedInUserID else { return }
         if sync.readySyncUserID != userID {
             await environment.prepareAccount(forUserID: userID, session: session, router: router)
         }

@@ -6,7 +6,7 @@ import ClerkKit
 import Observation
 import WidgetKit
 
-/// Coordinates remote synchronization with Inunity, durable queues, and account binding.
+/// Coordinates remote synchronization with In Unity, durable queues, and account binding.
 /// Keeps network and sync concerns isolated from SwiftUI checkout flow views.
 @Observable
 @MainActor
@@ -52,7 +52,7 @@ public final class SyncCoordinator {
     ) async -> OwnerStateSyncResult? {
         guard MoneyTalksConfiguration.isConfigured,
               !isSyncing,
-              let userID = Clerk.shared.user?.id,
+              let userID = ClerkSession.currentUserID,
               readySyncUserID == userID,
               accountOwnerStateStore.activeUserID == userID else {
             return nil
@@ -74,7 +74,7 @@ public final class SyncCoordinator {
         guard MoneyTalksConfiguration.isConfigured,
               !isSyncing,
               let baseURL = MoneyTalksConfiguration.apiBaseURL,
-              let userID = Clerk.shared.user?.id,
+              let userID = ClerkSession.currentUserID,
               readySyncUserID == userID,
               accountOwnerStateStore.activeUserID == userID else {
             return nil
@@ -83,7 +83,7 @@ public final class SyncCoordinator {
         isSyncing = true
         defer { isSyncing = false }
 
-        let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+        let client = MoneyTalksAPIClient(baseURL: baseURL) { try await ClerkSession.token() }
         return await performSync(ownerState: ownerState, catalogue: catalogue,
                                  userID: userID, client: client)
     }
@@ -102,6 +102,7 @@ public final class SyncCoordinator {
     ) async -> OwnerStateSyncResult? {
         do {
             var warnings: [String] = []
+            var ownerStateUploadSucceeded = true
 
             // Each durable queue is an INDEPENDENT job. A refused owner state must not cancel
             // caps, feedback, card requests or wallet captures — but it did, because this call
@@ -117,10 +118,39 @@ public final class SyncCoordinator {
             do {
                 try await flushQueuedOwnerState(forUserID: userID, using: client)
             } catch {
-                warnings.append("Your wallet could not be uploaded yet.")
+                ownerStateUploadSucceeded = false
+                warnings.append(ownerStateUploadWarning(for: error))
             }
 
-            let result = try await OwnerStateSyncService(client: client).sync(ownerState: ownerState, catalogue: catalogue)
+            let baseOwnerState = ownerStateUploadQueue.pending(forUserID: userID)
+                ?? accountOwnerStateStore.state(forUserID: userID)
+                ?? ownerState
+            let downloaded = try await OwnerStateSyncService(client: client).sync(
+                ownerState: baseOwnerState,
+                catalogue: catalogue,
+                mergeRemoteOwnerState: ownerStateUploadSucceeded
+                    && ownerStateUploadQueue.pending(forUserID: userID) == nil
+            )
+
+            // MainActor is re-entrant at every network await. If the owner edited again while the
+            // reads above were in flight, keep that newest queued wallet and layer only server-owned
+            // cap progress onto it. Applying `downloaded.ownerState` wholesale would undo the edit.
+            let result: OwnerStateSyncResult
+            if let latest = ownerStateUploadQueue.pending(forUserID: userID) {
+                let rebased = OwnerStateSyncService.merging(downloaded.remoteCaps,
+                                                           remoteState: nil,
+                                                           into: latest,
+                                                           catalogue: catalogue)
+                result = OwnerStateSyncResult(ownerState: rebased,
+                                              feedback: downloaded.feedback,
+                                              remoteCaps: downloaded.remoteCaps,
+                                              installations: downloaded.installations,
+                                              installationRefreshError: downloaded.installationRefreshError,
+                                              ownerStateRefreshError: downloaded.ownerStateRefreshError,
+                                              lastSyncedAt: downloaded.lastSyncedAt)
+            } else {
+                result = downloaded
+            }
 
             walletFeedback = result.feedback
             let aliasStore = WalletCardAliasStore()
@@ -134,6 +164,9 @@ public final class SyncCoordinator {
             if result.installationRefreshError != nil {
                 warnings.append("Connected Wallet tokens could not be refreshed.")
             }
+            if result.ownerStateRefreshError != nil {
+                warnings.append("Wallet changes from your other devices could not be downloaded.")
+            }
             do {
                 try await flushQueuedCardRequests(forUserID: userID, using: client)
             } catch {
@@ -146,9 +179,15 @@ public final class SyncCoordinator {
             } else {
                 saveSyncIssue(
                     kind: .warning,
-                    message: "Caps and feedback synced, but \(warnings.joined(separator: " "))",
+                    message: "Spending caps and purchase feedback updated. \(warnings.joined(separator: " "))",
                     forUserID: userID
                 )
+            }
+
+            // A successful download is durable, not just an in-memory graph update. This also
+            // covers callers such as Account Details that previously discarded the returned state.
+            if accountOwnerStateStore.activeUserID == userID {
+                try accountOwnerStateStore.updateActive(result.ownerState)
             }
 
             // Reload widgets so on-device caps and shortcuts reflect new sync
@@ -174,12 +213,17 @@ public final class SyncCoordinator {
                                       using client: MoneyTalksAPIClient) async throws {
         guard let pending = ownerStateUploadQueue.pending(forUserID: userID) else { return }
         try await client.updateOwnerState(pending)
-        ownerStateUploadQueue.remove(forUserID: userID)
+        ownerStateUploadQueue.removeIfMatching(pending, forUserID: userID)
+    }
+
+    public func hasPendingWalletChanges(forUserID userID: String?) -> Bool {
+        guard let userID else { return false }
+        return ownerStateUploadQueue.pending(forUserID: userID) != nil
     }
 
     public func createInstallation(label: String) async throws -> WalletCaptureConnectionTestResult {
         guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
-              let userID = Clerk.shared.user?.id, readySyncUserID == userID,
+              let userID = ClerkSession.currentUserID, readySyncUserID == userID,
               accountOwnerStateStore.activeUserID == userID else {
             throw MoneyTalksAPIError.unavailableConfiguration
         }
@@ -194,7 +238,7 @@ public final class SyncCoordinator {
             try await outbox.requireAccountChoiceForAssignedCaptures()
         }
 
-        let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+        let client = MoneyTalksAPIClient(baseURL: baseURL) { try await ClerkSession.token() }
         let installation = try await client.createWalletInstallation(label: label)
         guard let token = installation.token else {
             try? await client.revokeWalletInstallation(id: installation.id)
@@ -236,11 +280,11 @@ public final class SyncCoordinator {
 
     public func revokeWalletInstallation(id: String) async throws {
         guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
-              let userID = Clerk.shared.user?.id, readySyncUserID == userID,
+              let userID = ClerkSession.currentUserID, readySyncUserID == userID,
               accountOwnerStateStore.activeUserID == userID else {
             throw MoneyTalksAPIError.unavailableConfiguration
         }
-        let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+        let client = MoneyTalksAPIClient(baseURL: baseURL) { try await ClerkSession.token() }
         try await client.revokeWalletInstallation(id: id)
         let revokedAt = Date()
         walletInstallations = walletInstallations.map { item in
@@ -257,7 +301,7 @@ public final class SyncCoordinator {
         guard let credential = WalletCaptureCredentialStore().load(),
               userID == nil || credential.boundUserID == userID,
               let baseURL = MoneyTalksConfiguration.apiBaseURL else { return }
-        if let signedInUserID = Clerk.shared.user?.id, signedInUserID != credential.boundUserID { return }
+        if let signedInUserID = ClerkSession.currentUserID, signedInUserID != credential.boundUserID { return }
         let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
             ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         guard let outbox = try? WalletOutboxStore(root: root) else { return }
@@ -283,14 +327,14 @@ public final class SyncCoordinator {
         guard let credential = WalletCaptureCredentialStore().load() else {
             return .init(isConnected: false, failureReason: "No secure connection is stored on this iPhone.")
         }
-        guard let signedInUserID = Clerk.shared.user?.id else {
+        guard let signedInUserID = ClerkSession.currentUserID else {
             return .init(isConnected: false, failureReason: "Sign in before testing the secure connection.")
         }
         guard signedInUserID == credential.boundUserID else {
             return .init(isConnected: false, failureReason: "This secure connection belongs to a different signed-in account.")
         }
         guard let baseURL = MoneyTalksConfiguration.apiBaseURL else {
-            return .init(isConnected: false, failureReason: "The Inunity server URL is not configured.")
+            return .init(isConnected: false, failureReason: "The In Unity server URL is not configured.")
         }
         let result = await WalletCaptureHTTPUploader(baseURL: baseURL, token: credential.token).testConnectionResult()
         if result.isConnected {
@@ -307,7 +351,7 @@ public final class SyncCoordinator {
 
     public func assignUnassignedCaptures() async throws {
         guard let credential = WalletCaptureCredentialStore().load(),
-              let signedInUserID = Clerk.shared.user?.id,
+              let signedInUserID = ClerkSession.currentUserID,
               credential.boundUserID == signedInUserID else {
             throw URLError(.userAuthenticationRequired)
         }
@@ -322,7 +366,7 @@ public final class SyncCoordinator {
                 try? await diagnostics.update(eventID: capture.event.eventId, capture: capture)
             }
         }
-        await drainWalletCaptures(forUserID: Clerk.shared.user?.id)
+        await drainWalletCaptures(forUserID: ClerkSession.currentUserID)
     }
 
     public func deleteUnassignedCaptures() async throws {
@@ -355,9 +399,9 @@ public final class SyncCoordinator {
         }
         if let credential, let baseURL = MoneyTalksConfiguration.apiBaseURL {
             _ = await WalletCaptureHTTPUploader(baseURL: baseURL, token: credential.token).revokeInstallation()
-            if let userID = Clerk.shared.user?.id, readySyncUserID == userID,
+            if let userID = ClerkSession.currentUserID, readySyncUserID == userID,
                accountOwnerStateStore.activeUserID == userID {
-                let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+                let client = MoneyTalksAPIClient(baseURL: baseURL) { try await ClerkSession.token() }
                 try? await client.revokeWalletInstallation(id: credential.installationID)
             }
             let revokedAt = Date()
@@ -385,7 +429,7 @@ public final class SyncCoordinator {
                 settings.markConnectionVerified(boundUserID: credential.boundUserID)
             }
             await drainWalletCaptures(forUserID: credential.boundUserID)
-        } else if let userID = Clerk.shared.user?.id {
+        } else if let userID = ClerkSession.currentUserID {
             if settings.load().boundUserID == nil {
                 settings.markConnectionPending(boundUserID: userID)
             }
@@ -399,21 +443,21 @@ public final class SyncCoordinator {
     public func submitDiagnostic(_ report: WalletCaptureDiagnosticReport) async throws -> WalletSubmittedDiagnostic {
         guard let baseURL = MoneyTalksConfiguration.apiBaseURL else { throw MoneyTalksAPIError.unavailableConfiguration }
         return try await WalletCaptureDiagnosticsHTTPClient(baseURL: baseURL) {
-            try await Clerk.shared.auth.getToken()
+            try await ClerkSession.token()
         }.submit(report)
     }
 
     public func deleteSubmittedDiagnostic(id: String) async throws {
         guard let baseURL = MoneyTalksConfiguration.apiBaseURL else { throw MoneyTalksAPIError.unavailableConfiguration }
         try await WalletCaptureDiagnosticsHTTPClient(baseURL: baseURL) {
-            try await Clerk.shared.auth.getToken()
+            try await ClerkSession.token()
         }.delete(id: id)
     }
 
     public func listSubmittedDiagnostics() async throws -> [WalletSubmittedDiagnostic] {
         guard let baseURL = MoneyTalksConfiguration.apiBaseURL else { throw MoneyTalksAPIError.unavailableConfiguration }
         return try await WalletCaptureDiagnosticsHTTPClient(baseURL: baseURL) {
-            try await Clerk.shared.auth.getToken()
+            try await ClerkSession.token()
         }.list()
     }
 
@@ -442,14 +486,25 @@ public final class SyncCoordinator {
                 message = "Your sign-in expired. Sign in again, then retry sync."
             case .unavailableConfiguration:
                 message = "Sync is not configured in this build. Your on-device wallet is still available."
-            case .unexpectedResponse:
-                message = "Inunity could not finish the sync. Your on-device wallet is still available."
+            case .unexpectedResponse(let status, _):
+                switch status {
+                case 401, 403:
+                    message = "In Unity rejected this sign-in. Sign out, sign in again, then retry."
+                case 409:
+                    message = "Your wallet changed on another device at the same time. Tap Sync Now to reconcile it."
+                case 400..<500:
+                    message = "This app and In Unity disagree about the sync format. Your wallet is safe on this iPhone while an update is required."
+                case 500..<600:
+                    message = "In Unity is temporarily unavailable. Your wallet is safe on this iPhone; retry in a few minutes."
+                default:
+                    message = "In Unity returned an unexpected response. Your wallet is safe on this iPhone."
+                }
             }
         } else if let urlError = error as? URLError {
             switch urlError.code {
             case .notConnectedToInternet, .networkConnectionLost, .timedOut,
                  .cannotConnectToHost, .cannotFindHost:
-                message = "Could not reach Inunity. Check your connection and retry."
+                message = "Could not reach In Unity. Check your connection and retry."
             default:
                 message = "Sync could not finish. Your on-device wallet is still available."
             }
@@ -459,14 +514,48 @@ public final class SyncCoordinator {
         saveSyncIssue(kind: .error, message: message, forUserID: userID)
     }
 
+    private func ownerStateUploadWarning(for error: Error) -> String {
+        if let apiError = error as? MoneyTalksAPIError {
+            switch apiError {
+            case .unauthenticated:
+                return "Wallet changes are saved on this iPhone, but your sign-in expired. Sign in again to upload them."
+            case .unavailableConfiguration:
+                return "Wallet changes are saved on this iPhone, but cloud upload is not configured in this build."
+            case .unexpectedResponse(let status, _):
+                switch status {
+                case 401, 403:
+                    return "Wallet changes are saved on this iPhone, but In Unity rejected the sign-in. Sign out and sign in again."
+                case 409:
+                    return "Wallet changes are saved on this iPhone. Another device changed the wallet at the same time; tap Sync Now again."
+                case 400..<500:
+                    return "Wallet changes are saved on this iPhone, but this app and In Unity disagree about the wallet format. An update is required."
+                case 500..<600:
+                    return "Wallet changes are saved on this iPhone, but In Unity is temporarily unavailable. They will stay queued."
+                default:
+                    return "Wallet changes are saved on this iPhone, but the server returned an unexpected response. They will stay queued."
+                }
+            }
+        }
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet, .networkConnectionLost, .timedOut,
+                 .cannotConnectToHost, .cannotFindHost:
+                return "Wallet changes are saved on this iPhone and waiting for a working connection."
+            default:
+                break
+            }
+        }
+        return "Wallet changes are saved on this iPhone but have not uploaded. They will stay queued for retry."
+    }
+
     public func saveSyncIssue(kind: SyncStatusIssue.Kind, message: String, forUserID userID: String) {
         let issue = SyncStatusIssue(kind: kind, message: message)
         syncMetadataStore.save(issue: issue, forUserID: userID)
-        if Clerk.shared.user?.id == userID { syncIssue = issue }
+        if ClerkSession.currentUserID == userID { syncIssue = issue }
     }
 
     public func clearSyncIssue(forUserID userID: String) {
         syncMetadataStore.clearIssue(forUserID: userID)
-        if Clerk.shared.user?.id == userID { syncIssue = nil }
+        if ClerkSession.currentUserID == userID { syncIssue = nil }
     }
 }

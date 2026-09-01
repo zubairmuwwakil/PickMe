@@ -351,7 +351,12 @@ struct ActivityHubView: View {
 
     private func refreshHistoryAndCaptures() {
         guard let graph = environment.graph else { return }
-        try? graph.service.ingestAutomaticCaptures(from: sync.walletFeedback)
+        do {
+            _ = try graph.service.ingestAutomaticCaptures(from: sync.walletFeedback)
+        } catch {
+            session.report(FlowError(message:
+                "Purchase feedback downloaded, but it could not be saved on this iPhone: \(error.localizedDescription)"))
+        }
         session.refresh(using: graph)
     }
 
@@ -849,7 +854,7 @@ struct ActivityHubView: View {
     private func findCap(for category: String) -> (cardName: String, limit: Double, period: String)? {
         for card in environment.graph?.walletCards ?? [] {
             for cap in card.caps {
-                for rule in card.earnRules where rule.capId == cap.capId {
+                for rule in card.earnRules where rule.effectiveCapIds.contains(cap.capId) {
                     if let categories = rule.predicate.categories, categories.contains(category) {
                         let periodLabel = cap.period == .calendarMonth ? "Monthly" : "Annual"
                         let shortName = CardVisualTheme.styles[card.cardId]?.shortName ?? card.officialName

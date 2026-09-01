@@ -249,6 +249,7 @@ final class CopilotSessionTests: XCTestCase {
         await session.prefetchNearby(using: graph)
 
         XCTAssertEqual(session.preparedNearestMerchant?.id, "first")
+        XCTAssertEqual(session.preparedNearbyMerchants.map(\.id), ["first", "second"])
         XCTAssertNil(session.confidentPreparedMerchant,
                      "two storefronts 20 m apart must retain exact-merchant confirmation")
     }

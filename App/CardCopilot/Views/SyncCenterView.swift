@@ -45,7 +45,7 @@ struct SyncCenterView: View {
                     signInRequired
                 } else if sync.isPreparingAccount {
                     preparingAccount
-                } else if sync.readySyncUserID != Clerk.shared.user?.id {
+                } else if sync.readySyncUserID != ClerkSession.currentUserID {
                     accountUnavailable
                 } else {
                     connectedContent
@@ -85,7 +85,7 @@ struct SyncCenterView: View {
         ContentUnavailableView(
             "Sync Setup Required",
             systemImage: "key.horizontal",
-            description: Text("Checkout stays fully offline-capable. Add the Inunity Clerk key and API URL in configuration to enable cross-device cloud sync.")
+            description: Text("Checkout stays fully offline-capable. Add the In Unity Clerk key and API URL in configuration to enable cross-device cloud sync.")
         )
     }
 
@@ -312,7 +312,7 @@ struct SyncCenterView: View {
                         .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
 
-                    Text(sync.lastSyncedAt.map { "Last synced \($0.formatted(date: .abbreviated, time: .shortened))" }
+                    Text(sync.lastSyncedAt.map { "Caps updated \($0.formatted(date: .abbreviated, time: .shortened))" }
                          ?? "Stored cap data remains active until sync completes")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.secondary)
@@ -344,6 +344,13 @@ struct SyncCenterView: View {
                 .disabled(sync.isSyncing)
             }
 
+            if sync.hasPendingWalletChanges(forUserID: ClerkSession.currentUserID) {
+                Label("Wallet changes saved on this iPhone are waiting to upload", systemImage: "tray.and.arrow.up.fill")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             if let syncIssue = sync.syncIssue {
                 HStack(spacing: 8) {
                     Image(systemName: syncIssue.kind == .warning ? "exclamationmark.triangle.fill" : "xmark.octagon.fill")
@@ -354,6 +361,7 @@ struct SyncCenterView: View {
                         Text(syncIssue.message)
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(syncIssue.kind == .warning ? .orange : .red)
+                            .fixedSize(horizontal: false, vertical: true)
                         Text("Last attempt \(syncIssue.occurredAt.formatted(date: .abbreviated, time: .shortened))")
                             .font(.system(size: 10))
                             .foregroundStyle(.secondary)

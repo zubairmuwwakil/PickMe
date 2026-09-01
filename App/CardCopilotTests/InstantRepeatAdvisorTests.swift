@@ -165,4 +165,43 @@ final class InstantRepeatAdvisorTests: XCTestCase {
         XCTAssertEqual(r100, r50 * 2, accuracy: 0.01)
         XCTAssertTrue(eval50?.calculationText.contains("$50") == true)
     }
+
+    func testNearbyMerchantEvaluation() throws {
+        let catalogue = try SeedLoader.loadCatalogue()
+        let programs = try SeedLoader.loadPrograms()
+        let setup = WalletSetup(
+            ownedCardIds: ["amex-cobalt", "rogers-red-we"],
+            defaultCardId: "rogers-red-we",
+            switchThreshold: SwitchThreshold(minAdvantagePercentagePoints: 0.5, minAdvantageCad: 0.50, semantics: "either"),
+            valuationsCad: Valuations(programs: programs.defaults)
+        )
+        let ownerState = OwnerStateBuilder.firstRun(setup: setup, catalogue: catalogue)
+        let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
+
+        let nearby = NearbyMerchant(
+            id: "nearby-starbucks-1",
+            name: "Starbucks",
+            poiCategoryRaw: "MKPOICategoryCafe",
+            latitude: 43.65,
+            longitude: -79.38,
+            distanceMeters: 25.0
+        )
+
+        let eval = InstantRepeatAdvisor.evaluate(
+            merchant: nearby,
+            amountCad: 50,
+            catalogue: catalogue,
+            ownerState: ownerState,
+            engine: engine
+        )
+
+        XCTAssertNotNil(eval)
+        guard let eval else { return }
+
+        XCTAssertEqual(eval.merchantId, "nearby-starbucks-1")
+        XCTAssertEqual(eval.merchantName, "Starbucks")
+        XCTAssertEqual(eval.winnerCardId, "amex-cobalt")
+        XCTAssertEqual(eval.multiplierText, "5x Points")
+        XCTAssertEqual(eval.formattedCategory, "Dining & Food")
+    }
 }

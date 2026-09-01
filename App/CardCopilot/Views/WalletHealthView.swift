@@ -150,7 +150,7 @@ struct WalletHealthView: View {
             .analyze(activeDistribution, asOf: today)
     }
 
-    private var incomeProfileId: String? { Clerk.shared.user?.id }
+    private var incomeProfileId: String? { ClerkSession.currentUserID }
 
     private func profileSwitcher(graph: DependencyGraph) -> some View {
         VStack(alignment: .leading, spacing: 6) {

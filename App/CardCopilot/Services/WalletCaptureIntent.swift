@@ -7,8 +7,8 @@ import UIKit
 import ClerkKit
 
 struct WalletCaptureIntent: AppIntent {
-    static let title: LocalizedStringResource = "Send Wallet Purchase to Inunity"
-    static let description = IntentDescription("Saves a Wallet transaction locally, then securely syncs it to Inunity.")
+    static let title: LocalizedStringResource = "Send Wallet Purchase to In Unity"
+    static let description = IntentDescription("Saves a Wallet transaction locally, then securely syncs it to In Unity.")
     static let openAppWhenRun = false
 
     @Parameter(title: "Merchant") var merchant: String?
@@ -53,7 +53,7 @@ struct WalletCaptureIntent: AppIntent {
         let diagnostics = try? WalletCaptureDiagnosticsStore(root: root)
         let credential = WalletCaptureCredentialStore().load()
         let connection = WalletCaptureSettingsStore().load()
-        let signedInUserID = await MainActor.run { Clerk.shared.user?.id }
+        let signedInUserID = await MainActor.run { ClerkSession.currentUserID }
         let delivery = WalletCaptureDeliveryDecision.decide(
             credentialBoundUserID: credential?.boundUserID,
             connection: connection,

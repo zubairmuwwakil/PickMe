@@ -89,10 +89,12 @@ struct InstantRepeatCardView: View {
     let deps: DependencyGraph
     let context: InstantRepeatContext
 
+    @State private var selectedAmount: Double = InstantRepeatAdvisor.comparisonAmountCad
+
     private var evaluation: InstantRepeatEvaluation? {
         InstantRepeatAdvisor.evaluate(
             merchant: merchant,
-            amountCad: InstantRepeatAdvisor.comparisonAmountCad,
+            amountCad: selectedAmount,
             catalogue: deps.catalogue,
             ownerState: deps.ownerState,
             engine: deps.engine
@@ -122,7 +124,7 @@ struct InstantRepeatCardView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
                 MerchantBrandIconView(
                     merchantName: merchant.name,
@@ -186,6 +188,43 @@ struct InstantRepeatCardView: View {
 
                     Spacer(minLength: 0)
                 }
+
+                // Amount What-If Preset Selector
+                HStack(spacing: 6) {
+                    Text("Amount:")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+
+                    ForEach([25.0, 50.0, 100.0, 250.0], id: \.self) { amt in
+                        Button {
+                            let impact = UIImpactFeedbackGenerator(style: .light)
+                            impact.impactOccurred()
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.75)) {
+                                selectedAmount = amt
+                            }
+                        } label: {
+                            Text("$\(Int(amt))")
+                                .font(.system(size: 11, weight: selectedAmount == amt ? .bold : .medium, design: .rounded))
+                                .foregroundStyle(selectedAmount == amt ? Color.blue : Color.secondary)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    selectedAmount == amt ? Color.blue.opacity(0.12) : Color(.tertiarySystemFill),
+                                    in: Capsule()
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    Spacer()
+
+                    if let adv = eval.advantageText, eval.switchedFromDefault {
+                        Text(adv)
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundStyle(.green)
+                    }
+                }
+                .padding(.top, 2)
             } else {
                 Label("Recommendation unavailable", systemImage: "exclamationmark.triangle.fill")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))

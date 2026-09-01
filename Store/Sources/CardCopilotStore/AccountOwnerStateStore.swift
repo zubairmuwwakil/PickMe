@@ -106,6 +106,22 @@ public final class OwnerStateUploadQueue: @unchecked Sendable {
     public func remove(forUserID userID: String) {
         var values = records()
         values.removeValue(forKey: userID)
+        save(values)
+    }
+
+    /// Removes only the exact snapshot that finished uploading. The queue is latest-value: if the
+    /// owner edits again while the network request is in flight, that newer value must remain for
+    /// the next attempt instead of being deleted by the older request's completion.
+    @discardableResult
+    public func removeIfMatching(_ uploaded: OwnerState, forUserID userID: String) -> Bool {
+        var values = records()
+        guard values[userID] == uploaded else { return false }
+        values.removeValue(forKey: userID)
+        save(values)
+        return true
+    }
+
+    private func save(_ values: [String: OwnerState]) {
         if values.isEmpty {
             defaults.removeObject(forKey: key)
         } else {

@@ -266,7 +266,7 @@ struct WalletCardDetailSheet: View {
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundStyle(.primary)
 
-                if let capId = rule.capId, let cap = card.caps.first(where: { $0.capId == capId }) {
+                if let cap = card.caps.first(where: { rule.effectiveCapIds.contains($0.capId) }) {
                     Text("Cap: $\(Int(cap.limit))/\(cap.period.rawValue.replacingOccurrences(of: "calendar", with: "").lowercased())")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.secondary)

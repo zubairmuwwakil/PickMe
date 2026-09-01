@@ -186,10 +186,11 @@ final class CopilotEnvironmentTests: XCTestCase {
         XCTAssertFalse(nextEnvironment.walletIsFirstRun)
     }
 
-    func testPreparingNewAccountDoesNotPushWalletSetup() async throws {
+    func testPreparingConfirmedEmptyNewAccountDoesNotPushWalletSetup() async throws {
         let sync = try makeSync()
         let environment = CopilotEnvironment(modelContext: try makeContext(), sync: sync,
-                                             ambient: AmbientLocationService())
+                                             ambient: AmbientLocationService(),
+                                             remoteOwnerStateLoader: { nil })
         let session = CopilotSession()
         let router = CheckoutRouter()
 
@@ -199,6 +200,24 @@ final class CopilotEnvironmentTests: XCTestCase {
         XCTAssertFalse(router.path.contains(.walletSetup), "New accounts must not be forced into walletSetup")
         XCTAssertTrue(router.showingAddCard, "New accounts must open addCard directly")
         XCTAssertFalse(environment.walletIsFirstRun)
+    }
+
+    func testFailedNewAccountDownloadDoesNotInventAnEmptyCloudWallet() async throws {
+        let sync = try makeSync()
+        let environment = CopilotEnvironment(modelContext: try makeContext(), sync: sync,
+                                             ambient: AmbientLocationService(),
+                                             remoteOwnerStateLoader: { throw URLError(.timedOut) })
+        let session = CopilotSession()
+        let router = CheckoutRouter()
+        environment.load(session: session)
+        let before = try XCTUnwrap(environment.graph?.ownerState)
+
+        await environment.prepareAccount(forUserID: "unreachable-user", session: session, router: router)
+
+        XCTAssertEqual(environment.graph?.ownerState, before)
+        XCTAssertFalse(router.showingAddCard)
+        XCTAssertNil(sync.readySyncUserID)
+        XCTAssertNotNil(sync.syncMetadataStore.issue(forUserID: "unreachable-user"))
     }
 
     func testEmptyOwnerStateYieldsEmptyWalletCards() throws {

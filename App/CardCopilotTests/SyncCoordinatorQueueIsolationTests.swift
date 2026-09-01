@@ -28,7 +28,8 @@ private final class StubURLProtocol: URLProtocol {
     override func startLoading() {
         let path = request.url?.path ?? ""
         Self.requestedPaths.append(path)
-        guard let (status, body) = Self.routes[path] else {
+        let methodPath = "\(request.httpMethod ?? "GET") \(path)"
+        guard let (status, body) = Self.routes[methodPath] ?? Self.routes[path] else {
             client?.urlProtocol(self, didFailWithError: URLError(.unsupportedURL))
             return
         }
@@ -58,7 +59,13 @@ final class SyncCoordinatorQueueIsolationTests: XCTestCase {
     private func coordinator(queueKey: String) -> SyncCoordinator {
         let defaults = UserDefaults(suiteName: queueKey)!
         defaults.removePersistentDomain(forName: queueKey)
+        let localStore = OwnerStateLocalStore(defaults: defaults, key: "active")
         return SyncCoordinator(
+            ownerStateLocalStore: localStore,
+            accountOwnerStateStore: AccountOwnerStateStore(defaults: defaults,
+                                                           profilesKey: "profiles",
+                                                           activeUserKey: "active-user",
+                                                           activeStore: localStore),
             ownerStateUploadQueue: OwnerStateUploadQueue(defaults: defaults, key: "pending"),
             syncMetadataStore: SyncMetadataStore(defaults: defaults,
                                                 key: "metadata", issueKey: "issues"))
@@ -96,6 +103,8 @@ final class SyncCoordinatorQueueIsolationTests: XCTestCase {
         // `syncIssue` when Clerk reports the same signed-in user, and there is no Clerk session here.
         XCTAssertEqual(sync.syncMetadataStore.issue(forUserID: userID)?.kind, .warning,
                        "the refusal must be reported, not swallowed")
+        XCTAssertTrue(sync.syncMetadataStore.issue(forUserID: userID)?.message.contains("wallet format") == true,
+                      "the warning must tell the owner why this class of upload was refused")
     }
 
     /// The queued wallet is the owner's only unsynced answer set, and a 400 is frequently the
@@ -128,5 +137,44 @@ final class SyncCoordinatorQueueIsolationTests: XCTestCase {
 
         XCTAssertNotNil(result)
         XCTAssertNil(sync.ownerStateUploadQueue.pending(forUserID: userID))
+    }
+
+    func testSuccessfulSyncPersistsDownloadedCapProgress() async throws {
+        let sync = coordinator(queueKey: "ca.pickme.tests.persist-\(UUID().uuidString)")
+        var owner = try SeedLoader.loadOwnerState()
+        owner.ownedCardIds = ["amex-cobalt"]
+        owner.defaultCardId = "amex-cobalt"
+        owner.cardStates = ["amex-cobalt": CardState()]
+        try sync.accountOwnerStateStore.activate(owner, forUserID: userID)
+        let response = try JSONEncoder().encode(["ownerState": owner])
+        StubURLProtocol.routes["/api/spine/owner-state"] = (200, response)
+        StubURLProtocol.routes["/api/spine/caps"] = (200, Data(#"{"caps":{"cobalt-eats-monthly":{"usedMinor":12345,"periodKey":"2026-09"}}}"#.utf8))
+        let client = MoneyTalksAPIClient(baseURL: baseURL, tokenProvider: { "jwt" },
+                                         session: StubURLProtocol.session)
+
+        let result = await sync.performSync(ownerState: owner,
+                                            catalogue: try SeedLoader.loadCatalogue(),
+                                            userID: userID, client: client)
+
+        XCTAssertEqual(result?.ownerState.cardStates["amex-cobalt"]?.capProgress?["cobalt-eats-monthly"], 123.45)
+        XCTAssertEqual(sync.accountOwnerStateStore.state(forUserID: userID)?
+            .cardStates["amex-cobalt"]?.capProgress?["cobalt-eats-monthly"], 123.45)
+        XCTAssertEqual(sync.ownerStateLocalStore.load()?
+            .cardStates["amex-cobalt"]?.capProgress?["cobalt-eats-monthly"], 123.45)
+    }
+
+    func testRemoteWalletReadFailureIsVisibleWhileCapsStillSync() async throws {
+        let sync = coordinator(queueKey: "ca.pickme.tests.remote-read-\(UUID().uuidString)")
+        StubURLProtocol.routes["GET /api/spine/owner-state"] = (500, Data(#"{"error":"offline"}"#.utf8))
+        StubURLProtocol.routes["PUT /api/spine/owner-state"] = (200, Data())
+        let client = MoneyTalksAPIClient(baseURL: baseURL, tokenProvider: { "jwt" },
+                                         session: StubURLProtocol.session)
+
+        let result = await sync.performSync(ownerState: ownerState(), catalogue: .empty,
+                                            userID: userID, client: client)
+
+        XCTAssertNotNil(result)
+        XCTAssertTrue(sync.syncMetadataStore.issue(forUserID: userID)?.message
+            .contains("other devices could not be downloaded") == true)
     }
 }

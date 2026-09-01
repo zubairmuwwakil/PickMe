@@ -41,7 +41,7 @@ struct SettingsView: View {
                 if isSignedIn {
                     LabeledContent("Signed in as", value: accountEmail ?? "your PickMe account")
                     Button("Sync & Wallet Capture", action: onOpenSync)
-                    LabeledContent("Last synced",
+                    LabeledContent("Caps updated",
                                    value: lastSyncedAt.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "Never")
                     if let syncIssue {
                         Label(syncIssue.kind == .warning ? "Last sync needs attention" : "Last sync attempt failed",
@@ -110,7 +110,7 @@ struct SettingsView: View {
                 }
             }
         }
-        .confirmationDialog("Sign out of Inunity?", isPresented: $signOutIsPresented,
+        .confirmationDialog("Sign out of In Unity?", isPresented: $signOutIsPresented,
                             titleVisibility: .visible) {
             Button("Sign Out", role: .destructive) {
                 onSignOut()
@@ -169,7 +169,7 @@ struct DeleteAccountView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Delete your Inunity account").font(.title2.weight(.bold))
+                    Text("Delete your In Unity account").font(.title2.weight(.bold))
                     if let accountEmail {
                         Text(accountEmail).font(.subheadline).foregroundStyle(.secondary)
                     }
@@ -177,8 +177,8 @@ struct DeleteAccountView: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("What this deletes").font(.headline)
-                    consequence("Everything Inunity stores for you on the server: captured wallet events, cap usage, your saved card setup, and the account record itself.")
-                    consequence("Your Inunity sign-in. You will not be able to sign in again, here or on the web.")
+                    consequence("Everything In Unity stores for you on the server: captured wallet events, cap usage, your saved card setup, and the account record itself.")
+                    consequence("Your In Unity sign-in. You will not be able to sign in again, here or on the web.")
                     consequence("Any Wallet Shortcut tokens you created. They stop working immediately.")
                     consequence("This cannot be undone, and it cannot be restored for you.")
                 }
@@ -222,7 +222,7 @@ struct DeleteAccountView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: onCancel).disabled(isDeleting) } }
         // Step two. Separate surface, separate tap, and the destructive verb repeated.
-        .confirmationDialog("Delete your Inunity account permanently?",
+        .confirmationDialog("Delete your In Unity account permanently?",
                             isPresented: $confirmationIsPresented, titleVisibility: .visible) {
             Button(localHistory == .erase ? "Delete Account and Erase History" : "Delete Account",
                    role: .destructive) {

@@ -40,6 +40,12 @@ struct DependencyGraph {
 @Observable
 @MainActor
 final class CopilotEnvironment {
+    /// Takes no base URL: resolving one is a transport concern that belongs to the loader itself.
+    /// While `prepareAccount` resolved it, the `MoneyTalksConfiguration.isConfigured` guard needed
+    /// to do so sat *above* the injection point, so an injected loader was never reached in any
+    /// build where `isConfigured` is false — which is every test build.
+    typealias RemoteOwnerStateLoader = () async throws -> OwnerState?
+
     private(set) var graph: DependencyGraph?
     private(set) var isFirstRun = false
     /// Set when seed data cannot be read at all. Distinct from an operational error: the app
@@ -58,13 +64,23 @@ final class CopilotEnvironment {
     private let modelContext: ModelContext
     private let sync: SyncCoordinator
     private let ambient: AmbientLocationService
+    private let remoteOwnerStateLoader: RemoteOwnerStateLoader
     private var walletWriteTask: Task<Void, Never>?
     private var canonicalBenefits: BenefitsCatalogue?
 
-    init(modelContext: ModelContext, sync: SyncCoordinator, ambient: AmbientLocationService) {
+    init(modelContext: ModelContext, sync: SyncCoordinator, ambient: AmbientLocationService,
+         remoteOwnerStateLoader: RemoteOwnerStateLoader? = nil) {
         self.modelContext = modelContext
         self.sync = sync
         self.ambient = ambient
+        self.remoteOwnerStateLoader = remoteOwnerStateLoader ?? {
+            guard MoneyTalksConfiguration.isConfigured,
+                  let baseURL = MoneyTalksConfiguration.apiBaseURL else {
+                throw MoneyTalksAPIError.unavailableConfiguration
+            }
+            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await ClerkSession.token() }
+            return try await OwnerStateSyncService(client: client).seedFromRemote()
+        }
     }
 
     /// Refreshing `session` is part of loading, not a step a caller can forget. The 846-line
@@ -338,18 +354,15 @@ extension CopilotEnvironment {
                 return
             }
 
-            guard MoneyTalksConfiguration.isConfigured,
-                  let baseURL = MoneyTalksConfiguration.apiBaseURL else {
-                throw MoneyTalksAPIError.unavailableConfiguration
-            }
             let shouldClaimUnscopedRequests = sync.accountOwnerStateStore.activeUserID == nil
-            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
-            let remote: OwnerState?
-            do {
-                remote = try await OwnerStateSyncService(client: client).seedFromRemote()
-            } catch {
-                remote = nil
-            }
+            // A successful `nil` means this account truly has no cloud wallet. A transport or
+            // authentication failure is not the same fact and must not create a replacement empty
+            // wallet that can later overwrite data the phone simply failed to download.
+            //
+            // The unconfigured-build check lives inside the default loader, not here: a guard at
+            // this level short-circuits an injected loader too, which made this whole branch
+            // untestable.
+            let remote = try await remoteOwnerStateLoader()
             if let remote, !remote.ownedCardIds.isEmpty {
                 try sync.accountOwnerStateStore.activate(remote, forUserID: userID)
                 if shouldClaimUnscopedRequests {
@@ -362,7 +375,7 @@ extension CopilotEnvironment {
             } else {
                 let empty = OwnerStateBuilder.empty(catalogue: graph.catalogue,
                                                     market: graph.ownerState.market.flatMap(Market.init(rawValue:)))
-                try? sync.accountOwnerStateStore.activate(empty, forUserID: userID)
+                try sync.accountOwnerStateStore.activate(empty, forUserID: userID)
                 rebuild(ownerState: empty)
                 session.refresh(using: self.graph!)
                 walletIsFirstRun = false
@@ -385,7 +398,7 @@ extension CopilotEnvironment {
             ? OwnerStateBuilder.firstRun(setup: setup, catalogue: graph.catalogue)
             : OwnerStateBuilder.apply(setup, to: graph.ownerState, catalogue: graph.catalogue)
         do {
-            let signedInUserID = Clerk.shared.user?.id
+            let signedInUserID = ClerkSession.currentUserID
             let outcome = try WalletSetupPersistence(
                 accountStore: sync.accountOwnerStateStore,
                 uploadQueue: sync.ownerStateUploadQueue,
@@ -422,10 +435,10 @@ extension CopilotEnvironment {
         // Setup remains usable offline. The durable outbox retries on every sync until the server
         // has the exact wallet needed to evaluate Wallet Capture feedback.
         guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
-              let userID = Clerk.shared.user?.id, sync.readySyncUserID == userID,
+              let userID = ClerkSession.currentUserID, sync.readySyncUserID == userID,
               sync.accountOwnerStateStore.activeUserID == userID else { return }
         do {
-            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await ClerkSession.token() }
             try await sync.flushQueuedOwnerState(forUserID: userID, using: client)
         } catch {
             sync.saveSyncFailure(error, forUserID: userID)
@@ -452,13 +465,13 @@ extension CopilotEnvironment {
 
     func requestCard(_ request: PendingCardRequest) async -> Bool {
         guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL,
-              let userID = Clerk.shared.user?.id, sync.readySyncUserID == userID,
+              let userID = ClerkSession.currentUserID, sync.readySyncUserID == userID,
               sync.accountOwnerStateStore.activeUserID == userID else {
             enqueueCardRequestForCurrentProfile(request)
             return false
         }
         do {
-            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+            let client = MoneyTalksAPIClient(baseURL: baseURL) { try await ClerkSession.token() }
             try await client.createCardRequest(request)
             return true
         } catch {
@@ -496,8 +509,8 @@ extension CopilotEnvironment {
         guard MoneyTalksConfiguration.isConfigured, let baseURL = MoneyTalksConfiguration.apiBaseURL else {
             throw MoneyTalksAPIError.unavailableConfiguration
         }
-        let deletedUserID = Clerk.shared.user?.id
-        let client = MoneyTalksAPIClient(baseURL: baseURL) { try await Clerk.shared.auth.getToken() }
+        let deletedUserID = ClerkSession.currentUserID
+        let client = MoneyTalksAPIClient(baseURL: baseURL) { try await ClerkSession.token() }
         try await client.deleteAccount()
 
         // Geofences are refreshed from the store on the next significant location change, which
@@ -515,14 +528,14 @@ extension CopilotEnvironment {
         let captureRoot = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
             ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         if let outbox = try? WalletOutboxStore(root: captureRoot) { try? await outbox.deleteAll() }
-        try? await Clerk.shared.auth.signOut()
+        if MoneyTalksConfiguration.isConfigured { try? await Clerk.shared.auth.signOut() }
         resetSyncedState(session: session)
         router.popToRoot()
         router.resetToIdle()
     }
 
     func signOut(session: CopilotSession, router: CheckoutRouter) async {
-        try? await Clerk.shared.auth.signOut()
+        if MoneyTalksConfiguration.isConfigured { try? await Clerk.shared.auth.signOut() }
         resetSyncedState(session: session)
         router.popToRoot()
         router.resetToIdle()

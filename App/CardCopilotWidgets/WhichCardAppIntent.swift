@@ -243,6 +243,20 @@ public struct AnalyzeCartScreenshotIntent: AppIntent {
     }
 }
 
+/// An App Intent to launch PickMe Radar directly from Action Button, Lock Screen, or Control Center.
+public struct LaunchRadarIntent: AppIntent {
+    public static let title: LocalizedStringResource = "Open PickMe Radar"
+    public static let description = IntentDescription("Opens PickMe and immediately scans for nearby merchants.")
+    public static let openAppWhenRun: Bool = true
+
+    public init() {}
+
+    @MainActor
+    public func perform() async throws -> some IntentResult {
+        return .result()
+    }
+}
+
 /// Automatically exposes PickMe's Siri Shortcuts and Apple Intelligence AI Actions to iOS.
 public struct CardCopilotShortcutsProvider: AppShortcutsProvider {
     public static var appShortcuts: [AppShortcut] {
@@ -254,6 +268,15 @@ public struct CardCopilotShortcutsProvider: AppShortcutsProvider {
             ],
             shortTitle: "Which Card?",
             systemImageName: "creditcard.fill"
+        )
+        AppShortcut(
+            intent: LaunchRadarIntent(),
+            phrases: [
+                "Scan nearby with \(.applicationName)",
+                "Open \(.applicationName) Radar"
+            ],
+            shortTitle: "Checkout Radar",
+            systemImageName: "location.magnifyingglass"
         )
         AppShortcut(
             intent: AnalyzeCartScreenshotIntent(),
