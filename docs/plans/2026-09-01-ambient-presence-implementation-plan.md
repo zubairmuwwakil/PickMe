@@ -36,7 +36,7 @@
 - Consumes: nothing.
 - Produces: `public enum AmbientDeliveryTier: String, Codable, Equatable, Sendable, CaseIterable { case silent, presence, confirm, interrupt }` and `AmbientGateDecision.tier: AmbientDeliveryTier`. `AmbientGateDecision.fires: Bool` is retained, redefined as `tier == .interrupt`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `Engine/Tests/CardCopilotEngineTests/AmbientGateTests.swift`, inside the existing `AmbientGateTests` class (it already defines `both` and `passingInput()`):
 
@@ -110,12 +110,12 @@ Append to `Engine/Tests/CardCopilotEngineTests/AmbientGateTests.swift`, inside t
     }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `cd Engine && swift test --filter AmbientGateTests`
 Expected: FAIL — `value of type 'AmbientGateDecision' has no member 'tier'`.
 
-- [ ] **Step 3: Add the tier**
+- [x] **Step 3: Add the tier**
 
 In `Engine/Sources/CardCopilotEngine/Engine/AmbientGate.swift`, insert immediately **above** `public struct AmbientGateDecision`:
 
@@ -172,17 +172,17 @@ public struct AmbientGateDecision: Codable, Equatable, Sendable {
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `cd Engine && swift test --filter AmbientGateTests`
 Expected: PASS, including the pre-existing suppression-reason tests, which are untouched.
 
-- [ ] **Step 5: Run the full engine suite**
+- [x] **Step 5: Run the full engine suite**
 
 Run: `cd Engine && swift test`
 Expected: PASS. No other engine code reads `AmbientGateDecision`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add Engine/Sources/CardCopilotEngine/Engine/AmbientGate.swift Engine/Tests/CardCopilotEngineTests/AmbientGateTests.swift

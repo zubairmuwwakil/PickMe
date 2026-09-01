@@ -84,6 +84,32 @@ public enum AmbientSuppressionReason: String, Codable, CaseIterable, Hashable, S
     case advantageBelowFrequentedThreshold
 }
 
+/// How an arrival should reach the owner.
+///
+/// The gate used to answer one question — interrupt or stay silent — and the Live Activity was
+/// started from inside the notification path, so one boolean decided both whether PickMe spoke
+/// and whether PickMe was *visible*. That coupling was a consequence of call-site placement, not
+/// a policy: it left the owner seeing nothing on most arrivals.
+///
+/// The tiers are derived from the suppression reasons rather than added alongside them, because
+/// the reasons already record the distinction that matters. Two of them are volume judgements
+/// ("the answer is: keep going"), one is a correctness stop ("we do not know this merchant"), and
+/// one is consent ("you told us to stop"). Those deserve different treatment and the same
+/// notification budget cannot express it.
+public enum AmbientDeliveryTier: String, Codable, Equatable, Sendable, CaseIterable {
+    /// Nothing at all. The owner's explicit instruction, not a volume dial.
+    case silent
+    /// Visible, but carrying no card advice. Naming a card at a merchant we cannot identify is a
+    /// confident wrong answer, which costs trust faster than silence does.
+    case presence
+    /// Visible and advisory, but never audible: the answer is "stay on the card you were going
+    /// to use anyway", which is worth showing and not worth interrupting for.
+    case confirm
+    /// Sound, time-sensitive banner, and a Live Activity. Reserved for arrivals where switching
+    /// cards actually earns money.
+    case interrupt
+}
+
 /// A decision carries every failed conjunct rather than a single arbitrary first failure. This
 /// makes the field-test counters diagnostic while keeping the firing rule a strict conjunction.
 public struct AmbientGateDecision: Codable, Equatable, Sendable {
@@ -93,7 +119,18 @@ public struct AmbientGateDecision: Codable, Equatable, Sendable {
         self.suppressionReasons = suppressionReasons
     }
 
-    public var fires: Bool { suppressionReasons.isEmpty }
+    /// Precedence: consent, then correctness, then volume. Expressed as ordered checks rather
+    /// than as a `Comparable` ranking so that adding a reason forces a decision about where it
+    /// sits, instead of defaulting into the quietest tier by accident.
+    public var tier: AmbientDeliveryTier {
+        if suppressionReasons.contains(.merchantMuted) { return .silent }
+        if suppressionReasons.contains(.merchantConfidenceLow) { return .presence }
+        return suppressionReasons.isEmpty ? .interrupt : .confirm
+    }
+
+    /// Unchanged in meaning: PickMe interrupted. `SuppressionLog` and the TestFlight A3
+    /// criterion both read this, and neither is a statement about visibility.
+    public var fires: Bool { tier == .interrupt }
 }
 
 public enum AmbientGate {

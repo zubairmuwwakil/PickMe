@@ -199,4 +199,72 @@ extension AmbientGateTests {
             AmbientAdvantage(percentagePoints: 0.5, cad: 0.5)))
         XCTAssertEqual(decision.suppressionReasons, [.advantageBelowFrequentedThreshold])
     }
+
+    // MARK: - Delivery tier
+
+    func testClearArrivalInterrupts() {
+        XCTAssertEqual(AmbientGate.evaluate(passingInput()).tier, .interrupt)
+    }
+
+    func testDefaultCardWinConfirmsRatherThanSilencing() {
+        var input = passingInput()
+        input.recommendedCardId = input.defaultCardId
+        XCTAssertEqual(AmbientGate.evaluate(input).tier, .confirm)
+    }
+
+    func testAdvantageBelowThresholdConfirms() {
+        var input = passingInput()
+        input.advantage = AmbientAdvantage(percentagePoints: 0.99, cad: 2)
+        XCTAssertEqual(AmbientGate.evaluate(input).tier, .confirm)
+    }
+
+    func testUnknownMerchantGetsPresenceWithoutAdvice() {
+        var input = passingInput()
+        input.merchantConfidence = .unknown
+        XCTAssertEqual(AmbientGate.evaluate(input).tier, .presence)
+    }
+
+    func testMutedMerchantIsSilent() {
+        var input = passingInput()
+        input.isMuted = true
+        XCTAssertEqual(AmbientGate.evaluate(input).tier, .silent)
+    }
+
+    /// Consent outranks a correctness stop, which outranks a volume judgement.
+    func testMutePrecedesEveryOtherReason() {
+        var input = passingInput()
+        input.isMuted = true
+        input.merchantConfidence = .unknown
+        input.recommendedCardId = input.defaultCardId
+        XCTAssertEqual(AmbientGate.evaluate(input).tier, .silent)
+    }
+
+    func testUnknownMerchantPrecedesVolumeReasons() {
+        var input = passingInput()
+        input.merchantConfidence = .unknown
+        input.recommendedCardId = input.defaultCardId
+        XCTAssertEqual(AmbientGate.evaluate(input).tier, .presence)
+    }
+
+    /// The TestFlight A3 criterion and `SuppressionLog` both read `fires`. It must keep
+    /// meaning "PickMe interrupted", not "PickMe was visible".
+    func testFiresStillMeansInterrupt() {
+        for input in [passingInput(), mutedInput(), unknownInput(), defaultWinInput()] {
+            let decision = AmbientGate.evaluate(input)
+            XCTAssertEqual(decision.fires, decision.tier == .interrupt)
+            XCTAssertEqual(decision.fires, decision.suppressionReasons.isEmpty)
+        }
+    }
+
+    private func mutedInput() -> AmbientGateInput {
+        var input = passingInput(); input.isMuted = true; return input
+    }
+
+    private func unknownInput() -> AmbientGateInput {
+        var input = passingInput(); input.merchantConfidence = .unknown; return input
+    }
+
+    private func defaultWinInput() -> AmbientGateInput {
+        var input = passingInput(); input.recommendedCardId = input.defaultCardId; return input
+    }
 }
