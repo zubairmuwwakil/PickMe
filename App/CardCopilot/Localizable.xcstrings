@@ -861,6 +861,39 @@
         }
       }
     },
+    "ambient.activity.best.advantage" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Best card here"
+          }
+        }
+      }
+    },
+    "ambient.activity.confirm.advantage" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Already your best card here"
+          }
+        }
+      }
+    },
+    "ambient.activity.presence.body" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tap to tell PickMe which shop this is."
+          }
+        }
+      }
+    },
     "ambient.amount.body" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -1098,7 +1131,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "your usual card was already the best one"
+            "value" : "your usual card was already the best one, so PickMe confirmed it quietly"
           }
         }
       }
@@ -1109,7 +1142,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "the gain was below your switch threshold at a store you shop at often"
+            "value" : "the gain was below your switch threshold at a store you shop at often, so PickMe confirmed your card quietly"
           }
         }
       }
@@ -1120,7 +1153,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "the gain was below your switch threshold"
+            "value" : "the gain was below your switch threshold, so PickMe confirmed your card quietly"
           }
         }
       }
@@ -1131,7 +1164,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "the gain was below the higher bar for unconfirmed stores"
+            "value" : "the gain was below the higher bar for unconfirmed stores, so PickMe confirmed your card quietly"
           }
         }
       }
@@ -1142,7 +1175,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "you muted that store"
+            "value" : "you muted that store, so PickMe stayed out of the way entirely"
           }
         }
       }
@@ -1153,7 +1186,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "the store could not be identified"
+            "value" : "the store could not be identified, so PickMe showed up without naming a card"
           }
         }
       }
