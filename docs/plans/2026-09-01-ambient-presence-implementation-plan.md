@@ -203,7 +203,7 @@ git commit -m "feat(ambient): derive a delivery tier from the gate's suppression
 
 Note: there is no Kotlin test for this file today — the Swift side is the only place the gate is covered. This task creates the missing twin test as well as the twin behaviour, which is why it is one task rather than two.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `android/core/engine/src/test/kotlin/com/cardcopilot/engine/AmbientGateTest.kt`:
 
@@ -216,8 +216,8 @@ import com.cardcopilot.engine.engine.AmbientGate
 import com.cardcopilot.engine.engine.AmbientGateInput
 import com.cardcopilot.engine.engine.AmbientMerchantConfidence
 import com.cardcopilot.engine.models.SwitchThreshold
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 class AmbientGateTest {
     private val both = SwitchThreshold(
@@ -304,12 +304,12 @@ class AmbientGateTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd android && ./gradlew :core:engine:test --tests "*AmbientGateTest*"`
 Expected: FAIL — unresolved reference `AmbientDeliveryTier`.
 
-- [ ] **Step 3: Add the tier to the twin**
+- [x] **Step 3: Add the tier to the twin**
 
 In `android/core/engine/src/main/kotlin/com/cardcopilot/engine/engine/AmbientGate.kt`, insert immediately **above** `data class AmbientGateDecision`:
 
@@ -365,17 +365,17 @@ data class AmbientGateDecision(
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `cd android && ./gradlew :core:engine:test --tests "*AmbientGateTest*"`
 Expected: PASS.
 
-- [ ] **Step 5: Run the full cross-language gate**
+- [x] **Step 5: Run the full cross-language gate**
 
 Run: `(cd Engine && swift test) && (cd android && ./gradlew :core:engine:test)`
 Expected: PASS on both sides.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add android/core/engine/src/main/kotlin/com/cardcopilot/engine/engine/AmbientGate.kt android/core/engine/src/test/kotlin/com/cardcopilot/engine/AmbientGateTest.kt

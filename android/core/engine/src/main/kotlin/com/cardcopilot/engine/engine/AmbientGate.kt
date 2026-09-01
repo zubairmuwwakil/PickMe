@@ -46,10 +46,50 @@ enum class AmbientSuppressionReason {
     MERCHANT_MUTED
 }
 
+/**
+ * How an arrival should reach the owner.
+ *
+ * Derived from the suppression reasons rather than added alongside them: two of the reasons are
+ * volume judgements ("the answer is: keep going"), one is a correctness stop ("we do not know
+ * this merchant"), and one is consent ("you told us to stop"). One boolean cannot express that.
+ *
+ * Mirrors `AmbientDeliveryTier` in the Swift engine. The two must agree exactly.
+ */
+enum class AmbientDeliveryTier {
+    /** Nothing at all. The owner's explicit instruction, not a volume dial. */
+    SILENT,
+
+    /** Visible, carrying no card advice: naming a card at an unidentifiable merchant is a
+     * confident wrong answer, which costs trust faster than silence does. */
+    PRESENCE,
+
+    /** Visible and advisory, never audible. */
+    CONFIRM,
+
+    /** Sound, time-sensitive banner, Live Activity. Switching cards earns money here. */
+    INTERRUPT
+}
+
 data class AmbientGateDecision(
     val suppressionReasons: Set<AmbientSuppressionReason>
 ) {
-    val fires: Boolean get() = suppressionReasons.isEmpty()
+    /**
+     * Precedence: consent, then correctness, then volume. Ordered checks rather than a ranking,
+     * so that adding a reason forces a decision about where it sits instead of defaulting into
+     * the quietest tier by accident.
+     */
+    val tier: AmbientDeliveryTier
+        get() = when {
+            AmbientSuppressionReason.MERCHANT_MUTED in suppressionReasons ->
+                AmbientDeliveryTier.SILENT
+            AmbientSuppressionReason.MERCHANT_CONFIDENCE_LOW in suppressionReasons ->
+                AmbientDeliveryTier.PRESENCE
+            suppressionReasons.isEmpty() -> AmbientDeliveryTier.INTERRUPT
+            else -> AmbientDeliveryTier.CONFIRM
+        }
+
+    /** Unchanged in meaning: PickMe interrupted. Not a statement about visibility. */
+    val fires: Boolean get() = tier == AmbientDeliveryTier.INTERRUPT
 }
 
 object AmbientGate {
