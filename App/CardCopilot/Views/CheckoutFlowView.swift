@@ -124,6 +124,18 @@ struct CheckoutFlowView: View {
         .onReceive(NotificationCenter.default.publisher(for: .openCreditReminders)) { _ in
             router.selectTab(.perks)
         }
+        .onOpenURL { url in
+            guard let link = AmbientDeepLink(url: url) else { return }
+            switch link {
+            case .identifyMerchant:
+                // The presence Live Activity asked "which shop is this?". `findNearby` is that
+                // question: it lists the places around the owner and routes to `.confirming`,
+                // where picking one both answers it and produces a recommendation.
+                router.selectTab(.copilot)
+                router.popToRoot()
+                findNearby()
+            }
+        }
     }
 
     @ViewBuilder

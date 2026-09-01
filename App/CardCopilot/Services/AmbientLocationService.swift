@@ -364,7 +364,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         self.catalogue = catalogue
         self.ownerState = ownerState
         LiveActivityManager.shared.onDismissal = { [weak self] regionId in
-            self?.visitStore.update(regionId: regionId) { $0.liveActivityDismissed = true }
+            self?.visitStore.markLiveActivityDismissed(regionId: regionId)
         }
         startIfAuthorized()
         let pending = pendingArrivals
@@ -923,6 +923,14 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                         recommendation: Recommendation?,
                                         catalogue: Catalogue,
                                         regionId: String) {
+        // A swipe is the only "not now" that costs the owner nothing, and it is worth exactly as
+        // much as our willingness to honour it. Plaza geofences flap entry/exit/entry during one
+        // shop, so without this the card the owner just cleared is back within the minute — which
+        // teaches them the swipe does not work, and the next thing they reach for is the Settings
+        // toggle we cannot undo. The notification path is deliberately untouched: this suppresses
+        // presence, not the alert that earns money.
+        guard !visitStore.liveActivityWasDismissed(regionId: regionId) else { return }
+
         let meta = CategoryVisuals.meta(for: arrival.prediction.category)
         let merchant = notificationMerchantName(arrival.merchant.name)
 

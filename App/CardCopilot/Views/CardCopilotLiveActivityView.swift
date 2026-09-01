@@ -12,7 +12,15 @@ public struct CardCopilotLiveActivityView: View {
     }
 
     public var body: some View {
-        lockScreenBanner
+        // Without this the tap opens PickMe to wherever the owner last was, which makes "Tap to
+        // tell PickMe which shop this is" a promise the app does not keep. Only the presence tier
+        // carries a link: the other tiers already name a card, and have nothing to ask.
+        if context.state.tier == .presence {
+            lockScreenBanner
+                .widgetURL(URL(string: "pickme://arrival/identify"))
+        } else {
+            lockScreenBanner
+        }
     }
 
     private var lockScreenBanner: some View {

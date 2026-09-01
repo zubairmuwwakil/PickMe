@@ -3,6 +3,26 @@ import CardCopilotEngine
 import Foundation
 import SwiftUI
 
+/// Tells the owner's "not now" apart from our own cleanup.
+///
+/// Extracted from the observer so it can be tested: `Activity` cannot be constructed in a test
+/// process, but this decision is the part that was wrong.
+enum LiveActivityDismissalPolicy {
+    /// `.ended` and `.dismissed` are sequential states, not alternatives. `.ended` means the
+    /// activity is over but still on screen; `.dismissed` means it is no longer on screen. Our own
+    /// `endActivity(dismissalPolicy: .immediate)` therefore walks `.active → .ended → .dismissed`
+    /// in about a second, as does a system expiry — so watching for `.dismissed` alone counts
+    /// every geofence exit and every activity swap as a swipe the owner never made.
+    ///
+    /// Having seen `.ended` first is what distinguishes those from a swipe of a live card. The
+    /// cost is that swiping an already-ended card is not recorded; that is the generous direction,
+    /// and it is unobservable anyway once iOS has terminated the process.
+    static func isOwnerDismissal(after observed: [ActivityState],
+                                 observing state: ActivityState) -> Bool {
+        state == .dismissed && !observed.contains(.ended)
+    }
+}
+
 /// Manages Live Activities for ambient arrivals and checkout recommendations.
 @MainActor
 public final class LiveActivityManager: ObservableObject {
@@ -69,8 +89,9 @@ public final class LiveActivityManager: ObservableObject {
         }
     }
 
-    /// A swipe reports `.dismissed`; our own `endActivity` reports `.ended`. Only the first is
-    /// the owner saying "not now", so only the first is recorded.
+    /// Reports the owner swiping this activity away, and nothing else. See
+    /// `LiveActivityDismissalPolicy` for why the whole state sequence has to be considered rather
+    /// than just the arrival of `.dismissed`.
     ///
     /// This can only observe a dismissal while the process is alive. If iOS terminated the app
     /// first, the activity simply disappears from `Activity.activities` exactly as an ended one
@@ -80,9 +101,14 @@ public final class LiveActivityManager: ObservableObject {
                                   visitKey: String?) {
         guard let visitKey else { return }
         Task { [weak self] in
-            for await state in activity.activityStateUpdates where state == .dismissed {
-                await MainActor.run { self?.onDismissal?(visitKey) }
-                return
+            var observed: [ActivityState] = []
+            for await state in activity.activityStateUpdates {
+                if LiveActivityDismissalPolicy.isOwnerDismissal(after: observed, observing: state) {
+                    await MainActor.run { self?.onDismissal?(visitKey) }
+                    return
+                }
+                observed.append(state)
+                if state == .dismissed { return }
             }
         }
     }

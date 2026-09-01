@@ -47,6 +47,14 @@ struct AmbientVisit: Codable, Equatable {
     }
 }
 
+/// How long a swipe keeps PickMe off the Lock Screen at that region.
+///
+/// Refreshed by every arrival it suppresses, so the window measures time since the owner was last
+/// *seen* there rather than time since the swipe: a long shop with a flapping plaza geofence stays
+/// quiet throughout, and the suppression lifts twenty minutes after they have actually left. A
+/// return trip that afternoon is a new visit and gets service again.
+let dismissalRespectWindow: TimeInterval = 20 * 60
+
 /// Per-area visit state. Entries are pruned on write rather than on a timer: a region exit that
 /// never arrives would otherwise strand a timestamp forever, and the next entry to that area
 /// would compute a dwell measured in days.
@@ -54,6 +62,7 @@ struct AmbientVisit: Codable, Equatable {
 final class AmbientVisitStore {
     private let defaults: UserDefaults
     private let key = "ambientVisits.v1"
+    private let dismissalKey = "ambientLiveActivityDismissals.v1"
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -85,6 +94,49 @@ final class AmbientVisitStore {
 
     func forgetAll() {
         defaults.removeObject(forKey: key)
+        defaults.removeObject(forKey: dismissalKey)
+    }
+
+    // MARK: - Dismissals
+
+    /// Records that the owner swiped this region's Live Activity away.
+    ///
+    /// Kept separately from `AmbientVisit.liveActivityDismissed` because the two answer different
+    /// questions over different lifetimes. The visit flag answers "was it dismissed during *this*
+    /// visit", which the payment loop needs — and it dies with the visit, since an exit calls
+    /// `end(regionId:)` and the next entry calls `begin(_:forRegionId:)`. A plaza geofence flaps
+    /// entry/exit/entry during one shop, so relying on the flag alone would put the card straight
+    /// back on the screen the owner just cleared. Both are written here.
+    func markLiveActivityDismissed(regionId: String, at date: Date = .now) {
+        update(regionId: regionId) { $0.liveActivityDismissed = true }
+        var dismissals = prunedDismissals(now: date)
+        dismissals[regionId] = date.timeIntervalSince1970
+        saveDismissals(dismissals)
+    }
+
+    /// Whether a swipe at this region should still be honoured.
+    ///
+    /// Reading refreshes the window for that region, so suppression persists for as long as the
+    /// owner keeps re-entering. See `dismissalRespectWindow`.
+    func liveActivityWasDismissed(regionId: String, now: Date = .now) -> Bool {
+        var dismissals = prunedDismissals(now: now)
+        guard dismissals[regionId] != nil else {
+            saveDismissals(dismissals)
+            return false
+        }
+        dismissals[regionId] = now.timeIntervalSince1970
+        saveDismissals(dismissals)
+        return true
+    }
+
+    private func prunedDismissals(now: Date) -> [String: Double] {
+        let stored = defaults.dictionary(forKey: dismissalKey) as? [String: Double] ?? [:]
+        let cutoff = now.addingTimeInterval(-dismissalRespectWindow).timeIntervalSince1970
+        return stored.filter { $0.value > cutoff }
+    }
+
+    private func saveDismissals(_ dismissals: [String: Double]) {
+        defaults.set(dismissals, forKey: dismissalKey)
     }
 
     /// Drops entries older than a plausible visit. `maximumPlausibleDwell` is the same bound
