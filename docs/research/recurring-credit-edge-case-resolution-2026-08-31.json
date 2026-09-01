@@ -1,0 +1,355 @@
+{
+  "reviewedAt": "2026-08-31",
+  "repository": "zubairmuwwakil/PickMe",
+  "observedMainCommit": "af7c1f9fd96287f76bcc16ebf95b05d31f4c3884",
+  "scope": {
+    "claimCount": 6,
+    "claims": [
+      "amex-platinum/platinum-nexus-credit",
+      "amex-aeroplan-reserve/amex-aeroplan-reserve-nexus-credit",
+      "walmart-rewards-mastercard/walmart-rewards-annual-walmart-plus-credit",
+      "walmart-rewards-world-mastercard/walmart-rewards-world-annual-walmart-plus-credit",
+      "american-express-the-platinum-card/amex-plat-us-global-entry-credit",
+      "american-express-the-platinum-card/amex-plat-us-tsa-precheck-credit"
+    ],
+    "verificationStandard": "Only current issuer-hosted pages and issuer-hosted PDFs support findings. Search results were used only to locate issuer materials. No canonical contract, engine code, synchronized resource, release file, or prior research artifact was modified."
+  },
+  "summary": {
+    "promote": 0,
+    "remainBlocked": 4,
+    "moveToBenefits": 2,
+    "refused": 0,
+    "highConfidenceFacts": 6,
+    "keyFindings": [
+      "Both Canadian American Express NEXUS benefits are verified, automatic statement credits, but the product-level CardCredit schedule cannot select between the fixed legacy cohort and each newer account's individual Card-anniversary anchor.",
+      "Both Canadian Walmart+ benefits are verified statement-credit reimbursements, not merely free subscription access, but their values are formulas based on current annual membership fees plus tax rather than fixed CAD amounts.",
+      "The U.S. Platinum trusted-traveler benefit is one first-charge-wins allowance for either Global Entry or TSA PreCheck, not two independent credits. Current controlling issuer terms use a four-year interval for both paths and specific Additional Platinum guides state that each eligible Additional Card has its own allowance.",
+      "All six claims now have high-confidence factual support, but none can be safely emitted as the six existing independent CardCredit rows under the current schema."
+    ]
+  },
+  "claims": [
+    {
+      "cardId": "amex-platinum",
+      "creditId": "platinum-nexus-credit",
+      "disposition": "remainBlocked",
+      "confidence": "high",
+      "normalizedProposedFields": null,
+      "exactReasonIfNotPromotable": "The issuer defines two schedule cohorts. Cardmembers existing on 2021-09-01 use fixed issuer-wide four-year windows, while later Cardmembers use four-year windows anchored to the individual account's initial Card anniversary date. The current CardCredit schedule can express a 48-month account-anniversary cadence but cannot select the legacy cohort, store its fixed anchor, or materialize the correct current window from owner state. Promoting a generic accountAnniversary schedule would be wrong for legacy accounts.",
+      "contractLimitation": {
+        "currentSchema": "creditSchedule supports calendar, accountAnniversary, or rolling plus an interval, but has no cohort selector, anchor date, explicit-period list, or owner-specific Card-anniversary input.",
+        "safeCurrentAction": "Keep excluded from CardCredit. Do not map the legacy fixed schedule to a generic account-anniversary formula.",
+        "explicitLegacyWindows": [
+          {
+            "effectiveFrom": "2021-09-01",
+            "effectiveTo": "2025-08-31"
+          },
+          {
+            "effectiveFrom": "2025-09-01",
+            "effectiveTo": "2029-08-31",
+            "statusAtReview": "current"
+          }
+        ],
+        "newerAccountRule": "For Cardmembers after 2021-09-01, the first period begins on that account's initial Card anniversary date and ends the day before its fourth Card anniversary; each later four-year period immediately follows. A product-only contract cannot determine these dates without the account's real anniversary anchor."
+      },
+      "issuerSourceUrls": [
+        "https://www.americanexpress.com/en-ca/benefits/travel/the-platinum-card/",
+        "https://www.americanexpress.com/en-ca/benefits/experiences/experiences-app/"
+      ],
+      "reviewedAt": "2026-08-31",
+      "evidence": {
+        "conciseParaphrase": "Amex provides cumulative statement credits up to C$100 per account in each four-year period for NEXUS application or renewal fees. It rounds eligible spend down to whole dollars. Charges on either Basic or Supplementary Platinum Cards count toward the same account cap. The legacy first period was 2021-09-01 through 2025-08-31; later Cardmembers use account-specific Card-anniversary periods.",
+        "eligibilityBasis": "Cohort is based on whether the Cardmember already existed on 2021-09-01, not the NEXUS application date. Later accounts are anchored to the issuer's initial Card anniversary date.",
+        "applicationAndRenewalTreatment": "Identical. Both application and renewal fees qualify; rejection does not restore or extend the allowance.",
+        "limitScope": "Per account, shared across Basic and Supplementary Card charges.",
+        "supplementaryCardChargesEligible": true,
+        "claimOrSubmission": "Automatic statement credit; no manual claim or submission deadline is stated. Allow up to eight weeks. If a qualifying credit is absent after six to eight weeks, call the number on the Card.",
+        "accountCondition": "Account must be active and not in default when the credit is fulfilled.",
+        "completeScheduleLocation": "The Platinum travel-benefits issuer page contains the complete public schedule and fulfillment terms; no separate PDF was required."
+      },
+      "contradictionsOrRegionalCohortAmbiguity": [
+        "The public terms are clear about the legacy/new cohort split but do not give PickMe the individual Card-anniversary date needed for a newer account.",
+        "The phrase initial Card anniversary date should be stored from verified owner/account data rather than inferred from a credit-card application date."
+      ]
+    },
+    {
+      "cardId": "amex-aeroplan-reserve",
+      "creditId": "amex-aeroplan-reserve-nexus-credit",
+      "disposition": "remainBlocked",
+      "confidence": "high",
+      "normalizedProposedFields": null,
+      "exactReasonIfNotPromotable": "The verified Aeroplan Reserve terms use the same legacy-versus-new Cardmember cohort schedule as the Platinum Card. The current CardCredit schedule cannot distinguish the fixed 2021 legacy anchor from a later account's individual Card-anniversary anchor, so a single product-level accountAnniversary interval would misstate eligibility for legacy accounts.",
+      "contractLimitation": {
+        "currentSchema": "No cohort selector, explicit-period list, schedule anchor, or owner-specific Card-anniversary input exists in CardCredit.",
+        "safeCurrentAction": "Keep excluded from CardCredit until the owner/account model supplies the verified cohort and Card-anniversary anchor.",
+        "explicitLegacyWindows": [
+          {
+            "effectiveFrom": "2021-09-01",
+            "effectiveTo": "2025-08-31"
+          },
+          {
+            "effectiveFrom": "2025-09-01",
+            "effectiveTo": "2029-08-31",
+            "statusAtReview": "current"
+          }
+        ],
+        "newerAccountRule": "For Cardmembers after 2021-09-01, the first period begins on the account's initial Card anniversary date and ends the day before its fourth Card anniversary; each later period immediately follows."
+      },
+      "issuerSourceUrls": [
+        "https://www.americanexpress.com/en-ca/membership-benefits/aeroplan-reserve-card/"
+      ],
+      "reviewedAt": "2026-08-31",
+      "evidence": {
+        "conciseParaphrase": "Amex provides cumulative statement credits up to C$100 per account in each four-year period for NEXUS application or renewal fees. Eligible Basic and Supplementary Aeroplan Reserve charges share one account cap, and eligible spend is rounded down to whole dollars.",
+        "eligibilityBasis": "Cohort is based on Cardmember status on 2021-09-01; later accounts use their own initial Card anniversary date.",
+        "applicationAndRenewalTreatment": "Identical. Both application and renewal fees qualify; rejection still consumes the used allowance.",
+        "limitScope": "Per account, shared across Basic and Supplementary Card charges.",
+        "supplementaryCardChargesEligible": true,
+        "claimOrSubmission": "Automatic statement credit; no manual claim or submission deadline is stated. Allow up to eight weeks and call Amex after six to eight weeks if a qualifying credit is missing.",
+        "accountCondition": "Account must be active and not in default when the credit is fulfilled.",
+        "completeScheduleLocation": "The issuer's Aeroplan Reserve membership-benefits page contains the complete public schedule and fulfillment terms."
+      },
+      "contradictionsOrRegionalCohortAmbiguity": [
+        "The terms establish the schedule, but PickMe cannot derive a newer account's window without its real Card-anniversary anchor.",
+        "The no-fee Supplementary Aeroplan Reserve variant is excluded from some other benefits on the same page, but the NEXUS term itself says Basic or Supplementary Card and does not publish a narrower NEXUS exclusion. Do not import exclusions from unrelated footnotes."
+      ]
+    },
+    {
+      "cardId": "walmart-rewards-mastercard",
+      "creditId": "walmart-rewards-annual-walmart-plus-credit",
+      "disposition": "moveToBenefits",
+      "confidence": "high",
+      "normalizedProposedFields": null,
+      "exactReasonIfNotPromotable": "This is a real statement-credit reimbursement, but the issuer does not promise a fixed CAD maximum. The reimbursement equals three months of the then-current regularly priced annual Walmart+ membership fee plus corresponding taxes. CardCredit requires a fixed Money amount, so hard-coding today's price would become wrong when Walmart changes the annual price or the applicable tax changes.",
+      "contractLimitation": {
+        "currentSchema": "CardCredit.value requires a numeric Money amount and has no formula, reference-price, tax, or percentage field.",
+        "safeCurrentAction": "Represent the entitlement in benefits-catalogue as a formula-priced Walmart+ membership reimbursement. Do not annualize or invent a fixed CAD CardCredit.",
+        "suggestedBenefitRepresentation": {
+          "benefitType": "membershipStatementCredit",
+          "valueFormula": "3/12 of the current regularly priced annual Walmart+ membership fee, plus the taxes attributable to that reimbursed portion",
+          "billingPlanRequired": "annual",
+          "cadence": "one statement credit per account per calendar year",
+          "eligibleChannels": [
+            "Walmart.ca",
+            "Walmart Canada Mobile App"
+          ],
+          "eligibleCardholderRoles": [
+            "primary",
+            "supplemental"
+          ]
+        }
+      },
+      "issuerSourceUrls": [
+        "https://www.walmartrewards.ca/en/support/offers-promotions",
+        "https://www.walmartrewards.ca/content/dam/wr/legal-documents-footer/walmartplus/Walmart%2B%20Benefit%20Terms_Version%20June%202026_v3_01Jun2026%20-%20Final_ENG.pdf"
+      ],
+      "reviewedAt": "2026-08-31",
+      "evidence": {
+        "conciseParaphrase": "After a qualifying sign-up or renewal of a regularly priced annual Walmart+ membership is paid with the card, Fairstone posts a statement credit equal to three months of membership fees plus taxes. The credit is automatic within 45 business days and repeats on eligible annual renewal.",
+        "benefitNature": "Formula-priced statement-credit reimbursement, not merely included subscription access.",
+        "amountActuallyReimbursed": "Three months of the current annual membership fee plus applicable taxes; the issuer schedule does not set a permanent CAD amount.",
+        "taxesIncluded": true,
+        "valueVariability": "Varies with the regular annual-plan price and applicable tax. The terms do not publish province-specific base prices, but tax makes the credited total location-dependent and future price changes change the reimbursement.",
+        "billingPlanRequired": "Annual. Monthly Walmart+ plans do not satisfy the published qualifying-purchase rule.",
+        "enrollmentRequired": "A Walmart+ annual membership must be started or renewed and the eligible Mastercard must be the payment method on file. No separate issuer-benefit enrollment is stated.",
+        "limitScope": "One statement credit per account per calendar year. Primary or supplemental cardholders may make the qualifying purchase.",
+        "otherRestrictions": [
+          "Purchase or renewal must be online at Walmart.ca or in the Walmart Canada Mobile App.",
+          "Mobile-wallet payments are not eligible.",
+          "The credit cannot be combined with a Walmart+ annual-membership promotional discount.",
+          "The card account must not be in default, suspended, cancelled, or closed when the credit is issued."
+        ],
+        "completeScheduleLocation": "Issuer-hosted two-page Walmart+ Benefit Terms, version Jun2026."
+      },
+      "contradictionsOrRegionalCohortAmbiguity": [
+        "For existing members outside Quebec, the membership automatically renews. Quebec customers must purchase renewals using the eligible card; this changes the renewal flow, not the reimbursement formula.",
+        "Marketing may state an illustrative current value, but the legal schedule defines the reimbursement in months of fees plus taxes and controls normalization."
+      ]
+    },
+    {
+      "cardId": "walmart-rewards-world-mastercard",
+      "creditId": "walmart-rewards-world-annual-walmart-plus-credit",
+      "disposition": "moveToBenefits",
+      "confidence": "high",
+      "normalizedProposedFields": null,
+      "exactReasonIfNotPromotable": "This is a statement-credit reimbursement whose amount equals six months of the then-current regularly priced annual Walmart+ membership fee plus corresponding taxes. The current CardCredit Money value cannot safely represent a moving reference price or tax-dependent amount.",
+      "contractLimitation": {
+        "currentSchema": "CardCredit.value accepts only a fixed numeric Money amount and cannot encode price-linked or tax-linked formulas.",
+        "safeCurrentAction": "Move the entitlement to benefits-catalogue as a formula-priced membership reimbursement. Do not hard-code the current marketing value as a durable CardCredit.",
+        "suggestedBenefitRepresentation": {
+          "benefitType": "membershipStatementCredit",
+          "valueFormula": "6/12 of the current regularly priced annual Walmart+ membership fee, plus the taxes attributable to that reimbursed portion",
+          "billingPlanRequired": "annual",
+          "cadence": "one statement credit per account per calendar year",
+          "eligibleChannels": [
+            "Walmart.ca",
+            "Walmart Canada Mobile App"
+          ],
+          "eligibleCardholderRoles": [
+            "primary",
+            "supplemental"
+          ]
+        }
+      },
+      "issuerSourceUrls": [
+        "https://www.walmartrewards.ca/en/support/offers-promotions",
+        "https://www.walmartrewards.ca/content/dam/wr/legal-documents-footer/walmartplus/Walmart%2B%20Benefit%20Terms_Version%20June%202026_v3_01Jun2026%20-%20Final_ENG.pdf"
+      ],
+      "reviewedAt": "2026-08-31",
+      "evidence": {
+        "conciseParaphrase": "After an eligible annual Walmart+ sign-up or renewal is charged to the card, Fairstone posts a statement credit equal to six months of membership fees plus taxes. The automatic credit should post within 45 business days and repeats on qualifying annual renewal.",
+        "benefitNature": "Formula-priced statement-credit reimbursement, not merely included subscription access.",
+        "amountActuallyReimbursed": "Six months of the current annual membership fee plus applicable taxes; no permanent fixed CAD cap is stated in the legal schedule.",
+        "taxesIncluded": true,
+        "valueVariability": "Varies with the regular annual-plan price and applicable tax. Provincial tax and later membership-price changes can change the credited total.",
+        "billingPlanRequired": "Annual. Monthly billing is not eligible under the published qualifying-purchase rule.",
+        "enrollmentRequired": "The cardholder must start or renew an annual Walmart+ membership and retain the eligible card as payment method. There is no separate issuer-benefit enrollment step.",
+        "limitScope": "One statement credit per account per calendar year. Primary or supplemental cardholders may make the qualifying purchase.",
+        "otherRestrictions": [
+          "Purchase or renewal must be online at Walmart.ca or in the Walmart Canada Mobile App.",
+          "Mobile-wallet payments are not eligible.",
+          "The credit cannot be combined with a Walmart+ annual-membership promotional discount.",
+          "The account must remain open, unsuspended, and not in default through fulfillment."
+        ],
+        "completeScheduleLocation": "Issuer-hosted two-page Walmart+ Benefit Terms, version Jun2026."
+      },
+      "contradictionsOrRegionalCohortAmbiguity": [
+        "For existing members outside Quebec, the membership automatically renews; Quebec customers must actively purchase renewals with the card.",
+        "Any current advertised CAD value is illustrative and price-sensitive, while the legal schedule defines the benefit as six months of fees plus tax."
+      ]
+    },
+    {
+      "cardId": "american-express-the-platinum-card",
+      "creditId": "amex-plat-us-global-entry-credit",
+      "disposition": "remainBlocked",
+      "confidence": "high",
+      "normalizedProposedFields": null,
+      "exactReasonIfNotPromotable": "The Global Entry path is verified at US$120 every four years, but it is not an independent allowance. The first eligible Global Entry or TSA PreCheck charge on an eligible Card consumes that Card's one combined trusted-traveler allowance. Two separate CardCredit rows would double-count value and could recommend a second ineligible purchase. The schema has no alternative-group or first-charge-wins shared-cap relationship.",
+      "contractLimitation": {
+        "currentSchema": "CardCredit has no mutual-exclusion group, alternative-specific maximum, first-charge-wins rule, or unambiguous per-eligible-card limit scope.",
+        "safeCurrentAction": "Keep both U.S. trusted-traveler rows blocked until a combined alternative credit can express a US$120 Global Entry cap, an up-to-US$85 TSA PreCheck cap, one shared rolling window, and per-eligible-card consumption.",
+        "requiredFutureSemantics": {
+          "groupId": "amex-plat-us-trusted-traveler",
+          "selectionRule": "first qualifying application-fee charge wins",
+          "sharedAllowance": true,
+          "limitScope": "per eligible Basic or Additional Platinum Card",
+          "rollingIntervalMonths": 48,
+          "nextEligibilityAnchor": "merchant-reported transaction date of the qualifying charge that consumed the prior allowance"
+        }
+      },
+      "issuerSourceUrls": [
+        "https://www.americanexpress.com/us/credit-cards/card/platinum/",
+        "https://www.americanexpress.com/en-us/benefits/travel/expedite-your-travel/",
+        "https://www.americanexpress.com/en-us/travel/faq/travel-benefits/",
+        "https://www.americanexpress.com/en-us/account/get-started/additional-card-member//platinum",
+        "https://www.americanexpress.com/en-us/account/get-started/additional-card-member//companionplatinum",
+        "https://www.americanexpress.com/en-us/credit-cards/credit-intel/global-entry-credit-card-reimbursement/"
+      ],
+      "reviewedAt": "2026-08-31",
+      "evidence": {
+        "conciseParaphrase": "Current Amex terms reimburse the first eligible trusted-traveler application-fee charge on an eligible Card: US$120 for Global Entry or up to US$85 for an eligible five-year TSA PreCheck plan, but not both. A later application fee on that Card within four years is not eligible even when the first application was rejected.",
+        "currentAmount": {
+          "amount": 120,
+          "currency": "USD"
+        },
+        "cadence": "Rolling 48 months. The next fee should be treated as eligible no earlier than four years after the merchant-reported transaction date that consumed the prior allowance; Amex says merchant processing determines the transaction date.",
+        "sharedWithTsaPreCheck": true,
+        "primaryAdditionalEligibility": "The Basic Card and each eligible Additional Platinum or Companion Platinum Card are described as eligible. The specific Additional Card guides state that each Additional Card has its own statement-credit eligibility when the fee is charged to that Additional Card.",
+        "canPayForAnotherPerson": "Not established for an arbitrary non-Cardmember. The terms expressly cover applications made and paid for by the Basic or eligible Additional Cardmember and say each individual needs a separate application, but do not publish a general transferable-payment rule. Do not encode third-party applicant eligibility.",
+        "enrollmentOrClaim": "No benefit enrollment or manual claim is required. Allow up to eight weeks; call Amex if a qualifying credit is missing after eight weeks.",
+        "effectiveDatesAndChanges": "US$120 and the four-year combined cadence are current as reviewed on 2026-08-31. The current issuer terms do not state the effective date on which US$120 or the unified four-year TSA cadence began, and no future change to this benefit was announced in the reviewed issuer materials."
+      },
+      "contradictionsOrRegionalCohortAmbiguity": [
+        "A current Amex Credit Intel article last updated 2026-04-10 still describes TSA PreCheck as every 4.5 years, while the current controlling benefit page, travel FAQ, Platinum product page, and Additional Platinum guides use every four years. Treat the legal benefit terms and product-specific current guides as controlling; record the older 4.5-year article as stale issuer copy rather than retaining a 54-month contract.",
+        "The general benefit page uses per Card account wording, while the product-specific Additional Platinum and Companion Platinum guides explicitly say each eligible Additional Card has its own credit. The latter resolves implementation toward per-eligible-card allowances, but current CardCredit eligibility has no explicit per-card limit enum."
+      ]
+    },
+    {
+      "cardId": "american-express-the-platinum-card",
+      "creditId": "amex-plat-us-tsa-precheck-credit",
+      "disposition": "remainBlocked",
+      "confidence": "high",
+      "normalizedProposedFields": null,
+      "exactReasonIfNotPromotable": "The TSA PreCheck path is verified at up to US$85 for an eligible five-year plan every four years, but it shares a first-charge-wins allowance with the US$120 Global Entry path. The current schema would treat the two rows as additive independent credits and cannot attach different caps to mutually exclusive alternatives.",
+      "contractLimitation": {
+        "currentSchema": "No alternative-group, shared-consumption, first-charge-wins, or alternative-specific-cap semantics exist in CardCredit.",
+        "safeCurrentAction": "Do not promote this as a standalone 54-month or 48-month credit. Replace the two rows only when one combined trusted-traveler benefit can preserve both alternative amounts and the shared rolling allowance.",
+        "requiredFutureSemantics": {
+          "groupId": "amex-plat-us-trusted-traveler",
+          "selectionRule": "first qualifying application-fee charge wins",
+          "sharedAllowance": true,
+          "limitScope": "per eligible Basic or Additional Platinum Card",
+          "rollingIntervalMonths": 48,
+          "nextEligibilityAnchor": "merchant-reported transaction date of the qualifying charge that consumed the prior allowance"
+        }
+      },
+      "issuerSourceUrls": [
+        "https://www.americanexpress.com/us/credit-cards/card/platinum/",
+        "https://www.americanexpress.com/en-us/benefits/travel/expedite-your-travel/",
+        "https://www.americanexpress.com/en-us/travel/faq/travel-benefits/",
+        "https://www.americanexpress.com/en-us/account/get-started/additional-card-member//platinum",
+        "https://www.americanexpress.com/en-us/account/get-started/additional-card-member//companionplatinum",
+        "https://www.americanexpress.com/en-us/credit-cards/credit-intel/is-tsa-precheck-worth-it/",
+        "https://www.americanexpress.com/en-us/credit-cards/credit-intel/how-to-renew-tsa-precheck/"
+      ],
+      "reviewedAt": "2026-08-31",
+      "evidence": {
+        "conciseParaphrase": "Amex currently reimburses up to US$85 for a TSA PreCheck application through an official enrollment provider when the Cardmember buys a plan lasting at least five years. It is the alternative to Global Entry, and the first eligible program charged consumes the combined allowance.",
+        "currentAmount": {
+          "amount": 85,
+          "currency": "USD",
+          "qualifier": "maximum; actual eligible provider fee may be lower"
+        },
+        "cadence": "Rolling 48 months under the current controlling terms. The next eligibility date is anchored to the merchant-reported transaction date of the prior qualifying fee and is no earlier than four years later.",
+        "sharedWithGlobalEntry": true,
+        "primaryAdditionalEligibility": "Basic and eligible Additional Platinum Cardmembers qualify; current Additional Platinum and Companion Platinum guides state one allowance for each eligible Additional Card when its own Card pays the fee.",
+        "canPayForAnotherPerson": "Not issuer-established for an arbitrary non-Cardmember. The published terms discuss the Basic or Additional Cardmember applying and paying and require a separate application for each person; omit any claim that the benefit can be freely used for somebody else.",
+        "enrollmentOrClaim": "No separate benefit enrollment or manual reimbursement claim. TSA PreCheck must be purchased through an official enrollment provider, and a plan shorter than five years is ineligible. Allow up to eight weeks for the automatic statement credit.",
+        "effectiveDatesAndChanges": "The up-to-US$85 amount and four-year cadence are current as reviewed on 2026-08-31. Amex does not publish a transition effective date in the controlling terms, and the reviewed current terms announce no future change."
+      },
+      "contradictionsOrRegionalCohortAmbiguity": [
+        "Some issuer-authored informational pages from 2025 and early 2026 describe a 4.5-year TSA cadence. The current benefit terms, current Platinum travel FAQ, and current Additional Platinum guides use four years. The previous 54-month research row should therefore not be promoted.",
+        "General per-Card-account wording and the explicit each-Additional-Card wording should be modeled as a per-eligible-card allowance, not a single portfolio-wide allowance."
+      ]
+    }
+  ],
+  "architectureRecommendation": {
+    "cohortSchedules": {
+      "decision": "No card-catalogue schema expansion now; keep the two Canadian Amex NEXUS credits excluded.",
+      "reason": "The issuer evidence is deterministic only after the owner/account cohort and genuine Card-anniversary anchor are known. Adding a generic cohort formula to a product contract without that owner state would create apparent precision but still calculate the wrong window for some accounts.",
+      "safeDesignIfOwnerStateIsAddedLater": [
+        "Store a verified Card opened/anniversary anchor in owner state; do not infer it from application date, first observed transaction, or catalogue effectiveFrom.",
+        "Select the issuer-defined cohort using the explicit 2021-09-01 cutoff.",
+        "Materialize explicit inclusive start/end windows for the selected account. For the legacy cohort, retain the issuer's 2021-09-01 to 2025-08-31 window and current 2025-09-01 to 2029-08-31 window rather than converting them to accountYear.",
+        "For later accounts, materialize windows only from the verified account-specific initial Card anniversary date.",
+        "Do not use effectiveFrom/effectiveTo on one CardCredit to simulate owner cohorts; those fields describe contract availability, not which owner schedule applies."
+      ]
+    },
+    "sharedAlternativeCredits": {
+      "decision": "Do not promote Global Entry and TSA PreCheck as separate additive CardCredits.",
+      "requiredModelBeforePromotion": "A combined benefit needs alternative-specific maximum values, a mutual-exclusion/shared-consumption group, a first-qualifying-charge rule, a 48-month merchant-transaction anchor, and a per-eligible-card limit scope. Until those semantics exist, leave both rows blocked even though the issuer facts are high confidence."
+    },
+    "variablePriceBenefits": {
+      "decision": "Route both Walmart+ claims to benefits-catalogue.",
+      "reason": "The reimbursement is monetary but price-linked and tax-linked. CardCredit's fixed Money maximum would become stale and could distort ROI. Benefits-catalogue can describe the entitlement and purchase conditions without pretending the value is immutable."
+    }
+  },
+  "sourceReviewNotes": [
+    {
+      "source": "https://www.walmartrewards.ca/content/dam/wr/legal-documents-footer/walmartplus/Walmart%2B%20Benefit%20Terms_Version%20June%202026_v3_01Jun2026%20-%20Final_ENG.pdf",
+      "documentVersion": "Jun2026",
+      "reviewedAt": "2026-08-31",
+      "notes": "Issuer-hosted complete two-page Walmart+ benefit schedule."
+    },
+    {
+      "source": "https://www.americanexpress.com/en-us/benefits/travel/expedite-your-travel/",
+      "reviewedAt": "2026-08-31",
+      "notes": "Current controlling public benefit terms for amounts, combined allowance, transaction-date handling, eligibility, and fulfillment."
+    },
+    {
+      "source": "https://www.americanexpress.com/en-us/credit-cards/credit-intel/renew-global-entry-membership/",
+      "issuerArticleLastUpdated": "2026-04-10",
+      "reviewedAt": "2026-08-31",
+      "notes": "Issuer-authored informational article retained only to document the stale 4.5-year TSA contradiction; it does not override the current benefit terms."
+    }
+  ]
+}
