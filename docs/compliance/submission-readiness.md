@@ -421,9 +421,10 @@ therefore "build the thing," and the compliance-specific items are called out as
       **[verified]** 5.1.1(ii): "Ensure your purpose strings clearly and completely describe your
       use of the data." Draft string in
       [`app-privacy-labels.md`](app-privacy-labels.md) §7.
-- [ ] **B5. Confirm the absence of keys that must not be there:** no
-      `NSUserTrackingUsageDescription` (no ATT — see labels §4), no
-      `NSLocationAlwaysAndWhenInUseUsageDescription`, no `location` in `UIBackgroundModes`.
+- [ ] **B5. Confirm the permission keys match current behavior:** no
+      `NSUserTrackingUsageDescription` (no ATT — see labels §4),
+      `NSLocationAlwaysAndWhenInUseUsageDescription` for optional arrival alerts, and no
+      `location` in `UIBackgroundModes` because the app does not run continuous location updates.
       **[verified]** 5.1.1(iii): "Apps should only request access to data relevant to the core
       functionality."
 - [ ] **B6. Location off by default, behind its own consent screen.** **[verified]** P-39.1 s. 9.1:

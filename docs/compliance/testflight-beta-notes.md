@@ -74,14 +74,15 @@ The app includes an optional automation integration with Apple Wallet:
 - This integration is completely optional and user-configured; core recommendation and
   manual checkout flows operate independently of it.
 
-LOCATION USAGE & BACKGROUND MODES JUSTIFICATION (Guideline 2.5.4, 5.1.1)
+LOCATION USAGE & BACKGROUND DELIVERY JUSTIFICATION (Guideline 2.5.4, 5.1.1)
 
 Location is used for two specific user-facing purposes:
 1. When In Use (NSLocationWhenInUseUsageDescription): A single one-time fix when the
    user requests nearby merchants, querying MapKit to find the store they are visiting.
-2. Always & Background Mode (NSLocationAlwaysAndWhenInUseUsageDescription +
-   UIBackgroundModes "location"): The app registers geofenced regions (CLMonitor /
-   CLCircularRegion) for a small set of saved merchants. When the user enters a monitored
+2. Always (NSLocationAlwaysAndWhenInUseUsageDescription): The app registers geofenced regions
+   (CLCircularRegion) for a small set of shopping areas. Core Location can relaunch the app for
+   region and significant-change events; PickMe does not declare the continuous-location
+   background mode. When the user enters a monitored
    area, the app awakens in the background to evaluate whether a notification should be
    posted suggesting the best card before checkout, and computes visit dwell time upon
    exit.
@@ -180,9 +181,9 @@ flagged.
 1. **Shortcuts & Wallet Capture:** Explaining the Apple Shortcuts automation upfront prevents
    reviewers from mistaking PickMe for an unapproved FinancialKit consumer or unauthorized payment
    interceptor.
-2. **Location background mode justification:** Guideline 2.5.4 strictly evaluates apps declaring
-   `UIBackgroundModes = ["location"]`. The notes explicitly explain the `CLMonitor` / region
-   monitoring mechanism and confirm continuous GPS is not used.
+2. **Background arrival justification:** The notes explicitly explain the region and
+   significant-change monitoring mechanism, confirm continuous GPS is not used, and avoid
+   claiming a `UIBackgroundModes = ["location"]` declaration that is not in the built app.
 3. **Merchant-patronage paragraph (added 2026-08-27):** Always location plus a Wallet-transaction
    automation is a combination a beta reviewer is likely to question. The notes now say plainly
    that a local, on-device visit-frequency record (never uploaded) tunes the notification

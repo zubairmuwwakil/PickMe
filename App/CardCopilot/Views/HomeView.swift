@@ -96,6 +96,24 @@ struct HomeView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .background(Color(.systemGroupedBackground))
+        .onAppear {
+            if selectedRepeatMerchantID == nil {
+                selectedRepeatMerchantID = session.homeMerchants.first?.id
+            }
+        }
+        .onChange(of: session.homeMerchants) { _, newMerchants in
+            if let current = selectedRepeatMerchantID, !newMerchants.contains(where: { $0.id == current }) {
+                selectedRepeatMerchantID = newMerchants.first?.id
+            } else if selectedRepeatMerchantID == nil {
+                selectedRepeatMerchantID = newMerchants.first?.id
+            }
+        }
+        .onChange(of: selectedRepeatMerchantID) { oldID, newID in
+            if let newID, newID != oldID {
+                let impact = UISelectionFeedbackGenerator()
+                impact.selectionChanged()
+            }
+        }
     }
 
     // MARK: - 1. Hero Header & Chip Mascot Companion
@@ -395,6 +413,10 @@ struct HomeView: View {
 
     // MARK: - 4. Quick Pick
 
+    private var quickPickMerchants: [StoredMerchant] {
+        Array(session.homeMerchants.prefix(8))
+    }
+
     private var selectedRepeatMerchant: StoredMerchant? {
         if let selectedRepeatMerchantID,
            let selected = session.homeMerchants.first(where: { $0.id == selectedRepeatMerchantID }) {
@@ -405,8 +427,10 @@ struct HomeView: View {
 
     private var instantRepeatsSection: some View {
         Group {
-            if let merchant = selectedRepeatMerchant,
-               let graph = environment.graph {
+            if let graph = environment.graph, !quickPickMerchants.isEmpty {
+                let merchants = quickPickMerchants
+                let activeMerchant = selectedRepeatMerchant ?? merchants[0]
+
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(alignment: .firstTextBaseline) {
                         Text("Quick Pick")
@@ -416,22 +440,55 @@ struct HomeView: View {
                         Spacer()
 
                         Label(
-                            repeatContext(for: merchant) == .nearby ? "Nearby" : "Recent",
-                            systemImage: repeatContext(for: merchant) == .nearby ? "location.fill" : "clock.fill"
+                            repeatContext(for: activeMerchant) == .nearby ? "Nearby" : "Recent",
+                            systemImage: repeatContext(for: activeMerchant) == .nearby ? "location.fill" : "clock.fill"
                         )
                         .font(.system(size: 11, weight: .bold, design: .rounded))
                         .foregroundStyle(.secondary)
                     }
 
-                    InstantRepeatCardView(
-                        merchant: merchant,
-                        deps: graph,
-                        context: repeatContext(for: merchant)
-                    )
-                    .id(merchant.id)
-                    .transition(.opacity.combined(with: .scale(scale: 0.985)))
+                    if merchants.count == 1 {
+                        InstantRepeatCardView(
+                            merchant: merchants[0],
+                            deps: graph,
+                            context: repeatContext(for: merchants[0])
+                        )
+                    } else {
+                        VStack(spacing: 8) {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    ForEach(merchants) { item in
+                                        InstantRepeatCardView(
+                                            merchant: item,
+                                            deps: graph,
+                                            context: repeatContext(for: item)
+                                        )
+                                        .containerRelativeFrame(.horizontal)
+                                        .id(item.id)
+                                    }
+                                }
+                                .scrollTargetLayout()
+                            }
+                            .scrollTargetBehavior(.viewAligned)
+                            .scrollPosition(id: $selectedRepeatMerchantID)
 
-                    if session.homeMerchants.count > 1 {
+                            HStack(spacing: 6) {
+                                ForEach(merchants) { item in
+                                    Circle()
+                                        .fill(activeMerchant.id == item.id ? Color.blue : Color(.tertiarySystemFill))
+                                        .frame(
+                                            width: activeMerchant.id == item.id ? 7 : 5,
+                                            height: activeMerchant.id == item.id ? 7 : 5
+                                        )
+                                        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: activeMerchant.id)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 2)
+                        }
+                    }
+
+                    if merchants.count > 1 {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
                                 Text("Recent places")
@@ -440,23 +497,33 @@ struct HomeView: View {
 
                                 Spacer()
 
-                                Text("Tap to preview")
+                                Text("Swipe or tap to preview")
                                     .font(.system(size: 11, weight: .medium, design: .rounded))
                                     .foregroundStyle(.tertiary)
                             }
 
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 8) {
-                                    ForEach(session.homeMerchants.prefix(8)) { recentMerchant in
-                                        recentMerchantButton(recentMerchant)
+                            ScrollViewReader { proxy in
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 8) {
+                                        ForEach(merchants) { recentMerchant in
+                                            recentMerchantButton(recentMerchant)
+                                                .id(recentMerchant.id)
+                                        }
+                                    }
+                                }
+                                .contentMargins(.horizontal, 1, for: .scrollContent)
+                                .onChange(of: selectedRepeatMerchantID) { _, newID in
+                                    if let newID {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                            proxy.scrollTo(newID, anchor: .center)
+                                        }
                                     }
                                 }
                             }
-                            .contentMargins(.horizontal, 1, for: .scrollContent)
                         }
                     }
                 }
-                .animation(.easeInOut(duration: 0.18), value: merchant.id)
+                .animation(.easeInOut(duration: 0.18), value: activeMerchant.id)
             }
         }
     }
@@ -472,12 +539,14 @@ struct HomeView: View {
     private func recentMerchantButton(_ merchant: StoredMerchant) -> some View {
         let prediction = predictionForKnownMerchant(merchant)
         let meta = CategoryVisuals.meta(for: prediction.category)
-        let isSelected = selectedRepeatMerchant?.id == merchant.id
+        let isSelected = (selectedRepeatMerchant?.id ?? quickPickMerchants.first?.id) == merchant.id
 
         return Button {
             let impact = UISelectionFeedbackGenerator()
             impact.selectionChanged()
-            selectedRepeatMerchantID = merchant.id
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                selectedRepeatMerchantID = merchant.id
+            }
         } label: {
             HStack(spacing: 7) {
                 MerchantBrandIconView(
@@ -519,11 +588,17 @@ struct HomeView: View {
                 HStack(spacing: 12) {
                     ZStack {
                         Circle()
-                            .fill(environment.ambientEnabled ? Color.blue.opacity(0.15) : Color(.tertiarySystemFill))
+                            .fill(environment.ambientReady ? Color.green.opacity(0.15)
+                                  : environment.ambientEnabled ? Color.orange.opacity(0.15)
+                                  : Color(.tertiarySystemFill))
                             .frame(width: 36, height: 36)
-                        Image(systemName: environment.ambientEnabled ? "location.circle.fill" : "location.circle")
+                        Image(systemName: environment.ambientReady ? "location.circle.fill"
+                              : environment.ambientEnabled ? "exclamationmark.triangle.fill"
+                              : "location.circle")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(environment.ambientEnabled ? .blue : .secondary)
+                            .foregroundStyle(environment.ambientReady ? Color.green
+                                             : environment.ambientEnabled ? Color.orange
+                                             : Color.secondary)
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
@@ -531,17 +606,15 @@ struct HomeView: View {
                             .font(.system(size: 14, weight: .bold, design: .rounded))
                             .foregroundStyle(.primary)
 
-                        Text(environment.ambientEnabled
-                             ? "\(environment.ambientDiagnostics.fired) arrival alerts fired in last 7 days"
-                             : "Set up automatic on-device arrival alerts")
+                        Text(ambientDeliverySummary)
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.secondary)
                     }
 
                     Spacer()
 
-                    if !environment.ambientEnabled {
-                        Text("Set up")
+                    if !environment.ambientReady {
+                        Text(environment.ambientEnabled ? "Fix" : "Set up")
                             .font(.system(size: 11, weight: .bold, design: .rounded))
                             .foregroundStyle(.blue)
                             .padding(.horizontal, 8)
@@ -563,6 +636,15 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    private var ambientDeliverySummary: String {
+        let status = environment.ambientRuntimeStatus
+        if !environment.ambientEnabled { return "Set up automatic on-device arrival alerts" }
+        if !status.notificationsAllowed { return "Notifications are off · Tap to fix" }
+        if status.backgroundRefresh != .available { return "Background App Refresh is unavailable" }
+        if status.monitoredRegionCount == 0 { return "Preparing monitored places" }
+        return "\(environment.ambientDiagnostics.fired) arrival alerts fired in last 7 days"
     }
 
     private func submitSearch() {

@@ -20,7 +20,7 @@ struct CheckoutFlowView: View {
     /// Not `@Environment`: `AmbientLocationService` is an `NSObject`/`CLLocationManagerDelegate`
     /// conformer, not `@Observable`, so it is held directly here exactly as it was before this
     /// view existed as a navigation root.
-    @State private var ambient = AmbientLocationService()
+    @State private var ambient = AmbientLocationService.shared
     @Environment(CopilotSession.self) private var session
     @Environment(CheckoutRouter.self) private var router
     @State private var environment: CopilotEnvironment?
@@ -100,15 +100,18 @@ struct CheckoutFlowView: View {
                 environment?.refreshAmbientDiagnostics()
                 Task {
                     await sync.drainWalletCaptures()
-                    await ingestAutomaticCaptures()
-                    await autoSyncIfStale()
+                    // Foregrounding commonly means the owner just returned from Wallet. A normal
+                    // 15-minute stale gate would hide that brand-new capture, so pull feedback now.
+                    await syncCapsSilently()
                 }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .walletCaptureConnectivityRestored)) { _ in
             Task {
                 await sync.drainWalletCaptures()
-                await ingestAutomaticCaptures()
+                // The upload and the feedback read are two sides of one handoff. Refreshing only
+                // the outbox left the accepted purchase invisible until the next scheduled sync.
+                await syncCapsSilently()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .openWalletCaptureStatus)) { _ in
@@ -339,7 +342,7 @@ struct CheckoutFlowView: View {
                          accountEmail: Clerk.shared.user?.primaryEmailAddress?.emailAddress,
                          lastSyncedAt: sync.lastSyncedAt,
                          syncIssue: sync.syncIssue,
-                         ambientEnabled: ambient.isEnabled,
+                         ambientEnabled: environment.ambientReady,
                          onOpenSync: { router.push(.sync) },
                          onOpenAmbient: { router.push(.ambientSetup) },
                          onOpenLearnedMerchants: { router.push(.learnedMerchants) },
@@ -373,16 +376,21 @@ struct CheckoutFlowView: View {
                 isEnabled: environment.ambientEnabled,
                 diagnostics: environment.ambientDiagnostics,
                 coverage: environment.ambientCoverage,
+                runtimeStatus: environment.ambientRuntimeStatus,
                 onEnable: {
-                    ambient.requestAlwaysAuthorization()
-                    environment.refreshAmbientDiagnostics()
-                    router.pop()
+                    Task {
+                        await environment.enableArrivalAlerts()
+                    }
+                },
+                onTestNotification: {
+                    Task { await environment.sendArrivalTestNotification() }
                 },
                 onDone: {
                     environment.refreshAmbientDiagnostics()
                     router.pop()
                 }
             )
+            .task { await environment.refreshAmbientRuntimeStatus() }
         case .learnedMerchants:
             LearnedMerchantsView(onDone: { router.pop() })
         }
@@ -412,15 +420,6 @@ struct CheckoutFlowView: View {
         router.step = .locating
         let outcome = await session.search(text, using: graph)
         router.step = CheckoutFlowRouting.step(for: outcome)
-    }
-
-    private func autoSyncIfStale() async {
-        guard let environment, let graph = environment.graph else { return }
-        if let result = await sync.autoSyncIfStale(ownerState: graph.ownerState, catalogue: graph.catalogue) {
-            environment.rebuild(ownerState: result.ownerState)
-            await ingestAutomaticCaptures()
-            if let refreshed = environment.graph { session.refresh(using: refreshed) }
-        }
     }
 
     private func syncCapsSilently() async {

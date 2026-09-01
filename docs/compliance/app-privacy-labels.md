@@ -189,8 +189,9 @@ must be re-checked before any partnership, affiliate link, or referral scheme.
 
 ## 5. Location permissions — what changed, and what App Review will ask
 
-The app requests **Always** authorization and declares the `location` background mode, because
-arrival detection uses region monitoring that must fire while the app is not running.
+The app requests **Always** authorization because arrival detection uses region and
+significant-change monitoring that must fire while the app is not running. It does not declare
+the continuous-location `UIBackgroundModes` value and does not run continuous location updates.
 
 `Info.plist` currently declares both:
 - `NSLocationWhenInUseUsageDescription` — the one-time fix for finding a nearby merchant
@@ -216,8 +217,9 @@ Suggested reply:
 > and the app is fully usable without it. Declining location leaves every feature reachable through
 > manual merchant search.
 
-**[inference]** Expect a follow-up about the background mode. The honest answer is that region
-monitoring and significant-change monitoring both require it, and neither streams GPS.
+**[inference]** Expect a follow-up about background delivery. The honest answer is that Core
+Location can relaunch the app for region and significant-change events, while PickMe does not
+declare continuous background location or stream GPS.
 
 ---
 

@@ -258,9 +258,6 @@
         }
       }
     },
-    "%lld arrival alerts fired in last 7 days" : {
-
-    },
     "%lld arrivals · %lld evaluated" : {
       "localizations" : {
         "en" : {
@@ -351,6 +348,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "à %lld m"
+          }
+        }
+      }
+    },
+    "%lld more credit%@ in your wallet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld more credit%2$@ in your wallet"
           }
         }
       }
@@ -617,6 +624,9 @@
         }
       }
     },
+    "A delivery requirement needs attention" : {
+
+    },
     "A possible fee waiver is unresolved; ranking uses the stated fee." : {
       "localizations" : {
         "fr-CA" : {
@@ -667,6 +677,9 @@
 
     },
     "Account ID" : {
+
+    },
+    "Account opened" : {
 
     },
     "ACTION REQUIRED" : {
@@ -1218,6 +1231,9 @@
     "Annual Fee" : {
 
     },
+    "Annual income" : {
+
+    },
     "Answer 1 question about %@" : {
       "localizations" : {
         "fr-CA" : {
@@ -1259,6 +1275,9 @@
         }
       }
     },
+    "Application income profile" : {
+
+    },
     "Are you sure you want to remove %@ from your active wallet?" : {
 
     },
@@ -1275,16 +1294,16 @@
     "Arrival Alerts" : {
 
     },
-    "Arrival alerts are active" : {
-
-    },
-    "Arrival alerts enabled" : {
-
-    },
     "Arrival alerts for %@" : {
 
     },
+    "Arrival alerts need attention" : {
+
+    },
     "Arrival alerts prioritize this store" : {
+
+    },
+    "Arrival alerts ready" : {
 
     },
     "Arrival Detection" : {
@@ -1354,6 +1373,7 @@
 
     },
     "Based on a typical ~$%lld purchase. Exact amounts you enter feed your value-recovered scoreboard." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -1362,6 +1382,9 @@
           }
         }
       }
+    },
+    "Based on what you mark here—not a live issuer balance." : {
+
     },
     "Battery-efficient geofencing with no continuous route tracking." : {
 
@@ -1459,6 +1482,7 @@
 
     },
     "Calculate" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -1985,6 +2009,12 @@
     "Could not verify active credentials. Retry sync before creating a new token." : {
 
     },
+    "Couldn’t save credit status" : {
+
+    },
+    "Couldn’t save the date. Your wallet was not changed." : {
+
+    },
     "Counted only where you used the recommended card and recorded what it actually cost, scaled from the amount the engine scored. Reconciled purchases only — the pending figure is not included, because until a statement confirms how a charge coded, the return is an assumption." : {
       "localizations" : {
         "fr-CA" : {
@@ -2072,6 +2102,7 @@
 
     },
     "CUSTOM AMOUNT" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -2249,6 +2280,9 @@
           }
         }
       }
+    },
+    "DELIVERY READINESS" : {
+
     },
     "Delivery State" : {
 
@@ -2454,6 +2488,7 @@
 
     },
     "Entering amounts feeds your value-recovered scoreboard. Skip anytime." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -2666,6 +2701,9 @@
     "Expires %@" : {
 
     },
+    "Expiring card credits" : {
+
+    },
     "Export" : {
 
     },
@@ -2856,7 +2894,11 @@
     "Hotel-Motel" : {
 
     },
+    "Household income" : {
+
+    },
     "How much are you spending?" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -2963,6 +3005,9 @@
 
     },
     "Included Statement Credits" : {
+
+    },
+    "Income profile" : {
 
     },
     "Inspect" : {
@@ -3136,6 +3181,9 @@
       }
     },
     "Last attempt %@" : {
+
+    },
+    "Last notification accepted by iOS: %@" : {
 
     },
     "Last sync attempt failed" : {
@@ -3367,6 +3415,9 @@
 
     },
     "Maximized rewards on this purchase" : {
+
+    },
+    "Meeting a published income minimum does not mean the issuer will approve an application. Credit history and unpublished underwriting criteria are not scored." : {
 
     },
     "Meets Target" : {
@@ -3770,6 +3821,9 @@
     "Official insurance policy certificate for %@" : {
 
     },
+    "OK" : {
+
+    },
     "Old Server Connections Found" : {
 
     },
@@ -3914,6 +3968,9 @@
           }
         }
       }
+    },
+    "Optional. Enter whole Canadian dollars. PickMe compares these values only with issuer-published income paths and stores them on this device." : {
+
     },
     "or with email" : {
 
@@ -4064,6 +4121,9 @@
     "Personal benefit document for %@" : {
 
     },
+    "Personal income" : {
+
+    },
     "Pick" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4126,9 +4186,6 @@
 
     },
     "PickMe for iOS · Version 1.0 (Build 42)" : {
-
-    },
-    "PickMe is actively monitoring when you arrive at your saved merchants to suggest the best card before you pay." : {
 
     },
     "PickMe isolates account wallets on this iPhone." : {
@@ -4350,6 +4407,7 @@
 
     },
     "QUICK PRESETS" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4479,6 +4537,12 @@
     "Relink to This Account" : {
 
     },
+    "Remind me" : {
+
+    },
+    "Reminders on" : {
+
+    },
     "Remove" : {
 
     },
@@ -4567,6 +4631,9 @@
           }
         }
       }
+    },
+    "Required for anniversary-year expiry dates." : {
+
     },
     "Research status" : {
 
@@ -4839,6 +4906,9 @@
     "Send queued purchases, then disable" : {
 
     },
+    "Send test notification" : {
+
+    },
     "Send Wallet Purchase to Inunity" : {
 
     },
@@ -4857,9 +4927,6 @@
           }
         }
       }
-    },
-    "Set up automatic on-device arrival alerts" : {
-
     },
     "Set up on-device arrival detection" : {
       "extractionState" : "stale",
@@ -5020,6 +5087,7 @@
 
     },
     "Skip — just tell me which card" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -5141,6 +5209,9 @@
     "SUBMITTED DIAGNOSTIC PACKETS" : {
 
     },
+    "Swipe or tap to preview" : {
+
+    },
     "Switch recommendations" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5260,9 +5331,6 @@
           }
         }
       }
-    },
-    "Tap to preview" : {
-
     },
     "Tap to set as your primary card" : {
 
@@ -5613,6 +5681,9 @@
         }
       }
     },
+    "Update" : {
+
+    },
     "US" : {
       "localizations" : {
         "fr-CA" : {
@@ -5624,6 +5695,9 @@
       }
     },
     "Use" : {
+
+    },
+    "USE BEFORE YOU LOSE IT" : {
 
     },
     "Use by default" : {
@@ -5641,6 +5715,9 @@
 
     },
     "USE THIS CARD" : {
+
+    },
+    "Used to calculate anniversary-year credit windows." : {
 
     },
     "Used when no card is clearly better." : {
@@ -5825,6 +5902,7 @@
 
     },
     "Welcome bonuses, first-year fee rebates, approval odds, credit-score effects, insurance, lounges and statement credits are excluded. Income eligibility is not assessed." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -5833,6 +5911,9 @@
           }
         }
       }
+    },
+    "Welcome bonuses, first-year fee rebates, approval odds, credit-score effects, insurance, lounges and statement credits are excluded. Income screening checks published minimums only and never predicts approval." : {
+
     },
     "Welcome to PickMe" : {
 
@@ -6098,6 +6179,9 @@
       }
     },
     "Your Wallet Cards" : {
+
+    },
+    "Your wallet was not changed. Try again." : {
 
     },
     "YYYY-MM-DD" : {

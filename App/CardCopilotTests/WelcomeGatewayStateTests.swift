@@ -1,7 +1,15 @@
 import XCTest
+import Security
 @testable import CardCopilot
 
 final class WelcomeGatewayStateTests: XCTestCase {
+    func testClerkStartsOnlyWhenKeychainIsUsable() {
+        XCTAssertTrue(ClerkStartupPolicy.permitsConfiguration(for: errSecSuccess))
+        XCTAssertTrue(ClerkStartupPolicy.permitsConfiguration(for: errSecItemNotFound))
+        XCTAssertFalse(ClerkStartupPolicy.permitsConfiguration(for: errSecMissingEntitlement))
+        XCTAssertFalse(ClerkStartupPolicy.permitsConfiguration(for: errSecNotAvailable))
+    }
+
     func testConfiguredSignedOutInstallOffersAuthentication() {
         XCTAssertEqual(
             WelcomeGatewayContent.resolve(

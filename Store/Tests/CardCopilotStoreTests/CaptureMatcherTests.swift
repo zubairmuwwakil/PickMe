@@ -92,6 +92,33 @@ final class CaptureMatcherTests: XCTestCase {
         XCTAssertEqual(proposals.count, 1)
     }
 
+    // MARK: - Automatic completion threshold
+
+    func testCompleteExplicitCADCaptureIsEligibleForAutomaticCompletion() throws {
+        let stored = try prediction()
+
+        let automatic = CaptureMatcher.automaticProposals(for: [stored], from: [capture()])
+
+        XCTAssertEqual(automatic.count, 1)
+    }
+
+    func testCaptureWithoutExplicitCurrencyStillRequiresOwnerConfirmation() throws {
+        let stored = try prediction()
+
+        XCTAssertTrue(CaptureMatcher.automaticProposals(
+            for: [stored], from: [capture(currency: nil)]).isEmpty)
+        XCTAssertEqual(CaptureMatcher.proposals(
+            for: [stored], from: [capture(currency: nil)]).count, 1,
+                       "the capture remains useful in Finish Purchases")
+    }
+
+    func testZeroAmountCaptureStillRequiresOwnerConfirmation() throws {
+        let stored = try prediction()
+
+        XCTAssertTrue(CaptureMatcher.automaticProposals(
+            for: [stored], from: [capture(amountMinor: 0)]).isEmpty)
+    }
+
     // MARK: - The time window
 
     func testDoesNotMatchACaptureLongAfterTheCheckout() throws {

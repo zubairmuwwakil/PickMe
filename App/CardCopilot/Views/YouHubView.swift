@@ -227,16 +227,19 @@ struct YouHubView: View {
                     router.push(.ambientSetup)
                 } label: {
                     settingsRow(
-                        icon: environment.ambientEnabled ? "location.fill" : "location",
+                        icon: environment.ambientReady ? "location.fill" : "location",
                         iconBackground: .green,
                         title: "Arrival Alerts",
-                        subtitle: environment.ambientEnabled
+                        subtitle: environment.ambientReady
                             ? "\(environment.ambientDiagnostics.fired) fired · \(environment.ambientDiagnostics.suppressed) suppressed (7d)"
-                            : "Automatic store arrival notifications",
+                            : environment.ambientEnabled
+                                ? "A delivery requirement needs attention"
+                                : "Automatic store arrival notifications",
                         trailingContent: {
                             statusPill(
-                                text: environment.ambientEnabled ? "Active" : "Off",
-                                isPositive: environment.ambientEnabled
+                                text: environment.ambientReady ? "Active"
+                                    : environment.ambientEnabled ? "Fix" : "Off",
+                                isPositive: environment.ambientReady
                             )
                         }
                     )

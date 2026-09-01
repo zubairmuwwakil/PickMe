@@ -145,6 +145,70 @@ final class CheckoutServiceTests: XCTestCase {
 
     // MARK: merchant upsert
 
+    func testCompleteUniqueWalletMatchMovesCheckoutStraightToRecentPurchases() throws {
+        let checkout = try service.recommend(
+            merchant: merchant("Loblaws", poi: "MKPOICategoryFoodMarket"),
+            amountCad: nil,
+            asOf: asOf)
+        let prediction = try XCTUnwrap(try service.log.allPredictions().first)
+        let purchaseID = try XCTUnwrap(prediction.purchase?.id)
+        let capturedAt = prediction.recordedAt.addingTimeInterval(90)
+        let feedback = WalletFeedback(
+            eventId: "wallet-checkout-1", capturedAt: capturedAt,
+            merchantRaw: "LOBLAWS #1024", merchantNormalized: "Loblaws",
+            amountMinor: 4210, currency: "CAD", cardRaw: "Amex Cobalt",
+            resolvedCardId: "amex-cobalt", verdict: "best", warning: nil)
+
+        let ingested = try service.ingestAutomaticCaptures(from: [feedback])
+
+        let purchase = try XCTUnwrap(ingested.first)
+        XCTAssertEqual(purchase.id, purchaseID, "the capture must complete the checkout's row, not add another")
+        XCTAssertEqual(purchase.amountCad ?? .nan, 42.10, accuracy: 0.001)
+        XCTAssertEqual(purchase.cardUsedId, "amex-cobalt")
+        XCTAssertEqual(purchase.walletEventId, "wallet-checkout-1")
+        XCTAssertEqual(purchase.amountSource, .walletCapture)
+        XCTAssertEqual(purchase.cardSource, .walletCapture)
+        XCTAssertEqual(purchase.completedAt, capturedAt)
+        XCTAssertTrue(try service.log.awaitingCompletion().isEmpty)
+        XCTAssertEqual(try service.log.allPurchases().map(\.id), [purchaseID])
+        XCTAssertEqual(checkout.storedPredictionId, prediction.id)
+
+        XCTAssertTrue(try service.ingestAutomaticCaptures(from: [feedback]).isEmpty,
+                      "replaying the same Wallet event must be idempotent")
+        XCTAssertEqual(try service.log.allPurchases().count, 1)
+    }
+
+    func testPartialWalletMatchStaysInFinishPurchases() throws {
+        _ = try service.recommend(merchant: merchant("Loblaws", poi: "MKPOICategoryFoodMarket"),
+                                  amountCad: nil, asOf: asOf)
+        let prediction = try XCTUnwrap(try service.log.allPredictions().first)
+        let feedback = WalletFeedback(
+            eventId: "wallet-partial", capturedAt: prediction.recordedAt.addingTimeInterval(60),
+            merchantRaw: "Loblaws", amountMinor: 4210, currency: "CAD",
+            cardRaw: "Unmapped card", resolvedCardId: nil, verdict: "unknown", warning: nil)
+
+        XCTAssertTrue(try service.ingestAutomaticCaptures(from: [feedback]).isEmpty)
+        XCTAssertEqual(try service.log.awaitingCompletion().map(\.id), [prediction.id])
+        XCTAssertNil(prediction.purchase?.walletEventId)
+        XCTAssertEqual(try service.log.allPurchases().count, 1,
+                       "a partial match must not also create a standalone purchase")
+    }
+
+    func testForeignCurrencyWalletMatchStaysInFinishPurchases() throws {
+        _ = try service.recommend(merchant: merchant("Loblaws", poi: "MKPOICategoryFoodMarket"),
+                                  amountCad: nil, asOf: asOf)
+        let prediction = try XCTUnwrap(try service.log.allPredictions().first)
+        let feedback = WalletFeedback(
+            eventId: "wallet-usd", capturedAt: prediction.recordedAt.addingTimeInterval(60),
+            merchantRaw: "Loblaws", amountMinor: 4210, currency: "USD",
+            cardRaw: "Amex Cobalt", resolvedCardId: "amex-cobalt",
+            verdict: "unknown", warning: nil)
+
+        XCTAssertTrue(try service.ingestAutomaticCaptures(from: [feedback]).isEmpty)
+        XCTAssertEqual(try service.log.awaitingCompletion().map(\.id), [prediction.id])
+        XCTAssertNil(prediction.purchase?.amountCad, "PickMe must not invent an FX conversion")
+    }
+
     func testMapKitEnrichmentCategorizesAutomaticCaptureWithoutInventingPrediction() throws {
         let feedback = WalletFeedback(
             eventId: "wallet-1", capturedAt: Date(), merchantRaw: "Mom's Kitchen (Ajax)",

@@ -354,15 +354,30 @@ public struct CheckoutService {
             sortBy: [SortDescriptor(\.lastSeenAt, order: .reverse)]))
     }
 
-    /// Logs every synced wallet-tap that was never asked about at a live checkout, with no
-    /// confirmation gate — see `AutoCaptureLog`'s doc comment for why that is safe here and is
-    /// deliberately NOT how `CaptureProposal` behaves. Call after every sync that refreshes
-    /// `WalletFeedback`, before re-reading `log.snapshot()`, so the newly logged purchases are
-    /// reflected in the same UI update as the sync that produced them.
+    /// Applies complete one-to-one Wallet matches to their checkout and logs genuinely unclaimed
+    /// taps. Partial or ambiguous matches remain untouched for Finish Purchases. Call after every
+    /// sync that refreshes `WalletFeedback`, before re-reading `log.snapshot()`, so Recent
+    /// Purchases and the finish queue refresh together.
     @discardableResult
     public func ingestAutomaticCaptures(from feedback: [WalletFeedback]) throws -> [StoredPurchase] {
-        let purchases = try AutoCaptureLog(context: context)
-            .ingest(feedback: feedback, openPredictions: log.allPredictions())
+        let predictions = try log.allPredictions()
+        let predictionsByID = Dictionary(uniqueKeysWithValues: predictions.map { ($0.id, $0) })
+        let feedbackByID = Dictionary(grouping: feedback, by: \.eventId)
+        var purchases = try CaptureMatcher.automaticProposals(for: predictions, from: feedback)
+            .compactMap { proposal -> StoredPurchase? in
+                guard let prediction = predictionsByID[proposal.predictionId],
+                      let matchingFeedback = feedbackByID[proposal.eventId],
+                      matchingFeedback.count == 1,
+                      let cardID = matchingFeedback.first?.resolvedCardId,
+                      cardsById[cardID] != nil else { return nil }
+                return try log.applyAutomaticCapture(proposal, to: prediction)
+            }
+
+        // Use the original open-prediction population here. A capture that just completed a
+        // checkout must still be classified as claimed during this ingest; event-id deduplication
+        // provides the second guard against creating a standalone duplicate.
+        purchases += try AutoCaptureLog(context: context)
+            .ingest(feedback: feedback, openPredictions: predictions)
         for purchase in purchases {
             try assessPurchase(purchase, evaluatedAt: purchase.createdAt)
             if let merchantKey = purchase.merchantKey {

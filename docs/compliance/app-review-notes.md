@@ -85,8 +85,9 @@ store they are in.
 
 The app also offers optional arrival alerts: it monitors a small number of geofenced
 shopping areas so it can suggest a card as the user walks in, and ask what they spent
-as they leave. This requires "Always" authorization and the location background mode,
-because region monitoring must fire while the app is not running.
+as they leave. This requires "Always" authorization. It uses Core Location region and
+significant-change monitoring so iOS can relaunch the app for an event; it does not declare
+the continuous-location background mode or run continuous location updates.
 
 To reduce how often that background wake becomes a notification, the app keeps a local,
 on-device record of which recognised merchants the user has paid at on at least three

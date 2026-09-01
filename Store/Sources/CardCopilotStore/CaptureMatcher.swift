@@ -2,8 +2,9 @@ import Foundation
 
 /// One Wallet capture joined to one checkout, with only the facts that checkout is still missing.
 ///
-/// A proposal is an offer, never a record. Nothing here reaches `PredictionLog` until the owner
-/// accepts it, which is what keeps captured evidence distinguishable from attested evidence.
+/// A proposal is the pure description of a one-to-one match. `CheckoutService` automatically
+/// applies the strict complete subset; partial matches remain offers until the owner accepts them
+/// in Finish Purchases. In both paths, provenance stays `.walletCapture` only for unchanged facts.
 public struct CaptureProposal: Equatable, Sendable, Identifiable {
     public let eventId: String
     public let predictionId: UUID
@@ -68,6 +69,34 @@ public enum CaptureMatcher {
             guard eventCounts[pair.event.eventId] == 1,
                   predictionCounts[pair.prediction.id] == 1 else { return nil }
             return proposal(joining: pair.event, to: pair.prediction)
+        }
+    }
+
+    /// The subset of one-to-one proposals that can finish a checkout without asking the owner.
+    ///
+    /// Automatic completion is intentionally stricter than a proposal shown in Finish Purchases:
+    /// the capture itself must carry a positive amount in an explicit CAD currency and a resolved
+    /// card id, and those captured facts plus anything already saved must settle every missing
+    /// field. Partial, foreign-currency, and otherwise uncertain captures remain proposals.
+    public static func automaticProposals(for predictions: [StoredPrediction],
+                                          from feedback: [WalletFeedback]) -> [CaptureProposal] {
+        let eventsByID = Dictionary(grouping: feedback, by: \.eventId)
+        let predictionsByID = Dictionary(uniqueKeysWithValues: predictions.map { ($0.id, $0) })
+
+        return proposals(for: predictions, from: feedback).filter { proposal in
+            guard let events = eventsByID[proposal.eventId], events.count == 1,
+                  let event = events.first,
+                  !event.eventId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  event.currency?.uppercased() == "CAD",
+                  let amountMinor = event.amountMinor, amountMinor > 0,
+                  let resolvedCardID = event.resolvedCardId,
+                  !resolvedCardID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  let purchase = predictionsByID[proposal.predictionId]?.purchase else { return false }
+
+            guard let settledAmount = purchase.amountCad ?? proposal.amountCad,
+                  settledAmount.isFinite, settledAmount > 0,
+                  purchase.cardUsedId ?? proposal.cardUsedId != nil else { return false }
+            return true
         }
     }
 

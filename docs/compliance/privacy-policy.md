@@ -312,8 +312,9 @@ Three specific facts drive the analysis:
    ([wallet capture spec](../../../MoneyTalks/docs/plans/2026-08-16-wallet-capture-spec.md),
    amended 2026-08-17). Purchase history joined to precise location joined to identity is close to
    the most sensitive combination a consumer app can hold short of health data.
-2. **Background location.** The app requests Always authorization and declares the `location`
-   background mode for geofenced arrival detection.
+2. **Background arrival detection.** The app requests Always authorization and uses Core Location
+   region and significant-change monitoring for arrival detection. It does not declare the
+   continuous-location `UIBackgroundModes` value or run continuous location updates.
 3. **Passive MapKit queries.** Merchant discovery queries Apple as the user moves, not only on
    demand. The publisher receives nothing, but the user's expectation changes.
 

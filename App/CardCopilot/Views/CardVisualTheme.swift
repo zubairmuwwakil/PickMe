@@ -878,6 +878,8 @@ enum CategoryVisuals {
             return Meta(icon: "bolt.car.fill", color: .green, displayName: "EV Charging")
         case "entertainment":
             return Meta(icon: "ticket.fill", color: .pink, displayName: "Entertainment")
+        case "egames":
+            return Meta(icon: "gamecontroller.fill", color: .purple, displayName: "E-Games")
         case "householdutilities":
             return Meta(icon: "lightbulb.fill", color: .yellow, displayName: "Household Utilities")
         case "marriottdirect":

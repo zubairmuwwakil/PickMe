@@ -50,6 +50,8 @@ final class CopilotEnvironment {
     /// never reached the gate.
     private(set) var ambientCoverage = AmbientCoverageLog()
     private(set) var ambientEnabled = false
+    private(set) var ambientRuntimeStatus = AmbientRuntimeStatus()
+    var ambientReady: Bool { ambientRuntimeStatus.isReady }
     private(set) var walletIsFirstRun = false
     let benefitsDocumentVault = BenefitsDocumentVault()
 
@@ -201,6 +203,24 @@ final class CopilotEnvironment {
         ambientDiagnostics = ambient.diagnostics
         ambientCoverage = ambient.coverage
         ambientEnabled = ambient.isEnabled
+        Task { await refreshAmbientRuntimeStatus() }
+    }
+
+    func refreshAmbientRuntimeStatus() async {
+        ambientRuntimeStatus = await ambient.runtimeStatus()
+        ambientEnabled = ambientRuntimeStatus.locationAlways
+    }
+
+    func enableArrivalAlerts() async {
+        await ambient.requestAlwaysAuthorization()
+        await refreshAmbientRuntimeStatus()
+    }
+
+    @discardableResult
+    func sendArrivalTestNotification() async -> Bool {
+        let delivered = await ambient.sendTestNotification()
+        await refreshAmbientRuntimeStatus()
+        return delivered
     }
 
     func arrivalPreferenceChanged() {

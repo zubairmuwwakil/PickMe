@@ -11,11 +11,9 @@ import SwiftData
 /// fact, as a `StoredPurchase` with no `StoredPrediction` attached, so it shows up in Recent
 /// Purchases without becoming a second, fabricated data point in the Experiment Scoreboard.
 ///
-/// Unlike `CaptureProposal` — an offer the owner must accept before anything is written, because
-/// what it offers to fill in IS an accuracy-bearing fact (which card the prediction said, versus
-/// which card was actually tapped) — nothing here carries that risk, so nothing here waits for a
-/// tap to confirm it. `CaptureMatcher.unclaimedCaptures` already only hands this type events that
-/// match no open checkout, plausibly or otherwise.
+/// Complete, unique checkout matches are applied by `CheckoutService` before this type runs.
+/// Partial or ambiguous matches wait in Finish Purchases. `CaptureMatcher.unclaimedCaptures` only
+/// hands this type events that match no open checkout, plausibly or otherwise.
 public struct AutoCaptureLog {
     private let context: ModelContext
 

@@ -11,7 +11,8 @@ struct CardCopilotApp: App {
     @State private var router = CheckoutRouter()
 
     init() {
-        if let publishableKey = MoneyTalksConfiguration.clerkPublishableKey,
+        if MoneyTalksConfiguration.isConfigured,
+           let publishableKey = MoneyTalksConfiguration.clerkPublishableKey,
            publishableKey.hasPrefix("pk_") {
             Clerk.configure(publishableKey: publishableKey)
         }

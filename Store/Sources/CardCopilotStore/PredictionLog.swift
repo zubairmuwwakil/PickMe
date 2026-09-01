@@ -223,6 +223,42 @@ public struct PredictionLog {
         try context.save()
     }
 
+    /// Atomically applies a complete, unambiguous Wallet capture to its checkout purchase.
+    ///
+    /// Existing owner-entered facts always win. Event-id ownership is checked before any mutation,
+    /// so replaying a sync is a no-op and one capture can never complete two purchases.
+    @discardableResult
+    public func applyAutomaticCapture(_ proposal: CaptureProposal,
+                                      to prediction: StoredPrediction) throws -> StoredPurchase? {
+        guard proposal.predictionId == prediction.id,
+              let purchase = prediction.purchase else { return nil }
+
+        let eventID = proposal.eventId
+        let represented = try context.fetch(FetchDescriptor<StoredPurchase>(
+            predicate: #Predicate { $0.walletEventId == eventID }))
+        guard represented.allSatisfy({ $0.id == purchase.id }) else { return nil }
+
+        let settledAmount = purchase.amountCad ?? proposal.amountCad
+        let settledCard = purchase.cardUsedId ?? proposal.cardUsedId
+        guard let settledAmount, settledAmount.isFinite, settledAmount > 0,
+              let settledCard, !settledCard.isEmpty else { return nil }
+
+        if purchase.amountCad == nil {
+            purchase.amountCad = settledAmount
+            purchase.amountSourceRaw = CaptureSource.walletCapture.rawValue
+        }
+        if purchase.cardUsedId == nil {
+            purchase.cardUsedId = settledCard
+            purchase.cardSourceRaw = CaptureSource.walletCapture.rawValue
+        }
+        if purchase.walletEventId == nil {
+            purchase.walletEventId = eventID
+        }
+        refreshCompletion(purchase, at: proposal.capturedAt)
+        try context.save()
+        return purchase
+    }
+
     public func deletePurchase(_ purchase: StoredPurchase) throws {
         context.delete(purchase)
         try context.save()

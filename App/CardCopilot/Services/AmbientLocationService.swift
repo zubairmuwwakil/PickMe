@@ -3,8 +3,84 @@ import CardCopilotEngine
 import CardCopilotStore
 import Foundation
 import SwiftData
-import SwiftUI
+import UIKit
 @preconcurrency import UserNotifications
+
+enum AmbientNotificationAuthorization: String, Codable, Equatable, Sendable {
+    case unknown, allowed, denied
+}
+
+enum AmbientBackgroundRefreshState: String, Codable, Equatable, Sendable {
+    case available, denied, restricted
+}
+
+struct AmbientRuntimeIssue: Codable, Equatable, Sendable {
+    let message: String
+    let recordedAt: Date
+}
+
+/// The owner-visible health of the Apple-controlled half of arrival alerts. Keeping this separate
+/// from `SuppressionLog` is important: the latter starts only after a region fires and the engine
+/// evaluates it, while this describes why that region or notification may never happen at all.
+struct AmbientRuntimeStatus: Equatable, Sendable {
+    var locationAlways = false
+    var notificationAuthorization: AmbientNotificationAuthorization = .unknown
+    var backgroundRefresh: AmbientBackgroundRefreshState = .available
+    var monitoredRegionCount = 0
+    var lastNotificationScheduledAt: Date?
+    var latestIssue: AmbientRuntimeIssue?
+
+    var notificationsAllowed: Bool { notificationAuthorization == .allowed }
+    var hasSystemBlocker: Bool {
+        !locationAlways || !notificationsAllowed || backgroundRefresh != .available
+    }
+    var isReady: Bool { !hasSystemBlocker && monitoredRegionCount > 0 }
+}
+
+@MainActor
+final class AmbientRuntimeStore {
+    private struct State: Codable {
+        var lastNotificationScheduledAt: Date? = nil
+        var latestIssue: AmbientRuntimeIssue? = nil
+    }
+
+    private let defaults: UserDefaults
+    private let key = "ambientRuntimeHealth.v1"
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+    }
+
+    var lastNotificationScheduledAt: Date? { load().lastNotificationScheduledAt }
+    var latestIssue: AmbientRuntimeIssue? { load().latestIssue }
+
+    func recordScheduledNotification(at date: Date = .now) {
+        var state = load()
+        state.lastNotificationScheduledAt = date
+        save(state)
+    }
+
+    func recordIssue(_ message: String, at date: Date = .now) {
+        var state = load()
+        state.latestIssue = AmbientRuntimeIssue(message: message, recordedAt: date)
+        save(state)
+    }
+
+    func forgetAll() { defaults.removeObject(forKey: key) }
+
+    private func load() -> State {
+        guard let data = defaults.data(forKey: key),
+              let state = try? JSONDecoder().decode(State.self, from: data) else {
+            return State()
+        }
+        return state
+    }
+
+    private func save(_ state: State) {
+        guard let data = try? JSONEncoder().encode(state) else { return }
+        defaults.set(data, forKey: key)
+    }
+}
 
 /// A counter model that can start empty and be summed across days. Both ambient logs already had
 /// exactly these two members before this protocol existed — it names the shape rather than
@@ -178,7 +254,19 @@ final class AmbientMerchantMuteStore {
 /// means, and whether a notification fires all live in `CardCopilotStore`/`CardCopilotEngine` as
 /// pure functions, because none of it is testable once it is entangled with CoreLocation.
 @MainActor
-final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelegate, UNUserNotificationCenterDelegate {
+final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelegate {
+    private enum DeliveryError: LocalizedError {
+        case missingRecommendedCard(String)
+
+        var errorDescription: String? {
+            switch self {
+            case .missingRecommendedCard(let cardId):
+                return "The recommended card \(cardId) is missing from the catalogue."
+            }
+        }
+    }
+
+    static let shared = AmbientLocationService()
     static let regionPrefix = "ambient.region."
     /// Regions registered by the storefront-era build. Still stopped on rotation so an upgrade
     /// does not leave orphaned geofences monitoring forever.
@@ -199,6 +287,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private let notificationCenter = UNUserNotificationCenter.current()
     private let diagnosticsStore = AmbientDiagnosticsStore()
     private let coverageStore = AmbientCoverageStore()
+    private let runtimeStore = AmbientRuntimeStore()
     private let muteStore = AmbientMerchantMuteStore()
     private let visitStore = AmbientVisitStore()
     private let queryLog = DiscoveryQueryLog()
@@ -209,6 +298,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private var modelContainer: ModelContainer?
     private var catalogue: Catalogue?
     private var ownerState: OwnerState?
+    private var pendingArrivals: [(target: ArrivalTarget, regionId: String)] = []
 
     private(set) var authorizationStatus: CLAuthorizationStatus
 
@@ -216,6 +306,12 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         authorizationStatus = manager.authorizationStatus
         super.init()
         manager.delegate = self
+    }
+
+    /// Registers every notification category in one operation. `setNotificationCategories`
+    /// replaces the previous set, so separate ambient and Wallet registration sites race and one
+    /// silently deletes the other's actions.
+    func registerNotificationCategories() {
         let openCapture = UNNotificationAction(identifier: "OPEN_CAPTURE_STATUS", title: "Open Capture Status", options: [.foreground])
         let diagnosticCapture = UNNotificationAction(identifier: "OPEN_DIAGNOSTIC", title: "Prepare Diagnostic", options: [.foreground])
         notificationCenter.setNotificationCategories([
@@ -268,11 +364,54 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         self.catalogue = catalogue
         self.ownerState = ownerState
         startIfAuthorized()
+        let pending = pendingArrivals
+        pendingArrivals.removeAll()
+        for arrival in pending {
+            Task { await evaluateArrival(at: arrival.target, regionId: arrival.regionId) }
+        }
     }
 
     var isEnabled: Bool { authorizationStatus == .authorizedAlways }
     var diagnostics: SuppressionLog { diagnosticsStore.lastSevenDays() }
     var coverage: AmbientCoverageLog { coverageStore.lastSevenDays() }
+
+    func runtimeStatus() async -> AmbientRuntimeStatus {
+        let settings = await notificationCenter.notificationSettings()
+        let notifications: AmbientNotificationAuthorization
+        switch settings.authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            notifications = .allowed
+        case .denied:
+            notifications = .denied
+        case .notDetermined:
+            notifications = .unknown
+        @unknown default:
+            notifications = .unknown
+        }
+
+        let backgroundRefresh: AmbientBackgroundRefreshState
+        switch UIApplication.shared.backgroundRefreshStatus {
+        case .available: backgroundRefresh = .available
+        case .denied: backgroundRefresh = .denied
+        case .restricted: backgroundRefresh = .restricted
+        @unknown default: backgroundRefresh = .restricted
+        }
+
+        return AmbientRuntimeStatus(
+            locationAlways: manager.authorizationStatus == .authorizedAlways,
+            notificationAuthorization: notifications,
+            backgroundRefresh: backgroundRefresh,
+            monitoredRegionCount: monitoredAmbientRegions.count,
+            lastNotificationScheduledAt: runtimeStore.lastNotificationScheduledAt,
+            latestIssue: runtimeStore.latestIssue)
+    }
+
+    private var monitoredAmbientRegions: [CLRegion] {
+        manager.monitoredRegions.filter {
+            $0.identifier.hasPrefix(Self.regionPrefix)
+                || $0.identifier.hasPrefix(Self.legacyRegionPrefix)
+        }
+    }
 
     /// Called when the owner erases this iPhone's history.
     ///
@@ -290,6 +429,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         muteStore.forgetAll()
         diagnosticsStore.forgetAll()
         coverageStore.forgetAll()
+        runtimeStore.forgetAll()
         visitStore.forgetAll()
         queryLog.forgetAll()
         patronageStore.forgetAll()
@@ -297,11 +437,29 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     }
 
     /// Called only from the dedicated explainer screen, before either system prompt appears.
-    func requestAlwaysAuthorization() {
-        Task {
-            _ = try? await notificationCenter.requestAuthorization(options: [.alert, .badge, .sound])
+    func requestAlwaysAuthorization() async {
+        do {
+            let settings = await notificationCenter.notificationSettings()
+            if settings.authorizationStatus == .notDetermined {
+                let granted = try await notificationCenter.requestAuthorization(options: [.alert, .badge, .sound])
+                if !granted {
+                    runtimeStore.recordIssue("Notifications were not allowed. Arrival advice cannot appear until notifications are enabled in Settings.")
+                }
+            } else if settings.authorizationStatus == .denied {
+                runtimeStore.recordIssue("Notifications are off for PickMe. Enable them in Settings to receive arrival advice.")
+            }
+        } catch {
+            runtimeStore.recordIssue("PickMe could not request notification permission: \(error.localizedDescription)")
         }
         manager.requestAlwaysAuthorization()
+    }
+
+    /// Called during `didFinishLaunching`, including a Core Location background relaunch. Region
+    /// and significant-change services persist at the system level, but their manager/delegate do
+    /// not; recreating this shared service and restarting delivery is required to receive the
+    /// queued event.
+    func resumeMonitoringIfAuthorized() {
+        startIfAuthorized()
     }
 
     /// Re-aims regions after an owner changes a merchant-level alert preference.
@@ -312,6 +470,9 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         authorizationStatus = manager.authorizationStatus
+        if manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted {
+            runtimeStore.recordIssue("Always Location access is required for arrival alerts.")
+        }
         startIfAuthorized()
     }
 
@@ -322,12 +483,28 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
     func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
         guard let target = Self.target(for: region.identifier) else { return }
+        guard modelContainer != nil, catalogue != nil, ownerState != nil else {
+            if !pendingArrivals.contains(where: { $0.regionId == region.identifier }) {
+                pendingArrivals.append((target, region.identifier))
+            }
+            return
+        }
         Task { await evaluateArrival(at: target, regionId: region.identifier) }
     }
 
     func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
         guard Self.target(for: region.identifier) != nil else { return }
         evaluateExit(regionId: region.identifier)
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        runtimeStore.recordIssue("Location monitoring failed: \(error.localizedDescription)")
+    }
+
+    func locationManager(_ manager: CLLocationManager, monitoringDidFailFor region: CLRegion?,
+                         withError error: Error) {
+        let subject = region.map { " for \($0.identifier)" } ?? ""
+        runtimeStore.recordIssue("Arrival-region monitoring failed\(subject): \(error.localizedDescription)")
     }
 
     // MARK: - Discovery
@@ -540,11 +717,20 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             switchThreshold: ownerState.switchThreshold,
             isMuted: muteStore.isMuted(arrival.muteKey) || explicit == false
         ))
-        diagnosticsStore.record(decision)
-        guard decision.fires else { return }
+        guard decision.fires else {
+            diagnosticsStore.record(decision)
+            return
+        }
 
-        scheduleArrivalNotification(arrival: arrival, recommendation: recommendation,
-                                    catalogue: catalogue, regionId: regionId)
+        do {
+            try await scheduleArrivalNotification(arrival: arrival, recommendation: recommendation,
+                                                  catalogue: catalogue, regionId: regionId)
+            // A "fired" count now means iOS accepted the notification request, not merely that the
+            // pure gate approved one that may have failed before reaching Notification Center.
+            diagnosticsStore.record(decision)
+        } catch {
+            runtimeStore.recordIssue("Arrival advice was approved but could not be delivered: \(error.localizedDescription)")
+        }
     }
 
     /// Resolution ladder, cheapest and most certain first. Nothing here writes to the log — a
@@ -648,7 +834,13 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         visitStore.end(regionId: regionId)
 
         guard outcome == .promptForAmount, let purchaseId = visit.purchaseId else { return }
-        scheduleAmountPrompt(merchantName: visit.merchantName, purchaseId: purchaseId)
+        Task {
+            do {
+                try await scheduleAmountPrompt(merchantName: visit.merchantName, purchaseId: purchaseId)
+            } catch {
+                runtimeStore.recordIssue("The arrival follow-up could not be delivered: \(error.localizedDescription)")
+            }
+        }
     }
 
     // MARK: - Notifications
@@ -656,24 +848,14 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private func scheduleArrivalNotification(arrival: ResolvedArrival,
                                              recommendation: Recommendation,
                                              catalogue: Catalogue,
-                                             regionId: String) {
-        guard let card = catalogue.cards.first(where: { $0.cardId == recommendation.winner.cardId }) else { return }
+                                             regionId: String) async throws {
+        guard let card = catalogue.cards.first(where: { $0.cardId == recommendation.winner.cardId }) else {
+            throw DeliveryError.missingRecommendedCard(recommendation.winner.cardId)
+        }
         let headline = rewardReason(card, recommendation)
         let advantageCad = recommendation.advantageOverDefaultCad ?? 0
         let advantageText = advantageCad > 0 ? String(format: "+$%.2f", advantageCad) : ""
         let meta = CategoryVisuals.meta(for: arrival.prediction.category)
-
-        LiveActivityManager.shared.startRecommendationActivity(
-            merchantName: arrival.merchant.name,
-            merchantLocation: nil,
-            cardName: Self.shortCardName(card),
-            cardId: card.cardId,
-            multiplierHeadline: headline,
-            advantageDescription: advantageText,
-            categoryDisplayName: meta.displayName,
-            categoryIcon: meta.icon,
-            isFork: false
-        )
 
         let content = UNMutableNotificationContent()
         let titleTemplate = String(localized: "ambient.notification.title",
@@ -705,12 +887,12 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         ]
         if let poi = arrival.merchant.poiCategoryRaw { info["poiCategoryRaw"] = poi }
         content.userInfo = info
-        notificationCenter.add(UNNotificationRequest(
+        try await enqueue(UNNotificationRequest(
             identifier: "ambient.arrival.\(regionId).\(UUID().uuidString)",
             content: content, trigger: nil))
     }
 
-    private func scheduleAmountPrompt(merchantName: String, purchaseId: UUID) {
+    private func scheduleAmountPrompt(merchantName: String, purchaseId: UUID) async throws {
         let content = UNMutableNotificationContent()
         let template = String(localized: "ambient.amount.title", defaultValue: "What did you spend at %@?")
         content.title = String(format: template, locale: .current, merchantName)
@@ -719,31 +901,43 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         content.sound = nil
         content.categoryIdentifier = Self.amountCategoryIdentifier
         content.userInfo = ["purchaseId": purchaseId.uuidString]
-        notificationCenter.add(UNNotificationRequest(
+        try await enqueue(UNNotificationRequest(
             identifier: "ambient.amount.\(purchaseId.uuidString)", content: content, trigger: nil))
     }
 
-    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                            didReceive response: UNNotificationResponse) async {
-        let info = response.notification.request.content.userInfo
-        let action = response.actionIdentifier
-        let typed = (response as? UNTextInputNotificationResponse)?.userText
-
-        if info["route"] as? String == "walletCaptureStatus" ||
-           action == "OPEN_CAPTURE_STATUS" || action == "OPEN_DIAGNOSTIC" {
-            WalletCaptureDeepLinkStore.markPending()
-            NotificationCenter.default.post(name: .openWalletCaptureStatus, object: nil)
-            return
+    func sendTestNotification() async -> Bool {
+        let settings = await notificationCenter.notificationSettings()
+        guard settings.authorizationStatus == .authorized
+                || settings.authorizationStatus == .provisional
+                || settings.authorizationStatus == .ephemeral else {
+            runtimeStore.recordIssue("Test alert not sent because notifications are not enabled for PickMe.")
+            return false
         }
 
-        await MainActor.run {
-            self.handle(action: action, userInfo: info, typedText: typed)
+        let content = UNMutableNotificationContent()
+        content.title = "PickMe arrival alerts are ready"
+        content.body = "Notification delivery works. A real arrival alert still fires only when switching cards is worthwhile."
+        content.sound = .default
+        do {
+            try await enqueue(UNNotificationRequest(identifier: "ambient.delivery-test.\(UUID().uuidString)",
+                                                    content: content, trigger: nil))
+            return true
+        } catch {
+            runtimeStore.recordIssue("The test alert could not be delivered: \(error.localizedDescription)")
+            return false
         }
     }
 
-    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                            willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
-        [.banner, .sound, .badge, .list]
+    private func enqueue(_ request: UNNotificationRequest) async throws {
+        try await notificationCenter.add(request)
+        runtimeStore.recordScheduledNotification()
+    }
+
+    func handleNotificationResponse(_ response: UNNotificationResponse) {
+        let info = response.notification.request.content.userInfo
+        let action = response.actionIdentifier
+        let typed = (response as? UNTextInputNotificationResponse)?.userText
+        handle(action: action, userInfo: info, typedText: typed)
     }
 
     /// Notification actions are the ONLY place an ambient record is created. A geofence entry
@@ -848,8 +1042,11 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private func startIfAuthorized() {
         guard manager.authorizationStatus == .authorizedAlways else { return }
         // Significant-change monitoring is the only location stream. Region events supply the
-        // arrival and exit wakes; this avoids continuous GPS by construction.
+        // arrival and exit wakes; this avoids continuous GPS by construction. The one-shot fix
+        // is what seeds regions immediately after setup or launch instead of waiting for the
+        // owner to travel far enough to generate a significant-change event.
         manager.startMonitoringSignificantLocationChanges()
+        manager.requestLocation()
     }
 
     nonisolated static func shortCardName(_ card: CardProduct) -> String {

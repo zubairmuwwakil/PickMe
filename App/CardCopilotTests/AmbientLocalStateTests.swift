@@ -202,6 +202,40 @@ final class AmbientLocalStateTests: XCTestCase {
         XCTAssertEqual(AmbientDiagnosticsStore(defaults: defaults).lastSevenDays(ending: day).fired, 1)
     }
 
+    // MARK: - Delivery health
+
+    func testRuntimeStatusRequiresEveryDeliveryDependencyAndARegion() {
+        var status = AmbientRuntimeStatus(locationAlways: true,
+                                          notificationAuthorization: .allowed,
+                                          backgroundRefresh: .available,
+                                          monitoredRegionCount: 0)
+        XCTAssertFalse(status.isReady)
+
+        status.monitoredRegionCount = 4
+        XCTAssertTrue(status.isReady)
+
+        status.notificationAuthorization = .denied
+        XCTAssertFalse(status.isReady)
+        XCTAssertTrue(status.hasSystemBlocker)
+    }
+
+    func testRuntimeStorePersistsAcceptedNotificationsAndFailures() {
+        let scheduledAt = Date(timeIntervalSince1970: 1_786_000_000)
+        let failedAt = scheduledAt.addingTimeInterval(60)
+        let writer = AmbientRuntimeStore(defaults: defaults)
+        writer.recordScheduledNotification(at: scheduledAt)
+        writer.recordIssue("region monitoring failed", at: failedAt)
+
+        let reader = AmbientRuntimeStore(defaults: defaults)
+        XCTAssertEqual(reader.lastNotificationScheduledAt, scheduledAt)
+        XCTAssertEqual(reader.latestIssue,
+                       AmbientRuntimeIssue(message: "region monitoring failed", recordedAt: failedAt))
+
+        reader.forgetAll()
+        XCTAssertNil(AmbientRuntimeStore(defaults: defaults).lastNotificationScheduledAt)
+        XCTAssertNil(AmbientRuntimeStore(defaults: defaults).latestIssue)
+    }
+
     // MARK: - Explainer View
 
     func testExplainerViewInitializesInEnabledAndUnenabledStates() {
@@ -222,6 +256,9 @@ final class AmbientLocalStateTests: XCTestCase {
             diagnostics: diagnostics,
             coverage: AmbientCoverageLog(rotations: 5, rotationsAtCapacity: 4,
                                          evictedByTier: [.frequentedMerchant: 2]),
+            runtimeStatus: AmbientRuntimeStatus(locationAlways: true,
+                                                notificationAuthorization: .allowed,
+                                                monitoredRegionCount: 3),
             onEnable: {},
             onDone: {}
         )
@@ -229,5 +266,6 @@ final class AmbientLocalStateTests: XCTestCase {
         XCTAssertEqual(enabledView.diagnostics?.fired, 3)
         XCTAssertEqual(enabledView.diagnostics?.suppressed, 1)
         XCTAssertEqual(enabledView.coverage?.evictedWithStanding, 2)
+        XCTAssertTrue(enabledView.runtimeStatus?.isReady == true)
     }
 }

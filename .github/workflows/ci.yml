@@ -192,5 +192,4 @@ jobs:
             -project App/CardCopilot.xcodeproj \
             -scheme CardCopilot \
             -configuration Debug \
-            -destination "id=${{ steps.sim.outputs.udid }}" \
-            CODE_SIGNING_ALLOWED=NO
+            -destination "id=${{ steps.sim.outputs.udid }}"

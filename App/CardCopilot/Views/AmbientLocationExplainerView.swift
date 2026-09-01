@@ -12,7 +12,9 @@ struct AmbientLocationExplainerView: View {
     /// answer different questions — "what did the gate decide" versus "what never reached it" —
     /// and merging them would let a healthy gate hide an unhealthy budget.
     var coverage: AmbientCoverageLog? = nil
+    var runtimeStatus: AmbientRuntimeStatus? = nil
     let onEnable: () -> Void
+    var onTestNotification: () -> Void = {}
     let onDone: () -> Void
 
     var body: some View {
@@ -76,34 +78,38 @@ struct AmbientLocationExplainerView: View {
             VStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(Color.green.opacity(0.15))
+                        .fill(readinessColor.opacity(0.15))
                         .frame(width: 72, height: 72)
-                    Image(systemName: "checkmark.circle.fill")
+                    Image(systemName: readinessIcon)
                         .font(.system(size: 42, weight: .semibold))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(readinessColor)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 16)
 
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(Color.green)
+                        .fill(readinessColor)
                         .frame(width: 8, height: 8)
-                    Text("Arrival alerts are active")
+                    Text(readinessTitle)
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(readinessColor)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 5)
-                .background(Color.green.opacity(0.12), in: Capsule())
+                .background(readinessColor.opacity(0.12), in: Capsule())
                 .frame(maxWidth: .infinity, alignment: .center)
             }
 
             VStack(alignment: .leading, spacing: 10) {
-                Text("Arrival alerts enabled")
+                Text(runtimeStatus?.isReady == true ? "Arrival alerts ready" : "Arrival alerts need attention")
                     .font(.title2.bold())
-                Text("PickMe is actively monitoring when you arrive at your saved merchants to suggest the best card before you pay.")
+                Text(readinessExplanation)
                     .foregroundStyle(.secondary)
+            }
+
+            if let runtimeStatus {
+                deliveryReadinessCard(runtimeStatus)
             }
 
             VStack(alignment: .leading, spacing: 14) {
@@ -153,6 +159,10 @@ struct AmbientLocationExplainerView: View {
             }
 
             VStack(spacing: 12) {
+                Button("Send test notification", action: onTestNotification)
+                    .buttonStyle(.bordered)
+                    .disabled(runtimeStatus?.notificationsAllowed == false)
+
                 Button("Done", action: onDone)
                     .buttonStyle(.borderedProminent)
                     .frame(maxWidth: .infinity)
@@ -174,6 +184,101 @@ struct AmbientLocationExplainerView: View {
                         .frame(maxWidth: .infinity)
                 }
             }
+        }
+    }
+}
+
+private extension AmbientLocationExplainerView {
+    var readinessColor: Color {
+        guard let runtimeStatus else { return .blue }
+        if runtimeStatus.hasSystemBlocker { return .orange }
+        return runtimeStatus.monitoredRegionCount > 0 ? .green : .blue
+    }
+
+    var readinessIcon: String {
+        guard let runtimeStatus else { return "location.circle" }
+        if runtimeStatus.hasSystemBlocker { return "exclamationmark.triangle.fill" }
+        return runtimeStatus.monitoredRegionCount > 0 ? "checkmark.circle.fill" : "location.magnifyingglass"
+    }
+
+    var readinessTitle: String {
+        guard let runtimeStatus else { return "Checking arrival alerts" }
+        if runtimeStatus.hasSystemBlocker { return "Arrival alerts need attention" }
+        return runtimeStatus.monitoredRegionCount > 0 ? "Arrival alerts are active" : "Preparing monitored places"
+    }
+
+    var readinessExplanation: String {
+        guard let runtimeStatus else { return "Checking permissions and monitored places…" }
+        if !runtimeStatus.locationAlways {
+            return "Always Location is required so iOS can wake PickMe when you arrive, even when the app is not open."
+        }
+        if !runtimeStatus.notificationsAllowed {
+            return "Notifications are off. PickMe cannot show arrival advice until notifications are allowed in Settings."
+        }
+        if runtimeStatus.backgroundRefresh != .available {
+            return "Background App Refresh is unavailable, so iOS may not wake PickMe for an arrival."
+        }
+        if runtimeStatus.monitoredRegionCount == 0 {
+            return "Permissions are ready. PickMe is waiting for a location refresh to register nearby shopping areas."
+        }
+        return "PickMe is monitoring nearby shopping areas and can suggest a different card when the gain clears your threshold."
+    }
+
+    func deliveryReadinessCard(_ status: AmbientRuntimeStatus) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("DELIVERY READINESS")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+
+            readinessRow("Always Location", ready: status.locationAlways,
+                         detail: status.locationAlways ? "Allowed" : "Required")
+            readinessRow("Notifications", ready: status.notificationsAllowed,
+                         detail: notificationDescription(status.notificationAuthorization))
+            readinessRow("Background App Refresh", ready: status.backgroundRefresh == .available,
+                         detail: backgroundRefreshDescription(status.backgroundRefresh))
+            readinessRow("Monitored places", ready: status.monitoredRegionCount > 0,
+                         detail: "\(status.monitoredRegionCount) registered")
+
+            if let date = status.lastNotificationScheduledAt {
+                Text("Last notification accepted by iOS: \(date.formatted(date: .abbreviated, time: .shortened))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            if let issue = status.latestIssue {
+                Label(issue.message, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    func readinessRow(_ title: String, ready: Bool, detail: String) -> some View {
+        HStack {
+            Image(systemName: ready ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                .foregroundStyle(ready ? .green : .orange)
+            Text(title)
+            Spacer()
+            Text(detail).foregroundStyle(.secondary)
+        }
+        .font(.subheadline)
+    }
+
+    func notificationDescription(_ state: AmbientNotificationAuthorization) -> String {
+        switch state {
+        case .allowed: return "Allowed"
+        case .denied: return "Off"
+        case .unknown: return "Not requested"
+        }
+    }
+
+    func backgroundRefreshDescription(_ state: AmbientBackgroundRefreshState) -> String {
+        switch state {
+        case .available: return "Available"
+        case .denied: return "Off"
+        case .restricted: return "Restricted"
         }
     }
 }
