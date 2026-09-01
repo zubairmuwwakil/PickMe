@@ -363,6 +363,9 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         self.modelContainer = modelContainer
         self.catalogue = catalogue
         self.ownerState = ownerState
+        LiveActivityManager.shared.onDismissal = { [weak self] regionId in
+            self?.visitStore.update(regionId: regionId) { $0.liveActivityDismissed = true }
+        }
         startIfAuthorized()
         let pending = pendingArrivals
         pendingArrivals.removeAll()
@@ -717,19 +720,37 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             switchThreshold: ownerState.switchThreshold,
             isMuted: muteStore.isMuted(arrival.muteKey) || explicit == false
         ))
-        guard decision.fires else {
+        // The gate no longer decides whether PickMe is visible — only how loud it is. Silence is
+        // now reserved for the one reason that is the owner's own instruction.
+        switch decision.tier {
+        case .silent:
             diagnosticsStore.record(decision)
-            return
-        }
 
-        do {
-            try await scheduleArrivalNotification(arrival: arrival, recommendation: recommendation,
-                                                  catalogue: catalogue, regionId: regionId)
-            // A "fired" count now means iOS accepted the notification request, not merely that the
-            // pure gate approved one that may have failed before reaching Notification Center.
+        case .presence:
+            // Deliberately no recommendation: the merchant could not be identified, and naming a
+            // card here would be a confident wrong answer.
+            presentArrivalActivity(tier: .presence, arrival: arrival, recommendation: nil,
+                                   catalogue: catalogue, regionId: regionId)
             diagnosticsStore.record(decision)
-        } catch {
-            runtimeStore.recordIssue("Arrival advice was approved but could not be delivered: \(error.localizedDescription)")
+
+        case .confirm:
+            presentArrivalActivity(tier: .confirm, arrival: arrival, recommendation: recommendation,
+                                   catalogue: catalogue, regionId: regionId)
+            diagnosticsStore.record(decision)
+
+        case .interrupt:
+            do {
+                try await scheduleArrivalNotification(arrival: arrival, recommendation: recommendation,
+                                                      catalogue: catalogue, regionId: regionId)
+                presentArrivalActivity(tier: .interrupt, arrival: arrival,
+                                       recommendation: recommendation, catalogue: catalogue,
+                                       regionId: regionId)
+                // A "fired" count means iOS accepted the notification request, not merely that the
+                // pure gate approved one that may have failed before reaching Notification Center.
+                diagnosticsStore.record(decision)
+            } catch {
+                runtimeStore.recordIssue("Arrival advice was approved but could not be delivered: \(error.localizedDescription)")
+            }
         }
     }
 
@@ -890,6 +911,56 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         try await enqueue(UNNotificationRequest(
             identifier: "ambient.arrival.\(regionId).\(UUID().uuidString)",
             content: content, trigger: nil))
+    }
+
+    /// Starts the Live Activity for an arrival at the tier the gate chose.
+    ///
+    /// Separate from `scheduleArrivalNotification` on purpose. Those two calls used to be one, so
+    /// a single boolean decided both whether PickMe spoke and whether PickMe was visible — which
+    /// is why the owner saw nothing on most arrivals.
+    private func presentArrivalActivity(tier: AmbientDeliveryTier,
+                                        arrival: ResolvedArrival,
+                                        recommendation: Recommendation?,
+                                        catalogue: Catalogue,
+                                        regionId: String) {
+        let meta = CategoryVisuals.meta(for: arrival.prediction.category)
+        let merchant = notificationMerchantName(arrival.merchant.name)
+
+        guard tier != .presence else {
+            LiveActivityManager.shared.startRecommendationActivity(
+                merchantName: merchant, merchantLocation: nil,
+                cardName: "", cardId: "", multiplierHeadline: "",
+                advantageDescription: "", categoryDisplayName: meta.displayName,
+                categoryIcon: meta.icon, tier: .presence, visitKey: regionId)
+            return
+        }
+
+        guard let recommendation,
+              let card = catalogue.cards.first(where: { $0.cardId == recommendation.winner.cardId })
+        else { return }
+
+        let advantageCad = recommendation.advantageOverDefaultCad ?? 0
+        let advantage: String
+        switch tier {
+        case .interrupt where advantageCad > 0.005:
+            advantage = String(format: "+$%.2f vs default", advantageCad)
+        case .confirm:
+            // The answer is "stay on the card you were already going to use". Saying so plainly
+            // is the whole point of this tier: it is reassurance, not a suppressed alert.
+            advantage = String(localized: "ambient.activity.confirm.advantage",
+                               defaultValue: "Already your best card here")
+        default:
+            advantage = String(localized: "ambient.activity.best.advantage",
+                               defaultValue: "Best card here")
+        }
+
+        LiveActivityManager.shared.startRecommendationActivity(
+            merchantName: merchant, merchantLocation: nil,
+            cardName: Self.shortCardName(card), cardId: card.cardId,
+            multiplierHeadline: rewardReason(card, recommendation),
+            advantageDescription: advantage,
+            categoryDisplayName: meta.displayName, categoryIcon: meta.icon,
+            tier: tier, visitKey: regionId)
     }
 
     private func scheduleAmountPrompt(merchantName: String, purchaseId: UUID) async throws {
