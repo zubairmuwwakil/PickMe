@@ -398,7 +398,7 @@ git commit -m "feat(ambient): mirror the delivery tier in the Kotlin engine twin
 
 The two `CardCopilotActivityAttributes.swift` files are byte-identical duplicates and ActivityKit requires them to stay that way. Make the edit once and copy the file.
 
-- [ ] **Step 1: Add the tier to the content state**
+- [x] **Step 1: Add the tier to the content state**
 
 In `App/CardCopilot/Services/CardCopilotActivityAttributes.swift`, add the import, the stored property, and the initialiser parameter:
 
@@ -431,7 +431,7 @@ and the assignment, after `self.isFork = isFork`:
             self.tier = tier
 ```
 
-- [ ] **Step 2: Copy the file to the widget target verbatim**
+- [x] **Step 2: Copy the file to the widget target verbatim**
 
 ```bash
 cp App/CardCopilot/Services/CardCopilotActivityAttributes.swift App/CardCopilotWidgets/CardCopilotActivityAttributes.swift
@@ -440,7 +440,7 @@ diff App/CardCopilot/Services/CardCopilotActivityAttributes.swift App/CardCopilo
 
 Expected: `IDENTICAL`.
 
-- [ ] **Step 3: Render the presence tier without a card**
+- [x] **Step 3: Render the presence tier without a card**
 
 `App/CardCopilot/Views/CardCopilotLiveActivityView.swift` and
 `App/CardCopilotWidgets/CardCopilotLiveActivityView.swift` are also identical copies. Edit one and
@@ -504,7 +504,7 @@ diff App/CardCopilot/Views/CardCopilotLiveActivityView.swift App/CardCopilotWidg
 
 Expected: `IDENTICAL`. (The widget extension already links `CardCopilotEngine` — `CapTrackerWidget.swift`, `QuickRecommendWidget.swift`, and `WhichCardAppIntent.swift` all import it — so no target configuration is needed.)
 
-- [ ] **Step 4: Build the app target**
+- [x] **Step 4: Build the app target**
 
 ```bash
 xcrun simctl list devices available | grep -m1 iPhone
@@ -518,7 +518,7 @@ cd App && xcodebuild build -project CardCopilot.xcodeproj -scheme CardCopilot -c
 
 Expected: BUILD SUCCEEDED. Remember: never add `-sdk iphonesimulator`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add App/CardCopilot/Services/CardCopilotActivityAttributes.swift App/CardCopilotWidgets/CardCopilotActivityAttributes.swift App/CardCopilotWidgets/CardCopilotLiveActivityView.swift App/CardCopilot/Views/CardCopilotLiveActivityView.swift
@@ -636,7 +636,7 @@ git commit -m "fix(ambient): treat ActivityKit as the source of truth for live a
 
 **Known limitation, accept and do not work around.** A swipe reports `ActivityState.dismissed` while our own cleanup reports `.ended`, so the two are distinguishable — but only while this process is alive. If iOS terminated the app before the swipe, the dismissal is unobservable, because a dismissed activity simply disappears from `Activity.activities` exactly as an ended one does. The fallback is the more generous branch (treat it as absent), which is the right way to be wrong.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `App/CardCopilotTests/AmbientVisitStoreTests.swift`:
 
@@ -682,12 +682,12 @@ final class AmbientVisitStoreTests: XCTestCase {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd App && xcodebuild test -project CardCopilot.xcodeproj -scheme CardCopilot -configuration Debug -destination "id=<simulator-udid>" CODE_SIGNING_ALLOWED=NO -only-testing:CardCopilotTests/AmbientVisitStoreTests`
 Expected: FAIL — `value of type 'AmbientVisit' has no member 'liveActivityDismissed'`.
 
-- [ ] **Step 3: Add the field with a tolerant decoder**
+- [x] **Step 3: Add the field with a tolerant decoder**
 
 In `App/CardCopilot/Services/AmbientVisitStore.swift`, add to `AmbientVisit` after `merchantName`:
 
@@ -722,12 +722,12 @@ In `App/CardCopilot/Services/AmbientVisitStore.swift`, add to `AmbientVisit` aft
     }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `cd App && xcodebuild test -project CardCopilot.xcodeproj -scheme CardCopilot -configuration Debug -destination "id=<simulator-udid>" CODE_SIGNING_ALLOWED=NO -only-testing:CardCopilotTests/AmbientVisitStoreTests`
 Expected: PASS, both tests.
 
-- [ ] **Step 5: Report dismissals from the Live Activity manager**
+- [x] **Step 5: Report dismissals from the Live Activity manager**
 
 `App/CardCopilot/Services/LiveActivityManager.swift` imports only ActivityKit, Foundation, and
 SwiftUI today. It gains an `AmbientDeliveryTier` parameter in this task, so add the engine import
@@ -789,12 +789,12 @@ Add the observer method:
     }
 ```
 
-- [ ] **Step 6: Build and re-run the app test suite**
+- [x] **Step 6: Build and re-run the app test suite**
 
 Run: `cd App && xcodebuild test -project CardCopilot.xcodeproj -scheme CardCopilot -configuration Debug -destination "id=<simulator-udid>" CODE_SIGNING_ALLOWED=NO`
 Expected: PASS. Existing call sites compile unchanged because both new parameters are defaulted.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add App/CardCopilot/Services/AmbientVisitStore.swift App/CardCopilot/Services/LiveActivityManager.swift App/CardCopilotTests/AmbientVisitStoreTests.swift
@@ -817,7 +817,7 @@ Two structural points:
 1. **The Live Activity moves out of the notification function.** It is currently started at the end of `scheduleArrivalNotification`, which is the entire reason presence and interruption are welded together.
 2. **Where `diagnosticsStore.record(decision)` is called matters.** On the interrupt path it is deliberately called *after* iOS accepts the notification, so a "fired" count means the notification was actually enqueued rather than merely approved. Preserve that. On every other tier, record immediately.
 
-- [ ] **Step 1: Wire the dismissal callback**
+- [x] **Step 1: Wire the dismissal callback**
 
 In `AmbientLocationService`, in the same place the other stores are configured (near `private let visitStore = AmbientVisitStore()`, line 292 — put the assignment in whichever `start`/`configure` method already runs once on setup):
 
@@ -827,7 +827,7 @@ In `AmbientLocationService`, in the same place the other stores are configured (
         }
 ```
 
-- [ ] **Step 2: Replace the fire/suppress guard with tier routing**
+- [x] **Step 2: Replace the fire/suppress guard with tier routing**
 
 In `evaluateArrival`, replace this block:
 
@@ -885,7 +885,7 @@ with:
         }
 ```
 
-- [ ] **Step 3: Remove the Live Activity call from the notification function**
+- [x] **Step 3: Remove the Live Activity call from the notification function**
 
 At the end of `scheduleArrivalNotification`, delete the whole trailing block beginning:
 
@@ -896,7 +896,7 @@ At the end of `scheduleArrivalNotification`, delete the whole trailing block beg
 
 through its closing parenthesis. That function now does one thing: enqueue a notification.
 
-- [ ] **Step 4: Add the presentation function**
+- [x] **Step 4: Add the presentation function**
 
 Add to `AmbientLocationService`, next to `scheduleArrivalNotification`:
 
@@ -957,6 +957,11 @@ Add to `AmbientLocationService`, next to `scheduleArrivalNotification`:
 Run: `cd App && xcodebuild test -project CardCopilot.xcodeproj -scheme CardCopilot -configuration Debug -destination "id=<simulator-udid>" CODE_SIGNING_ALLOWED=NO`
 Expected: PASS.
 
+> **2026-09-01 note:** `xcodebuild build` SUCCEEDED with this change. The test suite could
+> not be run: a concurrent session has the auth/config layer (`MoneyTalksSync.swift`,
+> `CopilotEnvironment.swift`) mid-refactor, and the test host crashes at launch with
+> `Clerk has not been configured`. Unrelated to this task. Re-run once the tree is clean.
+
 - [ ] **Step 6: Commit**
 
 ```bash
@@ -979,7 +984,7 @@ git commit -m "feat(ambient): route arrivals by delivery tier instead of one fir
 
 **Why this is a task and not a footnote.** `ownerFacingDescription` explains to the owner *why an arrival stayed silent*. Four of its six cases no longer mean silence. Left alone, the app explains an absence the owner just watched appear on their Lock Screen.
 
-- [ ] **Step 1: Rewrite the reason descriptions**
+- [x] **Step 1: Rewrite the reason descriptions**
 
 In `App/CardCopilot/Views/AmbientLocationExplainerView.swift`, replace the bodies inside `ownerFacingDescription`, and update its doc comment:
 
@@ -1016,7 +1021,7 @@ extension AmbientSuppressionReason {
 }
 ```
 
-- [ ] **Step 2: Scope rule A3 in TESTFLIGHT.md**
+- [x] **Step 2: Scope rule A3 in TESTFLIGHT.md**
 
 Replace the table row at `TESTFLIGHT.md:182`:
 
@@ -1035,6 +1040,12 @@ And amend the sentence at `TESTFLIGHT.md:30` so the tester gate matches:
 Run: `cd App && xcodebuild build -project CardCopilot.xcodeproj -scheme CardCopilot -configuration Debug -destination "id=<simulator-udid>" CODE_SIGNING_ALLOWED=NO`
 Expected: BUILD SUCCEEDED. `Localizable.xcstrings` gains `ambient.activity.presence.title`, `ambient.activity.presence.body`, `ambient.activity.confirm.advantage`, `ambient.activity.best.advantage`, and the rewritten `ambient.suppressed.*` values.
 
+> **2026-09-01 note:** BUILD SUCCEEDED. Incremental build did not re-extract the new
+> `ambient.activity.*` keys into `Localizable.xcstrings`, and that file already carries
+> unrelated concurrent-session edits, so it was left out of the Task 7 commit. The
+> `String(localized:defaultValue:)` calls resolve at runtime without a catalogue entry;
+> a clean build on a settled tree will backfill the keys for translation.
+
 - [ ] **Step 4: Run the whole gate**
 
 ```bash
@@ -1048,6 +1059,10 @@ cd App && xcodebuild test -project CardCopilot.xcodeproj -scheme CardCopilot -co
 ```
 
 Expected: all PASS.
+
+> **2026-09-01 note:** Cross-language engine gate PASSED (`swift test` + `:core:engine:test`).
+> App suite blocked by the same `Clerk has not been configured` test-host crash from
+> concurrent auth/config WIP — see Task 6 Step 5. Re-run once the tree is clean.
 
 - [ ] **Step 5: Commit**
 
