@@ -11,6 +11,18 @@ enum ChipMood: Equatable {
     case knock      // Reaching right up to the iPhone screen glass & tapping on it
     case cool       // Deadpool sunglasses / smug expression
     case shocked    // Wide OLED eyes & jaw drop
+    case sleepy     // Half-shuttered LEDs for the small hours
+}
+
+/// Where Chip is looking when nothing has grabbed him.
+///
+/// Directed attention is what separates a character from a screensaver: random glancing reads as
+/// idle animation, but looking *at the thing the owner is touching* reads as awareness.
+enum ChipGaze: Equatable {
+    /// Free to glance around on his own schedule.
+    case wandering
+    /// Something below him has focus — the search field. Chip looks down at it and stops roaming.
+    case down
 }
 
 /// A pure SwiftUI vector-rendered and animated mascot companion for PickMe.
@@ -22,20 +34,26 @@ struct ChipMascotView: View {
     var size: CGFloat = 56
     var isWaving: Bool = true
     var enable3DTilt: Bool = true
+    var gaze: ChipGaze = .wandering
     var onTap: (() -> Void)? = nil
+    var onLongPress: (() -> Void)? = nil
 
     init(
         mood: ChipMood = .idle,
         size: CGFloat = 56,
         isWaving: Bool = true,
         enable3DTilt: Bool = true,
-        onTap: (() -> Void)? = nil
+        gaze: ChipGaze = .wandering,
+        onTap: (() -> Void)? = nil,
+        onLongPress: (() -> Void)? = nil
     ) {
         self.mood = mood
         self.size = size
         self.isWaving = isWaving
         self.enable3DTilt = enable3DTilt
+        self.gaze = gaze
         self.onTap = onTap
+        self.onLongPress = onLongPress
     }
 
     @State private var isBlinking = false
@@ -49,6 +67,38 @@ struct ChipMascotView: View {
     @State private var scanOffset: CGFloat = -1
     @State private var isKnockingGlass = false
     @State private var glassRipples: [GlassRipple] = []
+    @State private var eyeGlanceOffset: CGFloat = 0
+    @State private var idleFloatOffset: CGFloat = 0
+    @State private var idleBreathingScale: CGFloat = 1.0
+    @State private var idleTiltNudge: Double = 0
+    @State private var idleHopOffset: CGFloat = 0
+    @State private var lastInteractionAt: Date = .distantPast
+
+    /// Generation counter for the self-rescheduling idle timers (blink, glance, fidget).
+    ///
+    /// Those timers reschedule themselves through `asyncAfter`, so without a token they outlive
+    /// the view and a second `onAppear` starts a *second* chain on top of the first. This is a
+    /// plain reference type rather than `@State` of a value so the escaping closures can read
+    /// the live generation without touching SwiftUI storage after the view is gone.
+    ///
+    /// **Note for whoever grows this.** Chip now runs three hand-rolled `asyncAfter` chains per
+    /// instance. The token stops them leaking, but it does not make this a scheduler: every
+    /// mascot on screen wakes the main thread on its own irregular cadence. That is fine at the
+    /// one or two instances this app puts on a screen today. If Chip ever goes into a list — a
+    /// mascot per row, recycled on scroll — replace all three with `TimelineView` or
+    /// `.phaseAnimator`, which let SwiftUI own the cadence and stop it with the view. Do not
+    /// scale this pattern up; it is a small deliberate shortcut, not the design.
+    private final class IdleCycleToken {
+        var generation = 0
+    }
+    @State private var idleCycle = IdleCycleToken()
+    @State private var didLongPress = false
+    @State private var calculatingScanOffset: CGFloat = -1
+    @State private var eyeLookDownOffset: CGFloat = 0
+
+    /// Chip's whole body hovers, breathes, tilts in 3D and waves on permanent loops. That is a
+    /// lot of unrequested motion for someone who asked the system for less of it.
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     struct GlassRipple: Identifiable {
         let id = UUID()
@@ -57,98 +107,121 @@ struct ChipMascotView: View {
     }
 
     var body: some View {
-        Button {
+        ZStack(alignment: .center) {
+            // Glass Shockwave Ripples (appearing right on the "phone screen")
+            ForEach(glassRipples) { ripple in
+                Circle()
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                Color.cyan.opacity(0.8),
+                                Color.white.opacity(0.9),
+                                Color.orange.opacity(0.6)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: max(1.5, size * 0.04)
+                    )
+                    .frame(width: size * 1.6, height: size * 1.6)
+                    .scaleEffect(ripple.scale)
+                    .opacity(ripple.opacity)
+                    .offset(x: size * 0.22, y: -size * 0.15)
+            }
+
+            ZStack(alignment: .bottom) {
+                // Ground Ambient Depth Shadow (Casts onto card/surface behind)
+                Ellipse()
+                    .fill(Color.black.opacity(0.22))
+                    .frame(width: size * 1.15, height: size * 0.16)
+                    .blur(radius: max(2.5, size * 0.06))
+                    .offset(y: size * 0.12)
+
+                // Whole Robot Assembly with 3D Pop-Out
+                VStack(spacing: 0) {
+                    ZStack {
+                        // Left & Right Articulated Limbs
+                        HStack(spacing: 0) {
+                            // Left Arm (Thumbs up / friendly hand)
+                            leftArm
+                                .offset(x: -size * 0.04, y: size * 0.04)
+
+                            Spacer()
+
+                            // Right Arm (Waving or Screen-Knocking hand)
+                            rightArm
+                                .offset(x: size * 0.04, y: -size * 0.02)
+                        }
+                        .frame(width: size * 1.56)
+
+                        // Main Robot Torso / Chassis
+                        chassisBody
+                            .frame(width: size, height: size * 1.34)
+                    }
+
+                    // Legs & Shoes
+                    legsAndShoes
+                        .frame(width: size * 0.62, height: size * 0.24)
+                        .offset(y: -size * 0.02)
+                }
+                .scaleEffect(isPressed ? 1.18 : (isHovering ? (1.04 * idleBreathingScale) : idleBreathingScale))
+                .offset(y: idleFloatOffset + idleHopOffset)
+                .rotationEffect(.degrees(bodyTilt + idleTiltNudge))
+                .rotation3DEffect(
+                    .degrees(pitchTilt),
+                    axis: (x: 1.0, y: 0.0, z: 0.0),
+                    perspective: 0.4
+                )
+                .rotation3DEffect(
+                    .degrees(yawTilt),
+                    axis: (x: 0.0, y: 1.0, z: 0.0),
+                    perspective: 0.4
+                )
+                .shadow(
+                    color: Color.black.opacity(isPressed ? 0.35 : 0.18),
+                    radius: isPressed ? 14 : 7,
+                    x: 0,
+                    y: isPressed ? 8 : 4
+                )
+
+                if mood == .celebrating {
+                    sparkleBadge
+                        .offset(x: size * 0.42, y: -size * 1.30)
+                }
+            }
+            .frame(width: size * 1.62, height: size * 1.68)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            // A long press fires at its minimumDuration but the tap only lands on release, so
+            // without this a founder-protocol hold would also register as a poke and the poke's
+            // reaction would overwrite the protocol Chip just unlocked.
+            guard !didLongPress else {
+                didLongPress = false
+                return
+            }
             triggerGlassKnockInteraction()
             onTap?()
-        } label: {
-            ZStack(alignment: .center) {
-                // Glass Shockwave Ripples (appearing right on the "phone screen")
-                ForEach(glassRipples) { ripple in
-                    Circle()
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [
-                                    Color.cyan.opacity(0.8),
-                                    Color.white.opacity(0.9),
-                                    Color.orange.opacity(0.6)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: max(1.5, size * 0.04)
-                        )
-                        .frame(width: size * 1.6, height: size * 1.6)
-                        .scaleEffect(ripple.scale)
-                        .opacity(ripple.opacity)
-                        .offset(x: size * 0.22, y: -size * 0.15)
-                }
-
-                ZStack(alignment: .bottom) {
-                    // Ground Ambient Depth Shadow (Casts onto card/surface behind)
-                    Ellipse()
-                        .fill(Color.black.opacity(0.22))
-                        .frame(width: size * 1.15, height: size * 0.16)
-                        .blur(radius: max(2.5, size * 0.06))
-                        .offset(y: size * 0.12)
-
-                    // Whole Robot Assembly with 3D Pop-Out
-                    VStack(spacing: 0) {
-                        ZStack {
-                            // Left & Right Articulated Limbs
-                            HStack(spacing: 0) {
-                                // Left Arm (Thumbs up / friendly hand)
-                                leftArm
-                                    .offset(x: -size * 0.04, y: size * 0.04)
-
-                                Spacer()
-
-                                // Right Arm (Waving or Screen-Knocking hand)
-                                rightArm
-                                    .offset(x: size * 0.04, y: -size * 0.02)
-                            }
-                            .frame(width: size * 1.56)
-
-                            // Main Robot Torso / Chassis
-                            chassisBody
-                                .frame(width: size, height: size * 1.34)
-                        }
-
-                        // Legs & Shoes
-                        legsAndShoes
-                            .frame(width: size * 0.62, height: size * 0.24)
-                            .offset(y: -size * 0.02)
-                    }
-                    .scaleEffect(isPressed ? 1.18 : (isHovering ? 1.04 : 1.0))
-                    .rotationEffect(.degrees(bodyTilt))
-                    .rotation3DEffect(
-                        .degrees(pitchTilt),
-                        axis: (x: 1.0, y: 0.0, z: 0.0),
-                        perspective: 0.4
-                    )
-                    .rotation3DEffect(
-                        .degrees(yawTilt),
-                        axis: (x: 0.0, y: 1.0, z: 0.0),
-                        perspective: 0.4
-                    )
-                    .shadow(
-                        color: Color.black.opacity(isPressed ? 0.35 : 0.18),
-                        radius: isPressed ? 14 : 7,
-                        x: 0,
-                        y: isPressed ? 8 : 4
-                    )
-
-                    if mood == .celebrating {
-                        sparkleBadge
-                            .offset(x: size * 0.42, y: -size * 1.30)
-                    }
-                }
-                .frame(width: size * 1.62, height: size * 1.68)
-            }
         }
-        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 1.8) {
+            didLongPress = true
+            lastInteractionAt = Date()
+            onLongPress?()
+        }
         .onAppear {
+            idleCycle.generation += 1
+            let generation = idleCycle.generation
+
+            // Chip's face stays alive either way: blinking and glancing move a few points of
+            // LED, not the whole robot, so neither is what Reduce Motion is asking about.
+            scheduleBlinking(generation: generation)
+            scheduleGlancing(generation: generation)
+            if mood == .calculating { startCalculatingScan() }
+            guard !reduceMotion else { return }
+
             isHovering = true
-            scheduleBlinking()
+            scheduleIdleBehaviour(generation: generation)
+            startIdleFloatAndBreathe()
             if isWaving {
                 startWaving()
             }
@@ -156,9 +229,23 @@ struct ChipMascotView: View {
                 startSubtle3DParallax()
             }
         }
+        .onDisappear {
+            // Retires every in-flight blink/glance chain so they stop waking the main thread.
+            idleCycle.generation += 1
+        }
+        .onChange(of: mood) { _, newMood in
+            if newMood == .calculating { startCalculatingScan() }
+        }
+        .onChange(of: gaze) { _, newGaze in
+            withAnimation(.spring(response: 0.30, dampingFraction: 0.7)) {
+                eyeLookDownOffset = newGaze == .down ? size * 0.035 : 0
+                if newGaze == .down { eyeGlanceOffset = 0 }
+            }
+        }
     }
 
     private func triggerGlassKnockInteraction() {
+        lastInteractionAt = Date()
         let impact = UIImpactFeedbackGenerator(style: .rigid)
         impact.impactOccurred(intensity: 1.0)
 
@@ -204,9 +291,13 @@ struct ChipMascotView: View {
     }
 
     private func startSubtle3DParallax() {
-        withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) {
-            pitchTilt = 4.0
-            yawTilt = -3.5
+        pitchTilt = 0
+        yawTilt = 0
+        DispatchQueue.main.async {
+            withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) {
+                pitchTilt = 4.0
+                yawTilt = -3.5
+            }
         }
     }
 
@@ -435,44 +526,74 @@ struct ChipMascotView: View {
     private func eye(isLeft: Bool) -> some View {
         let isWinkingEye = isLeft && (isWinking || mood == .wink)
 
-        if isBlinking || isWinkingEye {
-            // Blink / wink slit
-            Capsule()
-                .fill(ledColor)
-                .frame(width: size * 0.14, height: size * 0.038)
-                .shadow(color: ledColor.opacity(0.9), radius: 3)
-        } else if mood == .celebrating {
-            // Star eyes
-            Image(systemName: "star.fill")
-                .font(.system(size: size * 0.15, weight: .bold))
-                .foregroundStyle(ledColor)
-                .shadow(color: ledColor.opacity(0.9), radius: 3)
-        } else if mood == .alert {
-            // Alert mark
-            Text("!")
-                .font(.system(size: size * 0.17, weight: .black, design: .monospaced))
-                .foregroundStyle(Color.orange)
-                .shadow(color: Color.orange.opacity(0.9), radius: 3)
-        } else if mood == .knock {
-            // Focused, direct-eye-contact capsule eyes looking through the screen
-            Capsule()
-                .fill(Color.cyan)
-                .frame(width: size * 0.12, height: size * 0.18)
-                .overlay(
+        Group {
+            if isBlinking || isWinkingEye {
+                // Blink / wink slit
+                Capsule()
+                    .fill(ledColor)
+                    .frame(width: size * 0.14, height: size * 0.038)
+                    .shadow(color: ledColor.opacity(0.9), radius: 3)
+            } else if mood == .celebrating {
+                // Star eyes
+                Image(systemName: "star.fill")
+                    .font(.system(size: size * 0.15, weight: .bold))
+                    .foregroundStyle(ledColor)
+                    .shadow(color: ledColor.opacity(0.9), radius: 3)
+            } else if mood == .alert {
+                // Alert mark
+                Text("!")
+                    .font(.system(size: size * 0.17, weight: .black, design: .monospaced))
+                    .foregroundStyle(Color.orange)
+                    .shadow(color: Color.orange.opacity(0.9), radius: 3)
+            } else if mood == .sleepy {
+                // Half-shuttered: the lid is a bar across the top of a full-height eye, which
+                // reads as drowsy where a simply shorter capsule just reads as a smaller eye.
+                Capsule()
+                    .fill(ledColor)
+                    .frame(width: size * 0.10, height: size * 0.16)
+                    .mask(
+                        Rectangle()
+                            .frame(width: size * 0.14, height: size * 0.07)
+                            .offset(y: size * 0.045)
+                    )
+                    .shadow(color: ledColor.opacity(0.7), radius: 3)
+                    .offset(x: gaze == .down ? 0 : eyeGlanceOffset)
+            } else if mood == .calculating {
+                // Processing: a narrow scanning bar sweeping across the socket, so "thinking"
+                // reads as machine work rather than another facial expression.
+                ZStack {
                     Capsule()
-                        .stroke(Color.white, lineWidth: 0.8)
-                )
-                .shadow(color: Color.cyan.opacity(0.95), radius: 5)
-        } else {
-            // Standard warm glowing dot-matrix eye (vertical capsule)
-            Capsule()
-                .fill(ledColor)
-                .frame(width: size * 0.10, height: size * 0.16)
-                .overlay(
+                        .fill(ledColor.opacity(0.22))
+                        .frame(width: size * 0.15, height: size * 0.15)
+
                     Capsule()
-                        .stroke(Color.white.opacity(0.4), lineWidth: 0.6)
-                )
-                .shadow(color: ledColor.opacity(0.95), radius: 4)
+                        .fill(ledColor)
+                        .frame(width: size * 0.05, height: size * 0.13)
+                        .offset(x: calculatingScanOffset * size * 0.05)
+                        .shadow(color: ledColor.opacity(0.95), radius: 3)
+                }
+            } else if mood == .knock {
+                // Focused, direct-eye-contact capsule eyes looking through the screen
+                Capsule()
+                    .fill(Color.cyan)
+                    .frame(width: size * 0.12, height: size * 0.18)
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.white, lineWidth: 0.8)
+                    )
+                    .shadow(color: Color.cyan.opacity(0.95), radius: 5)
+            } else {
+                // Standard warm glowing dot-matrix eye (vertical capsule) with dynamic glancing
+                Capsule()
+                    .fill(ledColor)
+                    .frame(width: size * 0.10, height: size * 0.16)
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.white.opacity(0.4), lineWidth: 0.6)
+                    )
+                    .shadow(color: ledColor.opacity(0.95), radius: 4)
+                    .offset(x: gaze == .down ? 0 : eyeGlanceOffset, y: eyeLookDownOffset)
+            }
         }
     }
 
@@ -496,6 +617,10 @@ struct ChipMascotView: View {
             return Color(red: 1.0, green: 0.88, blue: 0.28)
         case .knock:
             return Color(red: 0.35, green: 0.85, blue: 1.0)
+        case .calculating:
+            return Color(red: 0.62, green: 0.88, blue: 1.0)
+        case .sleepy:
+            return Color(red: 0.86, green: 0.78, blue: 0.58)
         default:
             // Warm Champagne Amber LED
             return Color(red: 1.0, green: 0.90, blue: 0.52)
@@ -889,26 +1014,196 @@ struct ChipMascotView: View {
 
     // MARK: - Animation Loops
 
-    private func startWaving() {
-        withAnimation(
-            .easeInOut(duration: 0.9)
-            .repeatForever(autoreverses: true)
-        ) {
-            waveAngle = 14
+    private func startCalculatingScan() {
+        calculatingScanOffset = -1
+        DispatchQueue.main.async {
+            withAnimation(.easeInOut(duration: 0.85).repeatForever(autoreverses: true)) {
+                calculatingScanOffset = 1
+            }
         }
     }
 
-    private func scheduleBlinking() {
+    private func startWaving() {
+        waveAngle = 0
+        DispatchQueue.main.async {
+            withAnimation(
+                .easeInOut(duration: 0.9)
+                .repeatForever(autoreverses: true)
+            ) {
+                waveAngle = 14
+            }
+        }
+    }
+
+    private func scheduleBlinking(generation: Int) {
         let delay = Double.random(in: 2.8...4.8)
+        let token = idleCycle
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            guard token.generation == generation else { return }
             withAnimation(.easeInOut(duration: 0.10)) {
                 isBlinking = true
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                guard token.generation == generation else { return }
                 withAnimation(.easeInOut(duration: 0.10)) {
                     isBlinking = false
                 }
-                scheduleBlinking()
+                scheduleBlinking(generation: generation)
+            }
+        }
+    }
+
+    private func startIdleFloatAndBreathe() {
+        // A `repeatForever` animation only attaches to an actual value *change*. On a second
+        // onAppear — a NavigationStack pop, say — these already hold their animated values, so
+        // withAnimation would find nothing to animate and Chip would hang frozen mid-hover.
+        // Snap back to rest first, then start the loop on the next runloop turn.
+        idleFloatOffset = 0
+        idleBreathingScale = 1.0
+        DispatchQueue.main.async {
+            withAnimation(
+                .easeInOut(duration: 2.4)
+                .repeatForever(autoreverses: true)
+            ) {
+                idleFloatOffset = -2.5
+                idleBreathingScale = 1.025
+            }
+        }
+    }
+
+    /// One-off micro-behaviours Chip performs between the permanent idle loops.
+    ///
+    /// The float, breathe, wave and parallax loops run forever and never vary, which reads as a
+    /// screensaver rather than a character. These fire irregularly on top of them — through their
+    /// own offsets so they compose with the loops instead of fighting them for the same property.
+    private enum IdleBehaviour: CaseIterable {
+        case tiltLeft
+        case tiltRight
+        case hop
+        case doubleBlink
+        case stretch
+    }
+
+    /// How often each behaviour comes up, relative to the others.
+    ///
+    /// Uniform random over the table reads as twitchy — a hop is a whole-body event and should
+    /// not be as likely as a blink. Weighting is the difference between "alive" and "restless".
+    private var idleBehaviourWeights: [(IdleBehaviour, Int)] {
+        [
+            (.doubleBlink, 8),
+            (.tiltLeft, 5),
+            (.tiltRight, 5),
+            (.stretch, isWaving ? 3 : 0),
+            (.hop, 2)
+        ]
+    }
+
+    private func scheduleIdleBehaviour(generation: Int) {
+        let delay = Double.random(in: 6.0...11.0)
+        let token = idleCycle
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            guard token.generation == generation else { return }
+
+            // Chip does not fidget over the top of a real interaction: a poke or a knock already
+            // gave him something to do, and a stray hop mid-reaction reads as a glitch.
+            guard Date().timeIntervalSince(lastInteractionAt) > 3.0 else {
+                scheduleIdleBehaviour(generation: generation)
+                return
+            }
+
+            perform(weightedIdleBehaviour(), generation: generation)
+            scheduleIdleBehaviour(generation: generation)
+        }
+    }
+
+    private func weightedIdleBehaviour() -> IdleBehaviour {
+        let table = idleBehaviourWeights.filter { $0.1 > 0 }
+        let total = table.reduce(0) { $0 + $1.1 }
+        guard total > 0 else { return .doubleBlink }
+        var roll = Int.random(in: 0..<total)
+        for (behaviour, weight) in table {
+            if roll < weight { return behaviour }
+            roll -= weight
+        }
+        return .doubleBlink
+    }
+
+    private func perform(_ behaviour: IdleBehaviour, generation: Int) {
+        let token = idleCycle
+        func settle(after seconds: Double, _ body: @escaping () -> Void) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + seconds) {
+                guard token.generation == generation else { return }
+                body()
+            }
+        }
+
+        switch behaviour {
+        case .tiltLeft, .tiltRight:
+            let angle: Double = behaviour == .tiltLeft ? -6 : 6
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.6)) {
+                idleTiltNudge = angle
+            }
+            settle(after: 1.1) {
+                withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) {
+                    idleTiltNudge = 0
+                }
+            }
+
+        case .hop:
+            withAnimation(.spring(response: 0.26, dampingFraction: 0.45)) {
+                idleHopOffset = -7
+            }
+            settle(after: 0.28) {
+                withAnimation(.spring(response: 0.38, dampingFraction: 0.55)) {
+                    idleHopOffset = 0
+                }
+            }
+
+        case .doubleBlink:
+            withAnimation(.easeInOut(duration: 0.08)) { isBlinking = true }
+            settle(after: 0.10) {
+                withAnimation(.easeInOut(duration: 0.08)) { isBlinking = false }
+                settle(after: 0.12) {
+                    withAnimation(.easeInOut(duration: 0.08)) { isBlinking = true }
+                    settle(after: 0.22) {
+                        withAnimation(.easeInOut(duration: 0.08)) { isBlinking = false }
+                    }
+                }
+            }
+
+        case .stretch:
+            // Reaches the waving arm out further than its loop ever does, then hands the arm
+            // back to that loop.
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.55)) {
+                waveAngle = 34
+            }
+            settle(after: 0.85) {
+                startWaving()
+            }
+        }
+    }
+
+    private func scheduleGlancing(generation: Int) {
+        let delay = Double.random(in: 2.8...5.5)
+        let token = idleCycle
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            guard token.generation == generation else { return }
+            // A directed gaze outranks idle roaming: Chip is already looking at something.
+            guard gaze == .wandering else {
+                scheduleGlancing(generation: generation)
+                return
+            }
+            let options: [CGFloat] = [-1.8, 0.0, 1.8, 0.0]
+            let chosen = options.randomElement() ?? 0.0
+            withAnimation(.spring(response: 0.24, dampingFraction: 0.65)) {
+                eyeGlanceOffset = chosen
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                guard token.generation == generation else { return }
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.70)) {
+                    eyeGlanceOffset = 0.0
+                }
+                scheduleGlancing(generation: generation)
             }
         }
     }
@@ -916,10 +1211,20 @@ struct ChipMascotView: View {
 
 // MARK: - Interactive Chip Companion Header Card (4th-Wall Breaking)
 
+/// Something Chip can say, and optionally something the owner can do about it.
 struct ChipBanterItem {
     let text: String
     let mood: ChipMood
     let tag: String
+    /// Rendered as an extra button in the bubble's action row. Present only on quips that lead
+    /// somewhere — an advisory the owner can act on, rather than a joke.
+    var action: ChipBanterAction? = nil
+}
+
+struct ChipBanterAction {
+    let label: String
+    let systemImage: String
+    let perform: () -> Void
 }
 
 /// Formats typed Engine insights into Chip's 4th-wall breaking personality
@@ -991,19 +1296,100 @@ struct ChipCompanionHeaderCard: View {
     let statusText: String
     let subtitle: String
     var insights: [ChipInsight] = []
+    /// Quips that jump the queue — a broken subsystem outranks any joke or engine insight.
+    var pinnedBanter: [ChipBanterItem] = []
+    /// Quips that take their turn in the ordinary rotation rather than demanding attention.
+    var rotationBanter: [ChipBanterItem] = []
     var onSearchTap: (() -> Void)? = nil
+    var activeSearchText: String = ""
+    /// Where Chip should be looking — the owner's focus, not his own idle schedule.
+    var gaze: ChipGaze = .wandering
+    /// The face Chip falls back to between reactions. Late at night that is not `.cool`.
+    var restingMood: ChipMood = .cool
+    @Binding var externalReactionText: String?
+    @Binding var externalIsBubblePresented: Bool
+    /// A binding, not a value: whoever sets the tag cannot know when Chip moves on, so the card
+    /// has to be able to clear it. As a plain value it stuck, and every later quip — Costco
+    /// rules, DCC warnings — kept wearing the tag of whichever easter egg fired first.
+    @Binding var externalReactionTag: String?
 
     @State private var quipIndex: Int = 0
-    @State private var isBubblePresented: Bool = false
+    @State private var internalIsBubblePresented: Bool = false
     @State private var isGlowPulsing: Bool = false
-    @State private var currentMood: ChipMood = .cool
+    @State private var currentMood: ChipMood? = nil
     @State private var glassKnockTrigger: Int = 0
     @State private var pokeCount: Int = 0
     @State private var specialReactionText: String? = nil
+    @State private var lastPokeTimestamp: Date = Date.distantPast
+    @State private var rapidPokeStreak: Int = 0
+    @State private var lastPinnedTag: String? = nil
+    /// The advisory Chip has already opened himself for. Once the owner dismisses that bubble it
+    /// stays shut until a *different* advisory arrives — a panel that springs back open after you
+    /// close it is worse than one that never opened.
+    @State private var autoExpandedTag: String? = nil
 
-    private var activeBanterList: [ChipBanterItem] {
-        let dynamic = insights.map { ChipInsightFormatter.format($0) }
-        return dynamic + staticBanterList
+    private var isBubblePresented: Bool {
+        externalIsBubblePresented || internalIsBubblePresented
+    }
+
+    /// What Chip's face is doing right now: a live reaction if he has one, otherwise the search
+    /// field, otherwise whatever the time of day says he should look like.
+    private var effectiveMood: ChipMood {
+        // A live reaction always outranks the search field: if Chip is mid-sentence about being
+        // poked, he should look poked, even with "cobalt" still sitting in the search box.
+        if isBubblePresented { return currentMood ?? restingMood }
+        if let searchMood = ChipEasterEgg.match(activeSearchText)?.mood { return searchMood }
+        return currentMood ?? restingMood
+    }
+
+    private var banterQueue: ChipBanterQueue {
+        ChipBanterQueue(
+            pinned: pinnedBanter,
+            insights: insights.map { ChipInsightFormatter.format($0) },
+            standing: staticBanterList,
+            rotation: rotationBanter
+        )
+    }
+
+    /// The quip currently on deck. Never a raw subscript — see `ChipBanterQueue`.
+    private var currentBanter: ChipBanterItem {
+        banterQueue.item(at: quipIndex)
+            ?? ChipBanterItem(text: subtitle, mood: .idle, tag: "CHIP")
+    }
+
+    private var currentBubbleTag: String {
+        ChipBubbleTag.resolve(
+            externalTag: externalReactionTag,
+            reactionText: externalReactionText ?? specialReactionText,
+            fallback: currentBanter.tag
+        )
+    }
+
+    /// Opens Chip's bubble on its own when something is genuinely broken.
+    ///
+    /// A collapsed bubble is the right default for jokes and tips — but the empty-wallet advisory
+    /// is a new owner's first minute in the app, and advice they have to tap a mascot to discover
+    /// is advice most of them never see. Only pinned advisories qualify, only once each, and a
+    /// dismissal sticks.
+    private func autoExpandForPinnedAdvisoryIfNeeded() {
+        guard let tag = pinnedBanter.first?.tag, tag != autoExpandedTag else { return }
+        autoExpandedTag = tag
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.72)) {
+            internalIsBubblePresented = true
+        }
+    }
+
+    private func dismissBubble() {
+        let impact = UIImpactFeedbackGenerator(style: .light)
+        impact.impactOccurred()
+        withAnimation(.spring(response: 0.30, dampingFraction: 0.75)) {
+            externalIsBubblePresented = false
+            internalIsBubblePresented = false
+            externalReactionText = nil
+            externalReactionTag = nil
+            specialReactionText = nil
+            currentMood = currentBanter.mood
+        }
     }
 
     private let staticBanterList: [ChipBanterItem] = [
@@ -1011,6 +1397,26 @@ struct ChipCompanionHeaderCard: View {
             text: "Hey you holding the iPhone! Yeah, you. Stop scrolling—Amex Cobalt earns 5x on this meal, so don't touch that debit card.",
             mood: .cool,
             tag: "4TH WALL BREAK"
+        ),
+        ChipBanterItem(
+            text: "Baby's first credit card? BMO CashBack Mastercard. Humble beginnings, but look at us now: master point strategists.",
+            mood: .cool,
+            tag: "ORIGIN LORE"
+        ),
+        ChipBanterItem(
+            text: "If you ever take away my Amex Cobalt, I will personally rewrite my firmware. 5x on groceries & dining is sacred in Canada.",
+            mood: .celebrating,
+            tag: "HOLY GRAIL"
+        ),
+        ChipBanterItem(
+            text: "Most regretted card? Amex Platinum. That $799 annual fee still gives me digital nightmares unless you literally sleep in airport lounges.",
+            mood: .shocked,
+            tag: "FEE TRAUMA"
+        ),
+        ChipBanterItem(
+            text: "Best coffee spot? Error 404: this copilot runs on matcha. Routing you to the nearest bubble tea spot instead!",
+            mood: .wink,
+            tag: "ENERGY CHECK"
         ),
         ChipBanterItem(
             text: "Ow! Did you just poke my forehead? There's 0.8mm of Ceramic Shield glass between us, but I still felt that!",
@@ -1059,6 +1465,7 @@ struct ChipCompanionHeaderCard: View {
         )
     ]
 
+
     var body: some View {
         VStack(spacing: 8) {
             // Main Pop-Out Card
@@ -1067,9 +1474,15 @@ struct ChipCompanionHeaderCard: View {
                 Button {
                     let impact = UIImpactFeedbackGenerator(style: .medium)
                     impact.impactOccurred()
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.72)) {
-                        isBubblePresented.toggle()
-                        if isBubblePresented {
+                    if isBubblePresented {
+                        dismissBubble()
+                    } else {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.72)) {
+                            internalIsBubblePresented = true
+                            externalIsBubblePresented = false
+                            externalReactionText = nil
+                            externalReactionTag = nil
+                            specialReactionText = nil
                             advanceQuip()
                         }
                     }
@@ -1142,6 +1555,10 @@ struct ChipCompanionHeaderCard: View {
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 12)
+                    // Without this, a plain Button only hits its *rendered* content, so the
+                    // padding, the spacers, and the 3pt gap between the title and subtitle were
+                    // all dead. Tapping the card mostly worked, which is the worst kind of bug.
+                    .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .background(
                         ZStack {
                             // Frosted Glass Base
@@ -1213,13 +1630,18 @@ struct ChipCompanionHeaderCard: View {
 
                     // The Mascot Itself: Size 50, overlapping the top edge
                     ChipMascotView(
-                        mood: currentMood,
+                        mood: effectiveMood,
                         size: 48,
                         isWaving: true,
-                        enable3DTilt: true
-                    ) {
-                        pokeChipAction()
-                    }
+                        enable3DTilt: true,
+                        gaze: gaze,
+                        onTap: {
+                            pokeChipAction()
+                        },
+                        onLongPress: {
+                            triggerFounderProtocolHoldAction()
+                        }
+                    )
                     .frame(width: 60, height: 60)
                 }
                 .offset(x: 10, y: -14) // Breaks through the top & left card frame!
@@ -1237,7 +1659,7 @@ struct ChipCompanionHeaderCard: View {
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundStyle(.orange)
 
-                            Text(activeBanterList[quipIndex].tag)
+                            Text(currentBubbleTag)
                                 .font(.system(size: 10, weight: .heavy, design: .monospaced))
                                 .foregroundStyle(.orange)
                                 .tracking(1.0)
@@ -1261,12 +1683,40 @@ struct ChipCompanionHeaderCard: View {
                     }
 
                     // The Dialogue Body
-                    Text(specialReactionText ?? activeBanterList[quipIndex].text)
+                    Text(externalReactionText ?? specialReactionText ?? currentBanter.text)
                         .font(.system(size: 13, weight: .medium, design: .rounded))
                         .foregroundStyle(.primary)
                         .lineSpacing(3.5)
                         .fixedSize(horizontal: false, vertical: true)
                         .transition(.opacity.combined(with: .scale(scale: 0.98)))
+
+                    // The quip's own call to action, when it leads somewhere. Shown above the
+                    // 4th-wall toys so a broken subsystem is not competing with "Poke Chip".
+                    if externalReactionText == nil, specialReactionText == nil,
+                       let action = currentBanter.action {
+                        Button {
+                            let impact = UIImpactFeedbackGenerator(style: .medium)
+                            impact.impactOccurred()
+                            action.perform()
+                        } label: {
+                            HStack(spacing: 5) {
+                                Image(systemName: action.systemImage)
+                                    .font(.system(size: 11, weight: .bold))
+                                Text(action.label)
+                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                                Spacer(minLength: 0)
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 10, weight: .semibold))
+                            }
+                            .foregroundStyle(Color.blue)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                    }
 
                     // Interactive 4th-Wall Actions (Poke Chip, Knock Glass, Next Quip)
                     HStack(spacing: 8) {
@@ -1276,15 +1726,14 @@ struct ChipCompanionHeaderCard: View {
                         } label: {
                             HStack(spacing: 4) {
                                 Image(systemName: "hand.tap.fill")
-                                    .font(.system(size: 11, weight: .bold))
+                                    .font(.system(size: 11, weight: .semibold))
                                 Text("Knock Glass")
                                     .font(.system(size: 11, weight: .bold, design: .rounded))
                             }
-                            .foregroundStyle(Color.cyan)
-                            .padding(.horizontal, 9)
-                            .padding(.vertical, 5)
-                            .background(Color.cyan.opacity(0.14), in: Capsule())
-                            .overlay(Capsule().strokeBorder(Color.cyan.opacity(0.35), lineWidth: 0.8))
+                            .foregroundStyle(.primary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color(.systemFill), in: Capsule())
                         }
                         .buttonStyle(.plain)
 
@@ -1293,16 +1742,15 @@ struct ChipCompanionHeaderCard: View {
                             pokeChipAction()
                         } label: {
                             HStack(spacing: 4) {
-                                Image(systemName: "hand.point.up.left.fill")
-                                    .font(.system(size: 11, weight: .bold))
+                                Image(systemName: "hand.point.up.fill")
+                                    .font(.system(size: 11, weight: .semibold))
                                 Text("Poke Chip")
                                     .font(.system(size: 11, weight: .bold, design: .rounded))
                             }
-                            .foregroundStyle(Color.orange)
-                            .padding(.horizontal, 9)
-                            .padding(.vertical, 5)
-                            .background(Color.orange.opacity(0.14), in: Capsule())
-                            .overlay(Capsule().strokeBorder(Color.orange.opacity(0.35), lineWidth: 0.8))
+                            .foregroundStyle(.primary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color(.systemFill), in: Capsule())
                         }
                         .buttonStyle(.plain)
 
@@ -1315,13 +1763,13 @@ struct ChipCompanionHeaderCard: View {
                             HStack(spacing: 4) {
                                 Text("Next")
                                     .font(.system(size: 11, weight: .bold, design: .rounded))
-                                Image(systemName: "arrow.right.circle.fill")
-                                    .font(.system(size: 11, weight: .bold))
+                                Image(systemName: "arrow.right")
+                                    .font(.system(size: 10, weight: .bold))
                             }
-                            .foregroundStyle(Color.blue)
-                            .padding(.horizontal, 9)
-                            .padding(.vertical, 5)
-                            .background(Color.blue.opacity(0.14), in: Capsule())
+                            .foregroundStyle(.orange)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.orange.opacity(0.14), in: Capsule())
                         }
                         .buttonStyle(.plain)
                     }
@@ -1352,32 +1800,93 @@ struct ChipCompanionHeaderCard: View {
         }
         .onAppear {
             isGlowPulsing = true
-            currentMood = activeBanterList[quipIndex].mood
+            currentMood = currentBanter.mood
+            lastPinnedTag = pinnedBanter.first?.tag
+            autoExpandForPinnedAdvisoryIfNeeded()
         }
         .onChange(of: insights) {
             quipIndex = 0
-            currentMood = activeBanterList[quipIndex].mood
+            currentMood = currentBanter.mood
         }
+        // A newly pinned advisory takes the front of the queue, so reset to it rather than
+        // leaving Chip mid-rotation on a joke while something is actually broken.
+        .onChange(of: pinnedBanter.first?.tag) { _, newTag in
+            guard newTag != lastPinnedTag else { return }
+            lastPinnedTag = newTag
+            quipIndex = 0
+            currentMood = currentBanter.mood
+            autoExpandForPinnedAdvisoryIfNeeded()
+        }
+    }
+
+    /// Chip's deepest cut. Both routes here — the 1.8s hold and the five-poke streak — are
+    /// deliberate gestures, which is the only place the founder is named by name; nothing a
+    /// stranger can trip over by typing a merchant should introduce them to him.
+    private static let founderProtocolDialogue = "FOUNDER PROTOCOL UNLOCKED!\nEngineered by Zubair Muwwakil in Canada to rescue Canadians from 1x multiplier traps and brutal interchange fees. Maximum effort!"
+
+    private func triggerFounderProtocol(moodResetAfter delay: TimeInterval) {
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.55)) {
+            externalReactionText = nil
+            externalReactionTag = nil
+            currentMood = .celebrating
+            internalIsBubblePresented = true
+            specialReactionText = Self.founderProtocolDialogue
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                currentMood = currentBanter.mood
+            }
+        }
+    }
+
+    private func triggerFounderProtocolHoldAction() {
+        let notification = UINotificationFeedbackGenerator()
+        notification.notificationOccurred(.success)
+        let impact = UIImpactFeedbackGenerator(style: .heavy)
+        impact.impactOccurred()
+        triggerFounderProtocol(moodResetAfter: 5.0)
     }
 
     private func advanceQuip() {
         let impact = UIImpactFeedbackGenerator(style: .light)
         impact.impactOccurred()
-        specialReactionText = nil
         withAnimation(.spring(response: 0.32, dampingFraction: 0.75)) {
-            quipIndex = (quipIndex + 1) % activeBanterList.count
-            currentMood = activeBanterList[quipIndex].mood
+            externalReactionText = nil
+            externalReactionTag = nil
+            specialReactionText = nil
+            quipIndex = banterQueue.advanced(from: quipIndex)
+            currentMood = currentBanter.mood
         }
     }
 
     private func pokeChipAction() {
         pokeCount += 1
+        let now = Date()
+        if now.timeIntervalSince(lastPokeTimestamp) < 1.4 {
+            rapidPokeStreak += 1
+        } else {
+            rapidPokeStreak = 1
+        }
+        lastPokeTimestamp = now
+
         let impact = UIImpactFeedbackGenerator(style: .medium)
         impact.impactOccurred()
 
+        // 5-Tap Rapid Streak: Founder Protocol Easter Egg!
+        if rapidPokeStreak >= 5 {
+            rapidPokeStreak = 0
+            let notification = UINotificationFeedbackGenerator()
+            notification.notificationOccurred(.success)
+            triggerFounderProtocol(moodResetAfter: 4.0)
+            return
+        }
+
         withAnimation(.spring(response: 0.25, dampingFraction: 0.55)) {
+            externalReactionText = nil
+            externalReactionTag = nil
             currentMood = .shocked
-            isBubblePresented = true
+            internalIsBubblePresented = true
             if pokeCount % 3 == 0 {
                 specialReactionText = "HEY! That's my face! Do you go around poking cashiers like that too?!"
             } else if pokeCount % 2 == 0 {
@@ -1389,7 +1898,7 @@ struct ChipCompanionHeaderCard: View {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                currentMood = activeBanterList[quipIndex].mood
+                currentMood = currentBanter.mood
             }
         }
     }
@@ -1402,14 +1911,16 @@ struct ChipCompanionHeaderCard: View {
         }
 
         withAnimation(.spring(response: 0.22, dampingFraction: 0.5)) {
+            externalReactionText = nil
+            externalReactionTag = nil
             currentMood = .knock
-            isBubblePresented = true
+            internalIsBubblePresented = true
             specialReactionText = "*TAP TAP TAP* — Hey! Lionel! Just checking if the Ceramic Shield glass is clean. Now check those multipliers!"
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                currentMood = activeBanterList[quipIndex].mood
+                currentMood = currentBanter.mood
             }
         }
     }

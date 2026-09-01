@@ -17,23 +17,167 @@ struct HomeView: View {
     @State private var searchText = ""
     @FocusState private var isSearchFocused: Bool
     @State private var isFindingNearbyPressed = false
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedRepeatMerchantID: UUID?
+    @State private var greetingEasterEggCount = 0
+    @State private var greetingIndex: Int = Int.random(in: 0..<100)
+    @State private var showOriginToast = false
+    @State private var chipCustomReactionText: String? = nil
+    @State private var chipCustomReactionTag: String? = nil
+    @State private var chipIsBubblePresented: Bool = false
 
-    private var timeGreeting: String {
+    private var userFirstName: String? {
+        if let first = ClerkSession.currentUser?.firstName, !first.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return first
+        }
+        return nil
+    }
+
+    private struct DynamicGreetingItem {
+        let titlePrefix: String
+        let titleSuffix: String
+        let iconName: String
+        let iconColor: Color
+        let subcaption: String
+    }
+
+    private var greetingQuipsForCurrentTime: [DynamicGreetingItem] {
         let hour = Calendar.current.component(.hour, from: Date())
+
         switch hour {
-        case 5..<12: return "Good morning"
-        case 12..<17: return "Good afternoon"
-        case 17..<22: return "Good evening"
-        default: return "Hello"
+        case 5..<12: // Morning
+            return [
+                DynamicGreetingItem(
+                    titlePrefix: "Rise & optimize,",
+                    titleSuffix: "!",
+                    iconName: "sun.and.horizon.fill",
+                    iconColor: .orange,
+                    subcaption: "Don't let Starbucks swipe the wrong card"
+                ),
+                DynamicGreetingItem(
+                    titlePrefix: "Good morning,",
+                    titleSuffix: "!",
+                    iconName: "cup.and.saucer.fill",
+                    iconColor: .orange,
+                    subcaption: "5x coffee mode engaged · Breakfast multipliers ready"
+                ),
+                DynamicGreetingItem(
+                    titlePrefix: "Chief Multiplier,",
+                    titleSuffix: "!",
+                    iconName: "bolt.fill",
+                    iconColor: Color(red: 1.0, green: 0.78, blue: 0.18),
+                    subcaption: "Brewing maximum multipliers before the world wakes up"
+                ),
+                DynamicGreetingItem(
+                    titlePrefix: "Morning,",
+                    titleSuffix: "!",
+                    iconName: "sparkles",
+                    iconColor: .orange,
+                    subcaption: "You and Chip: the points dream team on duty"
+                )
+            ]
+
+        case 12..<17: // Afternoon
+            return [
+                DynamicGreetingItem(
+                    titlePrefix: "Chief Multiplier,",
+                    titleSuffix: "!",
+                    iconName: "bolt.fill",
+                    iconColor: Color(red: 1.0, green: 0.78, blue: 0.18),
+                    subcaption: "Every swipe today is a multiplier waiting to be claimed"
+                ),
+                DynamicGreetingItem(
+                    titlePrefix: "Good afternoon,",
+                    titleSuffix: "!",
+                    iconName: "sun.max.fill",
+                    iconColor: Color(red: 1.0, green: 0.78, blue: 0.18),
+                    subcaption: "Lunch is on—let's harvest that 5x return"
+                ),
+                DynamicGreetingItem(
+                    titlePrefix: "Put down the debit,",
+                    titleSuffix: "!",
+                    iconName: "shield.fill",
+                    iconColor: .green,
+                    subcaption: "Breaking the 4th wall so you never get 1x on dining"
+                ),
+                DynamicGreetingItem(
+                    titlePrefix: "Afternoon,",
+                    titleSuffix: "!",
+                    iconName: "target",
+                    iconColor: .orange,
+                    subcaption: "Point hacking never takes a lunch break"
+                ),
+                DynamicGreetingItem(
+                    titlePrefix: "Hey,",
+                    titleSuffix: "!",
+                    iconName: "sparkles",
+                    iconColor: .orange,
+                    subcaption: "Your wallet's favourite partner in crime is on duty"
+                )
+            ]
+
+        case 17..<22: // Evening
+            return [
+                DynamicGreetingItem(
+                    titlePrefix: "Good evening,",
+                    titleSuffix: "!",
+                    iconName: "sunset.fill",
+                    iconColor: .orange,
+                    subcaption: "Amex Cobalt is primed for dinner · 5x dining ready"
+                ),
+                DynamicGreetingItem(
+                    titlePrefix: "Chief Multiplier,",
+                    titleSuffix: "!",
+                    iconName: "bolt.fill",
+                    iconColor: Color(red: 1.0, green: 0.78, blue: 0.18),
+                    subcaption: "Dinner reservations? Let's harvest those 5x rewards"
+                ),
+                DynamicGreetingItem(
+                    titlePrefix: "Put down the debit,",
+                    titleSuffix: "!",
+                    iconName: "shield.fill",
+                    iconColor: .green,
+                    subcaption: "Ready to outsmart the terminal at checkout"
+                ),
+                DynamicGreetingItem(
+                    titlePrefix: "Evening,",
+                    titleSuffix: "!",
+                    iconName: "sparkles",
+                    iconColor: .orange,
+                    subcaption: "Maximum Effort mode: dinner is served"
+                )
+            ]
+
+        default: // Late Night
+            return [
+                DynamicGreetingItem(
+                    titlePrefix: "Night owl mode,",
+                    titleSuffix: "!",
+                    iconName: "moon.stars.fill",
+                    iconColor: Color(red: 0.45, green: 0.65, blue: 1.0),
+                    subcaption: "Midnight snacks still earn multipliers"
+                ),
+                DynamicGreetingItem(
+                    titlePrefix: "Chief Multiplier,",
+                    titleSuffix: "!",
+                    iconName: "bolt.fill",
+                    iconColor: Color(red: 1.0, green: 0.78, blue: 0.18),
+                    subcaption: "Running 4,000 interchange algorithms while you sleep"
+                ),
+                DynamicGreetingItem(
+                    titlePrefix: "Good evening,",
+                    titleSuffix: "!",
+                    iconName: "moon.fill",
+                    iconColor: Color(red: 0.45, green: 0.65, blue: 1.0),
+                    subcaption: "Late night cravings? We've got the multipliers covered"
+                )
+            ]
         }
     }
 
-    private var personalizedGreeting: String {
-        if let first = ClerkSession.currentUser?.firstName, !first.isEmpty {
-            return "\(timeGreeting), \(first)!"
-        }
-        return "\(timeGreeting)!"
+    private var activeGreetingItem: DynamicGreetingItem {
+        let list = greetingQuipsForCurrentTime
+        return list[greetingIndex % list.count]
     }
 
     private var companionStatusText: String {
@@ -86,9 +230,6 @@ struct HomeView: View {
 
                 // 4. Instant Repeats (Glanceable Checkout Deck)
                 instantRepeatsSection
-
-                // 5. Ambient Arrival Alert Pill
-                ambientDiagnosticsRow
             }
             .padding(.horizontal, 16)
             .padding(.top, 4)
@@ -97,8 +238,16 @@ struct HomeView: View {
         .toolbar(.hidden, for: .navigationBar)
         .background(Color(.systemGroupedBackground))
         .onAppear {
+            greetingIndex = Int.random(in: 0..<max(1, greetingQuipsForCurrentTime.count))
             if selectedRepeatMerchantID == nil {
                 selectedRepeatMerchantID = session.homeMerchants.first?.id
+            }
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            // Only a real trip through the background earns a new greeting. Reshuffling on every
+            // `.active` also fired for a dismissed permission alert or a Control Center pull.
+            if oldPhase == .background, newPhase == .active {
+                greetingIndex = Int.random(in: 0..<max(1, greetingQuipsForCurrentTime.count))
             }
         }
         .onChange(of: session.homeMerchants) { _, newMerchants in
@@ -118,11 +267,94 @@ struct HomeView: View {
 
     // MARK: - 1. Hero Header & Chip Mascot Companion
 
+    /// Memo for `ambientInsights`.
+    ///
+    /// The property below is read on every body evaluation — which includes once per keystroke
+    /// in the search field — and each miss runs merchant prediction plus a full engine
+    /// recommendation. Keying the answer on the inputs that can actually change it keeps that
+    /// work to once per real change while keeping the property's always-fresh semantics.
+    private final class AmbientInsightMemo {
+        var signature: String?
+        var insights: [ChipInsight] = []
+    }
+    @State private var ambientInsightMemo = AmbientInsightMemo()
+
     private var ambientInsights: [ChipInsight] {
         guard let graph = environment.graph,
               let top = session.homeMerchants.first else {
             return []
         }
+
+        let signature = [
+            top.id.uuidString,
+            top.name,
+            top.poiCategoryRaw ?? "",
+            graph.ownerState.defaultCardId,
+            graph.ownerState.ownedCardIds.joined(separator: ","),
+            Date().formatted(.iso8601.year().month().day())
+        ].joined(separator: "|")
+
+        if ambientInsightMemo.signature == signature {
+            return ambientInsightMemo.insights
+        }
+
+        let insights = computeAmbientInsights(graph: graph, top: top)
+        ambientInsightMemo.signature = signature
+        ambientInsightMemo.insights = insights
+        return insights
+    }
+
+    /// Chip's read on whether arrival alerts are actually working.
+    ///
+    /// A broken subsystem is pinned to the front of his queue; the never-configured case takes
+    /// its turn in the ordinary rotation instead, so the mascot mentions the feature without
+    /// nagging about it. When alerts are healthy Chip says nothing at all — this is the whole
+    /// reason the Home diagnostics card could go away without the failure mode going dark.
+    /// Everything Chip has noticed about the app's own health, most pressing first.
+    private var chipAdvisories: [ChipAdvisory] {
+        ChipAdvisor.evaluate(
+            walletIsEmpty: environment.graph?.walletCards.isEmpty ?? true,
+            hasSyncIssue: sync.syncIssue != nil,
+            ambientIsEnabled: environment.ambientEnabled,
+            ambientStatus: environment.ambientRuntimeStatus
+        )
+    }
+
+    private func banter(for advisory: ChipAdvisory) -> ChipBanterItem {
+        ChipBanterItem(
+            text: advisory.text,
+            mood: advisory.mood,
+            tag: advisory.tag,
+            action: ChipBanterAction(
+                label: advisory.actionLabel,
+                systemImage: advisory.isUrgent ? "wrench.and.screwdriver.fill" : "arrow.right.circle.fill",
+                perform: { router.push(advisory.destination) }
+            )
+        )
+    }
+
+    private var pinnedChipBanter: [ChipBanterItem] {
+        chipAdvisories.filter(\.isUrgent).map(banter(for:))
+    }
+
+    private var rotationChipBanter: [ChipBanterItem] {
+        chipAdvisories.filter { !$0.isUrgent }.map(banter(for:))
+    }
+
+    /// The face Chip wears between reactions. Home already computes the time-of-day tiers for the
+    /// greeting; letting the mascot ignore them made him the one part of the screen with no idea
+    /// what time it is.
+    private var chipRestingMood: ChipMood {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<12: return .idle
+        case 12..<17: return .cool
+        case 17..<22: return .idle
+        default: return .sleepy
+        }
+    }
+
+    private func computeAmbientInsights(graph: DependencyGraph, top: StoredMerchant) -> [ChipInsight] {
         let prediction = CardCopilotStore.predict(poiCategoryRaw: top.poiCategoryRaw, merchantName: top.name)
         let category = prediction.category
         let nearby = NearbyMerchant(id: top.identifier ?? top.id.uuidString, name: top.name, poiCategoryRaw: top.poiCategoryRaw, latitude: top.latitude, longitude: top.longitude, distanceMeters: nil)
@@ -155,84 +387,192 @@ struct HomeView: View {
         }.count
     }
 
-    private var heroCompanionSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            // Top App Bar: PickMe Brand Logo on Left + Value Recovered & Cloud Sync Button on Right
-            HStack(alignment: .center, spacing: 8) {
-                Text("PickMe")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color(red: 0.08, green: 0.48, blue: 0.98))
+    private var greetingHeaderView: some View {
+        Button {
+            triggerGreetingEasterEgg()
+        } label: {
+            VStack(alignment: .leading, spacing: 3) {
+                // Tier 1: Single-Line Flowing Headline with 24K EMV Gold Name
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text(activeGreetingItem.titlePrefix)
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
 
-                Spacer()
+                    Text(userFirstName ?? "Co-Pilot")
+                        .font(.system(size: 20, weight: .heavy, design: .rounded))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 1.0, green: 0.86, blue: 0.42),
+                                    Color(red: 0.95, green: 0.64, blue: 0.18)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .shadow(color: Color.orange.opacity(0.35), radius: 3, x: 0, y: 1)
 
-                if session.valueRecoveredCad > 0.005 {
-                    Button {
-                        router.push(.dashboard)
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "sparkles")
-                                .font(.system(size: 10, weight: .bold))
-                            Text(String(format: "+$%.2f earned", session.valueRecoveredCad))
-                                .font(.system(size: 11, weight: .bold, design: .rounded))
-                        }
-                        .foregroundStyle(Color.green)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.green.opacity(0.12), in: Capsule())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("View total value recovered")
+                    Text(activeGreetingItem.titleSuffix)
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
                 }
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
 
-                SyncStatusToolbarButton(
-                    isSyncing: sync.isSyncing || sync.isPreparingAccount,
-                    lastSyncedAt: sync.lastSyncedAt,
-                    syncIssue: sync.syncIssue,
-                    action: { router.show(.sync) }
-                )
+                // Tier 2: Vector Icon + Contextual Subcaption
+                HStack(spacing: 5) {
+                    Image(systemName: activeGreetingItem.iconName)
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(activeGreetingItem.iconColor)
+
+                    Text(activeGreetingItem.subcaption)
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Shuffles the greeting")
+    }
+
+    /// Taps needed on the header before Chip volunteers the origin story.
+    private static let originToastTapCount = 4
+
+    private func triggerGreetingEasterEgg() {
+        greetingEasterEggCount += 1
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.75)) {
+            greetingIndex += 1
+        }
+        let impact = UIImpactFeedbackGenerator(style: .medium)
+        impact.impactOccurred()
+        if greetingEasterEggCount % Self.originToastTapCount == 0 {
+            let notification = UINotificationFeedbackGenerator()
+            notification.notificationOccurred(.success)
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                showOriginToast = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    showOriginToast = false
+                }
+            }
+        }
+    }
+
+    private var heroCompanionSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Top App Bar: Dynamic Time Greeting & Styled Name on Left + Value Recovered & Cloud Sync Button on Right
+            HStack(alignment: .top, spacing: 8) {
+                greetingHeaderView
+
+                Spacer(minLength: 4)
+
+                HStack(alignment: .center, spacing: 6) {
+                    if session.valueRecoveredCad > 0.005 {
+                        Button {
+                            router.push(.dashboard)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 10, weight: .bold))
+                                Text(String(format: "+$%.2f earned", session.valueRecoveredCad))
+                                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                            }
+                            .foregroundStyle(Color.green)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.green.opacity(0.12), in: Capsule())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("View total value recovered")
+                    }
+
+                    SyncStatusToolbarButton(
+                        isSyncing: sync.isSyncing || sync.isPreparingAccount,
+                        lastSyncedAt: sync.lastSyncedAt,
+                        syncIssue: sync.syncIssue,
+                        action: { router.show(.sync) }
+                    )
+                }
+                .padding(.top, 2)
             }
             .padding(.top, 2)
 
-            // Dynamic Greeting & Expiring Credit Banner
-            VStack(alignment: .leading, spacing: 6) {
-                Text(personalizedGreeting)
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
+            // Origin Story Toast (surfaces every originToastTapCount header taps)
+            if showOriginToast {
+                HStack(spacing: 8) {
+                    Image(systemName: "mapleleaf.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.red)
 
-                if expiringCreditsCount > 0 {
-                    Button {
-                        router.push(.walletHealth)
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "clock.badge.exclamationmark")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(.orange)
+                    Text("PickMe Origin: Built with precision by Zubair Muwwakil so Canadians never get 1x points on a 5x grocery run!")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.primary)
 
-                            Text("\(expiringCreditsCount) card credit\(expiringCreditsCount == 1 ? "" : "s") expiring soon")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                .foregroundStyle(.primary)
+                    Spacer(minLength: 0)
 
-                            Spacer()
-
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.orange)
                 }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.orange.opacity(0.14))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .strokeBorder(Color.orange.opacity(0.40), lineWidth: 1)
+                        )
+                )
+                .transition(.scale(scale: 0.95).combined(with: .opacity))
             }
 
-            // Chip the EMV Micro-Bot Mascot Companion Interactive Card with Pulsing Glow
+            // Expiring Credits Banner (if any)
+            if expiringCreditsCount > 0 {
+                Button {
+                    router.push(.walletHealth)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "clock.badge.exclamationmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(.orange)
+
+                        Text("\(expiringCreditsCount) card credit\(expiringCreditsCount == 1 ? "" : "s") expiring soon")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.primary)
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+
+            // Chip the EMV Micro-Bot Mascot Companion Interactive Card with Pulsing Glow & Live Reaction Binding
             ChipCompanionHeaderCard(
                 statusText: companionStatusText,
                 subtitle: session.locationDenied
                     ? "Tap settings to enable GPS checkout"
                     : "Tap Chip for quick multiplier tips & merchant rules",
-                insights: ambientInsights
+                insights: ambientInsights,
+                pinnedBanter: pinnedChipBanter,
+                rotationBanter: rotationChipBanter,
+                activeSearchText: searchText,
+                gaze: isSearchFocused ? .down : .wandering,
+                restingMood: chipRestingMood,
+                externalReactionText: $chipCustomReactionText,
+                externalIsBubblePresented: $chipIsBubblePresented,
+                externalReactionTag: $chipCustomReactionTag
             )
         }
         .padding(.top, 2)
@@ -253,7 +593,7 @@ struct HomeView: View {
                     .font(.system(size: 15, weight: .regular))
                     .focused($isSearchFocused)
                     .textInputAutocapitalization(.words)
-                    .disableAutocorrection(true)
+                    .autocorrectionDisabled()
                     .onSubmit { submitSearch() }
 
                 if !searchText.isEmpty {
@@ -301,14 +641,14 @@ struct HomeView: View {
                                 .offset(x: 2, y: -2)
                         }
                     }
-                        .shadow(
-                            color: session.locationDenied
-                                ? Color.clear
-                                : Color.blue.opacity(0.25),
-                            radius: 4,
-                            x: 0,
-                            y: 2
-                        )
+                    .shadow(
+                        color: session.locationDenied
+                            ? Color.clear
+                            : Color.blue.opacity(0.25),
+                        radius: 4,
+                        x: 0,
+                        y: 2
+                    )
                 }
                 .buttonStyle(PlainPressableButtonStyle())
                 .disabled(session.locationDenied)
@@ -331,16 +671,19 @@ struct HomeView: View {
                     .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
             )
 
+            // Radar Status Pill / Tip
             HStack(spacing: 5) {
                 Image(systemName: radarStatus.icon)
+                    .font(.caption2.weight(.semibold))
                 Text(radarStatus.text)
+                    .font(.caption2.weight(.medium))
             }
-            .font(.system(size: 11, weight: .semibold, design: .rounded))
             .foregroundStyle(radarStatus.color)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 10)
+            .padding(.leading, 6)
 
-            if searchText.isEmpty, !session.preparedNearbyMerchants.isEmpty, let graph = environment.graph {
+            // Dynamic Ambient Location Banner (if nearby merchants prepared)
+            if searchText.isEmpty, let graph = environment.graph, !session.preparedNearbyMerchants.isEmpty {
                 NearbyRadarDropdownView(
                     merchants: session.preparedNearbyMerchants,
                     deps: graph,
@@ -348,11 +691,73 @@ struct HomeView: View {
                 )
             }
 
-            // Instant Offline Pre-Index Autocomplete Dropdown
+            // Instant Offline Pre-Index Autocomplete Dropdown & Easter Egg Matches
             if !searchText.isEmpty {
+                let easterEgg = ChipEasterEgg.match(searchText)
                 let preIndexMatches = CanadianMerchantPreIndex.search(searchText, limit: 3)
-                if !preIndexMatches.isEmpty {
+                if easterEgg != nil || !preIndexMatches.isEmpty {
                     VStack(spacing: 4) {
+                        if let egg = easterEgg {
+                            Button {
+                                let impact = UIImpactFeedbackGenerator(style: .medium)
+                                impact.impactOccurred()
+                                let notification = UINotificationFeedbackGenerator()
+                                notification.notificationOccurred(.success)
+                                isSearchFocused = false
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                                    chipCustomReactionText = egg.dialogue
+                                    chipCustomReactionTag = egg.tag
+                                    chipIsBubblePresented = true
+                                    searchText = ""
+                                }
+                            } label: {
+                                HStack(spacing: 9) {
+                                    Image(systemName: egg.iconName)
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundStyle(egg.tint)
+                                        .frame(width: 26, height: 26)
+                                        .background(egg.tint.opacity(0.14), in: Circle())
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        HStack(spacing: 6) {
+                                            Text(egg.title)
+                                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                                .foregroundStyle(.primary)
+
+                                            Text(egg.tag)
+                                                .font(.system(size: 9, weight: .heavy, design: .monospaced))
+                                                .foregroundStyle(egg.tint)
+                                                .padding(.horizontal, 5)
+                                                .padding(.vertical, 1.5)
+                                                .background(egg.tint.opacity(0.14), in: Capsule())
+                                        }
+
+                                        Text(egg.subtitle)
+                                            .font(.system(size: 11, weight: .medium, design: .rounded))
+                                            .foregroundStyle(.secondary)
+                                            .multilineTextAlignment(.leading)
+                                    }
+
+                                    Spacer()
+
+                                    Image(systemName: "sparkles")
+                                        .font(.caption2.weight(.bold))
+                                        .foregroundStyle(egg.tint)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(Color(.secondarySystemGroupedBackground))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                .strokeBorder(egg.tint.opacity(0.40), lineWidth: 1.2)
+                                        )
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+
                         ForEach(preIndexMatches) { match in
                             Button {
                                 let impact = UIImpactFeedbackGenerator(style: .light)
@@ -414,6 +819,7 @@ struct HomeView: View {
             }
         }
     }
+
 
 
 
@@ -577,80 +983,6 @@ struct HomeView: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Preview recommendation for \(merchant.name)")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
-
-    // MARK: - 5. Ambient Arrival Alert Section
-
-    private var ambientDiagnosticsRow: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Smart Automation")
-                .font(.system(size: 13, weight: .bold, design: .rounded))
-                .foregroundStyle(.secondary)
-                .textCase(.uppercase)
-                .tracking(0.8)
-                .padding(.horizontal, 2)
-
-            Button { router.push(.ambientSetup) } label: {
-                HStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(environment.ambientReady ? Color.green.opacity(0.15)
-                                  : environment.ambientEnabled ? Color.orange.opacity(0.15)
-                                  : Color(.tertiarySystemFill))
-                            .frame(width: 36, height: 36)
-                        Image(systemName: environment.ambientReady ? "location.circle.fill"
-                              : environment.ambientEnabled ? "exclamationmark.triangle.fill"
-                              : "location.circle")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(environment.ambientReady ? Color.green
-                                             : environment.ambientEnabled ? Color.orange
-                                             : Color.secondary)
-                    }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Arrival Detection")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                            .foregroundStyle(.primary)
-
-                        Text(ambientDeliverySummary)
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Spacer()
-
-                    if !environment.ambientReady {
-                        Text(environment.ambientEnabled ? "Fix" : "Set up")
-                            .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundStyle(.blue)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.blue.opacity(0.12), in: Capsule())
-                    }
-
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.tertiary)
-                }
-                .padding(14)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(Color(.secondarySystemGroupedBackground))
-                        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
-                )
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private var ambientDeliverySummary: String {
-        let status = environment.ambientRuntimeStatus
-        if !environment.ambientEnabled { return "Set up automatic on-device arrival alerts" }
-        if !status.notificationsAllowed { return "Notifications are off · Tap to fix" }
-        if status.backgroundRefresh != .available { return "Background App Refresh is unavailable" }
-        if status.monitoredRegionCount == 0 { return "Preparing monitored places" }
-        return "\(environment.ambientDiagnostics.fired) arrival alerts fired in last 7 days"
     }
 
     private func submitSearch() {
