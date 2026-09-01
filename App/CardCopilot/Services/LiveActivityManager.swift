@@ -1,4 +1,5 @@
 import ActivityKit
+import CardCopilotEngine
 import Foundation
 import SwiftUI
 
@@ -8,6 +9,13 @@ public final class LiveActivityManager: ObservableObject {
     public static let shared = LiveActivityManager()
 
     @Published public private(set) var currentActivityId: String?
+
+    /// The region whose visit owns the activity on screen, so a dismissal can be attributed.
+    private var visitKey: String?
+
+    /// Called on the main actor with the visit key when the owner swipes the card away.
+    /// `AmbientLocationService` wires this to `AmbientVisitStore`.
+    public var onDismissal: (@MainActor (String) -> Void)?
 
     private init() {}
 
@@ -20,7 +28,9 @@ public final class LiveActivityManager: ObservableObject {
                                            advantageDescription: String,
                                            categoryDisplayName: String,
                                            categoryIcon: String,
-                                           isFork: Bool = false) {
+                                           isFork: Bool = false,
+                                           tier: AmbientDeliveryTier = .interrupt,
+                                           visitKey: String? = nil) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
 
         // Ask the system, not this object: after a background relaunch `currentActivityId` is nil
@@ -41,6 +51,7 @@ public final class LiveActivityManager: ObservableObject {
             categoryDisplayName: categoryDisplayName,
             categoryIcon: categoryIcon,
             isFork: isFork,
+            tier: tier,
             timestamp: Date()
         )
 
@@ -51,8 +62,28 @@ public final class LiveActivityManager: ObservableObject {
                 pushType: nil
             )
             currentActivityId = activity.id
+            self.visitKey = visitKey
+            observeDismissal(of: activity, visitKey: visitKey)
         } catch {
             // Live activities request may fail if suppressed or rate-limited by OS
+        }
+    }
+
+    /// A swipe reports `.dismissed`; our own `endActivity` reports `.ended`. Only the first is
+    /// the owner saying "not now", so only the first is recorded.
+    ///
+    /// This can only observe a dismissal while the process is alive. If iOS terminated the app
+    /// first, the activity simply disappears from `Activity.activities` exactly as an ended one
+    /// does, and the dismissal is unobservable — callers must treat "no flag" as "unknown",
+    /// never as "not dismissed".
+    private func observeDismissal(of activity: Activity<CardCopilotActivityAttributes>,
+                                  visitKey: String?) {
+        guard let visitKey else { return }
+        Task { [weak self] in
+            for await state in activity.activityStateUpdates where state == .dismissed {
+                await MainActor.run { self?.onDismissal?(visitKey) }
+                return
+            }
         }
     }
 

@@ -17,6 +17,34 @@ struct AmbientVisit: Codable, Equatable {
     var purchaseId: UUID?
     /// Enough of the merchant to write the prompt without re-resolving location.
     var merchantName: String
+    /// Whether the owner swiped this visit's Live Activity away.
+    ///
+    /// A swipe is the only "not now" the owner has that costs them nothing. Honouring it means
+    /// not re-showing the card when a plaza geofence flaps, and — in the payment loop — not
+    /// pushing a confirmation they already dismissed.
+    var liveActivityDismissed: Bool = false
+
+    init(enteredAt: Date, didEngage: Bool, purchaseId: UUID?, merchantName: String,
+         liveActivityDismissed: Bool = false) {
+        self.enteredAt = enteredAt
+        self.didEngage = didEngage
+        self.purchaseId = purchaseId
+        self.merchantName = merchantName
+        self.liveActivityDismissed = liveActivityDismissed
+    }
+
+    /// Written by hand rather than synthesised: synthesised `Codable` throws on a missing key
+    /// even where the property has a default, so a visit stored before this field existed would
+    /// fail to decode and `all()`'s `try?` would silently discard every in-flight visit.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        enteredAt = try container.decode(Date.self, forKey: .enteredAt)
+        didEngage = try container.decode(Bool.self, forKey: .didEngage)
+        purchaseId = try container.decodeIfPresent(UUID.self, forKey: .purchaseId)
+        merchantName = try container.decode(String.self, forKey: .merchantName)
+        liveActivityDismissed = try container.decodeIfPresent(
+            Bool.self, forKey: .liveActivityDismissed) ?? false
+    }
 }
 
 /// Per-area visit state. Entries are pruned on write rather than on a timer: a region exit that
