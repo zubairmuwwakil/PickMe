@@ -1,4 +1,5 @@
 import ActivityKit
+import CardCopilotEngine
 import Foundation
 
 /// Activity attributes describing a checkout recommendation Live Activity on the Lock Screen
@@ -12,6 +13,10 @@ public struct CardCopilotActivityAttributes: ActivityAttributes {
         public var categoryDisplayName: String
         public var categoryIcon: String
         public var isFork: Bool
+        /// Which delivery tier produced this activity. The view needs it because a `presence`
+        /// activity deliberately carries no card: it exists to say PickMe is here and to invite
+        /// the owner to identify a merchant we could not resolve.
+        public var tier: AmbientDeliveryTier
         public var timestamp: Date
 
         public init(recommendedCardName: String,
@@ -21,6 +26,7 @@ public struct CardCopilotActivityAttributes: ActivityAttributes {
                     categoryDisplayName: String,
                     categoryIcon: String,
                     isFork: Bool = false,
+                    tier: AmbientDeliveryTier = .interrupt,
                     timestamp: Date = Date()) {
             self.recommendedCardName = recommendedCardName
             self.recommendedCardId = recommendedCardId
@@ -29,6 +35,7 @@ public struct CardCopilotActivityAttributes: ActivityAttributes {
             self.categoryDisplayName = categoryDisplayName
             self.categoryIcon = categoryIcon
             self.isFork = isFork
+            self.tier = tier
             self.timestamp = timestamp
         }
     }

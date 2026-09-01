@@ -1,6 +1,7 @@
 import SwiftUI
 import WidgetKit
 import ActivityKit
+import CardCopilotEngine
 
 /// SwiftUI Live Activity and Dynamic Island view presentations for PickMe checkout advice.
 public struct CardCopilotLiveActivityView: View {
@@ -38,13 +39,23 @@ public struct CardCopilotLiveActivityView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                HStack(spacing: 6) {
-                    Text("Pay with")
+                // A `presence` state reached the Lock Screen precisely because the merchant could
+                // not be identified. It carries no card, and must not invent one.
+                if context.state.tier == .presence {
+                    Text(String(localized: "ambient.activity.presence.body",
+                                defaultValue: "Tap to tell PickMe which shop this is."))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.secondary)
-                    Text(context.state.recommendedCardName)
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .foregroundStyle(.blue)
+                        .lineLimit(2)
+                } else {
+                    HStack(spacing: 6) {
+                        Text("Pay with")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        Text(context.state.recommendedCardName)
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundStyle(.blue)
+                    }
                 }
 
                 if !context.state.multiplierHeadline.isEmpty {
