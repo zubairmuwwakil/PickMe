@@ -135,6 +135,9 @@ public struct CheckoutService {
     let explainer: RecommendationExplainer
     public let log: PredictionLog
     private let context: ModelContext
+    /// Counts which rung of the resolution ladder answered. Injected so a test can observe it
+    /// without writing to the owner's real App Group counters.
+    private let metrics: CategoryResolutionMetricsStore
     /// The Membership Rewards valuation in force when a prediction is logged, so an audit can
     /// tell which assumption produced it. Optional since valuations became a keyed dictionary:
     /// nil records "the owner declared none", which is the truth, rather than a zero that would
@@ -154,7 +157,9 @@ public struct CheckoutService {
     /// cashback winner would record a valuation that never applied to it.
     private let programCentsPerPoint: [String: Double]
 
-    public init(catalogue: Catalogue, ownerState: OwnerState, context: ModelContext) {
+    public init(catalogue: Catalogue, ownerState: OwnerState, context: ModelContext,
+                metrics: CategoryResolutionMetricsStore = CategoryResolutionMetricsStore()) {
+        self.metrics = metrics
         self.engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
         self.explainer = RecommendationExplainer(catalogue: catalogue)
         self.log = PredictionLog(context: context)
@@ -180,6 +185,8 @@ public struct CheckoutService {
                           purchaseSource: PurchaseActivitySource = .pickMeCheckout) throws -> CheckoutResult {
         let prediction = try confirmedPrediction(forMerchantId: merchant.id)
             ?? resolveCategory(for: merchant)
+        metrics.record(.resolved(rung: prediction.confidenceSource,
+                                 forked: prediction.candidates.count > 1))
         let brand = canonicalEngineBrand(merchant.name)
         let effectiveAmount = amountCad
             ?? categoryAmountEstimates[prediction.category]
@@ -375,7 +382,7 @@ public struct CheckoutService {
         // Use the original open-prediction population here. A capture that just completed a
         // checkout must still be classified as claimed during this ingest; event-id deduplication
         // provides the second guard against creating a standalone duplicate.
-        purchases += try AutoCaptureLog(context: context)
+        purchases += try AutoCaptureLog(context: context, metrics: metrics)
             .ingest(feedback: feedback, openPredictions: predictions)
         for purchase in purchases {
             try assessPurchase(purchase, evaluatedAt: purchase.createdAt)
@@ -403,6 +410,8 @@ public struct CheckoutService {
         // guess, so the row stays honest about how it was classified.
         guard prediction.confidenceSource != .fallback,
               prediction.category != "other" else { return }
+
+        metrics.record(.walletEnrichmentMatched)
 
         let merchant = resolution.merchant
         purchase.merchantIdentifier = merchant.id

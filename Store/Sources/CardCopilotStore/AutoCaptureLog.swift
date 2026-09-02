@@ -17,7 +17,14 @@ import SwiftData
 public struct AutoCaptureLog {
     private let context: ModelContext
 
-    public init(context: ModelContext) {
+    /// Counts which rung of the resolution ladder answered a Wallet capture. This is the path
+    /// where "my Apple Pay purchase has no category" actually happens, so it is the counter worth
+    /// reading before deciding the pack needs more rows.
+    private let metrics: CategoryResolutionMetricsStore
+
+    public init(context: ModelContext,
+                metrics: CategoryResolutionMetricsStore = CategoryResolutionMetricsStore()) {
+        self.metrics = metrics
         self.context = context
     }
 
@@ -106,6 +113,14 @@ public struct AutoCaptureLog {
             } ?? predict(poiCategoryRaw: nil, merchantName: capture.merchant)
         let category = categoryPrediction.confidenceSource == .fallback
             ? nil : categoryPrediction.category
+        metrics.record(.resolved(rung: categoryPrediction.confidenceSource,
+                                 forked: categoryPrediction.candidates.count > 1))
+        if category == nil && !purchaseHasUsableLocation(capture) {
+            // Distinguishes "we looked and found nothing" from "we were never able to look".
+            // WalletFeedback.latitude/longitude are optional and older servers omit them, so a
+            // capture with no fix can never reach location enrichment at all.
+            metrics.record(.walletEnrichmentSkippedWithoutLocation)
+        }
         let purchase = StoredPurchase(createdAt: capture.capturedAt,
                                       merchantLabel: capture.merchant,
                                       walletEventId: capture.eventId,
@@ -167,4 +182,11 @@ public struct AutoCaptureLog {
               prediction.candidates.count == 1 else { return nil }
         return prediction
     }
+}
+
+/// Whether a capture carries a fix precise enough for location enrichment to be attempted later.
+/// Mirrors `StoredPurchase.hasPreciseLocation`, which cannot be asked before the row exists.
+private func purchaseHasUsableLocation(_ capture: CaptureMatcher.UnclaimedCapture) -> Bool {
+    guard let latitude = capture.latitude, let longitude = capture.longitude else { return false }
+    return latitude != 0 || longitude != 0
 }
