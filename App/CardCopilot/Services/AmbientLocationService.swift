@@ -302,6 +302,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private let patronageStore = MerchantPatronageStore()
     private let alertPreferenceStore = ArrivalAlertPreferenceStore()
     private let alertPolicyStore = AmbientAlertPolicyStore()
+    private let fieldLogStore = ArrivalFieldLogStore()
 
     /// Ten metres rather than `kCLLocationAccuracyBest`: storefronts in a plaza are tens of
     /// metres apart, so ten metres is the accuracy that actually decides anything, and it settles
@@ -389,6 +390,9 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         self.ownerState = ownerState
         LiveActivityManager.shared.onDismissal = { [weak self] regionId in
             self?.visitStore.markLiveActivityDismissed(regionId: regionId)
+            // A swipe is an answer too — the quietest kind, and the one an alert that fired but
+            // was not wanted produces. Pooling it with "no reaction" would lose it entirely.
+            self?.recordEngagement(.dismissedLiveActivity, userInfo: ["regionId": regionId])
         }
         startIfAuthorized()
         let pending = pendingArrivals
@@ -462,6 +466,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         patronageStore.forgetAll()
         alertPreferenceStore.forgetAll()
         alertPolicyStore.forgetAll()
+        fieldLogStore.forgetAll()
     }
 
     /// Called only from the dedicated explainer screen, before either system prompt appears.
@@ -758,6 +763,34 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         let mcc: Int?
         /// Mute identity. A string because discovered POIs have no local UUID.
         let muteKey: String
+
+        // Everything below is for the field log alone. Carried on the resolution rather than
+        // recomputed later because it describes the decision *as it was made* — which candidates
+        // were on the table, in what order, and which rung answered. Recomputing it after the
+        // fact would be describing a different decision.
+        let candidates: [ArrivalCandidateRecord]
+        let chosenIndex: Int?
+        let rung: ArrivalResolutionRung
+        let areaCentroidLatitude: Double?
+        let areaCentroidLongitude: Double?
+        let areaRadiusMeters: Double?
+    }
+
+    /// One candidate as the log records it. Distance is measured from the owner when there is a
+    /// fix, and absent otherwise — an absent distance is a fact about the arrival, not a zero.
+    private static func candidateRecord(name: String, poiCategoryRaw: String?,
+                                        latitude: Double, longitude: Double,
+                                        resolution: DiscoveredMerchantResolution,
+                                        fix: ArrivalFix?) -> ArrivalCandidateRecord {
+        ArrivalCandidateRecord(
+            name: name, poiCategoryRaw: poiCategoryRaw, latitude: latitude, longitude: longitude,
+            distanceFromFixMeters: fix.map {
+                greatCircleDistanceMeters(fromLatitude: $0.latitude, fromLongitude: $0.longitude,
+                                          toLatitude: latitude, toLongitude: longitude)
+            },
+            recognisedByPack: MerchantRecognizer.recognise(name) != nil,
+            resolvedCategory: resolution.prediction.category,
+            confidence: resolution.confidence)
     }
 
     /// `source` is provenance, not a quality grade: a synthesised arrival is exactly as real a
@@ -805,7 +838,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                              identifier: arrival.merchant.id,
                                              latitude: arrival.merchant.latitude,
                                              longitude: arrival.merchant.longitude)
-        let decision = AmbientGate.evaluate(AmbientGateInput(
+        let gateInput = AmbientGateInput(
             merchantConfidence: explicit == true ? .frequented : arrival.confidence,
             recommendedCardId: recommendation.winner.cardId,
             defaultCardId: ownerState.defaultCardId,
@@ -815,7 +848,8 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             unverifiedAdvantageMultiplier: policy.unverifiedAdvantageMultiplier,
             frequentedAdvantageMultiplier: policy.frequentedAdvantageMultiplier,
             categoryAdvantageMultiplier: policy.categoryAdvantageMultiplier
-        ))
+        )
+        let decision = AmbientGate.evaluate(gateInput)
         // The gate no longer decides whether PickMe is visible — only how loud it is. Silence is
         // now reserved for the one reason that is the owner's own instruction.
         switch decision.tier {
@@ -848,6 +882,96 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                 runtimeStore.recordIssue("Arrival advice was approved but could not be delivered: \(error.localizedDescription)")
             }
         }
+
+        recordFieldLog(arrival: arrival, regionId: regionId, source: source, fix: fix,
+                       policy: policy, estimatedAmountCad: purchase.amountCad,
+                       gateInput: gateInput, decision: decision)
+    }
+
+    /// One record per arrival, dev-only.
+    ///
+    /// Written after the delivery switch, so the tier recorded is the one that was acted on. It
+    /// records coordinates and merchant names, which the shipping counters deliberately do not —
+    /// which is exactly why it is compiled out of anything an owner could install.
+    private func recordFieldLog(arrival: ResolvedArrival, regionId: String,
+                                source: AmbientArrivalSource, fix: ArrivalFix?,
+                                policy: AmbientAlertPolicy, estimatedAmountCad: Double,
+                                gateInput: AmbientGateInput, decision: AmbientGateDecision) {
+        #if FIELD_DIAGNOSTICS
+        guard let catalogue, let ownerState else { return }
+        // Each candidate carries the card the engine would have chosen for it. Scored here, at
+        // capture, because card-equivalence accuracy — the number that decides the rework — has
+        // to be a pure comparison in the export rather than a re-scoring job against whichever
+        // catalogue happened to be current that week.
+        let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
+        let today = Date().formatted(.iso8601.year().month().day())
+        let candidates = arrival.candidates.map { candidate -> ArrivalCandidateRecord in
+            var scored = candidate
+            let merchant = NearbyMerchant(id: candidate.name, name: candidate.name,
+                                          poiCategoryRaw: candidate.poiCategoryRaw,
+                                          latitude: candidate.latitude,
+                                          longitude: candidate.longitude, distanceMeters: nil)
+            let context = ambientPurchaseContext(merchant: merchant,
+                                                 category: candidate.resolvedCategory,
+                                                 estimate: policy.amountEstimate)
+            if case .advised(let recommendation) = engine.recommend(context, asOf: today) {
+                scored.recommendedCardId = recommendation.winner.cardId
+                scored.advantageOverDefaultCad = recommendation.advantageOverDefaultCad
+            }
+            return scored
+        }
+
+        fieldLogStore.record(ArrivalFieldRecord(
+            recordedAt: .now, regionId: regionId, source: source,
+            areaCentroidLatitude: arrival.areaCentroidLatitude,
+            areaCentroidLongitude: arrival.areaCentroidLongitude,
+            areaRadiusMeters: arrival.areaRadiusMeters,
+            fix: fix,
+            // An explicit marker, not an inference from a null: "the window closed" and "there
+            // was no fix for some other reason" are different facts about the arrival.
+            fixTimedOut: fix == nil,
+            candidates: candidates, chosenCandidateIndex: arrival.chosenIndex,
+            rung: arrival.rung,
+            resolvedMerchantName: arrival.merchant.name,
+            resolvedCategory: arrival.prediction.category,
+            estimatedAmountCad: estimatedAmountCad,
+            gateInput: gateInput, deliveryTier: decision.tier,
+            suppressionReasons: Array(decision.suppressionReasons),
+            policy: policy,
+            discriminability: discriminability(candidates: candidates.map(\.site), fix: fix)))
+        #endif
+    }
+
+    /// The log, with Wallet captures joined and the metrics derived.
+    ///
+    /// Receipts are read here rather than kept alongside the records, because a charge posts
+    /// minutes to hours after the arrival and the join is a pure function worth re-running.
+    func fieldLogExport() -> Data? {
+        fieldLogStore.exportJSON(receipts: walletReceipts())
+    }
+
+    var fieldLogRecordCount: Int { fieldLogStore.all().count }
+
+    private func walletReceipts() -> [ArrivalReceipt] {
+        guard let modelContainer else { return [] }
+        let context = ModelContext(modelContainer)
+        let purchases = (try? context.fetch(FetchDescriptor<StoredPurchase>())) ?? []
+        return purchases.compactMap { purchase in
+            // Wallet-sourced only. A purchase the owner typed in is not independent evidence of
+            // which store they were in — it came from the same arrival this is trying to check.
+            guard purchase.walletEventId != nil, let amount = purchase.amountCad,
+                  let descriptor = purchase.merchantLabel ?? purchase.prediction?.merchantName
+            else { return nil }
+            return ArrivalReceipt(merchantDescriptor: descriptor, amountCad: amount,
+                                  capturedAt: purchase.createdAt)
+        }
+    }
+
+    private func recordEngagement(_ action: ArrivalEngagement, userInfo: [AnyHashable: Any]) {
+        #if FIELD_DIAGNOSTICS
+        guard let regionId = userInfo["regionId"] as? String else { return }
+        fieldLogStore.recordEngagement(action, regionId: regionId)
+        #endif
     }
 
     /// Resolution ladder, cheapest and most certain first. Nothing here writes to the log — a
@@ -858,7 +982,8 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         case .merchant(let id):
             guard let merchant = try? context.fetch(FetchDescriptor<StoredMerchant>(
                 predicate: #Predicate { $0.id == id })).first else { return nil }
-            return resolved(storedMerchant: merchant, frequentedKeys: effectiveFrequentedKeys())
+            return resolved(storedMerchant: merchant, frequentedKeys: effectiveFrequentedKeys(),
+                            fix: fix)
 
         case .area(let id):
             guard let area = try? context.fetch(FetchDescriptor<ShoppingArea>(
@@ -884,7 +1009,8 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             // several members, and this is a background wake.
             let frequentedKeys = effectiveFrequentedKeys()
             if let nearestConfirmed {
-                return resolved(storedMerchant: nearestConfirmed, frequentedKeys: frequentedKeys)
+                return resolved(storedMerchant: nearestConfirmed, frequentedKeys: frequentedKeys,
+                                fix: fix, rung: .confirmedMerchantNearby, area: area)
             }
 
             // Rung 2: a cached POI whose name resolves to a merchant the app can name.
@@ -908,8 +1034,12 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             }, from: fix).map { resolved[$0] }
             // A plaza holding one recognisable store and four unnamed pins is answered by the
             // store; a plaza of nothing but pins still answers, at `.unknown`, and is suppressed.
-            guard let (member, resolution) = ranked.first(where: { $0.1.confidence != .unknown })
-                    ?? ranked.first else { return nil }
+            // The index, not just the element: the log records the whole ranked set and which
+            // position won, and re-finding the winner by name afterwards would silently pick the
+            // first of two identically named units in one plaza.
+            guard let chosenIndex = ranked.firstIndex(where: { $0.1.confidence != .unknown })
+                    ?? (ranked.isEmpty ? nil : 0) else { return nil }
+            let (member, resolution) = ranked[chosenIndex]
             let nearby = NearbyMerchant(id: member.identifier ?? member.name, name: member.name,
                                         poiCategoryRaw: member.poiCategoryRaw,
                                         latitude: member.latitude, longitude: member.longitude,
@@ -919,12 +1049,25 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                 prediction: resolution.prediction,
                 confidence: resolution.confidence,
                 mcc: resolution.mcc,
-                muteKey: nearby.id)
+                muteKey: nearby.id,
+                candidates: ranked.map { member, resolution in
+                    Self.candidateRecord(name: member.name, poiCategoryRaw: member.poiCategoryRaw,
+                                         latitude: member.latitude, longitude: member.longitude,
+                                         resolution: resolution, fix: fix)
+                },
+                chosenIndex: chosenIndex,
+                rung: .areaMember,
+                areaCentroidLatitude: area.centroidLatitude,
+                areaCentroidLongitude: area.centroidLongitude,
+                areaRadiusMeters: area.radiusMeters)
         }
     }
 
     private func resolved(storedMerchant merchant: StoredMerchant,
-                          frequentedKeys: Set<String>) -> ResolvedArrival {
+                          frequentedKeys: Set<String>,
+                          fix: ArrivalFix? = nil,
+                          rung: ArrivalResolutionRung = .storedMerchantRegion,
+                          area: ShoppingArea? = nil) -> ResolvedArrival {
         let resolution = resolveStoredMerchant(name: merchant.name,
                                                poiCategoryRaw: merchant.poiCategoryRaw,
                                                confirmedCategory: merchant.confirmedCategory,
@@ -934,10 +1077,33 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                     name: merchant.name, poiCategoryRaw: merchant.poiCategoryRaw,
                                     latitude: merchant.latitude, longitude: merchant.longitude,
                                     distanceMeters: nil)
+        // The candidate set for a stored-merchant answer is the area's members plus the
+        // stored merchant itself, which is deliberately not one of them: a confirmed terminal
+        // is a different kind of row from a cached POI. Appending it keeps `chosenCandidate`
+        // meaningful on every rung, which is what card equivalence reads.
+        var candidates = (area?.members ?? []).map { member in
+            Self.candidateRecord(
+                name: member.name, poiCategoryRaw: member.poiCategoryRaw,
+                latitude: member.latitude, longitude: member.longitude,
+                resolution: resolveDiscoveredMerchant(name: member.name,
+                                                      poiCategoryRaw: member.poiCategoryRaw,
+                                                      frequentedKeys: frequentedKeys),
+                fix: fix)
+        }
+        candidates.append(Self.candidateRecord(
+            name: merchant.name, poiCategoryRaw: merchant.poiCategoryRaw,
+            latitude: merchant.latitude, longitude: merchant.longitude,
+            resolution: resolution, fix: fix))
         return ResolvedArrival(merchant: nearby, prediction: resolution.prediction,
                                confidence: resolution.confidence,
                                mcc: resolution.mcc,
-                               muteKey: nearby.id)
+                               muteKey: nearby.id,
+                               candidates: candidates,
+                               chosenIndex: candidates.count - 1,
+                               rung: rung,
+                               areaCentroidLatitude: area?.centroidLatitude,
+                               areaCentroidLongitude: area?.centroidLongitude,
+                               areaRadiusMeters: area?.radiusMeters)
     }
 
     /// Chain choices lift every recognised branch. Exact choices are checked against the POI id
@@ -1157,14 +1323,17 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         LiveActivityManager.shared.endActivity()
         switch action {
         case Self.muteActionIdentifier:
-            if let key = userInfo["muteKey"] as? String { muteStore.mute(key) }
+            recordEngagement(.mutedMerchant, userInfo: userInfo)
+                        if let key = userInfo["muteKey"] as? String { muteStore.mute(key) }
 
         case Self.usedRecommendedActionIdentifier:
+            recordEngagement(.usedRecommendedCard, userInfo: userInfo)
             openPurchase(userInfo: userInfo, useRecommendedCard: true)
 
         case Self.usedOtherActionIdentifier:
             // The card is genuinely unknown until the owner says so, so the purchase opens
             // without one and surfaces in the completion queue rather than guessing.
+            recordEngagement(.usedOtherCard, userInfo: userInfo)
             openPurchase(userInfo: userInfo, useRecommendedCard: false)
 
         case Self.enterAmountActionIdentifier:

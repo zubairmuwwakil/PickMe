@@ -58,6 +58,7 @@ final class CopilotEnvironment {
     private(set) var ambientEnabled = false
     /// The alert dials in force. `.shipped` outside a field-diagnostics build, always.
     private(set) var ambientAlertPolicy = AmbientAlertPolicy.shipped
+    private(set) var ambientFieldLogRecordCount = 0
     private(set) var ambientRuntimeStatus = AmbientRuntimeStatus()
     var ambientReady: Bool { ambientRuntimeStatus.isReady }
     private(set) var walletIsFirstRun = false
@@ -221,6 +222,7 @@ final class CopilotEnvironment {
         ambientDiagnostics = ambient.diagnostics
         ambientCoverage = ambient.coverage
         ambientAlertPolicy = ambient.activeAlertPolicy
+        ambientFieldLogRecordCount = ambient.fieldLogRecordCount
         ambientEnabled = ambient.isEnabled
         Task { await refreshAmbientRuntimeStatus() }
     }
@@ -230,6 +232,24 @@ final class CopilotEnvironment {
     func saveAmbientAlertPolicy(_ policy: AmbientAlertPolicy) {
         ambient.saveAlertPolicy(policy)
         ambientAlertPolicy = ambient.activeAlertPolicy
+    }
+
+    /// Writes the field-log export to a temporary file and hands back its URL.
+    ///
+    /// A file rather than a string: the export is the whole week, and a share sheet handing
+    /// somebody a hundred-kilobyte pasteboard item is not a usable way to move it off a phone.
+    /// Overwrites the previous export rather than accumulating — there is one current log, and
+    /// leaving a trail of dated copies in `tmp` would be a second thing to explain.
+    func exportAmbientFieldLog() -> URL? {
+        guard let data = ambient.fieldLogExport() else { return nil }
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pickme-arrival-field-log.json")
+        do {
+            try data.write(to: url, options: .atomic)
+            return url
+        } catch {
+            return nil
+        }
     }
 
     func refreshAmbientRuntimeStatus() async {

@@ -395,6 +395,8 @@ struct CheckoutFlowView: View {
                 ownerThreshold: environment.graph?.ownerState.switchThreshold,
                 alertPolicy: environment.ambientAlertPolicy,
                 onAlertPolicyChange: { environment.saveAmbientAlertPolicy($0) },
+                fieldLogRecordCount: environment.ambientFieldLogRecordCount,
+                onExportFieldLog: { environment.exportAmbientFieldLog() },
                 onEnable: {
                     Task {
                         await environment.enableArrivalAlerts()

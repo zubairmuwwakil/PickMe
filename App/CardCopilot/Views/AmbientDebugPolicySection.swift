@@ -19,6 +19,13 @@ import CardCopilotStore
 struct AmbientDebugPolicySection: View {
     let ownerThreshold: SwitchThreshold
     @Binding var policy: AmbientAlertPolicy
+    var fieldLogRecordCount: Int = 0
+    /// Writes the export and hands back a file URL. Returns nil when there is nothing to write.
+    var onExportFieldLog: () -> URL? = { nil }
+
+    /// Held rather than regenerated per redraw: the export is a file write and a receipt join,
+    /// and a `ShareLink` that rebuilt it on every layout pass would do both repeatedly.
+    @State private var exportURL: URL?
 
     /// Which tier's bar the table below reports. `.verified` is included so the unscaled floor is
     /// visible next to the scaled ones — the multipliers only mean anything as a comparison.
@@ -41,6 +48,8 @@ struct AmbientDebugPolicySection: View {
             estimateControls
             Divider()
             effectiveBarTable
+            Divider()
+            fieldLogExport
 
             Button("Reset to shipped policy") { policy = .shipped }
                 .font(.subheadline)
@@ -190,6 +199,32 @@ struct AmbientDebugPolicySection: View {
             Text("Orange: the dollar floor is deciding, not the percentage floor. That bar is a consequence of the guessed basket, not a number anyone chose.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    // MARK: - Export
+
+    @ViewBuilder
+    private var fieldLogExport: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Field log")
+                .font(.subheadline.weight(.semibold))
+            Text("\(fieldLogRecordCount) arrivals recorded, newest last. One record each: every candidate, the fix, the raw gate input, and the dials above. Wallet captures within 90 minutes are joined on export.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            // Two taps on purpose. Preparing the export runs the receipt join and writes a file;
+            // doing that inside a `ShareLink`'s item closure would run it on every redraw.
+            Button("Prepare export") { exportURL = onExportFieldLog() }
+                .font(.subheadline)
+                .disabled(fieldLogRecordCount == 0)
+
+            if let exportURL {
+                ShareLink(item: exportURL) {
+                    Label("Share \(exportURL.lastPathComponent)", systemImage: "square.and.arrow.up")
+                        .font(.subheadline)
+                }
+            }
         }
     }
 

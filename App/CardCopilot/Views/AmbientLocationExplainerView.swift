@@ -19,6 +19,8 @@ struct AmbientLocationExplainerView: View {
     var ownerThreshold: SwitchThreshold? = nil
     var alertPolicy: AmbientAlertPolicy = .shipped
     var onAlertPolicyChange: (AmbientAlertPolicy) -> Void = { _ in }
+    var fieldLogRecordCount: Int = 0
+    var onExportFieldLog: () -> URL? = { nil }
     let onEnable: () -> Void
     var onTestNotification: () -> Void = {}
     let onDone: () -> Void
@@ -205,7 +207,9 @@ extension AmbientLocationExplainerView {
         if let ownerThreshold {
             AmbientDebugPolicySection(
                 ownerThreshold: ownerThreshold,
-                policy: Binding(get: { alertPolicy }, set: onAlertPolicyChange))
+                policy: Binding(get: { alertPolicy }, set: onAlertPolicyChange),
+                fieldLogRecordCount: fieldLogRecordCount,
+                onExportFieldLog: onExportFieldLog)
         }
         #else
         EmptyView()
