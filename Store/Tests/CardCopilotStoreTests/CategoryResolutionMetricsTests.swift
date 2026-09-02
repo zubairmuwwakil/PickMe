@@ -122,4 +122,70 @@ final class CategoryResolutionMetricsTests: XCTestCase {
                        "an unrecognised descriptor with no POI signal reaches no rung")
         XCTAssertEqual(store.snapshot.walletEnrichmentSkippedWithoutLocation, 1)
     }
+
+    /// Selecting which captures to look up is the app's loop today, so the attempt was never
+    /// counted — leaving "we looked and missed" indistinguishable from "we never looked". Choosing
+    /// the candidates belongs with the store that holds them, and counting the attempt belongs
+    /// with the choice.
+    func testChoosingEnrichmentCandidatesCountsAnAttemptEach() throws {
+        let container = try ModelContainer(
+            for: StoredPrediction.self, StoredPurchase.self, StoredObservation.self,
+            StoredMerchant.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = ModelContext(container)
+        let service = CheckoutService(catalogue: try SeedLoader.loadCatalogue(),
+                                      ownerState: try SeedLoader.loadOwnerState(),
+                                      context: context, metrics: store)
+
+        // One capture with a fix and no category — enrichable. One without a fix — not.
+        let withFix = StoredPurchase(createdAt: Date(), merchantLabel: "SQ *BLUE DOOR",
+                                     walletEventId: "evt-1", activitySource: .walletCapture,
+                                     merchantLatitude: 43.65, merchantLongitude: -79.38)
+        let withoutFix = StoredPurchase(createdAt: Date(), merchantLabel: "SQ *RED DOOR",
+                                        walletEventId: "evt-2", activitySource: .walletCapture)
+        context.insert(withFix)
+        context.insert(withoutFix)
+        try context.save()
+
+        let candidates = try service.walletEnrichmentCandidates(excluding: [])
+
+        XCTAssertEqual(candidates.map { $0.walletEventId }, ["evt-1"])
+        XCTAssertEqual(store.snapshot.walletEnrichmentAttempts, 1)
+    }
+
+    func testAnAlreadyAttemptedCaptureIsNotCountedTwice() throws {
+        let container = try ModelContainer(
+            for: StoredPrediction.self, StoredPurchase.self, StoredObservation.self,
+            StoredMerchant.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = ModelContext(container)
+        let service = CheckoutService(catalogue: try SeedLoader.loadCatalogue(),
+                                      ownerState: try SeedLoader.loadOwnerState(),
+                                      context: context, metrics: store)
+        let purchase = StoredPurchase(createdAt: Date(), merchantLabel: "SQ *BLUE DOOR",
+                                      walletEventId: "evt-1", activitySource: .walletCapture,
+                                      merchantLatitude: 43.65, merchantLongitude: -79.38)
+        context.insert(purchase)
+        try context.save()
+
+        XCTAssertTrue(try service.walletEnrichmentCandidates(excluding: ["evt-1"]).isEmpty)
+        XCTAssertEqual(store.snapshot.walletEnrichmentAttempts, 0)
+    }
+
+    /// The counters are derived from the owner's purchases. A history wipe that left them standing
+    /// would keep describing activity the owner asked to be forgotten.
+    func testErasingLocalHistoryClearsTheCounters() throws {
+        store.record(.resolved(rung: .brandPrior, forked: false))
+        store.record(.walletEnrichmentAttempted)
+        XCTAssertEqual(store.snapshot.totalResolutions, 1)
+
+        let container = try ModelContainer(
+            for: StoredPrediction.self, StoredPurchase.self, StoredObservation.self,
+            StoredMerchant.self, ExploredCell.self, ShoppingArea.self, AreaMember.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        try LocalDataEraser(context: ModelContext(container), metrics: store).eraseLocalHistory()
+
+        XCTAssertEqual(store.snapshot, CategoryResolutionMetrics(),
+                       "counters must not survive an erase")
+    }
 }

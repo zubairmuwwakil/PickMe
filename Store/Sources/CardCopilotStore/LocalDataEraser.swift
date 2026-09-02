@@ -18,9 +18,12 @@ import SwiftData
 /// a battery optimisation, so it has the weakest claim to surviving a wipe.
 public struct LocalDataEraser {
     private let context: ModelContext
+    private let metrics: CategoryResolutionMetricsStore
 
-    public init(context: ModelContext) {
+    public init(context: ModelContext,
+                metrics: CategoryResolutionMetricsStore = CategoryResolutionMetricsStore()) {
         self.context = context
+        self.metrics = metrics
     }
 
     public func eraseLocalHistory() throws {
@@ -31,6 +34,9 @@ public struct LocalDataEraser {
         try context.delete(model: StoredPrediction.self)
         try context.delete(model: StoredMerchant.self)
         try DiscoveryCache(context: context).eraseAll()
+        // Derived from the rows just deleted. Counters that outlived their purchases would keep
+        // describing activity the owner asked us to forget.
+        metrics.forgetAll()
         try context.save()
     }
 }

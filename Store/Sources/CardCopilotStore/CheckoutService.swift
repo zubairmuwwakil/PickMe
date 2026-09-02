@@ -440,6 +440,34 @@ public struct CheckoutService {
         try assessPurchase(purchase, evaluatedAt: purchase.createdAt)
     }
 
+    /// Which auto-logged captures are worth a MapKit lookup, and the record that we tried.
+    ///
+    /// The selection used to live in `CheckoutFlowView`'s loop, which meant the attempt was never
+    /// counted — leaving "we looked and missed" indistinguishable from "we never looked", the one
+    /// distinction that decides whether more merchant data would help at all. Choosing the
+    /// candidates belongs with the store that holds them, and counting the attempt belongs with
+    /// the choice.
+    ///
+    /// `hasPreciseLocation` is the gate that matters: `WalletFeedback` carries optional
+    /// coordinates and older servers omit them entirely, so a capture without a fix can never be
+    /// enriched no matter how many times it is revisited. Those are already counted at ingest as
+    /// `walletEnrichmentSkippedWithoutLocation`, so they are silently excluded here rather than
+    /// counted twice.
+    ///
+    /// `attemptedEventIDs` is passed in rather than read here so this stays the caller's
+    /// once-per-session memory: a failed lookup is transient and must stay retryable, while a
+    /// completed no-match must not be retried on every foreground.
+    public func walletEnrichmentCandidates(excluding attemptedEventIDs: Set<String>,
+                                           limit: Int = 100) throws -> [StoredPurchase] {
+        let candidates = try autoLoggedPurchases(limit: limit).filter { purchase in
+            purchase.displayCategory == nil
+                && purchase.hasPreciseLocation
+                && purchase.walletEventId.map { !attemptedEventIDs.contains($0) } == true
+        }
+        for _ in candidates { metrics.record(.walletEnrichmentAttempted) }
+        return candidates
+    }
+
     /// Purchases logged automatically from a Wallet capture with no live checkout behind them —
     /// the "Logged Automatically" section of Activity, distinct from `PredictionLog.recentPurchases`
     /// because these carry no predicted category to grade.

@@ -30,6 +30,16 @@ struct SettingsView: View {
     @State private var eraseIsPresented = false
     @State private var signOutIsPresented = false
     @State private var didErase = false
+    /// Snapshotted rather than observed: these counters change while the owner is out shopping,
+    /// not while this screen is open, and a live binding would only add churn.
+    @State private var categoryMetrics = CategoryResolutionMetrics()
+
+    /// "3 (12%)" — the count on its own says nothing without the denominator, and the share on its
+    /// own hides how little data it is drawn from.
+    private static func countAndShare(_ count: Int, of total: Int) -> String {
+        guard total > 0 else { return "\(count)" }
+        return "\(count) (\(Int((Double(count) / Double(total) * 100).rounded()))%)"
+    }
 
     /// The published policy, served without authentication so it resolves for a signed-out
     /// reviewer. Same URL as the one given to App Store Connect; keep the two in step.
@@ -73,6 +83,42 @@ struct SettingsView: View {
                 Button("Card benefits & documents", action: onOpenBenefits)
                 Text("Review issuer sources, import your own certificates, and keep claim instructions close at hand.")
                     .font(.footnote).foregroundStyle(.secondary)
+            }
+
+            // Counted on this iPhone and shown here rather than reported anywhere. The numbers
+            // exist to answer one question with evidence instead of a hunch: when PickMe cannot
+            // name what a purchase was, is that because it has never heard of the shop, or
+            // because it was never given a location to look one up with? Those need opposite
+            // fixes, and guessing between them is how a merchant-database import came to look
+            // like the obvious answer.
+            Section {
+                if categoryMetrics.totalResolutions == 0 {
+                    Text("Nothing recorded yet.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                } else {
+                    LabeledContent("Purchases seen", value: "\(categoryMetrics.totalResolutions)")
+                    LabeledContent("Couldn't be named",
+                                   value: Self.countAndShare(categoryMetrics.unresolved,
+                                                             of: categoryMetrics.totalResolutions))
+                    if categoryMetrics.forkedResolutions > 0 {
+                        LabeledContent("Narrowed to more than one",
+                                       value: "\(categoryMetrics.forkedResolutions)")
+                    }
+                }
+
+                if categoryMetrics.walletEnrichmentAttempts > 0
+                    || categoryMetrics.walletEnrichmentSkippedWithoutLocation > 0 {
+                    LabeledContent("Looked up by location",
+                                   value: "\(categoryMetrics.walletEnrichmentMatches) of \(categoryMetrics.walletEnrichmentAttempts)")
+                }
+                if categoryMetrics.walletEnrichmentSkippedWithoutLocation > 0 {
+                    LabeledContent("Arrived with no location",
+                                   value: "\(categoryMetrics.walletEnrichmentSkippedWithoutLocation)")
+                }
+            } header: {
+                Text("Category diagnostics")
+            } footer: {
+                Text("How often PickMe could name what a purchase was. Counted on this iPhone only — no merchant, amount, or place is recorded here, and none of it is sent anywhere. Erasing this iPhone's history clears these too.")
             }
 
             // Ahead of the destructive sections so Danger zone stays last for App Review, and
@@ -124,11 +170,15 @@ struct SettingsView: View {
             Button("Erase History", role: .destructive) {
                 onEraseLocalHistory()
                 didErase = true
+                // The eraser clears the counters; re-read so the section does not keep showing
+                // totals for history the owner just deleted.
+                categoryMetrics = CategoryResolutionMetricsStore().snapshot
             }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected.")
         }
+        .onAppear { categoryMetrics = CategoryResolutionMetricsStore().snapshot }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: onDone).font(.headline) } }
