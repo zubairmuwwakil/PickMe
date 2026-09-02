@@ -43,6 +43,27 @@ final class DiscoveredMerchantResolutionTests: XCTestCase {
                                            nearbyMerchants: [store]))
     }
 
+    /// `CategoryMapper` forks the two commonest place types on purpose — gasstation yields
+    /// ["gasStation", "other"] because you might have bought snacks inside. Wallet enrichment used
+    /// to require `candidates.count == 1`, so it read that deliberate honesty as "not confident
+    /// enough" and refused. Every gas-station capture was therefore unenrichable, no matter how
+    /// good the fix or the name match.
+    ///
+    /// The engine scores every candidate and collapses the fork when the branches agree, so a
+    /// two-element set is an answer it can act on, not a failure.
+    func testAGasStationCaptureEnrichesDespiteItsDeliberateFork() throws {
+        let station = NearbyMerchant(
+            id: "mapkit-petro", name: "Petro-Canada",
+            poiCategoryRaw: "MKPOICategoryGasStation",
+            latitude: 43.85, longitude: -79.02, distanceMeters: 30)
+
+        let result = try XCTUnwrap(resolveWalletMerchant(capturedName: "PETRO-CANADA #4021",
+                                                         nearbyMerchants: [station]))
+        XCTAssertEqual(result.prediction.category, "gasStation")
+        XCTAssertEqual(result.prediction.candidates, ["gasStation", "other"],
+                       "the fork survives; it is the engine's job to collapse it")
+    }
+
     func testAPreIndexedGroceryBrandEarnsTheMiddleTier() {
         let r = resolveDiscoveredMerchant(name: "Sobeys", poiCategoryRaw: nil)
         XCTAssertEqual(r.confidence, .brandMatched)

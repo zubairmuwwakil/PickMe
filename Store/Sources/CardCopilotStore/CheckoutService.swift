@@ -397,9 +397,12 @@ public struct CheckoutService {
                                         with resolution: WalletMerchantResolution) throws {
         guard purchase.isAutoLogged, purchase.displayCategory == nil else { return }
         let prediction = resolution.prediction
+        // Mirrors `resolveWalletMerchant`'s relaxed gate — see the note there. A forked candidate
+        // set is something the engine can score; refusing it left every gas-station capture with
+        // no category at all. `categoryConfidenceRaw` below records that this came from a POI
+        // guess, so the row stays honest about how it was classified.
         guard prediction.confidenceSource != .fallback,
-              prediction.category != "other",
-              prediction.candidates.count == 1 else { return }
+              prediction.category != "other" else { return }
 
         let merchant = resolution.merchant
         purchase.merchantIdentifier = merchant.id

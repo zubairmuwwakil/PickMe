@@ -48,9 +48,19 @@ public func resolveWalletMerchant(capturedName: String,
 
         let prediction = predict(poiCategoryRaw: merchant.poiCategoryRaw,
                                  merchantName: merchant.name)
+        // Deliberately does NOT require a single candidate. `CategoryMapper` forks the two
+        // commonest place types on purpose — gasstation yields ["gasStation", "other"] because
+        // snacks bought inside code differently — and demanding one candidate read that honesty
+        // as "not confident enough", making every gas-station capture permanently unenrichable.
+        // The engine already scores every candidate and collapses the fork when the branches
+        // agree, so a two-element set is an answer, not a failure.
+        //
+        // A PRIMARY of "other" is still refused: `MKPOICategoryStore` genuinely tells us nothing,
+        // and storing "other" would dress up an absence of evidence as a categorization. The
+        // distance ceiling and name-overlap floor above are untouched — they bound *identity*,
+        // which must stay strict. Only the category-confidence gate relaxes.
         guard prediction.confidenceSource != .fallback,
-              prediction.category != "other",
-              prediction.candidates.count == 1 else { return nil }
+              prediction.category != "other" else { return nil }
         return WalletMerchantResolution(merchant: merchant, prediction: prediction)
     }
 
