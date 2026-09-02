@@ -5,8 +5,11 @@ import com.cardcopilot.engine.engine.AmbientDeliveryTier
 import com.cardcopilot.engine.engine.AmbientGate
 import com.cardcopilot.engine.engine.AmbientGateInput
 import com.cardcopilot.engine.engine.AmbientMerchantConfidence
+import com.cardcopilot.engine.engine.AmbientSuppressionReason
 import com.cardcopilot.engine.models.SwitchThreshold
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class AmbientGateTest {
@@ -89,6 +92,88 @@ class AmbientGateTest {
             val decision = AmbientGate.evaluate(input)
             assertEquals(decision.tier == AmbientDeliveryTier.INTERRUPT, decision.fires)
             assertEquals(decision.suppressionReasons.isEmpty(), decision.fires)
+        }
+    }
+
+    /**
+     * The tier this replaces was UNKNOWN, a hard stop no multiplier can reach. Apple classifying a
+     * POI as a pharmacy is evidence about the category, which is the only thing the card actually
+     * depends on, so it must be able to reach the advantage conjunct at all.
+     */
+    @Test
+    fun categoryMatchedMerchantIsNotAHardStop() {
+        val input = passingInput().copy(
+            merchantConfidence = AmbientMerchantConfidence.CATEGORY_MATCHED,
+            advantage = AmbientAdvantage(percentagePoints = 2.0, cad = 2.0)
+        )
+        val decision = AmbientGate.evaluate(input)
+        assertEquals(AmbientDeliveryTier.INTERRUPT, decision.tier)
+        assertFalse(
+            AmbientSuppressionReason.MERCHANT_CONFIDENCE_LOW in decision.suppressionReasons
+        )
+    }
+
+    /**
+     * Its multiplier starts equal to the unverified one, so introducing the tier changes which bar
+     * a place-type arrival is judged against but never moves the bar itself.
+     */
+    @Test
+    fun categoryMatchedStartsAtTheSameBarAsABrandMatchedGuess() {
+        val base = passingInput().copy(
+            merchantConfidence = AmbientMerchantConfidence.CATEGORY_MATCHED
+        )
+        assertFalse(
+            AmbientGate.evaluate(
+                base.copy(advantage = AmbientAdvantage(percentagePoints = 2.0, cad = 1.99))
+            ).fires
+        )
+        assertTrue(
+            AmbientGate.evaluate(
+                base.copy(advantage = AmbientAdvantage(percentagePoints = 2.0, cad = 2.0))
+            ).fires
+        )
+    }
+
+    /**
+     * Its own counter, for the reason ADVANTAGE_BELOW_UNVERIFIED_THRESHOLD has one: the multiplier
+     * is separately tunable, and pooled misses can only be tuned against evidence that belongs to
+     * another tier.
+     */
+    @Test
+    fun categoryMatchedMissIsCountedUnderItsOwnReasonAndConfirms() {
+        val decision = AmbientGate.evaluate(
+            passingInput().copy(
+                merchantConfidence = AmbientMerchantConfidence.CATEGORY_MATCHED,
+                advantage = AmbientAdvantage(percentagePoints = 0.5, cad = 0.5)
+            )
+        )
+        assertEquals(
+            setOf(AmbientSuppressionReason.ADVANTAGE_BELOW_CATEGORY_THRESHOLD),
+            decision.suppressionReasons
+        )
+        assertEquals(AmbientDeliveryTier.CONFIRM, decision.tier)
+    }
+
+    /** Every tier is measured against exactly one threshold, so no counter double-counts a miss. */
+    @Test
+    fun everyTierMissesAgainstExactlyOneThreshold() {
+        val advantageReasons = setOf(
+            AmbientSuppressionReason.ADVANTAGE_BELOW_SWITCH_THRESHOLD,
+            AmbientSuppressionReason.ADVANTAGE_BELOW_UNVERIFIED_THRESHOLD,
+            AmbientSuppressionReason.ADVANTAGE_BELOW_FREQUENTED_THRESHOLD,
+            AmbientSuppressionReason.ADVANTAGE_BELOW_CATEGORY_THRESHOLD
+        )
+        for (confidence in AmbientMerchantConfidence.entries) {
+            val reasons = AmbientGate.evaluate(
+                passingInput().copy(
+                    merchantConfidence = confidence,
+                    advantage = AmbientAdvantage(percentagePoints = 0.0, cad = 0.0)
+                )
+            ).suppressionReasons
+            assertTrue(
+                reasons.intersect(advantageReasons).size <= 1,
+                "$confidence was measured against more than one threshold"
+            )
         }
     }
 }

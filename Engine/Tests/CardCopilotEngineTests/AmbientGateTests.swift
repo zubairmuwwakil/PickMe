@@ -268,3 +268,74 @@ extension AmbientGateTests {
         var input = passingInput(); input.recommendedCardId = input.defaultCardId; return input
     }
 }
+
+// MARK: - Place-type tier (category known, merchant not)
+
+extension AmbientGateTests {
+    private func categoryInput(_ advantage: AmbientAdvantage) -> AmbientGateInput {
+        AmbientGateInput(merchantConfidence: .categoryMatched,
+                         recommendedCardId: "amex-cobalt",
+                         defaultCardId: "wealthsimple-vip",
+                         advantage: advantage,
+                         switchThreshold: both,
+                         isMuted: false)
+    }
+
+    /// The tier this replaces was `.unknown`, which is a hard stop no multiplier can reach. Apple
+    /// classifying a POI as a pharmacy is evidence about the *category*, which is the only thing
+    /// the card actually depends on, and it must be able to reach the advantage conjunct at all.
+    func testCategoryMatchedMerchantIsNotAHardStop() {
+        let decision = AmbientGate.evaluate(categoryInput(
+            AmbientAdvantage(percentagePoints: 2, cad: 2)))
+        XCTAssertTrue(decision.fires)
+        XCTAssertFalse(decision.suppressionReasons.contains(.merchantConfidenceLow))
+    }
+
+    /// Its multiplier starts equal to the unverified one, so introducing the tier changes which
+    /// bar a place-type arrival is judged against but never moves the bar itself.
+    func testCategoryMatchedStartsAtTheSameBarAsABrandMatchedGuess() {
+        let justUnder = AmbientGate.evaluate(categoryInput(
+            AmbientAdvantage(percentagePoints: 2, cad: 1.99)))
+        XCTAssertFalse(justUnder.fires)
+
+        let exactly = AmbientGate.evaluate(categoryInput(
+            AmbientAdvantage(percentagePoints: 2, cad: 2)))
+        XCTAssertTrue(exactly.fires)
+    }
+
+    /// Its own counter, for exactly the reason `advantageBelowUnverifiedThreshold` has one: Group
+    /// B makes this multiplier separately tunable, and a multiplier with no counter of its own
+    /// can only be tuned against evidence that belongs to a different tier.
+    func testCategoryMatchedMissIsCountedUnderItsOwnReason() {
+        let decision = AmbientGate.evaluate(categoryInput(
+            AmbientAdvantage(percentagePoints: 0.5, cad: 0.5)))
+        XCTAssertEqual(decision.suppressionReasons, [.advantageBelowCategoryThreshold])
+    }
+
+    /// A volume judgement, not a correctness stop: the owner sees the advice and is not
+    /// interrupted for it. `.presence` — showing up while naming no card — is reserved for the
+    /// arrivals where nothing at all is known.
+    func testCategoryMatchedMissConfirmsRatherThanFallingBackToPresence() {
+        let decision = AmbientGate.evaluate(categoryInput(
+            AmbientAdvantage(percentagePoints: 0.5, cad: 0.5)))
+        XCTAssertEqual(decision.tier, .confirm)
+    }
+
+    /// Every tier is measured against exactly one threshold, so no counter can double-count one
+    /// miss. Extended to cover the new tier rather than left pinned to the original three.
+    func testEveryTierMissesAgainstExactlyOneThreshold() {
+        let advantageReasons: Set<AmbientSuppressionReason> = [
+            .advantageBelowSwitchThreshold, .advantageBelowUnverifiedThreshold,
+            .advantageBelowFrequentedThreshold, .advantageBelowCategoryThreshold,
+        ]
+        for confidence in [AmbientMerchantConfidence.verified, .brandMatched, .frequented,
+                           .categoryMatched, .unknown] {
+            var input = passingInput()
+            input.merchantConfidence = confidence
+            input.advantage = AmbientAdvantage(percentagePoints: 0, cad: 0)
+            let reasons = AmbientGate.evaluate(input).suppressionReasons
+            XCTAssertLessThanOrEqual(reasons.intersection(advantageReasons).count, 1,
+                                     "\(confidence) was measured against more than one threshold")
+        }
+    }
+}

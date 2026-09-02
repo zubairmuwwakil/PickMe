@@ -28,6 +28,19 @@ public enum AmbientMerchantConfidence: String, Codable, Equatable, Sendable {
     /// the identity and presence doubts and leaves the category question exactly where
     /// `.brandMatched` leaves it — on a brand prior.
     case frequented
+    /// Apple classified the place — pharmacy, restaurant, gas station — but the name resolves to
+    /// no brand we hold.
+    ///
+    /// Deliberately not folded into `.brandMatched`. That tier means *we recognise this brand*;
+    /// this one means *we know what kind of place this is, and not which store it is*. Those are
+    /// different claims, and conflating them is what put a POI Apple confidently calls a pharmacy
+    /// into `.unknown` — a hard stop no multiplier can reach — while the wallet path was already
+    /// treating the same evidence as sufficient to categorise a real logged purchase.
+    ///
+    /// It reaches the advantage conjunct because the card depends on the category, which this
+    /// evidence answers. What it does not answer is identity, which is why it is its own tier
+    /// with its own multiplier rather than a promotion to `.brandMatched`.
+    case categoryMatched
     /// A bare pin. Was `.low`.
     case unknown
 }
@@ -82,6 +95,12 @@ public enum AmbientSuppressionReason: String, Codable, CaseIterable, Hashable, S
     /// it is the only evidence that can say whether `frequentedAdvantageMultiplier` is set
     /// right, and pooling it with the verified tier's misses would answer no question at all.
     case advantageBelowFrequentedThreshold
+    /// A place-type arrival whose advantage did not clear its own scaled floor. Distinct from
+    /// `advantageBelowUnverifiedThreshold` for the reason that one is distinct from
+    /// `advantageBelowSwitchThreshold`: `categoryAdvantageMultiplier` is separately tunable, and
+    /// a multiplier whose misses are pooled with another tier's can only be tuned against
+    /// evidence that does not belong to it.
+    case advantageBelowCategoryThreshold
 }
 
 /// How an arrival should reach the owner.
@@ -154,6 +173,16 @@ public enum AmbientGate {
     /// muted, too low.
     public static let frequentedAdvantageMultiplier: Double = 1.0
 
+    /// What a place-type arrival's advantage is scaled by.
+    ///
+    /// Starts equal to `unverifiedAdvantageMultiplier` on purpose: introducing the tier is
+    /// already a large behavioural change — arrivals that were a hard stop can now speak — and
+    /// bundling a *new* bar into the same change would make the two impossible to tell apart in
+    /// the counters. Whether identity-free evidence deserves a different bar from a brand guess
+    /// is a question for the field log, not for a second constant chosen the same way the first
+    /// one was.
+    public static let categoryAdvantageMultiplier: Double = 2.0
+
     /// A3: fire only for a merchant confident enough to interrupt over, a non-default
     /// recommendation whose advantage clears that merchant's threshold, and a merchant the owner
     /// has not muted.
@@ -186,6 +215,12 @@ public enum AmbientGate {
                                       threshold: scaled(input.switchThreshold,
                                                         by: frequentedAdvantageMultiplier)) {
                 reasons.insert(.advantageBelowFrequentedThreshold)
+            }
+        case .categoryMatched:
+            if !clearsSwitchThreshold(input.advantage,
+                                      threshold: scaled(input.switchThreshold,
+                                                        by: categoryAdvantageMultiplier)) {
+                reasons.insert(.advantageBelowCategoryThreshold)
             }
         }
 

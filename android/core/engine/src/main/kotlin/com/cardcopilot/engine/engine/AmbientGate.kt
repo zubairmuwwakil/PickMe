@@ -15,6 +15,19 @@ enum class AmbientMerchantConfidence {
      * leaves it — on a brand prior.
      */
     FREQUENTED,
+
+    /**
+     * Apple classified the place — pharmacy, restaurant, gas station — but the name resolves to no
+     * brand we hold.
+     *
+     * Deliberately not folded into BRAND_MATCHED. That tier means "we recognise this brand"; this
+     * one means "we know what kind of place this is, and not which store it is". Conflating them
+     * is what put a POI Apple confidently calls a pharmacy into UNKNOWN, a hard stop no multiplier
+     * can reach. It reaches the advantage conjunct because the card depends on the category, which
+     * this evidence answers; it stays its own tier because identity, which it does not answer, is
+     * what BRAND_MATCHED claims.
+     */
+    CATEGORY_MATCHED,
     UNKNOWN
 }
 
@@ -43,6 +56,13 @@ enum class AmbientSuppressionReason {
      * it is the only evidence that can say whether FREQUENTED_ADVANTAGE_MULTIPLIER is set right.
      */
     ADVANTAGE_BELOW_FREQUENTED_THRESHOLD,
+
+    /**
+     * Kept apart from ADVANTAGE_BELOW_UNVERIFIED_THRESHOLD for the reason that one is kept apart
+     * from ADVANTAGE_BELOW_SWITCH_THRESHOLD: CATEGORY_ADVANTAGE_MULTIPLIER is separately tunable,
+     * and pooled misses can only be tuned against evidence belonging to another tier.
+     */
+    ADVANTAGE_BELOW_CATEGORY_THRESHOLD,
     MERCHANT_MUTED
 }
 
@@ -102,6 +122,13 @@ object AmbientGate {
      */
     const val FREQUENTED_ADVANTAGE_MULTIPLIER = 1.0
 
+    /**
+     * Starts equal to UNVERIFIED_ADVANTAGE_MULTIPLIER on purpose. Introducing the tier is already
+     * a large behavioural change — arrivals that were a hard stop can now speak — and bundling a
+     * new bar into the same change would make the two impossible to tell apart in the counters.
+     */
+    const val CATEGORY_ADVANTAGE_MULTIPLIER = 2.0
+
     fun evaluate(input: AmbientGateInput): AmbientGateDecision {
         val reasons = mutableSetOf<AmbientSuppressionReason>()
         if (input.recommendedCardId == input.defaultCardId) {
@@ -136,6 +163,15 @@ object AmbientGate {
                     )
                 ) {
                     reasons.add(AmbientSuppressionReason.ADVANTAGE_BELOW_FREQUENTED_THRESHOLD)
+                }
+            }
+            AmbientMerchantConfidence.CATEGORY_MATCHED -> {
+                if (!clearsSwitchThreshold(
+                        input.advantage,
+                        scaled(input.switchThreshold, CATEGORY_ADVANTAGE_MULTIPLIER)
+                    )
+                ) {
+                    reasons.add(AmbientSuppressionReason.ADVANTAGE_BELOW_CATEGORY_THRESHOLD)
                 }
             }
         }

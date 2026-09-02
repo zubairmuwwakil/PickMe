@@ -186,3 +186,75 @@ extension DiscoveredMerchantResolutionTests {
         XCTAssertEqual(r.confidence, .verified)
     }
 }
+
+// MARK: - Place-type evidence (A4)
+
+extension DiscoveredMerchantResolutionTests {
+    /// The 5-of-6 defect. `predict` carries a `.mapKitCategory` tier that maps pharmacy to
+    /// drugStore, and rung 2 lifted only `.brandPrior` out of it — so a POI Apple confidently
+    /// classifies as a pharmacy resolved to `.unknown`, which the gate suppresses to `.presence`
+    /// unconditionally. The same file already trusts this evidence to categorise a real logged
+    /// purchase in `resolveWalletMerchant`. One file, two verdicts, same evidence.
+    func testAPharmacyPoiWithNoRecognisedBrandEarnsTheCategoryTier() {
+        let r = resolveDiscoveredMerchant(name: "Riverbend Compounding",
+                                          poiCategoryRaw: "MKPOICategoryPharmacy")
+        XCTAssertEqual(r.confidence, .categoryMatched)
+        XCTAssertEqual(r.prediction.category, "drugStore")
+        XCTAssertEqual(r.prediction.confidenceSource, .mapKitCategory)
+    }
+
+    /// Every mapping `predict` offers, not just the one that produced the incident report.
+    func testEveryMapKitCategoryMappingReachesTheCategoryTier() {
+        let mappings = [
+            ("MKPOICategoryPharmacy", "drugStore"),
+            ("MKPOICategoryRestaurant", "dining"),
+            ("MKPOICategoryCafe", "dining"),
+            ("MKPOICategoryBakery", "dining"),
+            ("MKPOICategoryGasStation", "gasStation"),
+            ("MKPOICategoryFoodMarket", "grocery"),
+            ("MKPOICategoryHotel", "lodging"),
+            ("MKPOICategoryPublicTransport", "transit"),
+            ("MKPOICategoryMovieTheater", "entertainment"),
+            ("MKPOICategoryFitnessCenter", "fitness"),
+        ]
+        for (raw, category) in mappings {
+            let r = resolveDiscoveredMerchant(name: "Riverbend Trading Post", poiCategoryRaw: raw)
+            XCTAssertEqual(r.confidence, .categoryMatched, raw)
+            XCTAssertEqual(r.prediction.category, category, raw)
+        }
+    }
+
+    /// `MKPOICategoryStore` maps to "other", where every card ties at base earn. Refused for
+    /// exactly the reason `resolveWalletMerchant` refuses it: storing "other" would dress up an
+    /// absence of evidence as a categorization, and the tier is a claim about knowing the
+    /// category.
+    func testAPlaceTypeThatOnlyYieldsOtherStaysUnknown() {
+        let r = resolveDiscoveredMerchant(name: "Riverbend Trading Post",
+                                          poiCategoryRaw: "MKPOICategoryStore")
+        XCTAssertEqual(r.confidence, .unknown)
+    }
+
+    func testAPlaceTypeMapKitCannotClassifyStaysUnknown() {
+        let r = resolveDiscoveredMerchant(name: "Riverbend Trading Post",
+                                          poiCategoryRaw: "MKPOICategoryCampground")
+        XCTAssertEqual(r.confidence, .unknown)
+    }
+
+    /// Identity outranks place type. A recognised brand keeps `.brandMatched` — the claim that we
+    /// know *which* store this is — rather than being demoted to the tier that claims only the
+    /// category.
+    func testARecognisedBrandOutranksItsPlaceType() {
+        let r = resolveDiscoveredMerchant(name: "Shoppers Drug Mart",
+                                          poiCategoryRaw: "MKPOICategoryPharmacy")
+        XCTAssertEqual(r.confidence, .brandMatched)
+    }
+
+    /// Place-type evidence says nothing about identity, so it cannot carry patronage: standing is
+    /// keyed on an indexed merchant, and there is no merchant here to have accrued it.
+    func testPlaceTypeEvidenceCannotBeFrequented() {
+        let r = resolveDiscoveredMerchant(name: "Riverbend Compounding",
+                                          poiCategoryRaw: "MKPOICategoryPharmacy",
+                                          frequentedKeys: ["riverbend compounding"])
+        XCTAssertEqual(r.confidence, .categoryMatched)
+    }
+}

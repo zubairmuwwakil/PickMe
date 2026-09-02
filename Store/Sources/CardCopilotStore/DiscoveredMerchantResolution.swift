@@ -102,10 +102,9 @@ public func resolveDiscoveredMerchant(name: String,
         // name resolving to a known brand — so it reaches the same tier. Which of the two lists
         // happens to hold a brand is an implementation detail and must not decide whether the
         // app is allowed to speak.
-        return DiscoveredMerchantResolution(
-            prediction: fromPoi,
-            confidence: fromPoi.confidenceSource == .brandPrior ? .brandMatched : .unknown,
-            mcc: nil)
+        return DiscoveredMerchantResolution(prediction: fromPoi,
+                                            confidence: unindexedConfidence(fromPoi),
+                                            mcc: nil)
     }
 
     // An index row categorised "other" names the brand without settling how it codes — the
@@ -127,6 +126,34 @@ public func resolveDiscoveredMerchant(name: String,
                                        candidates: [indexed.category]),
         confidence: frequentedKeys.contains(indexed.id) ? .frequented : .brandMatched,
         mcc: indexed.mcc)
+}
+
+/// What a POI earns when the recogniser cannot place its name.
+///
+/// This used to lift only `.brandPrior` out of `predict` and call everything else `.unknown` —
+/// which `AmbientGate` suppresses unconditionally, so no multiplier could reach it. `predict`
+/// carries a whole `.mapKitCategory` tier that maps pharmacy to drugStore, restaurant to dining,
+/// gasstation to gasStation; a POI Apple confidently classifies as a pharmacy was being called
+/// unknown. Meanwhile `resolveWalletMerchant`, twenty lines up this same file, already treats
+/// that evidence as sufficient to categorise a real logged purchase. One file, two verdicts, one
+/// class of evidence.
+///
+/// The tier it earns is `.categoryMatched`, not `.brandMatched`, because the two make different
+/// claims: we know what kind of place this is, and we do not know which store it is. Conflating
+/// those is the defect, not the fix for it.
+///
+/// A place type that only yields "other" is refused, on the same grounds `resolveWalletMerchant`
+/// refuses it: `MKPOICategoryStore` genuinely tells us nothing, and a tier that claims the
+/// category is known must not be granted on the strength of a category that says "unclassified".
+private func unindexedConfidence(_ prediction: CategoryPrediction) -> AmbientMerchantConfidence {
+    switch prediction.confidenceSource {
+    case .brandPrior:
+        return .brandMatched
+    case .mapKitCategory:
+        return prediction.category == "other" ? .unknown : .categoryMatched
+    default:
+        return .unknown
+    }
 }
 
 /// Rung 1 of the arrival ladder: a merchant already stored on this device.

@@ -387,6 +387,9 @@ extension AmbientSuppressionReason {
         case .advantageBelowFrequentedThreshold:
             return String(localized: "ambient.suppressed.below-frequented",
                           defaultValue: "the gain was below your switch threshold at a store you shop at often, so PickMe confirmed your card quietly")
+        case .advantageBelowCategoryThreshold:
+            return String(localized: "ambient.suppressed.below-category",
+                          defaultValue: "PickMe knew the kind of store but not which one, and the gain was below the higher bar that earns, so it confirmed your card quietly")
         case .merchantMuted:
             return String(localized: "ambient.suppressed.muted",
                           defaultValue: "you muted that store, so PickMe stayed out of the way entirely")
