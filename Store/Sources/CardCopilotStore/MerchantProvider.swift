@@ -58,3 +58,31 @@ private func isOrderedBefore(_ lhs: NearbyMerchant, _ rhs: NearbyMerchant) -> Bo
         return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
     }
 }
+
+public extension NearbyMerchant {
+    /// A pre-index row the owner tapped, projected onto the shape the rest of the app scores.
+    ///
+    /// Lives here, once, because it used to live twice — in `HomeView`'s offline dropdown and in
+    /// `LiveMerchantProvider.fallbackSearch` — and both copies made the same mistake: they passed
+    /// the row's canonical taxonomy category (`grocery`, `dining`) as `poiCategoryRaw`, which
+    /// means Apple's place-type vocabulary, and dropped `mcc`. Two vocabularies sharing one
+    /// `String?` compiles cleanly and fails silently, so the two fields are set here and nowhere
+    /// else.
+    ///
+    /// `poiCategoryRaw` is deliberately nil: a pre-index tap carries no MapKit signal at all, and
+    /// saying otherwise is what discarded the category. The row's own facts travel as `mcc`, and
+    /// the brand itself stays recoverable from `name` through `MerchantRecognizer`.
+    ///
+    /// Coordinates are zero because the owner named a brand, not a place. Nothing is written to
+    /// the store until they ask for the breakdown, which keeps a merchant with no real location
+    /// out of the merchant table.
+    init(preIndexed merchant: PreIndexedMerchant) {
+        self.init(id: "preindex:\(merchant.id)",
+                  name: merchant.name,
+                  poiCategoryRaw: nil,
+                  merchantCategoryCode: merchant.mcc,
+                  latitude: 0,
+                  longitude: 0,
+                  distanceMeters: nil)
+    }
+}

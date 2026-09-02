@@ -143,3 +143,27 @@ public func resolveStoredMerchant(name: String, poiCategoryRaw: String?,
         confidence: .verified,
         mcc: MerchantRecognizer.recognise(name)?.mcc)
 }
+
+/// What category a merchant is, from whatever evidence the app actually holds. The single entry
+/// point every caller uses, so no two screens can disagree about the same purchase.
+///
+/// Ordered strongest-first, and deliberately identical to the order `predict` already ranks:
+/// an observed MCC, then a POI place type, then a seed brand prior — all strictly better evidence
+/// than an editorial pack row. Only when every one of them comes up `.fallback` is the pack asked.
+///
+/// That last rung is the one nothing was reading. `observedMCCCategory` holds only MCCs with a
+/// single stable meaning, so 5968 (Netflix), 5200 (Canadian Tire) and 4814 (Rogers) are absent by
+/// design; and a merchant the owner reached by tapping a pre-index row carries no POI signal at
+/// all. Both paths landed on `other`, where every card ties at base earn.
+///
+/// Owner-confirmed categories are NOT consulted here. They outrank everything on this ladder and
+/// are looked up per-caller against stored merchants — `CheckoutService.confirmedPrediction` and
+/// `predictionForKnownMerchant` — because only a caller with store access can answer them.
+public func resolveCategory(for merchant: NearbyMerchant) -> CategoryPrediction {
+    let fromSignals = predict(poiCategoryRaw: merchant.poiCategoryRaw,
+                              merchantName: merchant.name,
+                              merchantCategoryCode: merchant.merchantCategoryCode)
+    guard fromSignals.confidenceSource == .fallback else { return fromSignals }
+    return resolveDiscoveredMerchant(name: merchant.name,
+                                     poiCategoryRaw: merchant.poiCategoryRaw).prediction
+}

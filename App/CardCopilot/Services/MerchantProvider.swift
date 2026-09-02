@@ -46,17 +46,7 @@ final class LiveMerchantProvider: MerchantProviding {
     }
 
     private static func fallbackSearch(_ text: String) -> [NearbyMerchant] {
-        let matches = CanadianMerchantPreIndex.search(text, limit: 10)
-        return matches.map { match in
-            NearbyMerchant(
-                id: "preindex:\(match.id)",
-                name: match.name,
-                poiCategoryRaw: match.category,
-                latitude: 0,
-                longitude: 0,
-                distanceMeters: nil
-            )
-        }
+        CanadianMerchantPreIndex.search(text, limit: 10).map(NearbyMerchant.init(preIndexed:))
     }
 
     private static func nearbyMerchant(from mapItem: MKMapItem,

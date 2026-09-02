@@ -25,6 +25,27 @@ final class CheckoutServiceTests: XCTestCase {
                        latitude: 43.65, longitude: -79.38, distanceMeters: 40)
     }
 
+    // MARK: the resolution ladder
+
+    /// Scoring must consult the same ladder recognition does. `predict` alone sees only MCC, POI
+    /// and nine seed brand priors — and `observedMCCCategory` deliberately holds only MCCs with a
+    /// single stable meaning, so 5968 (Netflix), 5200 (Canadian Tire) and 4814 (Rogers) are all
+    /// absent. A tapped pre-index row therefore scored `other` and every card tied at base earn,
+    /// even though the pack states the category outright.
+    func testATappedPreIndexRowScoresItsPackCategoryNotOther() throws {
+        let netflix = try XCTUnwrap(CanadianMerchantPreIndex.all.first { $0.name == "Netflix" })
+        let result = try service.recommend(merchant: NearbyMerchant(preIndexed: netflix),
+                                           amountCad: 20, asOf: asOf)
+        XCTAssertEqual(result.prediction.category, "streaming")
+    }
+
+    func testATappedRowWhoseMccIsAbsentStillResolves() throws {
+        let ct = try XCTUnwrap(CanadianMerchantPreIndex.all.first { $0.name == "Canadian Tire" })
+        let result = try service.recommend(merchant: NearbyMerchant(preIndexed: ct),
+                                           amountCad: 60, asOf: asOf)
+        XCTAssertEqual(result.prediction.category, "ctFamily")
+    }
+
     // MARK: brand canonicalization for engine predicates
 
     func testCanonicalEngineBrandMatchesEngineTokens() {

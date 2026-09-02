@@ -197,8 +197,7 @@
       "category": "householdUtilities",
       "matchKeys": [
         "bell mobility",
-        "bell canada",
-        "bell"
+        "bell canada"
       ],
       "mcc": 4814,
       "emailDomains": [
@@ -1214,8 +1213,7 @@
       "category": "transit",
       "matchKeys": [
         "oc transpo ottawa",
-        "oc transpo",
-        "ottawa"
+        "oc transpo"
       ],
       "mcc": 4111,
       "acceptedNetworks": [
@@ -1665,7 +1663,6 @@
       "matchKeys": [
         "societe de transport",
         "stm montreal",
-        "montreal",
         "stm"
       ],
       "mcc": 4111,

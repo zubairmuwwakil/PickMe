@@ -179,8 +179,7 @@ public struct CheckoutService {
                           asOf: String,
                           purchaseSource: PurchaseActivitySource = .pickMeCheckout) throws -> CheckoutResult {
         let prediction = try confirmedPrediction(forMerchantId: merchant.id)
-            ?? predict(poiCategoryRaw: merchant.poiCategoryRaw, merchantName: merchant.name,
-                       merchantCategoryCode: merchant.merchantCategoryCode)
+            ?? resolveCategory(for: merchant)
         let brand = canonicalEngineBrand(merchant.name)
         let effectiveAmount = amountCad
             ?? categoryAmountEstimates[prediction.category]

@@ -62,6 +62,30 @@ final class MerchantRecognizerTests: XCTestCase {
         XCTAssertNil(MerchantRecognizer.recognise(""))
     }
 
+    // MARK: - Payment descriptors (the pack's curated matchKeys)
+
+    /// The reason the pack is loaded at all. A storefront name and a payment descriptor are
+    /// different strings, and until 2026-09-01 recognition only ever saw the first kind — so an
+    /// Apple Pay capture of Amazon resolved to nothing and landed in Activity uncategorized.
+    func testRecognisesAPaymentDescriptorThatIsNotTheStorefrontName() {
+        XCTAssertEqual(MerchantRecognizer.recognise("AMZN MKTP CA")?.name, "Amazon.ca")
+        XCTAssertEqual(MerchantRecognizer.recognise("APPLE COM BILL")?.category, "digitalMedia")
+    }
+
+    func testRecognisesADescriptorCarryingAStoreNumberAndCity() {
+        XCTAssertEqual(MerchantRecognizer.recognise("TIM HORTONS #4021 TORONTO ON")?.name,
+                       "Tim Hortons")
+    }
+
+    /// A city is never a merchant needle. The index holds "STM (Montréal)" and
+    /// "OC Transpo (Ottawa)"; a bare city token would register every business in those cities as
+    /// a transit merchant. The old name-derived alias logic refused to derive these on purpose —
+    /// the pack must not reintroduce them as curated keys.
+    func testDoesNotRecogniseACityNameAsItsTransitAgency() {
+        XCTAssertNil(MerchantRecognizer.recognise("Bank of Montreal"))
+        XCTAssertNil(MerchantRecognizer.recognise("Ottawa Bagel Shop"))
+    }
+
     // MARK: - Invariants over the whole index
 
     /// Every row must be reachable from its own name. A row the recognizer cannot find is a row
