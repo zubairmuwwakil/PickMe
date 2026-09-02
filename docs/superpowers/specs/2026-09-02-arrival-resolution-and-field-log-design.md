@@ -129,6 +129,23 @@ answer, delivered before the first store, never revised.**
 This is architectural, not a defect, and this spec does not fix it. It is the
 question the field log exists to inform.
 
+### 6. A region registered around the owner never fires for that visit
+
+`CLLocationManager.requestState(for:)` is called nowhere in the codebase. iOS
+delivers `didEnterRegion` only on a boundary *crossing*; registering a region while
+already inside it produces no entry event until the owner leaves and returns.
+
+`rotateRegions` runs off a significant location change — which is roughly the event
+that happens when the owner arrives somewhere new. So the region created to cover a
+newly discovered plaza is, by construction, usually created while the owner is
+already standing in it, and cannot fire for the visit that produced it. The first
+visit to any new place is silent no matter what the rest of the ladder decides.
+
+This costs arrivals that never reach any counter: `AmbientCoverageLog.arrivals`
+counts wakes that happened, and a wake that was never delivered is invisible to it.
+It is therefore also invisible in the "6 arrivals" figure above — the true arrival
+count for that week is unknown and higher.
+
 ## Decisions taken
 
 **D1. Apple's place type becomes its own confidence tier, not a reuse of
@@ -198,6 +215,26 @@ Kotlin twin, plus `AmbientGateTests` / `AmbientGateTest` coverage on both sides.
 `resolveDiscoveredMerchant` returns it when `predict` yields `.mapKitCategory`.
 Its multiplier starts at `unverifiedAdvantageMultiplier`'s current value so A4 alone
 changes no firing decision; Group B is what makes it tunable.
+
+**A5. Ask whether the owner is already inside a newly registered region.** After
+`rotateRegions` starts monitoring, call `requestState(for:)` on each region it just
+registered, and treat a `.inside` result as an arrival — routed through the same
+`evaluateArrival` path, not a parallel one. Without this, the first visit to any
+newly discovered place is silent by construction (finding 6).
+
+Two things this must not do:
+
+- **Re-fire on every rotation.** Rotations happen on each significant location
+  change, and a region the owner is still inside will keep reporting `.inside`. Reuse
+  the in-flight visit in `AmbientVisitStore` as the guard: an `.inside` result for a
+  region with a live visit is not a new arrival. The existing dismissal window
+  already handles the Live Activity half of this.
+- **Bypass the exit path.** A synthesised arrival must open a visit exactly as a real
+  entry does, so dwell and the amount prompt still work.
+
+Count synthesised arrivals separately in `AmbientCoverageLog` from delivered
+`didEnterRegion` wakes. The difference between the two is the size of the problem
+this item fixes, and pooling them would erase the only evidence that it worked.
 
 ### Group B — adjustable alert policy (Engine + App)
 
