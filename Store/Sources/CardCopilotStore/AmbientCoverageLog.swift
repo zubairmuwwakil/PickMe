@@ -35,16 +35,51 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
     /// …of which the engine declined to advise. Distinct from a *suppressed* decision: the gate
     /// never ran, so no suppression reason describes it.
     public private(set) var arrivalsNotAdvised: Int
+    /// …of which iOS never delivered a wake for, and the app had to ask about.
+    ///
+    /// `didEnterRegion` fires only on a boundary *crossing*, so a region registered while the
+    /// owner is already inside it cannot fire for the visit that created it — and `rotateRegions`
+    /// runs off a significant location change, which is roughly the event that happens when
+    /// someone arrives somewhere new. The first visit to any newly discovered place was silent by
+    /// construction, and invisible to `arrivals`, which counts wakes that happened.
+    ///
+    /// Counted separately rather than folded in: the difference between the two totals is the
+    /// size of that problem, and pooling them erases the only evidence that asking helped.
+    public private(set) var arrivalsSynthesised: Int
 
     public init(rotations: Int = 0, rotationsAtCapacity: Int = 0,
                 evictedByTier: [AmbientRegionTier: Int] = [:],
-                arrivals: Int = 0, arrivalsUnresolved: Int = 0, arrivalsNotAdvised: Int = 0) {
+                arrivals: Int = 0, arrivalsUnresolved: Int = 0, arrivalsNotAdvised: Int = 0,
+                arrivalsSynthesised: Int = 0) {
         self.rotations = rotations
         self.rotationsAtCapacity = rotationsAtCapacity
         self.evictedByTier = evictedByTier
         self.arrivals = arrivals
         self.arrivalsUnresolved = arrivalsUnresolved
         self.arrivalsNotAdvised = arrivalsNotAdvised
+        self.arrivalsSynthesised = arrivalsSynthesised
+    }
+
+    /// Tolerant of days recorded before a counter existed.
+    ///
+    /// These are persisted per day in `UserDefaults` and summed over a rolling week. A
+    /// synthesized decoder would throw on every day written by an earlier build, and
+    /// `DailyLogStore` would read that as an empty history — deleting the baseline a new counter
+    /// exists to be compared against.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        rotations = try container.decodeIfPresent(Int.self, forKey: .rotations) ?? 0
+        rotationsAtCapacity = try container.decodeIfPresent(Int.self,
+                                                            forKey: .rotationsAtCapacity) ?? 0
+        evictedByTier = try container.decodeIfPresent([AmbientRegionTier: Int].self,
+                                                      forKey: .evictedByTier) ?? [:]
+        arrivals = try container.decodeIfPresent(Int.self, forKey: .arrivals) ?? 0
+        arrivalsUnresolved = try container.decodeIfPresent(Int.self,
+                                                           forKey: .arrivalsUnresolved) ?? 0
+        arrivalsNotAdvised = try container.decodeIfPresent(Int.self,
+                                                           forKey: .arrivalsNotAdvised) ?? 0
+        arrivalsSynthesised = try container.decodeIfPresent(Int.self,
+                                                            forKey: .arrivalsSynthesised) ?? 0
     }
 
     // MARK: - Derived read-outs
@@ -79,8 +114,10 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
         }
     }
 
-    public mutating func recordArrival(_ outcome: AmbientArrivalOutcome) {
+    public mutating func recordArrival(_ outcome: AmbientArrivalOutcome,
+                                       source: AmbientArrivalSource = .regionEntry) {
         arrivals += 1
+        if source == .alreadyInside { arrivalsSynthesised += 1 }
         switch outcome {
         case .resolved: break
         case .unresolved: arrivalsUnresolved += 1
@@ -98,7 +135,20 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
         arrivals += other.arrivals
         arrivalsUnresolved += other.arrivalsUnresolved
         arrivalsNotAdvised += other.arrivalsNotAdvised
+        arrivalsSynthesised += other.arrivalsSynthesised
     }
+}
+
+/// How an arrival came to be evaluated.
+///
+/// Not a quality judgement: a synthesised arrival is exactly as real a visit as a delivered one.
+/// It is a provenance mark, so the field log and the counters can say which arrivals iOS would
+/// never have mentioned.
+public enum AmbientArrivalSource: String, Codable, Equatable, Sendable {
+    /// iOS delivered `didEnterRegion` — the owner crossed a boundary.
+    case regionEntry
+    /// `requestState(for:)` reported `.inside` for a region just registered around the owner.
+    case alreadyInside
 }
 
 /// How far one geofence entry got. Named for the dropout, not the cause, because the causes are

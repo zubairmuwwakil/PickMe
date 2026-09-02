@@ -260,3 +260,64 @@ final class AreaStandingTests: XCTestCase {
         XCTAssertFalse(tier.carriesStanding)
     }
 }
+
+/// Arrivals iOS never delivered, and the counter that measures whether asking for them helped.
+///
+/// `didEnterRegion` fires only on a boundary crossing, so a region registered while the owner is
+/// already standing inside it cannot fire for the visit that created it — and `rotateRegions`
+/// runs off a significant location change, which is roughly the event that happens when someone
+/// arrives somewhere new. The first visit to any newly discovered place was silent by
+/// construction, and invisible to `arrivals`, which counts wakes that happened.
+final class SynthesisedArrivalCountingTests: XCTestCase {
+    func testADeliveredWakeIsNotCountedAsSynthesised() {
+        var log = AmbientCoverageLog()
+        log.recordArrival(.resolved)
+        XCTAssertEqual(log.arrivals, 1)
+        XCTAssertEqual(log.arrivalsSynthesised, 0)
+    }
+
+    /// Counted in both totals: it is an arrival, and it is one that only exists because the app
+    /// asked. Leaving it out of `arrivals` would break `arrivalsReachingTheGate` against
+    /// `SuppressionLog`.
+    func testASynthesisedArrivalIsCountedInBothTotals() {
+        var log = AmbientCoverageLog()
+        log.recordArrival(.resolved, source: .alreadyInside)
+        XCTAssertEqual(log.arrivals, 1)
+        XCTAssertEqual(log.arrivalsSynthesised, 1)
+    }
+
+    /// The difference between the two totals is the size of the problem this fixes. Pooling them
+    /// would erase the only evidence that asking changed anything.
+    func testTheTwoTotalsStaySeparableAcrossADay() {
+        var log = AmbientCoverageLog()
+        log.recordArrival(.resolved)
+        log.recordArrival(.unresolved, source: .alreadyInside)
+        log.recordArrival(.notAdvised, source: .alreadyInside)
+        XCTAssertEqual(log.arrivals, 3)
+        XCTAssertEqual(log.arrivalsSynthesised, 2)
+        XCTAssertEqual(log.arrivalsUnresolved, 1)
+        XCTAssertEqual(log.arrivalsNotAdvised, 1)
+    }
+
+    func testTheSevenDaySumCarriesTheSynthesisedTotal() {
+        var week = AmbientCoverageLog()
+        var today = AmbientCoverageLog()
+        today.recordArrival(.resolved, source: .alreadyInside)
+        week.merge(today)
+        week.merge(today)
+        XCTAssertEqual(week.arrivalsSynthesised, 2)
+    }
+
+    /// Persisted per day in `UserDefaults`, so a counter added by an update must not make the
+    /// days already recorded undecodable. Losing them would delete the baseline this counter
+    /// exists to be compared against.
+    func testADayRecordedBeforeThisCounterExistedStillDecodes() throws {
+        let legacy = """
+        {"rotations":4,"rotationsAtCapacity":1,"evictedByTier":[],
+         "arrivals":6,"arrivalsUnresolved":0,"arrivalsNotAdvised":0}
+        """
+        let decoded = try JSONDecoder().decode(AmbientCoverageLog.self, from: Data(legacy.utf8))
+        XCTAssertEqual(decoded.arrivals, 6)
+        XCTAssertEqual(decoded.arrivalsSynthesised, 0)
+    }
+}

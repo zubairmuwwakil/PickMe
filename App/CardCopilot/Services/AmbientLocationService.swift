@@ -197,8 +197,9 @@ final class AmbientCoverageStore {
         store.update(at: date) { $0.record(allocation) }
     }
 
-    func recordArrival(_ outcome: AmbientArrivalOutcome, at date: Date = .now) {
-        store.update(at: date) { $0.recordArrival(outcome) }
+    func recordArrival(_ outcome: AmbientArrivalOutcome,
+                       source: AmbientArrivalSource = .regionEntry, at date: Date = .now) {
+        store.update(at: date) { $0.recordArrival(outcome, source: source) }
     }
 
     func lastSevenDays(ending date: Date = .now) -> AmbientCoverageLog {
@@ -313,6 +314,13 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private var catalogue: Catalogue?
     private var ownerState: OwnerState?
     private var pendingArrivals: [(target: ArrivalTarget, regionId: String)] = []
+    /// Regions whose arrival is being evaluated right now.
+    ///
+    /// A synthesised arrival holds for up to five seconds waiting on a location fix, and the
+    /// visit that would otherwise guard against a duplicate is not opened until after resolution.
+    /// Two rotations inside that window — a real possibility, since each significant location
+    /// change rotates — would otherwise both synthesise the same arrival.
+    private var arrivalsInFlight: Set<String> = []
 
     private(set) var authorizationStatus: CLAuthorizationStatus
 
@@ -532,6 +540,27 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         Task { await evaluateArrival(at: target, regionId: region.identifier) }
     }
 
+    func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState,
+                         for region: CLRegion) {
+        guard state == .inside, let target = Self.target(for: region.identifier) else { return }
+        // A region the owner is still inside keeps reporting `.inside` on every rotation. The
+        // in-flight visit is what separates "they just got here" from "they have been here for
+        // twenty minutes and we have rotated four times since".
+        guard visitStore.visit(forRegionId: region.identifier) == nil,
+              !arrivalsInFlight.contains(region.identifier) else { return }
+        guard modelContainer != nil, catalogue != nil, ownerState != nil else {
+            if !pendingArrivals.contains(where: { $0.regionId == region.identifier }) {
+                pendingArrivals.append((target, region.identifier))
+            }
+            return
+        }
+        arrivalsInFlight.insert(region.identifier)
+        Task {
+            await evaluateArrival(at: target, regionId: region.identifier, source: .alreadyInside)
+            arrivalsInFlight.remove(region.identifier)
+        }
+    }
+
     func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
         guard Self.target(for: region.identifier) != nil else { return }
         evaluateExit(regionId: region.identifier)
@@ -689,6 +718,13 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             // walking past — and what decides which of several overlapping regions was real.
             region.notifyOnExit = true
             manager.startMonitoring(for: region)
+            // iOS delivers `didEnterRegion` only on a boundary *crossing*, so a region registered
+            // around the owner cannot fire for the visit that created it — and rotation runs off
+            // a significant location change, which is roughly the event that happens when someone
+            // arrives somewhere new. Without this question, the first visit to any newly
+            // discovered place is silent by construction, and invisible to every counter, since
+            // `arrivals` counts wakes that happened.
+            manager.requestState(for: region)
         }
     }
 
@@ -724,7 +760,11 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         let muteKey: String
     }
 
-    private func evaluateArrival(at target: ArrivalTarget, regionId: String) async {
+    /// `source` is provenance, not a quality grade: a synthesised arrival is exactly as real a
+    /// visit as a delivered one, and takes exactly the same path — including opening a visit, so
+    /// dwell and the exit amount prompt still work.
+    private func evaluateArrival(at target: ArrivalTarget, regionId: String,
+                                 source: AmbientArrivalSource = .regionEntry) async {
         guard let modelContainer, let catalogue, let ownerState else { return }
         // Hold the arrival open until iOS says where the owner is, or until the window closes.
         // `nil` is a complete answer: every use of it below falls back to exactly the behaviour
@@ -734,7 +774,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         // Both of the dropouts below used to `return` in silence, which made a background wake
         // that produced nothing indistinguishable from a wake that never happened.
         guard let arrival = resolve(target, fix: fix, context: context) else {
-            coverageStore.recordArrival(.unresolved)
+            coverageStore.recordArrival(.unresolved, source: source)
             return
         }
 
@@ -754,10 +794,10 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                               estimate: policy.amountEstimate)
         guard case .advised(let recommendation) = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
             .recommend(purchase, asOf: Date().formatted(.iso8601.year().month().day())) else {
-            coverageStore.recordArrival(.notAdvised)
+            coverageStore.recordArrival(.notAdvised, source: source)
             return
         }
-        coverageStore.recordArrival(.resolved)
+        coverageStore.recordArrival(.resolved, source: source)
         let advantageCad = recommendation.advantageOverDefaultCad ?? 0
         let advantagePP = purchase.amountCad > 0 ? advantageCad / purchase.amountCad * 100 : 0
 

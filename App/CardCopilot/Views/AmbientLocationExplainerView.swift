@@ -346,6 +346,15 @@ extension AmbientLocationExplainerView {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.top, 4)
+                    // iOS wakes an app only when it crosses a boundary, so a place discovered
+                    // while the owner was already standing in it never announced itself. These
+                    // are the visits PickMe had to ask about, and before it asked they were not
+                    // merely uncounted — they did not happen at all.
+                    if coverage.arrivalsSynthesised > 0 {
+                        Text("\(coverage.arrivalsSynthesised) · noticed you were already there")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     if coverage.arrivalsUnresolved > 0 {
                         Text("\(coverage.arrivalsUnresolved) · could not tell which store it was")
                             .font(.caption)
