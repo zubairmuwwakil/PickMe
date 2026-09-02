@@ -11,20 +11,27 @@ struct HomeView: View {
     @Environment(CheckoutRouter.self) private var router
     @Environment(CopilotEnvironment.self) private var environment
     @Environment(SyncCoordinator.self) private var sync
-    let onFindNearby: () -> Void
-    let onSearch: (String) -> Void
-
     @State private var searchText = ""
     @FocusState private var isSearchFocused: Bool
-    @State private var isFindingNearbyPressed = false
     @Environment(\.scenePhase) private var scenePhase
-    @State private var selectedRepeatMerchantID: UUID?
+    /// The place the answer card is pointed at. A `String` because a subject may come from Radar
+    /// (a MapKit POI id) or from visit history (a `StoredMerchant.identifier`).
+    @State private var selectedSubjectID: String?
+    /// Results of an explicit search submission, rendered inline. Home no longer navigates to a
+    /// separate list to answer a question the owner asked from this screen.
+    @State private var searchResults: [NearbyMerchant] = []
+    @State private var searchNotice: String?
+    @State private var isSearching = false
+    /// A place the owner reached by searching, kept at the head of the chip row so the card can
+    /// point at somewhere Radar never returned.
+    @State private var pinnedSubject: HomeAnswerSubject?
     @State private var greetingEasterEggCount = 0
     @State private var greetingIndex: Int = Int.random(in: 0..<100)
     @State private var showOriginToast = false
     @State private var chipCustomReactionText: String? = nil
     @State private var chipCustomReactionTag: String? = nil
     @State private var chipIsBubblePresented: Bool = false
+    @State private var showPointsFlexSheet = false
 
     private var userFirstName: String? {
         if let first = ClerkSession.currentUser?.firstName, !first.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -180,37 +187,60 @@ struct HomeView: View {
         return list[greetingIndex % list.count]
     }
 
-    private var companionStatusText: String {
-        if session.locationDenied {
-            return "Location access disabled"
-        } else if let nearest = session.preparedNearestMerchant {
-            return "Nearby: \(nearest.name)"
-        } else if case .preparing = session.nearbyPreparationState {
-            return "GPS Ready · Scanning nearby"
-        } else if let top = session.homeMerchants.first {
-            return "Nearby: Ready at \(top.name)"
-        } else {
-            return "Ready to maximize rewards"
-        }
+    /// Deliberately short. The line this replaced was truncated because a long status string had
+    /// taken the headline; a long affordance would simply reintroduce the ellipsis one line down.
+    private static let chipAffordance = "Tap Chip for a quick card tip"
+
+    /// The top of Chip's own priority queue: a broken subsystem, else an engine insight,
+    /// else a rotation quip, else the affordance.
+    ///
+    /// This line used to render `"Nearby: <place>"`, which was Radar state wearing a mascot. It
+    /// duplicated the status pill and the nearby card, and — because it sat *outside* the queue
+    /// below it — it took the most prominent slot even when a broken subsystem was waiting. The
+    /// answer card owns "where am I" now, so Chip says what Chip actually has.
+    private var chipHeadline: String {
+        if let urgent = pinnedChipBanter.first { return urgent.text }
+        if let insight = ambientInsights.first { return ChipInsightFormatter.format(insight).text }
+        if let rotation = rotationChipBanter.first { return rotation.text }
+        return Self.chipAffordance
     }
 
-    private var radarStatus: (text: String, icon: String, color: Color) {
+    /// Never empty: the card falls back to this string for the bubble when Chip has no quip.
+    private var chipSubtitle: String {
+        chipHeadline == Self.chipAffordance
+            ? "Multipliers, caps, and merchant rules"
+            : Self.chipAffordance
+    }
+
+    /// Every place the answer card can be pointed at, Radar first and visit history after.
+    private var answerSubjects: [HomeAnswerSubject] {
+        let base = HomeAnswerSubject.merged(nearby: session.preparedNearbyMerchants,
+                                            remembered: session.homeMerchants)
+        guard let pinnedSubject else { return base }
+        return [pinnedSubject] + base.filter { $0.id != pinnedSubject.id }
+    }
+
+    /// Only states the owner can act on. "Radar ready · 16 nearby" and "Radar starts when needed"
+    /// are gone: the answer card names the place it found and how old the fix is, so the pill
+    /// repeating it was the third rendering of one fact. A ready-but-empty scan still speaks,
+    /// because in that case there is no card to say anything.
+    private var radarStatus: (text: String, icon: String, color: Color)? {
         if session.locationDenied {
             return ("Location access disabled · Search still works", "location.slash", .secondary)
         }
         switch session.nearbyPreparationState {
-        case .idle:
-            return ("Radar starts when needed", "location", .secondary)
         case .permissionRequired:
             return ("Tap Radar to allow location", "hand.tap", .blue)
         case .preparing:
             return ("Preparing nearby merchants…", "location.magnifyingglass", .blue)
         case .ready(let count):
-            return count == 0
+            return count == 0 && answerSubjects.isEmpty
                 ? ("Radar ready · No places within 200 m", "checkmark.circle", .secondary)
-                : ("Radar ready · \(count) nearby", "checkmark.circle.fill", .green)
+                : nil
         case .unavailable:
             return ("Radar couldn't prepare · Tap to retry", "arrow.clockwise", .orange)
+        case .idle:
+            return nil
         }
     }
 
@@ -220,16 +250,20 @@ struct HomeView: View {
                 // 1. Hero Header: Brand, Greeting & Chip Companion
                 heroCompanionSection
 
-                // 2. Checkout Radar & Spotlight Search Bar
+                // 2. Checkout Radar, Spotlight Search & the answer card
                 primaryCheckoutSection
 
-                // 3. Quick Category Peek Bar
+                // 3. The no-merchant fallback. Deliberately *below* the answer card: this asks
+                //    the same question at a lower resolution, so it follows the precise answer
+                //    rather than preceding it.
                 if let graph = environment.graph {
-                    QuickCategoryPeekBar(deps: graph)
+                    QuickCategoryPeekBar(deps: graph) { category in
+                        router.push(.categoryPicker(category))
+                    }
                 }
 
-                // 4. Instant Repeats (Glanceable Checkout Deck)
-                instantRepeatsSection
+                // 4. Errands, after the checkout question is answered.
+                expiringCreditsSection
             }
             .padding(.horizontal, 16)
             .padding(.top, 4)
@@ -239,8 +273,8 @@ struct HomeView: View {
         .background(Color(.systemGroupedBackground))
         .onAppear {
             greetingIndex = Int.random(in: 0..<max(1, greetingQuipsForCurrentTime.count))
-            if selectedRepeatMerchantID == nil {
-                selectedRepeatMerchantID = session.homeMerchants.first?.id
+            if selectedSubjectID == nil {
+                selectedSubjectID = answerSubjects.first?.id
             }
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
@@ -250,18 +284,18 @@ struct HomeView: View {
                 greetingIndex = Int.random(in: 0..<max(1, greetingQuipsForCurrentTime.count))
             }
         }
-        .onChange(of: session.homeMerchants) { _, newMerchants in
-            if let current = selectedRepeatMerchantID, !newMerchants.contains(where: { $0.id == current }) {
-                selectedRepeatMerchantID = newMerchants.first?.id
-            } else if selectedRepeatMerchantID == nil {
-                selectedRepeatMerchantID = newMerchants.first?.id
+        .onChange(of: selectedSubjectID) { oldID, newID in
+            if let newID, newID != oldID {
+                UISelectionFeedbackGenerator().selectionChanged()
             }
         }
-        .onChange(of: selectedRepeatMerchantID) { oldID, newID in
-            if let newID, newID != oldID {
-                let impact = UISelectionFeedbackGenerator()
-                impact.selectionChanged()
-            }
+        .sheet(isPresented: $showPointsFlexSheet) {
+            PointsFlexSheetView(
+                valueRecoveredCad: session.valueRecoveredCad,
+                onOpenDashboard: {
+                    router.push(.dashboard)
+                }
+            )
         }
     }
 
@@ -279,16 +313,24 @@ struct HomeView: View {
     }
     @State private var ambientInsightMemo = AmbientInsightMemo()
 
+    private var activeAnswerSubject: HomeAnswerSubject? {
+        if let selectedSubjectID,
+           let match = answerSubjects.first(where: { $0.id == selectedSubjectID }) {
+            return match
+        }
+        return answerSubjects.first
+    }
+
     private var ambientInsights: [ChipInsight] {
         guard let graph = environment.graph,
-              let top = session.homeMerchants.first else {
+              let active = activeAnswerSubject else {
             return []
         }
 
         let signature = [
-            top.id.uuidString,
-            top.name,
-            top.poiCategoryRaw ?? "",
+            active.id,
+            active.name,
+            active.merchant.poiCategoryRaw ?? "",
             graph.ownerState.defaultCardId,
             graph.ownerState.ownedCardIds.joined(separator: ","),
             Date().formatted(.iso8601.year().month().day())
@@ -298,7 +340,7 @@ struct HomeView: View {
             return ambientInsightMemo.insights
         }
 
-        let insights = computeAmbientInsights(graph: graph, top: top)
+        let insights = computeAmbientInsights(graph: graph, active: active)
         ambientInsightMemo.signature = signature
         ambientInsightMemo.insights = insights
         return insights
@@ -354,12 +396,9 @@ struct HomeView: View {
         }
     }
 
-    private func computeAmbientInsights(graph: DependencyGraph, top: StoredMerchant) -> [ChipInsight] {
-        let prediction = CardCopilotStore.predict(poiCategoryRaw: top.poiCategoryRaw, merchantName: top.name)
-        let category = prediction.category
-        let nearby = NearbyMerchant(id: top.identifier ?? top.id.uuidString, name: top.name, poiCategoryRaw: top.poiCategoryRaw, latitude: top.latitude, longitude: top.longitude, distanceMeters: nil)
-
-        let purchase = CardCopilotStore.ambientPurchaseContext(merchant: nearby, category: category)
+    private func computeAmbientInsights(graph: DependencyGraph, active: HomeAnswerSubject) -> [ChipInsight] {
+        let category = active.prediction.category
+        let purchase = CardCopilotStore.ambientPurchaseContext(merchant: active.merchant, category: category)
         let today = Date().formatted(.iso8601.year().month().day())
 
         guard case .advised(let rec) = graph.engine.recommend(purchase, asOf: today) else {
@@ -439,7 +478,7 @@ struct HomeView: View {
     }
 
     /// Taps needed on the header before Chip volunteers the origin story.
-    private static let originToastTapCount = 4
+    private static let originToastTapCount = 3
 
     private func triggerGreetingEasterEgg() {
         greetingEasterEggCount += 1
@@ -451,10 +490,15 @@ struct HomeView: View {
         if greetingEasterEggCount % Self.originToastTapCount == 0 {
             let notification = UINotificationFeedbackGenerator()
             notification.notificationOccurred(.success)
+            for step in 1...3 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(step) * 0.08) {
+                    impact.impactOccurred(intensity: 0.7)
+                }
+            }
             withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                 showOriginToast = true
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) {
                 withAnimation(.easeOut(duration: 0.3)) {
                     showOriginToast = false
                 }
@@ -473,7 +517,7 @@ struct HomeView: View {
                 HStack(alignment: .center, spacing: 6) {
                     if session.valueRecoveredCad > 0.005 {
                         Button {
-                            router.push(.dashboard)
+                            showPointsFlexSheet = true
                         } label: {
                             HStack(spacing: 4) {
                                 Image(systemName: "sparkles")
@@ -508,7 +552,7 @@ struct HomeView: View {
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(.red)
 
-                    Text("PickMe Origin: Built with precision by Zubair Muwwakil so Canadians never get 1x points on a 5x grocery run!")
+                    Text("Origin Story: PickMe was born out of sheer rage after realizing a grocery store wasn't coded as groceries and gave 1x instead of 5x. Never again!")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(.primary)
 
@@ -531,39 +575,10 @@ struct HomeView: View {
                 .transition(.scale(scale: 0.95).combined(with: .opacity))
             }
 
-            // Expiring Credits Banner (if any)
-            if expiringCreditsCount > 0 {
-                Button {
-                    router.push(.walletHealth)
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "clock.badge.exclamationmark")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(.orange)
-
-                        Text("\(expiringCreditsCount) card credit\(expiringCreditsCount == 1 ? "" : "s") expiring soon")
-                            .font(.system(size: 12, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.primary)
-
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                }
-                .buttonStyle(.plain)
-            }
-
             // Chip the EMV Micro-Bot Mascot Companion Interactive Card with Pulsing Glow & Live Reaction Binding
             ChipCompanionHeaderCard(
-                statusText: companionStatusText,
-                subtitle: session.locationDenied
-                    ? "Tap settings to enable GPS checkout"
-                    : "Tap Chip for quick multiplier tips & merchant rules",
+                statusText: chipHeadline,
+                subtitle: chipSubtitle,
                 insights: ambientInsights,
                 pinnedBanter: pinnedChipBanter,
                 rotationBanter: rotationChipBanter,
@@ -623,7 +638,7 @@ struct HomeView: View {
                 Button {
                     let impact = UIImpactFeedbackGenerator(style: .medium)
                     impact.impactOccurred()
-                    onFindNearby()
+                    refreshNearby()
                 } label: {
                     ZStack(alignment: .topTrailing) {
                         RadarTargetIconView(size: 36)
@@ -672,22 +687,27 @@ struct HomeView: View {
             )
 
             // Radar Status Pill / Tip
-            HStack(spacing: 5) {
-                Image(systemName: radarStatus.icon)
-                    .font(.caption2.weight(.semibold))
-                Text(radarStatus.text)
-                    .font(.caption2.weight(.medium))
+            if let radarStatus {
+                HStack(spacing: 5) {
+                    Image(systemName: radarStatus.icon)
+                        .font(.caption2.weight(.semibold))
+                    Text(radarStatus.text)
+                        .font(.caption2.weight(.medium))
+                }
+                .foregroundStyle(radarStatus.color)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 6)
             }
-            .foregroundStyle(radarStatus.color)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, 6)
 
-            // Dynamic Ambient Location Banner (if nearby merchants prepared)
-            if searchText.isEmpty, let graph = environment.graph, !session.preparedNearbyMerchants.isEmpty {
-                NearbyRadarDropdownView(
-                    merchants: session.preparedNearbyMerchants,
+            // The single answer surface: Radar results and remembered places, one card, one
+            // chip row. Quick Pick used to render this same thing again further down the page.
+            if searchText.isEmpty, let graph = environment.graph, !answerSubjects.isEmpty {
+                HomeAnswerCardView(
+                    subjects: answerSubjects,
                     deps: graph,
-                    onViewAllNearby: { onFindNearby() }
+                    isStale: session.nearbyResultIsStale,
+                    fetchedAt: session.nearbyResultFetchedAt,
+                    selectedSubjectID: $selectedSubjectID
                 )
             }
 
@@ -762,19 +782,11 @@ struct HomeView: View {
                             Button {
                                 let impact = UIImpactFeedbackGenerator(style: .light)
                                 impact.impactOccurred()
-                                searchText = ""
-                                let merchant = NearbyMerchant(
-                                    id: "preindex:\(match.id)",
-                                    name: match.name,
-                                    poiCategoryRaw: match.category,
-                                    latitude: 0,
-                                    longitude: 0,
-                                    distanceMeters: nil
-                                )
-                                if let graph = environment.graph {
-                                    router.step = session.recommend(merchant: merchant, amount: nil,
-                                                                    using: graph)
-                                }
+                                let merchant = NearbyMerchant(preIndexed: match)
+                                // Re-points the card instead of scoring immediately. Nothing is
+                                // written until the owner asks for the breakdown, which keeps a
+                                // merchant with no real coordinates out of the store.
+                                retarget(merchant, provenance: .searched)
                             } label: {
                                 HStack(spacing: 8) {
                                     MerchantBrandIconView(merchantName: match.name, category: match.category, size: 22)
@@ -817,178 +829,163 @@ struct HomeView: View {
                     .transition(.opacity)
                 }
             }
+
+            submittedSearchResults
         }
     }
 
 
 
 
-    // MARK: - 4. Quick Pick
+    // MARK: - 4. Errands
 
-    private var quickPickMerchants: [StoredMerchant] {
-        Array(session.homeMerchants.prefix(8))
-    }
+    /// Expiring credits, moved out of the hero. It is a Perks errand, not an answer to "which
+    /// card, here, now", so it no longer sits between the greeting and the checkout question.
+    @ViewBuilder
+    private var expiringCreditsSection: some View {
+        if expiringCreditsCount > 0 {
+            Button {
+                router.push(.walletHealth)
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "clock.badge.exclamationmark")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(.orange)
 
-    private var selectedRepeatMerchant: StoredMerchant? {
-        if let selectedRepeatMerchantID,
-           let selected = session.homeMerchants.first(where: { $0.id == selectedRepeatMerchantID }) {
-            return selected
-        }
-        return session.homeMerchants.first
-    }
+                    Text("\(expiringCreditsCount) card credit\(expiringCreditsCount == 1 ? "" : "s") expiring soon")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.primary)
 
-    private var instantRepeatsSection: some View {
-        Group {
-            if let graph = environment.graph, !quickPickMerchants.isEmpty {
-                let merchants = quickPickMerchants
-                let activeMerchant = selectedRepeatMerchant ?? merchants[0]
+                    Spacer()
 
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("Quick Pick")
-                            .font(.system(size: 19, weight: .bold, design: .rounded))
-                            .foregroundStyle(.primary)
-
-                        Spacer()
-
-                        Label(
-                            repeatContext(for: activeMerchant) == .nearby ? "Nearby" : "Recent",
-                            systemImage: repeatContext(for: activeMerchant) == .nearby ? "location.fill" : "clock.fill"
-                        )
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.secondary)
-                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color.orange.opacity(0.12),
+                            in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .buttonStyle(.plain)
+        }
+    }
 
-                    if merchants.count == 1 {
-                        InstantRepeatCardView(
-                            merchant: merchants[0],
-                            deps: graph,
-                            context: repeatContext(for: merchants[0])
-                        )
-                    } else {
-                        VStack(spacing: 8) {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
-                                    ForEach(merchants) { item in
-                                        InstantRepeatCardView(
-                                            merchant: item,
-                                            deps: graph,
-                                            context: repeatContext(for: item)
-                                        )
-                                        .containerRelativeFrame(.horizontal)
-                                        .id(item.id)
-                                    }
-                                }
-                                .scrollTargetLayout()
-                            }
-                            .scrollTargetBehavior(.viewAligned)
-                            .scrollPosition(id: $selectedRepeatMerchantID)
+    // MARK: - Radar & search
 
-                            HStack(spacing: 6) {
-                                ForEach(merchants) { item in
-                                    Circle()
-                                        .fill(activeMerchant.id == item.id ? Color.blue : Color(.tertiarySystemFill))
-                                        .frame(
-                                            width: activeMerchant.id == item.id ? 7 : 5,
-                                            height: activeMerchant.id == item.id ? 7 : 5
-                                        )
-                                        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: activeMerchant.id)
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.top, 2)
-                        }
-                    }
+    /// Re-runs the scan and updates Home in place.
+    ///
+    /// This used to call `onFindNearby`, which set `router.step` and pushed the owner to the
+    /// merchant list — leaving the screen to answer a question the card on it already displays.
+    /// `MerchantConfirmView` still exists, reached from the ambient "which shop is this?" Live
+    /// Activity, where the owner has no app context yet and a full list is the right answer.
+    private func refreshNearby() {
+        guard let graph = environment.graph else { return }
+        Task { await session.rescanNearby(using: graph) }
+    }
 
-                    if merchants.count > 1 {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("Recent places")
-                                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                                    .foregroundStyle(.secondary)
+    /// Points the answer card at a place instead of navigating to it.
+    private func retarget(_ merchant: NearbyMerchant, provenance: HomeSubjectProvenance) {
+        UISelectionFeedbackGenerator().selectionChanged()
+        isSearchFocused = false
+        pinnedSubject = HomeAnswerSubject(nearby: merchant, provenance: provenance)
+        selectedSubjectID = merchant.id
+        searchText = ""
+        searchResults = []
+        searchNotice = nil
+    }
 
-                                Spacer()
+    @ViewBuilder
+    private var submittedSearchResults: some View {
+        if !searchText.isEmpty {
+            if isSearching {
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small)
+                    Text("Searching…")
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color(.secondarySystemGroupedBackground),
+                            in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            } else if let searchNotice {
+                Text(searchNotice)
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Color(.secondarySystemGroupedBackground),
+                                in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            } else {
+                ForEach(searchResults) { merchant in
+                    Button {
+                        retarget(merchant, provenance: .searched)
+                    } label: {
+                        HStack(spacing: 8) {
+                            MerchantBrandIconView(
+                                merchantName: merchant.name,
+                                category: CardCopilotStore.predict(
+                                    poiCategoryRaw: merchant.poiCategoryRaw,
+                                    merchantName: merchant.name).category,
+                                size: 22)
 
-                                Text("Swipe or tap to preview")
+                            Text(merchant.name)
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+
+                            Spacer()
+
+                            if let distance = merchant.distanceMeters {
+                                Text("\(Int(distance.rounded())) m")
                                     .font(.system(size: 11, weight: .medium, design: .rounded))
                                     .foregroundStyle(.tertiary)
                             }
 
-                            ScrollViewReader { proxy in
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 8) {
-                                        ForEach(merchants) { recentMerchant in
-                                            recentMerchantButton(recentMerchant)
-                                                .id(recentMerchant.id)
-                                        }
-                                    }
-                                }
-                                .contentMargins(.horizontal, 1, for: .scrollContent)
-                                .onChange(of: selectedRepeatMerchantID) { _, newID in
-                                    if let newID {
-                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                            proxy.scrollTo(newID, anchor: .center)
-                                        }
-                                    }
-                                }
-                            }
+                            Image(systemName: "arrow.up.left")
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(.tertiary)
                         }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Color(.secondarySystemGroupedBackground),
+                                    in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
+                    .buttonStyle(.plain)
                 }
-                .animation(.easeInOut(duration: 0.18), value: activeMerchant.id)
             }
         }
     }
 
-    private func repeatContext(for merchant: StoredMerchant) -> InstantRepeatContext {
-        if session.cachedLocation?.isRecent == true,
-           session.homeMerchants.first?.id == merchant.id {
-            return .nearby
-        }
-        return .recent
-    }
-
-    private func recentMerchantButton(_ merchant: StoredMerchant) -> some View {
-        let prediction = predictionForKnownMerchant(merchant)
-        let meta = CategoryVisuals.meta(for: prediction.category)
-        let isSelected = (selectedRepeatMerchant?.id ?? quickPickMerchants.first?.id) == merchant.id
-
-        return Button {
-            let impact = UISelectionFeedbackGenerator()
-            impact.selectionChanged()
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                selectedRepeatMerchantID = merchant.id
-            }
-        } label: {
-            HStack(spacing: 7) {
-                MerchantBrandIconView(
-                    merchantName: merchant.name,
-                    category: meta.displayName,
-                    size: 24
-                )
-
-                Text(merchant.name)
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(isSelected ? Color.blue : Color.primary)
-                    .lineLimit(1)
-            }
-            .padding(.leading, 7)
-            .padding(.trailing, 10)
-            .padding(.vertical, 7)
-            .background(
-                isSelected ? Color.blue.opacity(0.12) : Color(.tertiarySystemFill),
-                in: Capsule()
-            )
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Preview recommendation for \(merchant.name)")
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
-
+    /// Resolves the query on Home. Submitting used to push `MerchantConfirmView`; the results
+    /// now render under the search bar and re-point the answer card when tapped, so the owner
+    /// never leaves the screen they asked the question from.
     private func submitSearch() {
-        guard let text = SearchSubmission.query(from: searchText) else { return }
+        guard let text = SearchSubmission.query(from: searchText),
+              let graph = environment.graph else { return }
         isSearchFocused = false
-        onSearch(text)
+        isSearching = true
+        searchNotice = nil
+        Task {
+            let outcome = await session.search(text, using: graph)
+            isSearching = false
+            switch outcome {
+            case .found(let merchants):
+                searchResults = merchants
+            case .nothingFound(let query):
+                searchResults = []
+                searchNotice = "Nothing found for “\(query ?? text)”."
+            case .failed(let message):
+                searchResults = []
+                searchNotice = message
+            case .locationDenied:
+                searchResults = []
+                searchNotice = nil
+            }
+        }
     }
 }
 

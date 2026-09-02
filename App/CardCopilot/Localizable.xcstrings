@@ -181,6 +181,16 @@
     "%@ tracked spend" : {
 
     },
+    "%@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@"
+          }
+        }
+      }
+    },
     "%@: %.2f¢ / point" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -352,6 +362,9 @@
     "%lld logged" : {
 
     },
+    "%lld m" : {
+
+    },
     "%lld m away" : {
       "localizations" : {
         "fr-CA" : {
@@ -492,6 +505,9 @@
       }
     },
     "%lld%% Optimal" : {
+
+    },
+    "%lldm" : {
 
     },
     "•" : {
@@ -1358,6 +1374,16 @@
     "Assign to This Account" : {
 
     },
+    "At %@, use %@. %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "At %1$@, use %2$@. %3$@."
+          }
+        }
+      }
+    },
     "At least %.1f percentage points better" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1833,9 +1859,6 @@
     "CHIP" : {
 
     },
-    "CHIP V4.0" : {
-
-    },
     "Choose a default card" : {
       "localizations" : {
         "fr-CA" : {
@@ -1913,9 +1936,6 @@
     "Close" : {
 
     },
-    "Closest nearby" : {
-
-    },
     "Cloud Sync & Capture" : {
 
     },
@@ -1932,7 +1952,7 @@
         }
       }
     },
-    "Collapse nearby card recommendations for %@" : {
+    "Collapse card recommendation for %@" : {
 
     },
     "common.done" : {
@@ -2377,6 +2397,9 @@
     "Disable or Pause Wallet Capture" : {
 
     },
+    "Dismiss category preview" : {
+
+    },
     "Documents" : {
 
     },
@@ -2739,7 +2762,7 @@
         }
       }
     },
-    "Expand nearby card recommendations, closest is %@" : {
+    "Expand card recommendation for %@" : {
 
     },
     "Experiment" : {
@@ -3384,9 +3407,6 @@
         }
       }
     },
-    "Likely here" : {
-
-    },
     "Live" : {
 
     },
@@ -3576,6 +3596,7 @@
 
     },
     "Nearby" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3584,9 +3605,6 @@
           }
         }
       }
-    },
-    "Nearby Places" : {
-
     },
     "Needs Attention" : {
 
@@ -3833,10 +3851,10 @@
         }
       }
     },
-    "Not compared" : {
+    "Not at a store? Pick a category" : {
 
     },
-    "Not here? Choose from all places" : {
+    "Not compared" : {
 
     },
     "Not now" : {
@@ -3996,6 +4014,9 @@
     "Open Shortcuts App" : {
 
     },
+    "Opens the category breakdown" : {
+
+    },
     "Opens the item that needs an answer" : {
       "localizations" : {
         "fr-CA" : {
@@ -4056,6 +4077,9 @@
 
     },
     "or with email" : {
+
+    },
+    "Origin Story: PickMe was born out of sheer rage after realizing a grocery store wasn't coded as groceries and gave 1x instead of 5x. Never again!" : {
 
     },
     "Other Active Connections (%lld)" : {
@@ -4298,9 +4322,6 @@
         }
       }
     },
-    "PickMe Origin: Built with precision by Zubair Muwwakil so Canadians never get 1x points on a 5x grocery run!" : {
-
-    },
     "PickMe Wallet Audit Report" : {
 
     },
@@ -4388,9 +4409,6 @@
       }
     },
     "PREFERENCES" : {
-
-    },
-    "Preview recommendation for %@" : {
 
     },
     "PRIVACY & LOCAL DATA" : {
@@ -4489,12 +4507,6 @@
     "Queued purchases are saved locally on this iPhone and are never discarded without your choice." : {
 
     },
-    "Quick Category Peek" : {
-
-    },
-    "Quick Pick" : {
-
-    },
     "QUICK PRESETS" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4520,6 +4532,7 @@
       }
     },
     "Recent" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4544,9 +4557,6 @@
       }
     },
     "RECENT CAPTURE FEEDBACK" : {
-
-    },
-    "Recent places" : {
 
     },
     "Recent Purchases" : {
@@ -4954,6 +4964,9 @@
     "Search perks, insurance, or cards…" : {
 
     },
+    "Searching…" : {
+
+    },
     "Secrets, authorization tokens, device identifiers, and precise location coordinates are never included." : {
 
     },
@@ -5076,6 +5089,16 @@
     },
     "Shortcuts Setup" : {
 
+    },
+    "Show recommendation for %@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show recommendation for %1$@, %2$@"
+          }
+        }
+      }
     },
     "Showing cards from" : {
       "extractionState" : "stale",
@@ -5242,9 +5265,6 @@
     "Spend Rules & Condition Triggers" : {
 
     },
-    "Spend:" : {
-
-    },
     "Standard (2.5%)" : {
 
     },
@@ -5304,12 +5324,6 @@
 
     },
     "SUBMITTED DIAGNOSTIC PACKETS" : {
-
-    },
-    "Swipe cards or tap to switch" : {
-
-    },
-    "Swipe or tap to preview" : {
 
     },
     "Switch recommendations" : {
@@ -5433,6 +5447,9 @@
       }
     },
     "Tap to set as your primary card" : {
+
+    },
+    "Tap to switch" : {
 
     },
     "Tapped" : {

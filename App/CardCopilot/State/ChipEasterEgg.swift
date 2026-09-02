@@ -14,6 +14,7 @@ enum ChipEasterEgg: String, CaseIterable {
     case platinum
     case matcha
     case maximumEffort
+    case overclock
 
     /// Words that summon the beat.
     ///
@@ -31,6 +32,7 @@ enum ChipEasterEgg: String, CaseIterable {
         case .platinum: return ["platinum"]
         case .matcha: return ["coffee", "starbucks", "tim", "tims", "timmies", "timhortons"]
         case .maximumEffort: return ["deadpool"]
+        case .overclock: return ["overclock", "overclocking", "turbo"]
         }
     }
 
@@ -39,6 +41,7 @@ enum ChipEasterEgg: String, CaseIterable {
         switch self {
         case .origin: return ["pick me"]
         case .maximumEffort: return ["maximum effort"]
+        case .overclock: return ["overclock chip"]
         default: return []
         }
     }
@@ -74,6 +77,7 @@ enum ChipEasterEgg: String, CaseIterable {
         case .platinum: return .shocked
         case .matcha: return .alert
         case .maximumEffort: return .cool
+        case .overclock: return .calculating
         }
     }
 
@@ -86,6 +90,7 @@ enum ChipEasterEgg: String, CaseIterable {
         case .platinum: return "Amex Platinum Card"
         case .matcha: return "Coffee Spot Finder: 404"
         case .maximumEffort: return "Maximum Effort Mode"
+        case .overclock: return "Overclocking Engine"
         }
     }
 
@@ -98,6 +103,7 @@ enum ChipEasterEgg: String, CaseIterable {
         case .platinum: return "Most regretted annual fee ($799)! Hope you used that dining credit."
         case .matcha: return "No coffee here. Rerouting you to bubble tea & matcha instead."
         case .maximumEffort: return "Chip & you: the best rewards duo in the multiverse."
+        case .overclock: return "Simulating 50,000 reward strategies across Visa, Mastercard, and Amex."
         }
     }
 
@@ -110,6 +116,7 @@ enum ChipEasterEgg: String, CaseIterable {
         case .platinum: return "FEE TRAUMA"
         case .matcha: return "MATCHA MODE"
         case .maximumEffort: return "CINEMATIC"
+        case .overclock: return "OVERCLOCK"
         }
     }
 
@@ -122,6 +129,7 @@ enum ChipEasterEgg: String, CaseIterable {
         case .platinum: return "creditcard.trianglebadge.exclamationmark"
         case .matcha: return "cup.and.saucer.fill"
         case .maximumEffort: return "theatermasks.fill"
+        case .overclock: return "bolt.fill"
         }
     }
 
@@ -134,6 +142,7 @@ enum ChipEasterEgg: String, CaseIterable {
         case .platinum: return .purple
         case .matcha: return .green
         case .maximumEffort: return .red
+        case .overclock: return .cyan
         }
     }
 
@@ -154,6 +163,8 @@ enum ChipEasterEgg: String, CaseIterable {
             return "Coffee recommendations? Error 404: this copilot runs on matcha. Rerouting coordinates to the nearest bubble tea spot instead!"
         case .maximumEffort:
             return "Maximum Effort mode engaged! Look at us: you, me, and a 5x multiplier. Best cinematic point-hacking duo in history."
+        case .overclock:
+            return "⚡️ OVERCLOCKING ENGINE: Simulating 50,000 reward strategies across Visa, Mastercard, and Amex..."
         }
     }
 }

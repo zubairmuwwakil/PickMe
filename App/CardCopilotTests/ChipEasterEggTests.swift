@@ -12,6 +12,8 @@ final class ChipEasterEggTests: XCTestCase {
         XCTAssertEqual(ChipEasterEgg.match("bmo"), .bmo)
         XCTAssertEqual(ChipEasterEgg.match("platinum"), .platinum)
         XCTAssertEqual(ChipEasterEgg.match("deadpool"), .maximumEffort)
+        XCTAssertEqual(ChipEasterEgg.match("overclock"), .overclock)
+        XCTAssertEqual(ChipEasterEgg.match("turbo"), .overclock)
     }
 
     func testMatchingIgnoresCaseAndSurroundingWords() {
@@ -22,6 +24,7 @@ final class ChipEasterEggTests: XCTestCase {
     func testMatchesMultiWordPhrases() {
         XCTAssertEqual(ChipEasterEgg.match("maximum effort"), .maximumEffort)
         XCTAssertEqual(ChipEasterEgg.match("why pick me"), .origin)
+        XCTAssertEqual(ChipEasterEgg.match("overclock chip"), .overclock)
     }
 
     func testPunctuationDoesNotBlockAMatch() {

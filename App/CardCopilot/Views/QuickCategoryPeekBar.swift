@@ -4,6 +4,11 @@ import CardCopilotStore
 
 /// A fast, horizontal category peek strip allowing owners to glance at their best card
 /// for everyday categories in 1 tap without searching or typing an amount.
+///
+/// This is the same question the answer card above it answers, asked at a lower resolution —
+/// "which card for dining" rather than "which card here" — which is why it sits below the card
+/// rather than above it. Tapping a category expands a glance card; tapping that card invokes
+/// `onSelectCategory` to open the category's full breakdown.
 struct QuickCategoryPeekBar: View {
     let deps: DependencyGraph
     var onSelectCategory: ((String) -> Void)? = nil
@@ -27,11 +32,9 @@ struct QuickCategoryPeekBar: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Quick Category Peek")
+                Text("Not at a store? Pick a category")
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
-                    .tracking(0.8)
 
                 Spacer()
 
@@ -54,7 +57,7 @@ struct QuickCategoryPeekBar: View {
             // Quick Inline Glance Card when tapped
             if let activeId = peekedCategory,
                let peekSummary = categoryWinnerSummary(for: activeId) {
-                quickGlanceCard(summary: peekSummary)
+                quickGlanceCard(category: activeId, summary: peekSummary)
                     .transition(.asymmetric(
                         insertion: .scale(scale: 0.96, anchor: .top).combined(with: .opacity),
                         removal: .opacity
@@ -75,7 +78,6 @@ struct QuickCategoryPeekBar: View {
                     peekedCategory = nil
                 } else {
                     peekedCategory = cat.id
-                    onSelectCategory?(cat.id)
                 }
             }
         } label: {
@@ -114,9 +116,43 @@ struct QuickCategoryPeekBar: View {
             .frame(width: 62)
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
-    private func quickGlanceCard(summary: CategoryWinnerSummary) -> some View {
+    private func quickGlanceCard(category: String, summary: CategoryWinnerSummary) -> some View {
+        HStack(spacing: 0) {
+            if let onSelectCategory {
+                Button {
+                    onSelectCategory(category)
+                } label: {
+                    quickGlanceContent(summary: summary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Opens the category breakdown")
+            } else {
+                quickGlanceContent(summary: summary)
+            }
+
+            Button {
+                withAnimation { peekedCategory = nil }
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(.tertiary)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss category preview")
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
+        )
+    }
+
+    private func quickGlanceContent(summary: CategoryWinnerSummary) -> some View {
         HStack(spacing: 12) {
             CardMiniBadge(cardId: summary.cardId, size: 28)
 
@@ -142,22 +178,9 @@ struct QuickCategoryPeekBar: View {
             }
 
             Spacer()
-
-            Button {
-                withAnimation { peekedCategory = nil }
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 16))
-                    .foregroundStyle(.tertiary)
-            }
-            .buttonStyle(.plain)
         }
         .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
-        )
+        .contentShape(Rectangle())
     }
 
     // MARK: - Quick Evaluation Helper

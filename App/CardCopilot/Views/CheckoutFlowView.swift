@@ -275,8 +275,7 @@ struct CheckoutFlowView: View {
             Group {
                 switch router.selectedTab {
                 case .copilot:
-                    HomeView(onFindNearby: { findNearby() },
-                             onSearch: { text in Task { await search(text) } })
+                    HomeView()
                 case .activity:
                     ActivityHubView()
                 case .wallet:
@@ -467,11 +466,11 @@ struct CheckoutFlowView: View {
     /// and persists matches. Failed searches remain retryable, while a completed no-match is not
     /// repeated again during the same app session.
     private func enrichUnknownWalletMerchants(using graph: DependencyGraph) async throws {
-        let candidates = try graph.service.autoLoggedPurchases(limit: 100).filter {
-            $0.displayCategory == nil
-                && $0.hasPreciseLocation
-                && $0.walletEventId.map { !attemptedWalletEnrichmentIDs.contains($0) } == true
-        }
+        // Selection moved into the service so the attempt is counted where it is decided. Doing it
+        // here left "we looked and missed" indistinguishable from "we never looked", which is the
+        // one distinction that says whether more merchant data would help.
+        let candidates = try graph.service.walletEnrichmentCandidates(
+            excluding: attemptedWalletEnrichmentIDs)
 
         for purchase in candidates {
             guard let eventID = purchase.walletEventId,

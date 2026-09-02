@@ -43,6 +43,13 @@ struct ChipBanterQueue {
         guard count > 0 else { return 0 }
         return (index + 1) % count
     }
+
+    /// The index before `index`, wrapped. Returns 0 for an empty queue.
+    func retreated(from index: Int) -> Int {
+        let count = items.count
+        guard count > 0 else { return 0 }
+        return ((index - 1) % count + count) % count
+    }
 }
 
 /// Resolves the label above Chip's dialogue.
@@ -66,6 +73,10 @@ enum ChipBubbleTag {
             return fallback
         }
         if text.contains("founder protocol") { return "FOUNDER PROTOCOL" }
+        if text.contains("overclock") { return "OVERCLOCK ENGINE" }
+        if text.contains("gyroscope") || text.contains("snowglobe") { return "GYROSCOPE" }
+        if text.contains("costco") { return "COSTCO TRAP" }
+        if text.contains("voltage") || text.contains("battery") { return "GRID VOLTAGE" }
         if text.contains("maximum effort") { return "MAXIMUM EFFORT" }
         if text.contains("cobalt") { return "HOLY GRAIL" }
         if text.contains("bmo") { return "FIRST CARD" }

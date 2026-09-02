@@ -470,4 +470,48 @@ final class CopilotSessionTests: XCTestCase {
         XCTAssertEqual(purchase.amountSource, .recalledLater)
         XCTAssertTrue(purchase.isComplete)
     }
+
+    func testHomeAnswerSubjectMergedPreservesNearbyAndRecentSeparation() {
+        let nearby = [
+            NearbyMerchant(id: "n1", name: "Nearby 1", poiCategoryRaw: "cafe", latitude: 43.65, longitude: -79.38, distanceMeters: 50),
+            NearbyMerchant(id: "n2", name: "Nearby 2", poiCategoryRaw: "grocery", latitude: 43.65, longitude: -79.38, distanceMeters: 120),
+            NearbyMerchant(id: "common", name: "Shared Place", poiCategoryRaw: "restaurant", latitude: 43.65, longitude: -79.38, distanceMeters: 200)
+        ]
+        let remembered = [
+            StoredMerchant(name: "Shared Place", identifier: "common", poiCategoryRaw: "restaurant", latitude: 43.65, longitude: -79.38),
+            StoredMerchant(name: "Recent 1", identifier: "r1", poiCategoryRaw: "gas_station", latitude: 43.65, longitude: -79.38),
+            StoredMerchant(name: "Recent 2", identifier: "r2", poiCategoryRaw: "pharmacy", latitude: 43.65, longitude: -79.38)
+        ]
+
+        let subjects = HomeAnswerSubject.merged(nearby: nearby, remembered: remembered)
+
+        // 3 nearby + 2 unique remembered = 5 subjects total
+        XCTAssertEqual(subjects.count, 5)
+
+        let nearbySubjects = subjects.filter { $0.provenance == HomeSubjectProvenance.nearby }
+        let recentSubjects = subjects.filter { $0.provenance == HomeSubjectProvenance.recent }
+
+        XCTAssertEqual(nearbySubjects.map { $0.id }, ["n1", "n2", "common"])
+        XCTAssertEqual(recentSubjects.map { $0.id }, ["r1", "r2"])
+        XCTAssertEqual(nearbySubjects.first?.distanceMeters, 50)
+        XCTAssertNil(recentSubjects.first?.distanceMeters)
+    }
+
+    func testHomeAnswerSubjectMergedEnforcesPerSectionLimits() {
+        let nearby = (1...15).map {
+            NearbyMerchant(id: "n\($0)", name: "Nearby \($0)", poiCategoryRaw: "cafe", latitude: 43.65, longitude: -79.38, distanceMeters: Double($0 * 10))
+        }
+        let remembered = (1...15).map {
+            StoredMerchant(name: "Recent \($0)", identifier: "r\($0)", poiCategoryRaw: "grocery", latitude: 43.65, longitude: -79.38)
+        }
+
+        let subjects = HomeAnswerSubject.merged(nearby: nearby, remembered: remembered, nearbyLimit: 3, rememberedLimit: 4)
+
+        let nearbySubjects = subjects.filter { $0.provenance == HomeSubjectProvenance.nearby }
+        let recentSubjects = subjects.filter { $0.provenance == HomeSubjectProvenance.recent }
+
+        XCTAssertEqual(nearbySubjects.count, 3)
+        XCTAssertEqual(recentSubjects.count, 4)
+        XCTAssertEqual(subjects.count, 7)
+    }
 }

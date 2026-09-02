@@ -218,6 +218,10 @@ final class CopilotSession {
     private(set) var cachedLocation: CachedLocation?
     private(set) var locationDenied = false
     private(set) var nearbyPreparationState: NearbyPreparationState = .idle
+    /// Whether the published nearby result has outlived the window in which it may be trusted
+    /// without re-querying. Kept as stored, observable state rather than derived from a date:
+    /// nothing re-renders a view because time passed, so the expiry timer has to say so.
+    private(set) var nearbyResultIsStale = false
     private(set) var nearbyMetrics: NearbyLookupMetrics
 
     private let locationProvider: any CheckoutLocationProviding
@@ -264,6 +268,7 @@ final class CopilotSession {
         preparedLocationFix = nil
         cachedLocation = nil
         nearbyPreparationState = .idle
+        nearbyResultIsStale = false
         nearbyMetricsStore.forgetAll()
         nearbyMetrics = NearbyLookupMetrics()
     }
@@ -329,21 +334,32 @@ final class CopilotSession {
         }
     }
 
+    /// What Home shows. Deliberately free of a freshness guard: an aged result is still the best
+    /// answer to "where am I", and deleting it left Home with no subject at all one minute after
+    /// a scan. Age is surfaced through `nearbyResultIsStale`, not by making the card disappear.
+    ///
+    /// Trust is a separate question, and `preparedOutcomeForTap` still answers it.
     var preparedNearbyMerchants: [NearbyMerchant] {
-        guard nearbySnapshot?.isRecent == true,
-              case .ready = nearbyPreparationState,
-              case .found(let merchants) = preparedNearbyOutcome else { return [] }
+        guard case .found(let merchants) = preparedNearbyOutcome else { return [] }
         return merchants
     }
+
+    /// When the displayed result was fetched, for the card's age hint.
+    var nearbyResultFetchedAt: Date? { nearbySnapshot?.fetchedAt }
 
     var preparedNearestMerchant: NearbyMerchant? {
         preparedNearbyMerchants.first
     }
 
-    /// A direct shortcut is offered only when the fix itself is reasonably accurate, the first
-    /// result is close, and the runner-up is far enough away not to describe a crowded plaza.
+    /// A direct shortcut is offered only when the fix itself is fresh and reasonably accurate,
+    /// the first result is close, and the runner-up is far enough away not to describe a crowded
+    /// plaza.
+    ///
+    /// The freshness term matters more now that `preparedNearbyMerchants` has dropped it: an
+    /// aged result may still be shown, but it may not be presented as a confident answer.
     var confidentPreparedMerchant: NearbyMerchant? {
-        guard let fix = preparedLocationFix,
+        guard nearbySnapshot?.isRecent == true,
+              let fix = preparedLocationFix,
               fix.horizontalAccuracyMeters <= 100,
               case .found(let merchants) = preparedNearbyOutcome,
               let first = merchants.first,
@@ -363,6 +379,21 @@ final class CopilotSession {
               let preparedNearbyOutcome else { return nil }
         recordNearbyMetric(.tap(prepared: true, durationMilliseconds: 0))
         return preparedNearbyOutcome
+    }
+
+    /// Re-runs the scan for an explicit Radar tap and returns nothing, because the owner asked to
+    /// refresh Home rather than to navigate.
+    ///
+    /// The snapshot is dropped first on purpose. It exists to make the *automatic* path instant;
+    /// letting it also short-circuit a deliberate refresh would make the button a no-op for the
+    /// first minute, which is exactly when someone who has just walked somewhere would press it.
+    /// The previously published result stays visible throughout, so the card never blanks.
+    func rescanNearby(using graph: DependencyGraph) async {
+        nearbyExpiryTask?.cancel()
+        nearbyExpiryTask = nil
+        nearbySnapshot = nil
+        nearbyResultIsStale = false
+        _ = await findNearby(using: graph)
     }
 
     /// Warms both the one-shot fix and MapKit results as soon as the app becomes active. This
@@ -522,9 +553,16 @@ final class CopilotSession {
         preparedLocationFix = fix
         let count = if case .found(let merchants) = outcome { merchants.count } else { 0 }
         nearbyPreparationState = .ready(merchantCount: count)
+        nearbyResultIsStale = false
         schedulePreparedExpiry()
     }
 
+    /// Ages the published result rather than deleting it.
+    ///
+    /// This timer used to nil the outcome and reset the state to `.idle`, which is why Home's
+    /// nearby card vanished a minute after every scan. One boolean was gating two unrelated
+    /// questions — whether the result may be trusted without re-querying, and whether the owner
+    /// may still see it. Only the first has a deadline.
     private func schedulePreparedExpiry() {
         nearbyExpiryTask?.cancel()
         guard let fetchedAt = nearbySnapshot?.fetchedAt else { return }
@@ -533,9 +571,7 @@ final class CopilotSession {
             try? await Task.sleep(for: .seconds(remaining))
             guard !Task.isCancelled,
                   self?.nearbySnapshot?.fetchedAt == fetchedAt else { return }
-            self?.preparedNearbyOutcome = nil
-            self?.preparedLocationFix = nil
-            self?.nearbyPreparationState = .idle
+            self?.nearbyResultIsStale = true
         }
     }
 

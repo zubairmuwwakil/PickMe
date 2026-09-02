@@ -62,6 +62,13 @@ final class ChipBanterQueueTests: XCTestCase {
                       "advancing from a stale index must still land in range")
     }
 
+    func testRetreatingWrapsAroundTheBeginning() {
+        let q = queue(standing: 3)
+        XCTAssertEqual(q.retreated(from: 2), 1)
+        XCTAssertEqual(q.retreated(from: 0), 2)
+        XCTAssertEqual(ChipBanterQueue().retreated(from: 5), 0)
+    }
+
     func testEveryIndexInALongRunStaysInRange() {
         let q = queue(insights: 2, standing: 4)
         var index = 0
@@ -100,6 +107,10 @@ final class ChipBanterQueueTests: XCTestCase {
             ("that $799 annual fee still gives me chills", "FEE TRAUMA"),
             ("this copilot runs on matcha", "ENERGY CHECK"),
             ("Why PickMe? Because life is too short", "ORIGIN STORY"),
+            ("⚡️ OVERCLOCKING ENGINE: Simulating 50,000 reward strategies...", "OVERCLOCK ENGINE"),
+            ("Who spiked the gyroscope?! I'm an EMV micro-chip", "GYROSCOPE"),
+            ("Costco Canada is strictly Mastercard-only", "COSTCO TRAP"),
+            ("Pure 24-karat grid voltage detected!", "GRID VOLTAGE"),
             ("HEY! That's my face!", "CHIP REACTION"),
         ]
         for (text, expected) in cases {
