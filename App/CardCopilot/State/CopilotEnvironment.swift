@@ -56,6 +56,8 @@ final class CopilotEnvironment {
     /// never reached the gate.
     private(set) var ambientCoverage = AmbientCoverageLog()
     private(set) var ambientEnabled = false
+    /// The alert dials in force. `.shipped` outside a field-diagnostics build, always.
+    private(set) var ambientAlertPolicy = AmbientAlertPolicy.shipped
     private(set) var ambientRuntimeStatus = AmbientRuntimeStatus()
     var ambientReady: Bool { ambientRuntimeStatus.isReady }
     private(set) var walletIsFirstRun = false
@@ -218,8 +220,16 @@ final class CopilotEnvironment {
     func refreshAmbientDiagnostics() {
         ambientDiagnostics = ambient.diagnostics
         ambientCoverage = ambient.coverage
+        ambientAlertPolicy = ambient.activeAlertPolicy
         ambientEnabled = ambient.isEnabled
         Task { await refreshAmbientRuntimeStatus() }
+    }
+
+    /// Written through the service rather than into a store this type owns, so the value the
+    /// debug screen shows and the value an arrival is evaluated against cannot diverge.
+    func saveAmbientAlertPolicy(_ policy: AmbientAlertPolicy) {
+        ambient.saveAlertPolicy(policy)
+        ambientAlertPolicy = ambient.activeAlertPolicy
     }
 
     func refreshAmbientRuntimeStatus() async {

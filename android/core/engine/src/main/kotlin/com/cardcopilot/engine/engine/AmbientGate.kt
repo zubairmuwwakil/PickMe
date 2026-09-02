@@ -42,7 +42,17 @@ data class AmbientGateInput(
     val defaultCardId: String,
     val advantage: AmbientAdvantage,
     val switchThreshold: SwitchThreshold,
-    val isMuted: Boolean
+    val isMuted: Boolean,
+    /**
+     * The three tier multipliers, carried on the input rather than read from constants. They were
+     * constants so tuning one was a single edit, which is the right shape for a number somebody
+     * has already worked out and the wrong shape for three nobody has: the honest justification
+     * for any of them is the suppression counters, and a constant cannot move while those accrue.
+     * Defaulted to the shipped values, so an omitted argument reproduces today's policy exactly.
+     */
+    val unverifiedAdvantageMultiplier: Double = AmbientGate.UNVERIFIED_ADVANTAGE_MULTIPLIER,
+    val frequentedAdvantageMultiplier: Double = AmbientGate.FREQUENTED_ADVANTAGE_MULTIPLIER,
+    val categoryAdvantageMultiplier: Double = AmbientGate.CATEGORY_ADVANTAGE_MULTIPLIER
 )
 
 enum class AmbientSuppressionReason {
@@ -150,7 +160,7 @@ object AmbientGate {
             AmbientMerchantConfidence.BRAND_MATCHED -> {
                 if (!clearsSwitchThreshold(
                         input.advantage,
-                        scaled(input.switchThreshold, UNVERIFIED_ADVANTAGE_MULTIPLIER)
+                        scaled(input.switchThreshold, input.unverifiedAdvantageMultiplier)
                     )
                 ) {
                     reasons.add(AmbientSuppressionReason.ADVANTAGE_BELOW_UNVERIFIED_THRESHOLD)
@@ -159,7 +169,7 @@ object AmbientGate {
             AmbientMerchantConfidence.FREQUENTED -> {
                 if (!clearsSwitchThreshold(
                         input.advantage,
-                        scaled(input.switchThreshold, FREQUENTED_ADVANTAGE_MULTIPLIER)
+                        scaled(input.switchThreshold, input.frequentedAdvantageMultiplier)
                     )
                 ) {
                     reasons.add(AmbientSuppressionReason.ADVANTAGE_BELOW_FREQUENTED_THRESHOLD)
@@ -168,7 +178,7 @@ object AmbientGate {
             AmbientMerchantConfidence.CATEGORY_MATCHED -> {
                 if (!clearsSwitchThreshold(
                         input.advantage,
-                        scaled(input.switchThreshold, CATEGORY_ADVANTAGE_MULTIPLIER)
+                        scaled(input.switchThreshold, input.categoryAdvantageMultiplier)
                     )
                 ) {
                     reasons.add(AmbientSuppressionReason.ADVANTAGE_BELOW_CATEGORY_THRESHOLD)

@@ -300,6 +300,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private let provider = LiveMerchantProvider()
     private let patronageStore = MerchantPatronageStore()
     private let alertPreferenceStore = ArrivalAlertPreferenceStore()
+    private let alertPolicyStore = AmbientAlertPolicyStore()
 
     /// Ten metres rather than `kCLLocationAccuracyBest`: storefronts in a plaza are tens of
     /// metres apart, so ten metres is the accuracy that actually decides anything, and it settles
@@ -452,6 +453,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         queryLog.forgetAll()
         patronageStore.forgetAll()
         alertPreferenceStore.forgetAll()
+        alertPolicyStore.forgetAll()
     }
 
     /// Called only from the dedicated explainer screen, before either system prompt appears.
@@ -742,9 +744,14 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                       merchantName: arrival.merchant.name),
                          forRegionId: regionId)
 
+        // The dials are read once per arrival and then carried, so the estimate the engine
+        // scored and the multiplier the gate applied are guaranteed to come from one policy —
+        // which is what makes a field-log record replayable at all.
+        let policy = activeAlertPolicy
         let purchase = ambientPurchaseContext(merchant: arrival.merchant,
                                               category: arrival.prediction.category,
-                                              mcc: arrival.mcc)
+                                              mcc: arrival.mcc,
+                                              estimate: policy.amountEstimate)
         guard case .advised(let recommendation) = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
             .recommend(purchase, asOf: Date().formatted(.iso8601.year().month().day())) else {
             coverageStore.recordArrival(.notAdvised)
@@ -763,8 +770,11 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             recommendedCardId: recommendation.winner.cardId,
             defaultCardId: ownerState.defaultCardId,
             advantage: AmbientAdvantage(percentagePoints: advantagePP, cad: advantageCad),
-            switchThreshold: ownerState.switchThreshold,
-            isMuted: muteStore.isMuted(arrival.muteKey) || explicit == false
+            switchThreshold: policy.threshold(ownerThreshold: ownerState.switchThreshold),
+            isMuted: muteStore.isMuted(arrival.muteKey) || explicit == false,
+            unverifiedAdvantageMultiplier: policy.unverifiedAdvantageMultiplier,
+            frequentedAdvantageMultiplier: policy.frequentedAdvantageMultiplier,
+            categoryAdvantageMultiplier: policy.categoryAdvantageMultiplier
         ))
         // The gate no longer decides whether PickMe is visible — only how loud it is. Silence is
         // now reserved for the one reason that is the owner's own instruction.
@@ -900,6 +910,24 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                             locationIdentifier: identifier,
                                             latitude: latitude,
                                             longitude: longitude)
+    }
+
+    /// The policy an arrival is actually evaluated against.
+    ///
+    /// A release build evaluates the shipped policy, full stop. The dials exist so a field build
+    /// can be moved while the suppression counters accrue — the whole argument for making them
+    /// adjustable is that the right threshold is what the engagement data says — and they are
+    /// deliberately not a hidden owner setting.
+    var activeAlertPolicy: AmbientAlertPolicy {
+        #if FIELD_DIAGNOSTICS
+        return alertPolicyStore.policy
+        #else
+        return .shipped
+        #endif
+    }
+
+    func saveAlertPolicy(_ policy: AmbientAlertPolicy) {
+        alertPolicyStore.save(policy)
     }
 
     private func effectiveFrequentedKeys() -> Set<String> {

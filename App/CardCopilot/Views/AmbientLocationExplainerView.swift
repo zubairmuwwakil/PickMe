@@ -13,6 +13,12 @@ struct AmbientLocationExplainerView: View {
     /// and merging them would let a healthy gate hide an unhealthy budget.
     var coverage: AmbientCoverageLog? = nil
     var runtimeStatus: AmbientRuntimeStatus? = nil
+    /// The owner's own switch threshold, needed only by the field-diagnostics section: the
+    /// effective bar cannot be reported without the floors it is derived from. Optional because
+    /// the wallet may not be set up yet, in which case there is no policy to describe.
+    var ownerThreshold: SwitchThreshold? = nil
+    var alertPolicy: AmbientAlertPolicy = .shipped
+    var onAlertPolicyChange: (AmbientAlertPolicy) -> Void = { _ in }
     let onEnable: () -> Void
     var onTestNotification: () -> Void = {}
     let onDone: () -> Void
@@ -158,6 +164,8 @@ struct AmbientLocationExplainerView: View {
                 coverageCard(coverage)
             }
 
+            fieldDiagnosticsSection
+
             VStack(spacing: 12) {
                 Button("Send test notification", action: onTestNotification)
                     .buttonStyle(.bordered)
@@ -185,6 +193,23 @@ struct AmbientLocationExplainerView: View {
                 }
             }
         }
+    }
+}
+
+extension AmbientLocationExplainerView {
+    /// Empty outside a field-diagnostics build, so a release binary carries neither the controls
+    /// nor the state they would need.
+    @ViewBuilder
+    var fieldDiagnosticsSection: some View {
+        #if FIELD_DIAGNOSTICS
+        if let ownerThreshold {
+            AmbientDebugPolicySection(
+                ownerThreshold: ownerThreshold,
+                policy: Binding(get: { alertPolicy }, set: onAlertPolicyChange))
+        }
+        #else
+        EmptyView()
+        #endif
     }
 }
 

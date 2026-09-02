@@ -43,9 +43,10 @@ let fallbackAmountEstimate: Double = 50
 /// Ambient delivery uses a clearly bounded category estimate only to decide whether to stay
 /// silent; it never persists that estimate as a purchase observation.
 public func ambientPurchaseContext(merchant: NearbyMerchant, category: String,
-                                   mcc: Int? = nil) -> PurchaseContext {
+                                   mcc: Int? = nil,
+                                   estimate: AmbientAmountEstimate = .perCategory) -> PurchaseContext {
     let brand = canonicalEngineBrand(merchant.name)
-    let amount = categoryAmountEstimates[category] ?? fallbackAmountEstimate
+    let amount = ambientEstimatedAmountCad(category: category, estimate: estimate)
     return PurchaseContext(amountCad: amount,
                            category: category,
                            mcc: mcc,

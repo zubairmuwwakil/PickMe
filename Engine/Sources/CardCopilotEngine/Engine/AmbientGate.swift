@@ -67,16 +67,59 @@ public struct AmbientGateInput: Codable, Equatable, Sendable {
     public var advantage: AmbientAdvantage
     public var switchThreshold: SwitchThreshold
     public var isMuted: Bool
+    /// The three tier multipliers, carried on the input rather than read from constants.
+    ///
+    /// They were constants so that tuning one was "one edit with one test". That is the right
+    /// shape for a number somebody has already worked out, and the wrong shape for three numbers
+    /// nobody has: the honest justification for any of them is the suppression counters, and a
+    /// constant cannot be moved while the counters are accruing. Defaulted to the shipped values
+    /// so an omitted argument reproduces today's policy exactly — see
+    /// `testOmittedMultipliersReproduceTheShippedPolicy`.
+    public var unverifiedAdvantageMultiplier: Double
+    public var frequentedAdvantageMultiplier: Double
+    public var categoryAdvantageMultiplier: Double
 
     public init(merchantConfidence: AmbientMerchantConfidence, recommendedCardId: String,
                 defaultCardId: String, advantage: AmbientAdvantage,
-                switchThreshold: SwitchThreshold, isMuted: Bool) {
+                switchThreshold: SwitchThreshold, isMuted: Bool,
+                unverifiedAdvantageMultiplier: Double = AmbientGate.unverifiedAdvantageMultiplier,
+                frequentedAdvantageMultiplier: Double = AmbientGate.frequentedAdvantageMultiplier,
+                categoryAdvantageMultiplier: Double = AmbientGate.categoryAdvantageMultiplier) {
         self.merchantConfidence = merchantConfidence
         self.recommendedCardId = recommendedCardId
         self.defaultCardId = defaultCardId
         self.advantage = advantage
         self.switchThreshold = switchThreshold
         self.isMuted = isMuted
+        self.unverifiedAdvantageMultiplier = unverifiedAdvantageMultiplier
+        self.frequentedAdvantageMultiplier = frequentedAdvantageMultiplier
+        self.categoryAdvantageMultiplier = categoryAdvantageMultiplier
+    }
+
+    /// Tolerant of payloads written before a multiplier existed.
+    ///
+    /// The field log persists raw gate inputs so alternative policies can be replayed offline,
+    /// and it accrues across app updates. A synthesized decoder would throw on the first record
+    /// written by an earlier build and take the whole ring buffer with it — which is the one
+    /// failure a log kept for a field week cannot afford.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        merchantConfidence = try container.decode(AmbientMerchantConfidence.self,
+                                                  forKey: .merchantConfidence)
+        recommendedCardId = try container.decode(String.self, forKey: .recommendedCardId)
+        defaultCardId = try container.decode(String.self, forKey: .defaultCardId)
+        advantage = try container.decode(AmbientAdvantage.self, forKey: .advantage)
+        switchThreshold = try container.decode(SwitchThreshold.self, forKey: .switchThreshold)
+        isMuted = try container.decode(Bool.self, forKey: .isMuted)
+        unverifiedAdvantageMultiplier = try container.decodeIfPresent(
+            Double.self, forKey: .unverifiedAdvantageMultiplier)
+            ?? AmbientGate.unverifiedAdvantageMultiplier
+        frequentedAdvantageMultiplier = try container.decodeIfPresent(
+            Double.self, forKey: .frequentedAdvantageMultiplier)
+            ?? AmbientGate.frequentedAdvantageMultiplier
+        categoryAdvantageMultiplier = try container.decodeIfPresent(
+            Double.self, forKey: .categoryAdvantageMultiplier)
+            ?? AmbientGate.categoryAdvantageMultiplier
     }
 }
 
@@ -207,19 +250,19 @@ public enum AmbientGate {
         case .brandMatched:
             if !clearsSwitchThreshold(input.advantage,
                                       threshold: scaled(input.switchThreshold,
-                                                        by: unverifiedAdvantageMultiplier)) {
+                                                        by: input.unverifiedAdvantageMultiplier)) {
                 reasons.insert(.advantageBelowUnverifiedThreshold)
             }
         case .frequented:
             if !clearsSwitchThreshold(input.advantage,
                                       threshold: scaled(input.switchThreshold,
-                                                        by: frequentedAdvantageMultiplier)) {
+                                                        by: input.frequentedAdvantageMultiplier)) {
                 reasons.insert(.advantageBelowFrequentedThreshold)
             }
         case .categoryMatched:
             if !clearsSwitchThreshold(input.advantage,
                                       threshold: scaled(input.switchThreshold,
-                                                        by: categoryAdvantageMultiplier)) {
+                                                        by: input.categoryAdvantageMultiplier)) {
                 reasons.insert(.advantageBelowCategoryThreshold)
             }
         }
@@ -229,7 +272,11 @@ public enum AmbientGate {
 
     /// Scales both floors, leaving `semantics` alone. Scaling only one axis would silently turn
     /// an `either` threshold into a stricter rule on whichever axis was left unscaled.
-    static func scaled(_ threshold: SwitchThreshold, by multiplier: Double) -> SwitchThreshold {
+    ///
+    /// Public because the debug screen has to report the bar an arrival actually faces, and a
+    /// second copy of this arithmetic outside the engine is a second place for it to drift from
+    /// what the gate does. (The Kotlin twin has always been public.)
+    public static func scaled(_ threshold: SwitchThreshold, by multiplier: Double) -> SwitchThreshold {
         SwitchThreshold(
             minAdvantagePercentagePoints: threshold.minAdvantagePercentagePoints * multiplier,
             minAdvantageCad: threshold.minAdvantageCad * multiplier,

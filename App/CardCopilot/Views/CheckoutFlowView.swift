@@ -392,6 +392,9 @@ struct CheckoutFlowView: View {
                 diagnostics: environment.ambientDiagnostics,
                 coverage: environment.ambientCoverage,
                 runtimeStatus: environment.ambientRuntimeStatus,
+                ownerThreshold: environment.graph?.ownerState.switchThreshold,
+                alertPolicy: environment.ambientAlertPolicy,
+                onAlertPolicyChange: { environment.saveAmbientAlertPolicy($0) },
                 onEnable: {
                     Task {
                         await environment.enableArrivalAlerts()

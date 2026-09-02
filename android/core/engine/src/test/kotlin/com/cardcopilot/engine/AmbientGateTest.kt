@@ -176,4 +176,67 @@ class AmbientGateTest {
             )
         }
     }
+
+    /**
+     * The point of moving these onto the input is that they can change at runtime, so the one
+     * thing that must not change is what happens when nobody changes them.
+     */
+    @Test
+    fun omittedMultipliersReproduceTheShippedPolicy() {
+        val input = passingInput()
+        assertEquals(2.0, input.unverifiedAdvantageMultiplier)
+        assertEquals(1.0, input.frequentedAdvantageMultiplier)
+        assertEquals(2.0, input.categoryAdvantageMultiplier)
+    }
+
+    @Test
+    fun theUnverifiedMultiplierIsReadFromTheInput() {
+        val base = passingInput().copy(
+            merchantConfidence = AmbientMerchantConfidence.BRAND_MATCHED,
+            advantage = AmbientAdvantage(percentagePoints = 1.0, cad = 1.0)
+        )
+        assertEquals(
+            setOf(AmbientSuppressionReason.ADVANTAGE_BELOW_UNVERIFIED_THRESHOLD),
+            AmbientGate.evaluate(base).suppressionReasons
+        )
+        assertTrue(AmbientGate.evaluate(base.copy(unverifiedAdvantageMultiplier = 1.0)).fires)
+    }
+
+    @Test
+    fun theFrequentedMultiplierIsReadFromTheInput() {
+        val base = passingInput().copy(
+            merchantConfidence = AmbientMerchantConfidence.FREQUENTED,
+            advantage = AmbientAdvantage(percentagePoints = 1.0, cad = 1.0)
+        )
+        assertTrue(AmbientGate.evaluate(base).fires)
+        assertEquals(
+            setOf(AmbientSuppressionReason.ADVANTAGE_BELOW_FREQUENTED_THRESHOLD),
+            AmbientGate.evaluate(base.copy(frequentedAdvantageMultiplier = 2.0)).suppressionReasons
+        )
+    }
+
+    @Test
+    fun theCategoryMultiplierIsReadFromTheInput() {
+        val base = passingInput().copy(
+            merchantConfidence = AmbientMerchantConfidence.CATEGORY_MATCHED,
+            advantage = AmbientAdvantage(percentagePoints = 1.0, cad = 1.0)
+        )
+        assertEquals(
+            setOf(AmbientSuppressionReason.ADVANTAGE_BELOW_CATEGORY_THRESHOLD),
+            AmbientGate.evaluate(base).suppressionReasons
+        )
+        assertTrue(AmbientGate.evaluate(base.copy(categoryAdvantageMultiplier = 1.0)).fires)
+    }
+
+    /** Each multiplier reaches exactly its own tier; the verified tier is never scaled. */
+    @Test
+    fun eachMultiplierReachesOnlyItsOwnTier() {
+        val input = passingInput().copy(
+            advantage = AmbientAdvantage(percentagePoints = 1.0, cad = 1.0),
+            unverifiedAdvantageMultiplier = 100.0,
+            frequentedAdvantageMultiplier = 100.0,
+            categoryAdvantageMultiplier = 100.0
+        )
+        assertTrue(AmbientGate.evaluate(input).fires)
+    }
 }

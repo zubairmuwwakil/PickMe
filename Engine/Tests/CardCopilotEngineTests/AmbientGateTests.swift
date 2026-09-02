@@ -339,3 +339,79 @@ extension AmbientGateTests {
         }
     }
 }
+
+// MARK: - Multipliers as inputs (adjustable alert policy)
+
+extension AmbientGateTests {
+    /// The whole point of moving these onto the input is that they can be changed at runtime, so
+    /// the one thing that must never change is what happens when nobody changes them. An omitted
+    /// argument has to reproduce the shipped policy exactly.
+    func testOmittedMultipliersReproduceTheShippedPolicy() {
+        let input = passingInput()
+        XCTAssertEqual(input.unverifiedAdvantageMultiplier, 2.0)
+        XCTAssertEqual(input.frequentedAdvantageMultiplier, 1.0)
+        XCTAssertEqual(input.categoryAdvantageMultiplier, 2.0)
+    }
+
+    /// Decoded from a payload written before the multipliers existed — a field-log record
+    /// persisted by an earlier build. Missing values must fall back to the shipped policy rather
+    /// than failing the decode and taking a week of records with them.
+    func testAPayloadWithoutMultipliersDecodesToTheShippedPolicy() throws {
+        let legacy = """
+        {"merchantConfidence":"verified","recommendedCardId":"amex-cobalt",
+         "defaultCardId":"wealthsimple-vip",
+         "advantage":{"percentagePoints":1.5,"cad":2},
+         "switchThreshold":{"minAdvantagePercentagePoints":1,"minAdvantageCad":1,
+                            "semantics":"both"},
+         "isMuted":false}
+        """
+        let decoded = try JSONDecoder().decode(AmbientGateInput.self,
+                                               from: Data(legacy.utf8))
+        XCTAssertEqual(decoded, passingInput())
+    }
+
+    func testTheUnverifiedMultiplierIsReadFromTheInput() {
+        var input = passingInput()
+        input.merchantConfidence = .brandMatched
+        input.advantage = AmbientAdvantage(percentagePoints: 1, cad: 1)
+        XCTAssertEqual(AmbientGate.evaluate(input).suppressionReasons,
+                       [.advantageBelowUnverifiedThreshold])
+
+        input.unverifiedAdvantageMultiplier = 1.0
+        XCTAssertTrue(AmbientGate.evaluate(input).fires)
+    }
+
+    func testTheFrequentedMultiplierIsReadFromTheInput() {
+        var input = passingInput()
+        input.merchantConfidence = .frequented
+        input.advantage = AmbientAdvantage(percentagePoints: 1, cad: 1)
+        XCTAssertTrue(AmbientGate.evaluate(input).fires)
+
+        input.frequentedAdvantageMultiplier = 2.0
+        XCTAssertEqual(AmbientGate.evaluate(input).suppressionReasons,
+                       [.advantageBelowFrequentedThreshold])
+    }
+
+    func testTheCategoryMultiplierIsReadFromTheInput() {
+        var input = passingInput()
+        input.merchantConfidence = .categoryMatched
+        input.advantage = AmbientAdvantage(percentagePoints: 1, cad: 1)
+        XCTAssertEqual(AmbientGate.evaluate(input).suppressionReasons,
+                       [.advantageBelowCategoryThreshold])
+
+        input.categoryAdvantageMultiplier = 1.0
+        XCTAssertTrue(AmbientGate.evaluate(input).fires)
+    }
+
+    /// Each multiplier reaches exactly its own tier. Without this, a debug screen that lowers one
+    /// dial and watches a different tier start firing would be measuring the wrong thing.
+    func testEachMultiplierReachesOnlyItsOwnTier() {
+        var input = passingInput()
+        input.advantage = AmbientAdvantage(percentagePoints: 1, cad: 1)
+        input.unverifiedAdvantageMultiplier = 100
+        input.frequentedAdvantageMultiplier = 100
+        input.categoryAdvantageMultiplier = 100
+        XCTAssertTrue(AmbientGate.evaluate(input).fires,
+                      "the verified tier is measured against the owner's own floor, unscaled")
+    }
+}
