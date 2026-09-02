@@ -1,7 +1,7 @@
 # Merchant category resolution — one ladder, one source
 
 **Date:** 2026-09-01
-**Status:** design, awaiting review
+**Status:** implemented 2026-09-01 (480f43d, ec9f929, ad5048e, 0cbc37c) — see Implementation status
 **Scope:** PickMe only. No cross-repo work, no new data sources.
 
 ## The problem
@@ -319,3 +319,33 @@ transaction-access rail for Canadian bank and card accounts,"* with the explicit
 instruction *"Do not plan v1 or v1.5 Canadian reconciliation around FinanceKit."*
 Two specs disagree and the newer one plans on a rail unavailable in this market.
 Reconcile separately from this work.
+
+## Implementation status (2026-09-01)
+
+Parts 1–4 landed across four commits. Gates green at each: Engine 367, Store 393,
+`:core:engine:test`, App target builds, 9 contracts schema-valid.
+
+Deliberately **not** done, and why:
+
+- **Two App-side counters are unwired.** `walletEnrichmentAttempted` and the skip
+  path inside `enrichUnknownWalletMerchants` live in `CheckoutFlowView.swift`,
+  which another session is actively rewriting (496 lines in flight). Wiring them
+  means editing that file mid-change. `walletEnrichmentSkippedWithoutLocation` is
+  wired where it belongs anyway — `AutoCaptureLog.record`, at ingest — so the
+  "could never look" population is already counted. What is missing is only the
+  attempt count for captures that *do* carry a fix.
+- **No diagnostics surface yet.** The counters are recorded and readable via
+  `CategoryResolutionMetricsStore().snapshot`; nothing displays them. Ship, let
+  them accumulate on a real device, then read them — that ordering is the point.
+- **Two edits sit uncommitted in another session's files.**
+  `HomeView.swift:785` (`NearbyMerchant(preIndexed:)`) and
+  `HomeAnswerSubject.swift:62` (`resolveCategory(for:)`) are both required for the
+  fix to reach the UI, and both are on disk and building. They are unstaged
+  because those files carry another session's in-flight work; committing them
+  would commit that work too.
+
+Three pack keys were removed as part of Part 2 — `bell`, `montreal`, `ottawa`.
+They were generated from display names into a file nothing read, and the moment
+recognition started reading it they made "Taco Bell" a hydro account and every
+business in two cities a transit merchant. The old derivation logic had refused to
+produce exactly these; the pack's own curation rule already forbids them.
