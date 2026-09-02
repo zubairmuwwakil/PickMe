@@ -70,7 +70,10 @@ public func resolveWalletMerchant(capturedName: String,
     }
 }
 
-private func compactMerchantIdentity(_ value: String) -> String {
+/// Internal rather than private: the field log's receipt join needs the same identity notion the
+/// wallet join uses, and a second normaliser is a second place for "SHOPPERS DRUG MART #1234" to
+/// stop matching "Shoppers Drug Mart".
+func compactMerchantIdentity(_ value: String) -> String {
     value.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
         .unicodeScalars
         .filter { CharacterSet.alphanumerics.contains($0) }
