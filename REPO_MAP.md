@@ -46,7 +46,7 @@ Existing automation remains under `scripts/`:
 - `release-catalogue.sh` stamps an immutable content-addressed release;
   `publish-catalogue.sh` performs the separate external publication.
 - `validate-catalogue-schema.py`, `check-id-permanence.sh`,
-  `check-raw-source-policy.sh`, and `generate-merchant-pack.mjs --check` verify
+  `check-raw-source-policy.sh`, and `validate-catalogue-schema.py` verify
   release/catalogue invariants.
 - `generate_*` scripts produce App Store or catalogue artifacts; outputs belong in
   the mapped artifact directory, not beside the script.

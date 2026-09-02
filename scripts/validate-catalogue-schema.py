@@ -53,6 +53,11 @@ PAIRS = [
     # jsonschema `referencing` registry this script does not build. That schema is also in the
     # digest and also unrun.
     ("engine-fixtures.json", "engine-fixtures.schema.json"),
+    # Added 2026-09-01, when the pack stopped being generated FROM Swift and became the source
+    # of truth Swift loads. `generate-merchant-pack.mjs --check` used to be its only gate, and it
+    # only ever asserted "the JSON matches the Swift array" — a question that no longer exists.
+    # The schema is now the thing keeping a hand-edited row honest.
+    ("merchant-pack.json", "merchant-pack.schema.json"),
 ]
 
 

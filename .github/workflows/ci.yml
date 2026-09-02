@@ -43,10 +43,13 @@ jobs:
       - name: Block uncleared raw-source material
         run: scripts/check-raw-source-policy.sh
 
-      # Merchant facts move independently from card-rate releases, so the pack has its own
-      # generator check instead of being folded into RELEASE.json.
-      - name: Verify merchant-pack.json matches its Swift source
-        run: node scripts/generate-merchant-pack.mjs --check
+      # Merchant facts move independently from card-rate releases, so the pack stays out of
+      # RELEASE.json's digest and carries its own packVersion. Until 2026-09-01 its gate asked
+      # "does this JSON match the Swift array it was generated from"; the pack is now the source
+      # of truth Swift loads, so the schema is what keeps a hand-edited row honest. Byte-level
+      # drift against Engine's bundled copy is covered separately by ContractsSyncTests.
+      - name: Validate contracts against their schemas
+        run: python3 scripts/validate-catalogue-schema.py
 
   engine-fixtures:
     name: engine-fixtures (swift test)

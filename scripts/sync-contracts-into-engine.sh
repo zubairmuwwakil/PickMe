@@ -22,6 +22,8 @@ cp "$root/contracts/owner-conditions.json" \
    "$root/Engine/Sources/CardCopilotEngine/Resources/owner-conditions.json"
 cp "$root/contracts/purchase-categories.json" \
    "$root/Engine/Sources/CardCopilotEngine/Resources/purchase-categories.json"
+cp "$root/contracts/merchant-pack.json" \
+   "$root/Engine/Sources/CardCopilotEngine/Resources/merchant-pack.json"
 cp "$root/contracts/owner-state.json" \
    "$root/Engine/Sources/CardCopilotEngine/Resources/owner-state.json"
 cp "$root/contracts/RELEASE.json" \

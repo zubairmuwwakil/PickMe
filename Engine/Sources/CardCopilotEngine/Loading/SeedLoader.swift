@@ -19,6 +19,11 @@ public enum SeedLoader {
     /// qualification facts change on a different cadence from reward arithmetic.
     static let supportedApplicationRequirementsMajorVersion = 1
 
+    /// First merchant-pack contract. Independent of the catalogue MAJOR because brand facts and
+    /// reward arithmetic change on entirely different cadences — a brand's descriptor keys move
+    /// when an acquirer changes its billing string, which has nothing to do with card rules.
+    static let supportedMerchantPackMajorVersion = 1
+
     public static func loadCatalogue() throws -> Catalogue {
         let catalogue: Catalogue = try load("card-catalogue")
         try validate(catalogueVersion: catalogue.catalogueVersion)
@@ -77,6 +82,24 @@ public enum SeedLoader {
         try load("purchase-categories")
     }
 
+    /// Brand -> spend-category facts for resolving a payment descriptor into a scoreable category.
+    public static func loadMerchantPack() throws -> MerchantPack {
+        let pack: MerchantPack = try load("merchant-pack")
+        try validate(packVersion: pack.packVersion)
+        return pack
+    }
+
+    /// Decoded once and reused by every merchant boundary. Traps rather than falling back to an
+    /// empty pack, for the same reason `purchaseCategories` does: the pack is a resource compiled
+    /// into the bundle and gated by `ContractsSyncTests`, so it cannot be unreadable at runtime
+    /// without the build itself being broken — and an empty fallback would silently uncategorize
+    /// every brand the owner has not confirmed by hand, which is the exact failure this contract
+    /// exists to prevent.
+    public static let merchantPack: MerchantPack = {
+        do { return try loadMerchantPack() }
+        catch { preconditionFailure("contracts/merchant-pack.json is unreadable: \(error)") }
+    }()
+
     /// Decoded once and reused by every category boundary. An unreadable registry is a broken
     /// build, not a reason to fall back to a second handwritten vocabulary.
     public static let purchaseCategories: PurchaseCategoryRegistry = {
@@ -132,6 +155,14 @@ public enum SeedLoader {
               let major = Int(majorComponent),
               major == supportedCandidateCatalogueMajorVersion else {
             throw SeedLoaderError.unsupportedCatalogueVersion(candidateCatalogueVersion)
+        }
+    }
+
+    static func validate(packVersion: String) throws {
+        guard let majorComponent = packVersion.split(separator: ".", maxSplits: 1).first,
+              let major = Int(majorComponent),
+              major == supportedMerchantPackMajorVersion else {
+            throw SeedLoaderError.unsupportedCatalogueVersion(packVersion)
         }
     }
 

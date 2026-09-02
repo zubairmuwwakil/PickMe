@@ -12,7 +12,7 @@
       "Bash(python3 scripts/validate-catalogue-schema.py)",
       "Bash(scripts/check-id-permanence.sh)",
       "Bash(scripts/check-raw-source-policy.sh)",
-      "Bash(node scripts/generate-merchant-pack.mjs --check)"
+      "Bash(python3 scripts/validate-catalogue-schema.py)"
     ]
   }
 }

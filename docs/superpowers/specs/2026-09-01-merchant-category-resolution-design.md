@@ -143,10 +143,24 @@ Invert it:
    `supportedCatalogueMajorVersion`.
 4. Rewrite `CanadianMerchantPreIndex` as a thin view over the loaded pack, keeping
    its public API (`all`, `search(_:limit:)`) and `PreIndexedMerchant`'s shape
-   unchanged so its five call sites need no edit.
+   unchanged so its five call sites need no edit — plus a new `matchKeys` field,
+   which is the whole point of loading the pack.
+
+   **`PreIndexedMerchant.id` must not adopt the pack's slug.** It is persisted:
+   `MerchantPatronageStore` keys visit history on it and resolves display names
+   back through it (`MerchantPatronageStore.swift:143`), and
+   `resolveDiscoveredMerchant` tests `frequentedKeys.contains(indexed.id)`. The
+   pack's `amazon-ca` is a different string from the historical `amazon.ca`, so
+   adopting it would silently orphan every owner's patronage record. The id stays
+   derived from the display name; adopting stable ids is a migration, not an edit.
 5. Delete the 127 hand-written rows from the Swift file.
-6. Reverse `generate-merchant-pack.mjs`: it stops reading Swift. The pack plus
-   `scripts/merchant-pack-overrides.json` become the editable surface.
+6. Delete `generate-merchant-pack.mjs` and `merchant-pack-overrides.json`. The
+   generator's only question was "does this JSON match the Swift array?", which
+   stops existing the moment the array does. Its curation guidance moves into the
+   pack's own `_provenance` so it travels with the data, and its CI slot is taken
+   by `scripts/validate-catalogue-schema.py` — which now covers the pack and
+   catches the failure the generator never could: a hand-edited `matchKey` that
+   is not normalized, and so can never match anything.
 
 **Android is untouched.** There is no Kotlin pre-index or `MerchantRecognizer`;
 merchant recognition is not engine semantics, so the cross-language gate does not
@@ -271,9 +285,8 @@ New coverage, written test-first:
 | `CheckoutServiceTests` (extend) | an enriched two-candidate purchase scores both branches and collapses when the winners agree |
 | `ContractsSyncTests` | `merchant-pack.json` matches its `Engine/Resources` copy byte for byte |
 
-`node scripts/generate-merchant-pack.mjs --check` stays green throughout, with its
-meaning inverted: it now verifies the pack against the overrides file rather than
-against Swift.
+`python3 scripts/validate-catalogue-schema.py` replaces the generator's CI step and
+must stay green.
 
 ## Follow-on, deliberately out of scope
 
