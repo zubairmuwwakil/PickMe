@@ -284,6 +284,12 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private static let verifiedMerchantRadiusMeters: Double = 60
 
     private let manager = CLLocationManager()
+    /// A second manager exists purely so an arrival fix and a significant-change update cannot
+    /// arrive on the same callback. `didUpdateLocations` has always meant "the owner moved far
+    /// enough to re-aim the geofences"; a one-shot arrival fix means nothing of the kind, and
+    /// routing both through one delegate would make every arrival trigger a discovery refresh
+    /// and every refresh look like an arrival's answer.
+    private let arrivalFixManager = CLLocationManager()
     private let notificationCenter = UNUserNotificationCenter.current()
     private let diagnosticsStore = AmbientDiagnosticsStore()
     private let coverageStore = AmbientCoverageStore()
@@ -294,6 +300,13 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private let provider = LiveMerchantProvider()
     private let patronageStore = MerchantPatronageStore()
     private let alertPreferenceStore = ArrivalAlertPreferenceStore()
+
+    /// Ten metres rather than `kCLLocationAccuracyBest`: storefronts in a plaza are tens of
+    /// metres apart, so ten metres is the accuracy that actually decides anything, and it settles
+    /// well inside a background wake where Best may not.
+    private lazy var arrivalFixRequester = ArrivalFixRequester { [weak self] in
+        self?.arrivalFixManager.requestLocation()
+    }
 
     private var modelContainer: ModelContainer?
     private var catalogue: Catalogue?
@@ -306,6 +319,8 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         authorizationStatus = manager.authorizationStatus
         super.init()
         manager.delegate = self
+        arrivalFixManager.delegate = self
+        arrivalFixManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
     }
 
     /// Registers every notification category in one operation. `setNotificationCategories`
@@ -481,7 +496,27 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
+        guard manager !== arrivalFixManager else {
+            if let fix = Self.arrivalFix(from: location) {
+                arrivalFixRequester.deliver(fix)
+            } else {
+                // CoreLocation does emit a negative `horizontalAccuracy`, which means the fix is
+                // invalid rather than merely coarse. Ranking storefronts against it would be
+                // worse than not ranking them at all.
+                arrivalFixRequester.fail()
+            }
+            return
+        }
         Task { await refreshDiscovery(around: location) }
+    }
+
+    /// The one place a `CLLocation` becomes the pure `ArrivalFix` the resolution policy takes.
+    private static func arrivalFix(from location: CLLocation) -> ArrivalFix? {
+        guard location.horizontalAccuracy >= 0 else { return nil }
+        return ArrivalFix(latitude: location.coordinate.latitude,
+                          longitude: location.coordinate.longitude,
+                          horizontalAccuracyMeters: location.horizontalAccuracy,
+                          capturedAt: location.timestamp)
     }
 
     func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
@@ -501,6 +536,13 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        guard manager !== arrivalFixManager else {
+            // No fix is a complete answer. Releasing the arrival now, rather than making it wait
+            // out a window nothing will arrive in, is the difference between resolving the way
+            // this always did and not resolving at all.
+            arrivalFixRequester.fail()
+            return
+        }
         runtimeStore.recordIssue("Location monitoring failed: \(error.localizedDescription)")
     }
 
@@ -682,10 +724,14 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
     private func evaluateArrival(at target: ArrivalTarget, regionId: String) async {
         guard let modelContainer, let catalogue, let ownerState else { return }
+        // Hold the arrival open until iOS says where the owner is, or until the window closes.
+        // `nil` is a complete answer: every use of it below falls back to exactly the behaviour
+        // this had before a fix was ever requested.
+        let fix = await arrivalFixRequester.fix()
         let context = ModelContext(modelContainer)
         // Both of the dropouts below used to `return` in silence, which made a background wake
         // that produced nothing indistinguishable from a wake that never happened.
-        guard let arrival = resolve(target, context: context) else {
+        guard let arrival = resolve(target, fix: fix, context: context) else {
             coverageStore.recordArrival(.unresolved)
             return
         }
@@ -756,7 +802,8 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
     /// Resolution ladder, cheapest and most certain first. Nothing here writes to the log — a
     /// geofence entry is not evidence that anything was bought.
-    private func resolve(_ target: ArrivalTarget, context: ModelContext) -> ResolvedArrival? {
+    private func resolve(_ target: ArrivalTarget, fix: ArrivalFix?,
+                         context: ModelContext) -> ResolvedArrival? {
         switch target {
         case .merchant(let id):
             guard let merchant = try? context.fetch(FetchDescriptor<StoredMerchant>(
@@ -767,11 +814,18 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             guard let area = try? context.fetch(FetchDescriptor<ShoppingArea>(
                 predicate: #Predicate { $0.id == id })).first else { return nil }
 
-            // Rung 1: an owner-reconciled terminal standing inside this area.
+            // Rung 1: an owner-reconciled terminal standing inside this area, measured from the
+            // owner rather than from the middle of the plaza. Areas run to
+            // `maximumAreaRadiusMeters`, so measuring the 60 m radius from the centroid meant a
+            // confirmed store near the edge could never claim its own visit — confirming a
+            // terminal by hand did not reliably promote it.
+            let origin = arrivalOrigin(fix: fix,
+                                       areaCentroidLatitude: area.centroidLatitude,
+                                       areaCentroidLongitude: area.centroidLongitude)
             let merchants = (try? context.fetch(FetchDescriptor<StoredMerchant>())) ?? []
             let nearestConfirmed = merchants
-                .map { ($0, greatCircleDistanceMeters(fromLatitude: area.centroidLatitude,
-                                                      fromLongitude: area.centroidLongitude,
+                .map { ($0, greatCircleDistanceMeters(fromLatitude: origin.latitude,
+                                                      fromLongitude: origin.longitude,
                                                       toLatitude: $0.latitude,
                                                       toLongitude: $0.longitude)) }
                 .filter { $0.1 <= Self.verifiedMerchantRadiusMeters && $0.0.confirmedCategory != nil }
@@ -793,10 +847,19 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                 ($0, resolveDiscoveredMerchant(name: $0.name, poiCategoryRaw: $0.poiCategoryRaw,
                                                frequentedKeys: frequentedKeys))
             }
+            // Nearest-first against the owner's own fix. Before this, the answer was
+            // `resolved.first`, whose order came from `clusterIntoAreas` sorting members by
+            // `(latitude, longitude, id)` — a sort that exists to keep region registration stable
+            // across rotations and silently became the resolution answer, naming the
+            // southernmost recognised store in the plaza. That sort is untouched; the ordering
+            // happens here, at the point of resolution. With no fix, the input order stands.
+            let ranked = nearestFirstOrder(area.members.map {
+                ArrivalSite(latitude: $0.latitude, longitude: $0.longitude)
+            }, from: fix).map { resolved[$0] }
             // A plaza holding one recognisable store and four unnamed pins is answered by the
             // store; a plaza of nothing but pins still answers, at `.unknown`, and is suppressed.
-            guard let (member, resolution) = resolved.first(where: { $0.1.confidence != .unknown })
-                    ?? resolved.first else { return nil }
+            guard let (member, resolution) = ranked.first(where: { $0.1.confidence != .unknown })
+                    ?? ranked.first else { return nil }
             let nearby = NearbyMerchant(id: member.identifier ?? member.name, name: member.name,
                                         poiCategoryRaw: member.poiCategoryRaw,
                                         latitude: member.latitude, longitude: member.longitude,
