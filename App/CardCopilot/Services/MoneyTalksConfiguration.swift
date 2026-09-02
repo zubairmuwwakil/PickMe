@@ -55,13 +55,19 @@ enum MoneyTalksConfiguration {
 @MainActor
 enum ClerkSession {
     static var currentUserID: String? {
-        guard MoneyTalksConfiguration.isConfigured else { return nil }
-        return Clerk.shared.user?.id
+        currentUser?.id
     }
 
     static var currentUser: User? {
         guard MoneyTalksConfiguration.isConfigured else { return nil }
-        return Clerk.shared.user
+        return authenticatedUser(in: Clerk.shared.session)
+    }
+
+    /// Clerk can return a user on a pending session that still needs account verification.
+    /// Keep the sign-in sheet open and defer wallet sync until that session becomes active.
+    static func authenticatedUser(in session: ClerkKit.Session?) -> User? {
+        guard session?.status == .active else { return nil }
+        return session?.user
     }
 
     static var isSignedIn: Bool { currentUserID != nil }

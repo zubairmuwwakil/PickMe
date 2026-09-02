@@ -139,9 +139,7 @@ struct WelcomeGatewayView: View {
         .background(Color(.systemGroupedBackground))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: authSheetIsPresented) {
-            PickMeAuthSheet {
-                authIsPresented = false
-            }
+            PickMeAuthSheet()
         }
         .onChange(of: isSignedIn) { _, signedIn in
             if signedIn { authIsPresented = false }

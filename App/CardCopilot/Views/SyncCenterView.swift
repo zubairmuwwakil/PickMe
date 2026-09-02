@@ -64,9 +64,7 @@ struct SyncCenterView: View {
             }
         }
         .sheet(isPresented: $authIsPresented) {
-            PickMeAuthSheet {
-                authIsPresented = false
-            }
+            PickMeAuthSheet()
         }
         .alert("Revoke this connection?", isPresented: .init(
             get: { pendingRevocation != nil },

@@ -1,9 +1,42 @@
 import XCTest
 import Security
 import CardCopilotStore
+import ClerkKit
 @testable import CardCopilot
 
 final class WelcomeGatewayStateTests: XCTestCase {
+    @MainActor
+    func testPendingAccountRequirementsKeepAuthenticationOpenUntilSessionIsActive() {
+        let now = Date()
+        let user = User(
+            backupCodeEnabled: false, createdAt: now, createOrganizationEnabled: false,
+            deleteSelfEnabled: false, emailAddresses: [], externalAccounts: [],
+            hasImage: false, id: "user-auth-test", imageUrl: "", organizationMemberships: [],
+            passkeys: [], passwordEnabled: false, phoneNumbers: [], totpEnabled: false,
+            twoFactorEnabled: false, updatedAt: now
+        )
+        var session = ClerkKit.Session(
+            id: "session-auth-test", status: .pending, expireAt: now.addingTimeInterval(3600),
+            abandonAt: now.addingTimeInterval(3600), lastActiveAt: now, user: user,
+            createdAt: now, updatedAt: now
+        )
+
+        XCTAssertNil(ClerkSession.authenticatedUser(in: session))
+        let content = WelcomeGatewayContent.resolve(
+            isConfigured: true,
+            isSignedIn: ClerkSession.authenticatedUser(in: session) != nil,
+            isPreparingAccount: false,
+            syncIssueMessage: nil
+        )
+        XCTAssertTrue(content.shouldPresentAuthentication(requested: true))
+
+        session.status = .active
+        XCTAssertEqual(ClerkSession.authenticatedUser(in: session)?.id, user.id)
+        session.status = .revoked
+        XCTAssertNil(ClerkSession.authenticatedUser(in: session))
+        XCTAssertNil(ClerkSession.authenticatedUser(in: nil))
+    }
+
     func testClerkStartsOnlyWhenKeychainIsUsable() {
         XCTAssertTrue(ClerkStartupPolicy.permitsConfiguration(for: errSecSuccess))
         XCTAssertTrue(ClerkStartupPolicy.permitsConfiguration(for: errSecItemNotFound))

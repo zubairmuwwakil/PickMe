@@ -474,6 +474,11 @@
 					};
 					A1000006 = {
 						CreatedOnToolsVersion = 26.3;
+						SystemCapabilities = {
+							com.apple.SignInWithApple = {
+								enabled = 1;
+							};
+						};
 					};
 					A1000055 = {
 						CreatedOnToolsVersion = 26.3;

@@ -543,6 +543,9 @@
     "≈ $%@ return" : {
 
     },
+    "🇨🇦 CANADA" : {
+
+    },
     "$" : {
       "localizations" : {
         "fr-CA" : {
@@ -682,6 +685,9 @@
           }
         }
       }
+    },
+    "above standard 1x base earn" : {
+
     },
     "Accept" : {
 
@@ -1371,6 +1377,9 @@
     "Arrival alerts ready" : {
 
     },
+    "Arrived with no location" : {
+
+    },
     "Assign to This Account" : {
 
     },
@@ -1767,6 +1776,9 @@
     "Category Condition" : {
 
     },
+    "Category diagnostics" : {
+
+    },
     "Certificate confirms no listed coverage" : {
 
     },
@@ -1824,6 +1836,9 @@
 
     },
     "Charged" : {
+
+    },
+    "Check out how much I've saved with PickMe:" : {
 
     },
     "Checking active credentials…" : {
@@ -1940,6 +1955,9 @@
 
     },
     "Cloud Sync Engine" : {
+
+    },
+    "Co-Piloted by Chip" : {
 
     },
     "Coded As" : {
@@ -2094,6 +2112,9 @@
       }
     },
     "Could not verify active credentials. Retry sync before creating a new token." : {
+
+    },
+    "Couldn't be named" : {
 
     },
     "Couldn’t save credit status" : {
@@ -3012,6 +3033,9 @@
         }
       }
     },
+    "How often PickMe could name what a purchase was. Counted on this iPhone only — no merchant, amount, or place is recorded here, and none of it is sent anywhere. Erasing this iPhone's history clears these too." : {
+
+    },
     "I checked — verify this card" : {
 
     },
@@ -3261,9 +3285,6 @@
         }
       }
     },
-    "Knock Glass" : {
-
-    },
     "Know what your cards protect." : {
 
     },
@@ -3453,6 +3474,9 @@
         }
       }
     },
+    "Looked up by location" : {
+
+    },
     "Manage cards & optimize reward rules" : {
 
     },
@@ -3589,10 +3613,16 @@
         }
       }
     },
+    "My PickMe Rewards Savings" : {
+
+    },
     "Name" : {
 
     },
     "name@example.com" : {
+
+    },
+    "Narrowed to more than one" : {
 
     },
     "Nearby" : {
@@ -3636,6 +3666,9 @@
 
     },
     "Next" : {
+
+    },
+    "Next Quip" : {
 
     },
     "No" : {
@@ -3897,6 +3930,9 @@
           }
         }
       }
+    },
+    "Nothing recorded yet." : {
+
     },
     "Nothing to Finish" : {
       "localizations" : {
@@ -4322,6 +4358,9 @@
         }
       }
     },
+    "PICKME REWARDS PROOF" : {
+
+    },
     "PickMe Wallet Audit Report" : {
 
     },
@@ -4381,9 +4420,6 @@
         }
       }
     },
-    "Poke Chip" : {
-
-    },
     "Policies verified against official issuer certificates" : {
 
     },
@@ -4409,6 +4445,9 @@
       }
     },
     "PREFERENCES" : {
+
+    },
+    "Previous Quip" : {
 
     },
     "PRIVACY & LOCAL DATA" : {
@@ -4499,6 +4538,9 @@
       }
     },
     "PURCHASES" : {
+
+    },
+    "Purchases seen" : {
 
     },
     "Queued Captures" : {
@@ -4802,6 +4844,9 @@
     "Rewards Program" : {
 
     },
+    "Rewards Proof" : {
+
+    },
     "Rogers Red World Elite" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5081,6 +5126,9 @@
     "Share Policy Link" : {
 
     },
+    "Share Rewards Proof" : {
+
+    },
     "Share Transaction" : {
 
     },
@@ -5151,6 +5199,9 @@
     "Sign in to sync cap limits across your devices and enable automated Apple Wallet Shortcuts capture." : {
 
     },
+    "Sign in with Apple" : {
+
+    },
     "Sign In with PickMe" : {
 
     },
@@ -5182,6 +5233,9 @@
 
     },
     "Sign Up" : {
+
+    },
+    "Sign up with Apple" : {
 
     },
     "Sign Up with Google" : {
@@ -5324,6 +5378,9 @@
 
     },
     "SUBMITTED DIAGNOSTIC PACKETS" : {
+
+    },
+    "Swipe" : {
 
     },
     "Switch recommendations" : {
@@ -5700,6 +5757,9 @@
     "Total tracked spending in PickMe" : {
 
     },
+    "Total Value Rescued" : {
+
+    },
     "Track net reward gains & experiment calibration" : {
 
     },
@@ -5897,6 +5957,9 @@
 
     },
     "View All %lld Purchases" : {
+
+    },
+    "View Detailed Dashboard" : {
 
     },
     "View Details" : {
@@ -6296,6 +6359,9 @@
 
     },
     "YYYY-MM-DD" : {
+
+    },
+    "Zero 1x multiplier traps. Maximum effort." : {
 
     }
   },

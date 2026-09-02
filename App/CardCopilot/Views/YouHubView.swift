@@ -88,9 +88,7 @@ struct YouHubView: View {
             )
         }
         .sheet(isPresented: $authIsPresented) {
-            PickMeAuthSheet {
-                authIsPresented = false
-            }
+            PickMeAuthSheet()
         }
         .confirmationDialog("Erase this iPhone's history?", isPresented: $eraseIsPresented, titleVisibility: .visible) {
             Button("Erase On-Device History", role: .destructive) {
