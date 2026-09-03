@@ -4003,6 +4003,9 @@
         }
       }
     },
+    "Not %@" : {
+
+    },
     "Not added" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4043,6 +4046,9 @@
           }
         }
       }
+    },
+    "Not this store?" : {
+
     },
     "Notes (optional)" : {
       "localizations" : {
@@ -4557,6 +4563,9 @@
 
     },
     "PickMe's highest earning card advised for this purchase." : {
+
+    },
+    "Picking the right one teaches PickMe this exact storefront, so the next answer here is instant." : {
 
     },
     "Place details are no longer cached. Refresh nearby monitoring to update this area." : {
@@ -6498,6 +6507,9 @@
           }
         }
       }
+    },
+    "Which store are you in?" : {
+
     },
     "Why didn't I get an alert?" : {
 
