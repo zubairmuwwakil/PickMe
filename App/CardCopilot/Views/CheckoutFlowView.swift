@@ -396,6 +396,7 @@ struct CheckoutFlowView: View {
                 alertPolicy: environment.ambientAlertPolicy,
                 onAlertPolicyChange: { environment.saveAmbientAlertPolicy($0) },
                 fieldLogRecordCount: environment.ambientFieldLogRecordCount,
+                radarMetrics: session.nearbyMetrics,
                 onExportFieldLog: { environment.exportAmbientFieldLog() },
                 onEnable: {
                     Task {

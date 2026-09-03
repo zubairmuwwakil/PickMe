@@ -20,6 +20,13 @@ struct AmbientDebugPolicySection: View {
     let ownerThreshold: SwitchThreshold
     @Binding var policy: AmbientAlertPolicy
     var fieldLogRecordCount: Int = 0
+    /// The shipping counters, shown here rather than on a screen of their own.
+    ///
+    /// Counters and records answer different questions — how often, versus what happened that
+    /// time — and neither is derived from the other, but they are read together, so they belong
+    /// on one page.
+    var radarMetrics: NearbyLookupMetrics = NearbyLookupMetrics()
+    var coverage: AmbientCoverageLog? = nil
     /// Writes the export and hands back a file URL. Returns nil when there is nothing to write.
     var onExportFieldLog: () -> URL? = { nil }
 
@@ -48,6 +55,12 @@ struct AmbientDebugPolicySection: View {
             estimateControls
             Divider()
             effectiveBarTable
+            Divider()
+            radarCounters
+            Divider()
+            deliveryCounters
+            Divider()
+            wakeCounters
             Divider()
             fieldLogExport
 
@@ -199,6 +212,135 @@ struct AmbientDebugPolicySection: View {
             Text("Orange: the dollar floor is deciding, not the percentage floor. That bar is a consequence of the guessed basket, not a number anyone chose.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    // MARK: - Counters
+
+    /// One row is the reason this section exists: how often a recognised chain was in the result
+    /// set and something else was ranked above it.
+    @ViewBuilder
+    private var radarCounters: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Radar scans")
+                .font(.subheadline.weight(.semibold))
+
+            if radarMetrics.radarScans == 0 {
+                Text("No scans recorded yet. Tap Radar while standing in a store.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                counterRow("Scans", "\(radarMetrics.radarScans)")
+                counterRow("…with a recognised chain",
+                           "\(radarMetrics.radarScansWithARecognisedChain)")
+                counterRow("…where something else ranked first",
+                           "\(radarMetrics.radarScansWhereTopRankedMissedAChain)",
+                           tint: radarMetrics.radarScansWhereTopRankedMissedAChain > 0
+                               ? .orange : nil)
+
+                Text("Raw \(bucketSummary(radarMetrics.radarRawResultBuckets))  ·  deduped \(bucketSummary(radarMetrics.radarDedupedResultBuckets))")
+                    .font(.caption2.monospaced())
+                    .foregroundStyle(.secondary)
+
+                Text("Orange counts the pin-geometry signature: the store was returned and outranked. A large gap between the raw and deduped buckets is the other mechanism — a bounded response crowding the anchor tenant out.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var deliveryCounters: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Alert delivery")
+                .font(.subheadline.weight(.semibold))
+
+            if let coverage, !coverage.notificationDeliveryByOutcome.isEmpty {
+                counterRow("Asked iOS for an alert", "\(coverage.notificationsRequested)")
+                counterRow("…and it was in Notification Center",
+                           "\(coverage.notificationsThatLanded)")
+                counterRow("…accepted then absent",
+                           "\(coverage.notificationDeliveryByOutcome[.acceptedThenAbsent] ?? 0)",
+                           tint: (coverage.notificationDeliveryByOutcome[.acceptedThenAbsent] ?? 0) > 0
+                               ? .orange : nil)
+                counterRow("…the request threw",
+                           "\(coverage.notificationDeliveryByOutcome[.requestFailed] ?? 0)")
+                counterRow("Never asked (gate stayed quiet)",
+                           "\(coverage.notificationDeliveryByOutcome[.neverRequested] ?? 0)")
+
+                Text("A gap between the first two is a delivery defect. No gap at all means the silence was policy, and the dials above are where to look.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("No arrivals recorded in the last seven days.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var wakeCounters: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Background wakes (last 7 days)")
+                .font(.subheadline.weight(.semibold))
+
+            if let coverage, coverage.wakes > 0 {
+                counterRow("Wakes", "\(coverage.wakes)")
+                ForEach(AmbientWakeCause.allCases, id: \.self) { cause in
+                    if let count = coverage.wakesByCause[cause], count > 0 {
+                        counterRow("  \(wakeCauseLabel(cause))",
+                                   "\(count) · avg \(coverage.averageWakeMilliseconds(for: cause) ?? 0) ms")
+                    }
+                }
+                counterRow("Longest wake", "\(coverage.longestWakeMilliseconds) ms")
+                counterRow("Total awake", "\(coverage.totalWakeMilliseconds / 1_000) s")
+                counterRow("Fix asked for and never arrived",
+                           "\(coverage.wakeFixOutcomes[.fixUnavailable] ?? 0)",
+                           tint: (coverage.wakeFixOutcomes[.fixUnavailable] ?? 0) > 0
+                               ? .orange : nil)
+                counterRow("Fix asked for and landed",
+                           "\(coverage.wakeFixOutcomes[.fixLanded] ?? 0)")
+                counterRow("No fix requested",
+                           "\(coverage.wakeFixOutcomes[.notRequested] ?? 0)")
+
+                Text("A wake that waits out its whole window for a fix that never comes is the expensive kind. This is the only figure that says whether ambient monitoring is affordable.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("No background wakes recorded in the last seven days.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func counterRow(_ label: String, _ value: String, tint: Color? = nil) -> some View {
+        HStack {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(tint ?? .primary)
+        }
+    }
+
+    private func bucketSummary(_ buckets: [NearbyResultBucket: Int]) -> String {
+        let parts = NearbyResultBucket.allCases.compactMap { bucket -> String? in
+            guard let count = buckets[bucket], count > 0 else { return nil }
+            return "\(bucket.rawValue)×\(count)"
+        }
+        return parts.isEmpty ? "—" : parts.joined(separator: " ")
+    }
+
+    private func wakeCauseLabel(_ cause: AmbientWakeCause) -> String {
+        switch cause {
+        case .regionEntry: return "region entry"
+        case .regionExit: return "region exit"
+        case .significantChange: return "significant change"
+        case .stateSynthesis: return "asked if already inside"
         }
     }
 

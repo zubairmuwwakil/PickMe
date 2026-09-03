@@ -593,6 +593,14 @@ final class CopilotSession {
             frequentedKeys: MerchantPatronageStore().frequentedKeys())
         fieldLogStore.record(record)
         lastRadarFieldRecordId = record.id
+        // Counted from the record's own derived read-outs, so the counter and the log cannot
+        // disagree about what a scan was — but the counter keeps none of the identity that made
+        // those read-outs: how often, never which one.
+        recordNearbyMetric(.radarScan(
+            rawResultCount: rawResultCount,
+            dedupedResultCount: record.dedupedResultCount ?? merchants.count,
+            containedRecognisedChain: record.containsRecognisedChain,
+            topRankedMissedARecognisedChain: record.topRankedMissedARecognisedChain))
         #endif
     }
 

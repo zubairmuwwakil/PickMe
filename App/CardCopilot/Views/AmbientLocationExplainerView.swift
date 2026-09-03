@@ -20,6 +20,9 @@ struct AmbientLocationExplainerView: View {
     var alertPolicy: AmbientAlertPolicy = .shipped
     var onAlertPolicyChange: (AmbientAlertPolicy) -> Void = { _ in }
     var fieldLogRecordCount: Int = 0
+    /// The Radar's own counters. Read beside the coverage log in the field-diagnostics section,
+    /// which is the only place either of them is shown.
+    var radarMetrics: NearbyLookupMetrics = NearbyLookupMetrics()
     var onExportFieldLog: () -> URL? = { nil }
     let onEnable: () -> Void
     var onTestNotification: () -> Void = {}
@@ -223,6 +226,8 @@ extension AmbientLocationExplainerView {
                 ownerThreshold: ownerThreshold,
                 policy: Binding(get: { alertPolicy }, set: onAlertPolicyChange),
                 fieldLogRecordCount: fieldLogRecordCount,
+                radarMetrics: radarMetrics,
+                coverage: coverage,
                 onExportFieldLog: onExportFieldLog)
         }
         #else
