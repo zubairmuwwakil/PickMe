@@ -206,6 +206,14 @@ final class AmbientCoverageStore {
         store.update(at: date) { $0.recordNotificationDelivery(outcome) }
     }
 
+    func recordWake(_ cause: AmbientWakeCause, durationMilliseconds: Int, at date: Date = .now) {
+        store.update(at: date) { $0.recordWake(cause, durationMilliseconds: durationMilliseconds) }
+    }
+
+    func recordWakeFixOutcome(_ outcome: AmbientWakeFixOutcome, at date: Date = .now) {
+        store.update(at: date) { $0.recordWakeFixOutcome(outcome) }
+    }
+
     func lastSevenDays(ending date: Date = .now) -> AmbientCoverageLog {
         store.lastSevenDays(ending: date)
     }
@@ -588,6 +596,31 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         manager.requestLocation()
     }
 
+    /// Times one background wake and counts it.
+    ///
+    /// Wrapped at the delegate rather than inside the work, because the wake is the thing being
+    /// measured: everything the app does before returning from a callback is spent on the battery
+    /// budget, including the parts that return early. Measuring inside `evaluateArrival` would
+    /// miss exactly the wakes that resolved to nothing, which are the ones worth knowing about.
+    ///
+    /// `ContinuousClock` rather than `Date`: this is elapsed time, and a clock adjustment in the
+    /// middle of a wake must not turn into a wake that ran backwards.
+    private func accountingWake(_ cause: AmbientWakeCause,
+                                _ work: @escaping @MainActor () async -> Void) {
+        #if FIELD_DIAGNOSTICS
+        let started = ContinuousClock.now
+        Task { @MainActor in
+            await work()
+            let elapsed = started.duration(to: .now)
+            let milliseconds = Int(elapsed.components.seconds * 1_000)
+                + Int(elapsed.components.attoseconds / 1_000_000_000_000_000)
+            coverageStore.recordWake(cause, durationMilliseconds: milliseconds)
+        }
+        #else
+        Task { @MainActor in await work() }
+        #endif
+    }
+
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         authorizationStatus = manager.authorizationStatus
         if manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted {
@@ -614,7 +647,13 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             }
             return
         }
-        Task { await refreshDiscovery(around: location) }
+        accountingWake(.significantChange) { [weak self] in
+            await self?.refreshDiscovery(around: location)
+        }
+        // A discovery refresh re-aims geofences. It never asks where the owner is standing.
+        #if FIELD_DIAGNOSTICS
+        coverageStore.recordWakeFixOutcome(.notRequested)
+        #endif
     }
 
     /// The one place a `CLLocation` becomes the pure `ArrivalFix` the resolution policy takes.
@@ -634,7 +673,9 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             }
             return
         }
-        Task { await evaluateArrival(at: target, regionId: region.identifier) }
+        accountingWake(.regionEntry) { [weak self] in
+            await self?.evaluateArrival(at: target, regionId: region.identifier)
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState,
@@ -652,15 +693,22 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             return
         }
         arrivalsInFlight.insert(region.identifier)
-        Task {
-            await evaluateArrival(at: target, regionId: region.identifier, source: .alreadyInside)
-            arrivalsInFlight.remove(region.identifier)
+        accountingWake(.stateSynthesis) { [weak self] in
+            await self?.evaluateArrival(at: target, regionId: region.identifier,
+                                        source: .alreadyInside)
+            self?.arrivalsInFlight.remove(region.identifier)
         }
     }
 
     func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
         guard Self.target(for: region.identifier) != nil else { return }
-        evaluateExit(regionId: region.identifier)
+        accountingWake(.regionExit) { [weak self] in
+            self?.evaluateExit(regionId: region.identifier)
+        }
+        // An exit settles dwell from a visit already open. It asks iOS nothing.
+        #if FIELD_DIAGNOSTICS
+        coverageStore.recordWakeFixOutcome(.notRequested)
+        #endif
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -937,6 +985,11 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         // `nil` is a complete answer: every use of it below falls back to exactly the behaviour
         // this had before a fix was ever requested.
         let fix = await arrivalFixRequester.fix()
+        #if FIELD_DIAGNOSTICS
+        // Recorded where the answer arrives rather than where the arrival ends, so a wake that
+        // spent its whole window waiting and then resolved to nothing still reports the wait.
+        coverageStore.recordWakeFixOutcome(fix == nil ? .fixUnavailable : .fixLanded)
+        #endif
         let context = ModelContext(modelContainer)
         // Both of the dropouts below used to `return` in silence, which made a background wake
         // that produced nothing indistinguishable from a wake that never happened.

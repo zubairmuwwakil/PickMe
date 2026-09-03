@@ -55,11 +55,36 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
     /// No identity, no timing — just how many of each, per day, like every other counter here.
     public private(set) var notificationDeliveryByOutcome: [ArrivalNotificationDelivery: Int]
 
+    // MARK: - What monitoring costs
+    //
+    // The only counters here that speak to whether ambient monitoring is affordable at all. A
+    // battery cost found in week one is a design input; the same cost found after launch is a
+    // review.
+    //
+    // Deliberately totals and not a list. A list of wake durations with the days they fell on is
+    // a movement trace — it says when the owner left the house — while a daily sum is a battery
+    // bill and says nothing about where anyone was.
+
+    public private(set) var wakesByCause: [AmbientWakeCause: Int]
+    /// Wall-clock milliseconds awake, summed per cause.
+    public private(set) var wakeMillisecondsByCause: [AmbientWakeCause: Int]
+    /// The single longest wake of the day. Merged as a maximum, never a sum: adding two days'
+    /// maxima would report a wake nobody ever had.
+    public private(set) var longestWakeMilliseconds: Int
+    /// Whether each wake asked for an arrival fix, and whether it got one. A wake that spent its
+    /// whole window waiting for a fix that never came is the expensive kind; one that never asked
+    /// is nearly free, and pooling them hides which sort the battery is going on.
+    public private(set) var wakeFixOutcomes: [AmbientWakeFixOutcome: Int]
+
     public init(rotations: Int = 0, rotationsAtCapacity: Int = 0,
                 evictedByTier: [AmbientRegionTier: Int] = [:],
                 arrivals: Int = 0, arrivalsUnresolved: Int = 0, arrivalsNotAdvised: Int = 0,
                 arrivalsSynthesised: Int = 0,
-                notificationDeliveryByOutcome: [ArrivalNotificationDelivery: Int] = [:]) {
+                notificationDeliveryByOutcome: [ArrivalNotificationDelivery: Int] = [:],
+                wakesByCause: [AmbientWakeCause: Int] = [:],
+                wakeMillisecondsByCause: [AmbientWakeCause: Int] = [:],
+                longestWakeMilliseconds: Int = 0,
+                wakeFixOutcomes: [AmbientWakeFixOutcome: Int] = [:]) {
         self.rotations = rotations
         self.rotationsAtCapacity = rotationsAtCapacity
         self.evictedByTier = evictedByTier
@@ -68,6 +93,10 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
         self.arrivalsNotAdvised = arrivalsNotAdvised
         self.arrivalsSynthesised = arrivalsSynthesised
         self.notificationDeliveryByOutcome = notificationDeliveryByOutcome
+        self.wakesByCause = wakesByCause
+        self.wakeMillisecondsByCause = wakeMillisecondsByCause
+        self.longestWakeMilliseconds = longestWakeMilliseconds
+        self.wakeFixOutcomes = wakeFixOutcomes
     }
 
     /// Tolerant of days recorded before a counter existed.
@@ -93,6 +122,14 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
         notificationDeliveryByOutcome = try container.decodeIfPresent(
             [ArrivalNotificationDelivery: Int].self,
             forKey: .notificationDeliveryByOutcome) ?? [:]
+        wakesByCause = try container.decodeIfPresent([AmbientWakeCause: Int].self,
+                                                     forKey: .wakesByCause) ?? [:]
+        wakeMillisecondsByCause = try container.decodeIfPresent(
+            [AmbientWakeCause: Int].self, forKey: .wakeMillisecondsByCause) ?? [:]
+        longestWakeMilliseconds = try container.decodeIfPresent(
+            Int.self, forKey: .longestWakeMilliseconds) ?? 0
+        wakeFixOutcomes = try container.decodeIfPresent([AmbientWakeFixOutcome: Int].self,
+                                                        forKey: .wakeFixOutcomes) ?? [:]
     }
 
     // MARK: - Derived read-outs
@@ -131,6 +168,17 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
         notificationDeliveryByOutcome[.acceptedAndPresent] ?? 0
     }
 
+    public var wakes: Int { wakesByCause.values.reduce(0, +) }
+
+    public var totalWakeMilliseconds: Int { wakeMillisecondsByCause.values.reduce(0, +) }
+
+    /// Nil rather than zero for a cause that never woke: "never happened" and "happened and took
+    /// no time" are different readings, and only one of them is good news.
+    public func averageWakeMilliseconds(for cause: AmbientWakeCause) -> Int? {
+        guard let count = wakesByCause[cause], count > 0 else { return nil }
+        return (wakeMillisecondsByCause[cause] ?? 0) / count
+    }
+
     // MARK: - Recording
 
     public mutating func record(_ allocation: RegionAllocation) {
@@ -158,6 +206,19 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
         notificationDeliveryByOutcome[outcome, default: 0] += 1
     }
 
+    /// A negative duration is a clock artefact, not a wake that ran backwards; letting one
+    /// through would drag the daily total below what was actually spent.
+    public mutating func recordWake(_ cause: AmbientWakeCause, durationMilliseconds: Int) {
+        let duration = max(0, durationMilliseconds)
+        wakesByCause[cause, default: 0] += 1
+        wakeMillisecondsByCause[cause, default: 0] += duration
+        longestWakeMilliseconds = max(longestWakeMilliseconds, duration)
+    }
+
+    public mutating func recordWakeFixOutcome(_ outcome: AmbientWakeFixOutcome) {
+        wakeFixOutcomes[outcome, default: 0] += 1
+    }
+
     /// Mirrors `SuppressionLog.merge` so a seven-day read-out is assembled the same way for both.
     public mutating func merge(_ other: AmbientCoverageLog) {
         rotations += other.rotations
@@ -171,6 +232,17 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
         arrivalsSynthesised += other.arrivalsSynthesised
         for (outcome, count) in other.notificationDeliveryByOutcome {
             notificationDeliveryByOutcome[outcome, default: 0] += count
+        }
+        for (cause, count) in other.wakesByCause {
+            wakesByCause[cause, default: 0] += count
+        }
+        for (cause, milliseconds) in other.wakeMillisecondsByCause {
+            wakeMillisecondsByCause[cause, default: 0] += milliseconds
+        }
+        // A maximum, not a sum. Adding two days' longest wakes reports one nobody ever had.
+        longestWakeMilliseconds = max(longestWakeMilliseconds, other.longestWakeMilliseconds)
+        for (outcome, count) in other.wakeFixOutcomes {
+            wakeFixOutcomes[outcome, default: 0] += count
         }
     }
 }
@@ -190,6 +262,34 @@ public enum AmbientArrivalSource: String, Codable, Equatable, Sendable {
     /// log — which storefronts were on the table and which one was named — is the same question
     /// in both directions. Every counter that means "a geofence fired" must exclude it.
     case radar
+}
+
+/// Why iOS woke the app in the background.
+///
+/// Counted apart because they are not interchangeable. A region entry is the app doing the job it
+/// exists for; a significant-change wake that only re-aims geofences is pure overhead, and a
+/// synthesis wake is the app asking a question iOS did not volunteer.
+public enum AmbientWakeCause: String, Codable, Equatable, Sendable, CaseIterable {
+    /// `didEnterRegion` — the owner crossed into a monitored region.
+    case regionEntry
+    /// `didExitRegion`, which closes a visit and settles dwell.
+    case regionExit
+    /// `didUpdateLocations` on the significant-change service: refresh discovery, re-aim regions.
+    case significantChange
+    /// `didDetermineState` reported `.inside` for a region registered around the owner, and the
+    /// app turned it into an arrival iOS would never have delivered.
+    case stateSynthesis
+}
+
+/// Whether a wake asked iOS where the owner was, and whether it found out.
+public enum AmbientWakeFixOutcome: String, Codable, Equatable, Sendable, CaseIterable {
+    case fixLanded
+    /// Asked, and the window closed — or CoreLocation reported the fix invalid, which is the same
+    /// answer for the arrival's purposes and the same cost in battery.
+    case fixUnavailable
+    /// Never asked. An exit or a discovery refresh needs no arrival fix, and counting those with
+    /// the timeouts would make the expensive case look routine.
+    case notRequested
 }
 
 /// How far one geofence entry got. Named for the dropout, not the cause, because the causes are
