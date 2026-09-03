@@ -895,15 +895,19 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                         latitude: Double, longitude: Double,
                                         resolution: DiscoveredMerchantResolution,
                                         fix: ArrivalFix?) -> ArrivalCandidateRecord {
-        ArrivalCandidateRecord(
+        let indexed = MerchantRecognizer.recognise(name)
+        return ArrivalCandidateRecord(
             name: name, poiCategoryRaw: poiCategoryRaw, latitude: latitude, longitude: longitude,
             distanceFromFixMeters: fix.map {
                 greatCircleDistanceMeters(fromLatitude: $0.latitude, fromLongitude: $0.longitude,
                                           toLatitude: latitude, toLongitude: longitude)
             },
-            recognisedByPack: MerchantRecognizer.recognise(name) != nil,
+            recognisedByPack: indexed != nil,
             resolvedCategory: resolution.prediction.category,
-            confidence: resolution.confidence)
+            confidence: resolution.confidence,
+            // Named, not merely counted, and named on both paths — chain containment is only
+            // comparable between a geofence arrival and a Radar scan if both say which row.
+            preIndexMerchantId: indexed?.id)
     }
 
     /// `source` is provenance, not a quality grade: a synthesised arrival is exactly as real a

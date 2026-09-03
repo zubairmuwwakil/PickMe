@@ -154,13 +154,13 @@ final class ArrivalFieldMetricsTests: XCTestCase {
     /// against a guessed $25, where the doubled $0.25 floor costs 2.0pp. Replayed at the real
     /// amount with the CAD floor unscaled, it clears — so the estimate, not the policy, is what
     /// kept the app quiet.
-    func testAnAlertTheEstimateAteIsCountedOnReplay() {
+    func testAnAlertTheEstimateAteIsCountedOnReplay() throws {
         let candidates = [candidate("Shoppers Drug Mart", metresNorth: 20, card: "amex-cobalt")]
         let arrival = record(candidates: candidates, chosen: 0,
                              advantage: AmbientAdvantage(percentagePoints: 1.5, cad: 0.375))
         let joined = joinReceipts([arrival], receipts: [receipt("SHOPPERS DRUG MART")])
 
-        XCTAssertFalse(AmbientGate.evaluate(joined[0].gateInput).fires)
+        XCTAssertFalse(AmbientGate.evaluate(try XCTUnwrap(joined[0].gateInput)).fires)
         XCTAssertEqual(try? XCTUnwrap(replayAtRealAmount(joined[0])).fires, true)
         XCTAssertEqual(arrivalFieldMetrics(joined).alertsEatenByTheEstimate, 1)
     }

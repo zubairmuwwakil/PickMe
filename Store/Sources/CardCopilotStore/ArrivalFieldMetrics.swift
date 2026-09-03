@@ -68,17 +68,20 @@ func matchingCandidateIndex(descriptor: String,
 /// does not scale linearly. It is the honest one available without re-running the catalogue that
 /// was current at the time, and it is why this is a replay rather than a verdict.
 public func replayAtRealAmount(_ record: ArrivalFieldRecord) -> AmbientGateDecision? {
-    guard let receipt = record.receipt, receipt.amountCad > 0 else { return nil }
-    var input = record.gateInput
-    let percentagePoints = record.gateInput.advantage.percentagePoints
+    // No gate input means no gate ran — a Radar scan. There is no decision to replay, and
+    // synthesising one would report an alert the app was never in a position to suppress.
+    guard let gateInput = record.gateInput, let policy = record.policy,
+          let receipt = record.receipt, receipt.amountCad > 0 else { return nil }
+    var input = gateInput
+    let percentagePoints = gateInput.advantage.percentagePoints
     input.advantage = AmbientAdvantage(percentagePoints: percentagePoints,
                                        cad: percentagePoints / 100 * receipt.amountCad)
-    let multiplier = record.policy.multiplier(for: record.gateInput.merchantConfidence)
+    let multiplier = policy.multiplier(for: gateInput.merchantConfidence)
     input.switchThreshold = SwitchThreshold(
-        minAdvantagePercentagePoints: record.gateInput.switchThreshold
+        minAdvantagePercentagePoints: gateInput.switchThreshold
             .minAdvantagePercentagePoints * multiplier,
-        minAdvantageCad: record.gateInput.switchThreshold.minAdvantageCad,
-        semantics: record.gateInput.switchThreshold.semantics)
+        minAdvantageCad: gateInput.switchThreshold.minAdvantageCad,
+        semantics: gateInput.switchThreshold.semantics)
     input.unverifiedAdvantageMultiplier = 1
     input.frequentedAdvantageMultiplier = 1
     input.categoryAdvantageMultiplier = 1
@@ -112,9 +115,33 @@ public struct ArrivalFieldMetrics: Equatable, Sendable, Codable {
     /// floor unscaled. How many alerts the guessed amount ate.
     public let alertsEatenByTheEstimate: Int
     public let engagementByAction: [ArrivalEngagement: Int]
+
+    // MARK: - Radar
+    //
+    // Counted apart from arrivals throughout. Radar is tapped far more often than a geofence is
+    // crossed, so pooling the two would let scans swamp the arrival denominator every accuracy
+    // figure above rests on.
+
+    public let radarScans: Int
+    /// Scans in which at least one candidate resolved to a `CanadianMerchantPreIndex` row. The
+    /// denominator for "was the anchor tenant returned at all".
+    public let radarScansWithARecognisedChain: Int
+    /// **The number that decides which of the two fixes is needed.** Scans where a recognised
+    /// chain was present and something else was ranked first.
+    ///
+    /// High means pin geometry: the store is returned and outranked, and the fix is a different
+    /// ranking. Low, against a high count of scans with no chain at all, means the result set is
+    /// being truncated, and the fix is a second targeted query.
+    public let radarScansWhereTopRankedMissedAChain: Int
 }
 
 public func arrivalFieldMetrics(_ records: [ArrivalFieldRecord]) -> ArrivalFieldMetrics {
+    // One log holds both, because the question asked of a record — which storefronts were on the
+    // table, which one was named — is the same in both directions. Every figure below is asked of
+    // one population or the other, never of the union.
+    let scans = records.filter { $0.source == .radar }
+    let records = records.filter { $0.source != .radar }
+
     let withReceipt = records.filter { $0.receipt != nil }
     let contained = withReceipt.filter { $0.receiptCandidateIndex != nil }
     let topOne = contained.filter { $0.receiptCandidateIndex == $0.chosenCandidateIndex }
@@ -148,9 +175,14 @@ public func arrivalFieldMetrics(_ records: [ArrivalFieldRecord]) -> ArrivalField
         resolvableArrivals: records.filter { $0.discriminability?.isResolvable == true }.count,
         ambiguousArrivals: records.filter { $0.discriminability?.isResolvable == false }.count,
         alertsEatenByTheEstimate: records.filter { record in
-            guard !AmbientGate.evaluate(record.gateInput).fires,
+            guard let gateInput = record.gateInput,
+                  !AmbientGate.evaluate(gateInput).fires,
                   let replay = replayAtRealAmount(record) else { return false }
             return replay.fires
         }.count,
-        engagementByAction: engagement)
+        engagementByAction: engagement,
+        radarScans: scans.count,
+        radarScansWithARecognisedChain: scans.filter(\.containsRecognisedChain).count,
+        radarScansWhereTopRankedMissedAChain:
+            scans.filter(\.topRankedMissedARecognisedChain).count)
 }

@@ -10,6 +10,14 @@ final class LiveMerchantProvider: MerchantProviding {
     private static let nearbyRadiusMeters: CLLocationDistance = 200
 
     func nearby(latitude: Double, longitude: Double) async throws -> [NearbyMerchant] {
+        try await nearbyScan(latitude: latitude, longitude: longitude).merchants
+    }
+
+    /// The only place that can see how large MapKit's response was before `rankNearbyMerchants`
+    /// dedupes it, so it is the only place that can report it. A 200 m sweep with no category
+    /// filter returns a bounded set, and whether a plaza's anchor tenant was crowded out of that
+    /// set or merely outranked inside it is the question the field log exists to settle.
+    func nearbyScan(latitude: Double, longitude: Double) async throws -> NearbyScan {
         let center = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         let request = MKLocalPointsOfInterestRequest(center: center, radius: Self.nearbyRadiusMeters)
         let search = MKLocalSearch(request: request)
@@ -18,9 +26,11 @@ final class LiveMerchantProvider: MerchantProviding {
         } onCancel: {
             search.cancel()
         }
-        return rankNearbyMerchants(response.mapItems.map {
+        let mapped = response.mapItems.map {
             Self.nearbyMerchant(from: $0, referenceCoordinate: center)
-        })
+        }
+        return NearbyScan(merchants: rankNearbyMerchants(mapped),
+                          rawResultCount: response.mapItems.count)
     }
 
     func search(text: String) async throws -> [NearbyMerchant] {

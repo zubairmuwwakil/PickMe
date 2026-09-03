@@ -86,13 +86,21 @@ public struct ArrivalCandidateRecord: Equatable, Sendable, Codable {
     public var recognisedByPack: Bool
     public var resolvedCategory: String
     public var confidence: AmbientMerchantConfidence
+    /// The `CanadianMerchantPreIndex` row this candidate's name resolved to, or nil.
+    ///
+    /// `recognisedByPack` says *whether*; this says *which*. The difference is what turns
+    /// "Shoppers wasn't in the list" from a recollection into a counted fact, and naming the row
+    /// is what lets an export tell a plaza whose anchor tenant was returned-but-outranked from one
+    /// where it was never returned at all. Those are the two competing mechanisms.
+    public var preIndexMerchantId: String?
     /// What the engine would have recommended had this candidate been the answer.
     public var recommendedCardId: String?
     public var advantageOverDefaultCad: Double?
 
     public init(name: String, poiCategoryRaw: String?, latitude: Double, longitude: Double,
                 distanceFromFixMeters: Double?, recognisedByPack: Bool, resolvedCategory: String,
-                confidence: AmbientMerchantConfidence, recommendedCardId: String? = nil,
+                confidence: AmbientMerchantConfidence, preIndexMerchantId: String? = nil,
+                recommendedCardId: String? = nil,
                 advantageOverDefaultCad: Double? = nil) {
         self.name = name
         self.poiCategoryRaw = poiCategoryRaw
@@ -102,6 +110,7 @@ public struct ArrivalCandidateRecord: Equatable, Sendable, Codable {
         self.recognisedByPack = recognisedByPack
         self.resolvedCategory = resolvedCategory
         self.confidence = confidence
+        self.preIndexMerchantId = preIndexMerchantId
         self.recommendedCardId = recommendedCardId
         self.advantageOverDefaultCad = advantageOverDefaultCad
     }
@@ -144,23 +153,40 @@ public struct ArrivalFieldRecord: Equatable, Sendable, Codable, Identifiable {
     public var fixTimedOut: Bool
 
     public var candidates: [ArrivalCandidateRecord]
-    /// Index into `candidates`. Nil for a stored-merchant region, which has no candidate set.
+    /// Index into `candidates`. Nil for a stored-merchant region, which has no candidate set, and
+    /// for an empty Radar scan. For a Radar scan with results it is 0 — the one Home pointed at.
     public var chosenCandidateIndex: Int?
-    public var rung: ArrivalResolutionRung
+    /// Which rung of the arrival ladder answered. Nil for a Radar scan: no ladder ran.
+    public var rung: ArrivalResolutionRung?
+
+    /// How many places MapKit returned before `rankNearbyMerchants` deduped them, and how many
+    /// survived. Radar only.
+    ///
+    /// Recorded as a pair because a cap that truncates upstream is invisible once the list is
+    /// deduped, and "the anchor tenant was crowded out of a bounded response" is one of exactly
+    /// two mechanisms that explain the owner's report. Nil on an ambient arrival, which reads a
+    /// cached member set rather than issuing a query.
+    public var rawResultCount: Int?
+    public var dedupedResultCount: Int?
 
     public var resolvedMerchantName: String
     public var resolvedCategory: String
     /// The guessed basket the engine actually scored. Recorded because dividing the CAD floor by
     /// it is what makes the effective bar category-dependent, and a replay cannot undo that
     /// without knowing which number was used.
-    public var estimatedAmountCad: Double
+    ///
+    /// Nil for a Radar scan, which scores no basket.
+    public var estimatedAmountCad: Double?
 
-    public var gateInput: AmbientGateInput
-    public var deliveryTier: AmbientDeliveryTier
+    // The gate block. All nil together, or all present together: a Radar scan never reaches
+    // `AmbientGate`, and a zeroed input here would read to every replay in the export as a real
+    // decision not to fire.
+    public var gateInput: AmbientGateInput?
+    public var deliveryTier: AmbientDeliveryTier?
     public var suppressionReasons: [AmbientSuppressionReason]
     /// The dials in force. Makes an export self-describing: a record that fired says which policy
     /// made it fire.
-    public var policy: AmbientAlertPolicy
+    public var policy: AmbientAlertPolicy?
 
     public var discriminability: ArrivalDiscriminability?
     public var engagement: ArrivalEngagement?
@@ -198,6 +224,8 @@ public struct ArrivalFieldRecord: Equatable, Sendable, Codable, Identifiable {
         self.candidates = candidates
         self.chosenCandidateIndex = chosenCandidateIndex
         self.rung = rung
+        self.rawResultCount = nil
+        self.dedupedResultCount = nil
         self.resolvedMerchantName = resolvedMerchantName
         self.resolvedCategory = resolvedCategory
         self.estimatedAmountCad = estimatedAmountCad
@@ -209,6 +237,62 @@ public struct ArrivalFieldRecord: Equatable, Sendable, Codable, Identifiable {
         self.engagement = engagement
         self.receipt = receipt
         self.receiptCandidateIndex = receiptCandidateIndex
+    }
+
+    /// One foreground Radar scan.
+    ///
+    /// A separate initialiser rather than a pile of defaults on the arrival one, because the two
+    /// carry genuinely different facts: an arrival has a region, a ladder and a gate decision; a
+    /// scan has a query and its result set. Sharing one initialiser would mean every Radar record
+    /// naming a region that does not exist and a rung that never ran.
+    public init(radarScanAt recordedAt: Date, id: UUID = UUID(), fix: ArrivalFix?,
+                rawResultCount: Int, candidates: [ArrivalCandidateRecord],
+                discriminability: ArrivalDiscriminability? = nil) {
+        self.id = id
+        self.recordedAt = recordedAt
+        self.regionId = radarFieldRegionId
+        self.source = .radar
+        self.fix = fix
+        // A scan holds no arrival open, so there is no window to close: no fix means the owner
+        // had not granted location or the fix failed outright, not that a timeout expired.
+        self.fixTimedOut = false
+        self.candidates = candidates
+        self.chosenCandidateIndex = candidates.isEmpty ? nil : 0
+        self.rung = nil
+        self.rawResultCount = rawResultCount
+        self.dedupedResultCount = candidates.count
+        self.resolvedMerchantName = candidates.first?.name ?? ""
+        self.resolvedCategory = candidates.first?.resolvedCategory ?? ""
+        self.estimatedAmountCad = nil
+        self.gateInput = nil
+        self.deliveryTier = nil
+        self.suppressionReasons = []
+        self.policy = nil
+        self.discriminability = discriminability
+    }
+
+    // MARK: - Chain containment
+    //
+    // Derived here rather than stored, so a record and its read-out cannot disagree, and so the
+    // same three questions are asked of an ambient arrival and a Radar scan in the same words.
+
+    /// The first candidate that resolved to a `CanadianMerchantPreIndex` row, if any.
+    public var chainCandidateIndex: Int? {
+        candidates.firstIndex { $0.preIndexMerchantId != nil }
+    }
+
+    public var containsRecognisedChain: Bool { chainCandidateIndex != nil }
+
+    /// **The pin-geometry signature.** A recognised chain was returned and something else still
+    /// took the top slot.
+    ///
+    /// Result-set truncation cannot produce this — the chain is demonstrably in the set. What can
+    /// is a large store whose MapKit pin sits at the building centroid, leaving a small neighbour
+    /// genuinely nearer to its own pin than the owner is to the anchor's. Counting this is what
+    /// decides whether the fix is a second targeted query or a different ranking.
+    public var topRankedMissedARecognisedChain: Bool {
+        guard let chainCandidateIndex, let chosenCandidateIndex else { return false }
+        return chainCandidateIndex != chosenCandidateIndex
     }
 
     public var chosenCandidate: ArrivalCandidateRecord? {

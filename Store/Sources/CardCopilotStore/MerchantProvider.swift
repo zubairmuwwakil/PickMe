@@ -33,12 +33,42 @@ public struct NearbyMerchant: Equatable, Sendable, Identifiable {
     }
 }
 
+/// A nearby lookup's results together with the size of the response they were distilled from.
+///
+/// The raw count exists because `rankNearbyMerchants` dedupes, and a cap that truncates upstream
+/// is invisible afterwards: eight results that are really eight and eight results that are the
+/// survivors of a bounded response are different facts about a plaza, and only one of them
+/// explains an anchor tenant going missing.
+public struct NearbyScan: Equatable, Sendable {
+    /// Ranked and deduped — what the app actually shows.
+    public let merchants: [NearbyMerchant]
+    /// How many places the source returned before ranking and deduping.
+    public let rawResultCount: Int
+
+    public init(merchants: [NearbyMerchant], rawResultCount: Int) {
+        self.merchants = merchants
+        self.rawResultCount = rawResultCount
+    }
+}
+
 /// Merchant lookup, kept behind a protocol so engine-facing code never depends on MapKit
 /// directly. `search` takes no location — it is the mandatory manual fallback (Apple
 /// guideline 5.1.1) and must work whether or not location was ever granted.
 public protocol MerchantProviding: Sendable {
     func nearby(latitude: Double, longitude: Double) async throws -> [NearbyMerchant]
+    /// The same lookup, plus what the raw response held. Defaulted, because only a provider that
+    /// can see the response before it is deduped has anything extra to say.
+    func nearbyScan(latitude: Double, longitude: Double) async throws -> NearbyScan
     func search(text: String) async throws -> [NearbyMerchant]
+}
+
+public extension MerchantProviding {
+    /// Reports the ranked count as the raw one. Honest for a provider with no view of the
+    /// underlying response: nothing was dropped that this provider could have seen.
+    func nearbyScan(latitude: Double, longitude: Double) async throws -> NearbyScan {
+        let merchants = try await nearby(latitude: latitude, longitude: longitude)
+        return NearbyScan(merchants: merchants, rawResultCount: merchants.count)
+    }
 }
 
 /// Orders merchants by distance (closest first, unknown distance last), breaks ties by

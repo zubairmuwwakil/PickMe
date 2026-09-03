@@ -149,6 +149,11 @@ public enum AmbientArrivalSource: String, Codable, Equatable, Sendable {
     case regionEntry
     /// `requestState(for:)` reported `.inside` for a region just registered around the owner.
     case alreadyInside
+    /// Not an arrival at all: the owner tapped Radar and the foreground scan ran. Carried on the
+    /// same enum because the field log records both, and the one question worth asking of the
+    /// log — which storefronts were on the table and which one was named — is the same question
+    /// in both directions. Every counter that means "a geofence fired" must exclude it.
+    case radar
 }
 
 /// How far one geofence entry got. Named for the dropout, not the cause, because the causes are

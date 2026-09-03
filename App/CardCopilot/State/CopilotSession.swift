@@ -226,6 +226,13 @@ final class CopilotSession {
 
     private let locationProvider: any CheckoutLocationProviding
     private let nearbyMetricsStore: NearbyLookupMetricsStore
+    /// The same log `AmbientLocationService` writes arrivals to — same defaults, same key.
+    ///
+    /// Deliberately one log and not two. The question worth asking of a record is which
+    /// storefronts were on the table and which one was named, and that question is the same
+    /// whether a geofence woke the app or the owner tapped Radar. `source` keeps them apart where
+    /// it matters, and `forgetLocalHistory` still wipes both with one call.
+    private let fieldLogStore: ArrivalFieldLogStore
     private var nearbySnapshot: NearbySnapshot?
     private var preparedNearbyOutcome: FlowOutcome?
     private var preparedLocationFix: CheckoutLocationFix?
@@ -239,13 +246,16 @@ final class CopilotSession {
         let metricsStore = NearbyLookupMetricsStore()
         locationProvider = LocationProvider()
         nearbyMetricsStore = metricsStore
+        fieldLogStore = ArrivalFieldLogStore()
         nearbyMetrics = metricsStore.snapshot
     }
 
     init(locationProvider: any CheckoutLocationProviding,
-         nearbyMetricsStore: NearbyLookupMetricsStore) {
+         nearbyMetricsStore: NearbyLookupMetricsStore,
+         fieldLogStore: ArrivalFieldLogStore = ArrivalFieldLogStore()) {
         self.locationProvider = locationProvider
         self.nearbyMetricsStore = nearbyMetricsStore
+        self.fieldLogStore = fieldLogStore
         nearbyMetrics = nearbyMetricsStore.snapshot
     }
 
@@ -488,9 +498,12 @@ final class CopilotSession {
                 return outcome
             }
 
-            let merchants = rankNearbyMerchants(try await nearbyMerchants(
-                latitude: fix.latitude, longitude: fix.longitude, using: graph.provider))
+            let scan = try await nearbyScan(latitude: fix.latitude, longitude: fix.longitude,
+                                             using: graph.provider)
+            let merchants = rankNearbyMerchants(scan.merchants)
             guard generation == nearbyPreparationGeneration else { return nil }
+            recordRadarFieldLog(fix: fix, rawResultCount: scan.rawResultCount,
+                                merchants: merchants)
             let outcome: FlowOutcome = merchants.isEmpty
                 ? .nothingFound(query: nil)
                 : .found(merchants)
@@ -530,11 +543,11 @@ final class CopilotSession {
         }
     }
 
-    private func nearbyMerchants(latitude: Double, longitude: Double,
-                                 using provider: any MerchantProviding) async throws -> [NearbyMerchant] {
-        try await withThrowingTaskGroup(of: [NearbyMerchant].self) { group in
+    private func nearbyScan(latitude: Double, longitude: Double,
+                            using provider: any MerchantProviding) async throws -> NearbyScan {
+        try await withThrowingTaskGroup(of: NearbyScan.self) { group in
             group.addTask {
-                try await provider.nearby(latitude: latitude, longitude: longitude)
+                try await provider.nearbyScan(latitude: latitude, longitude: longitude)
             }
             group.addTask {
                 try await Task.sleep(for: .seconds(4))
@@ -546,6 +559,35 @@ final class CopilotSession {
             }
             return result
         }
+    }
+
+    /// One record per Radar query, dev-only.
+    ///
+    /// Written only where a query actually ran. A movement-cache hit re-publishes a result already
+    /// recorded and issued no request of its own, so recording it again would inflate the
+    /// denominator the pin-geometry rate is measured over and would have no raw response size to
+    /// report.
+    ///
+    /// An empty scan is recorded like any other. If the result set is the mechanism at fault, "I
+    /// was standing in the store and nothing came back" is the single most informative record the
+    /// field week can produce, and dropping it would be dropping the evidence.
+    private func recordRadarFieldLog(fix: CheckoutLocationFix, rawResultCount: Int,
+                                     merchants: [NearbyMerchant]) {
+        #if FIELD_DIAGNOSTICS
+        fieldLogStore.record(radarFieldRecord(
+            recordedAt: .now,
+            fix: ArrivalFix(latitude: fix.latitude, longitude: fix.longitude,
+                            horizontalAccuracyMeters: fix.horizontalAccuracyMeters,
+                            capturedAt: fix.capturedAt),
+            rawResultCount: rawResultCount,
+            merchants: merchants,
+            // Patronage only, without the chain-alert opt-in `AmbientLocationService` unions in.
+            // That opt-in says the owner wants to *hear about* a chain, which is a policy fact
+            // about alerting; it is not evidence about which storefront they are standing in, and
+            // letting it lift a candidate's confidence here would put a preference into a
+            // measurement.
+            frequentedKeys: MerchantPatronageStore().frequentedKeys()))
+        #endif
     }
 
     private func publishPrepared(_ outcome: FlowOutcome, fix: CheckoutLocationFix) {
