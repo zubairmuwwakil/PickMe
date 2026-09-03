@@ -27,6 +27,10 @@ struct HomeAnswerCardView: View {
     /// changes, at which point the confidence rule takes over again.
     @State private var expansionOverride: Bool?
     @State private var selectedAmount: Double = InstantRepeatAdvisor.comparisonAmountCad
+    /// The "not this store" sheet. Presented rather than inlined because rejecting the subject is
+    /// a deliberate act — the chip row below already handles idle browsing, and putting a list of
+    /// rivals permanently under the answer would make the card argue with itself.
+    @State private var isCorrectingSubject = false
 
     private var activeSubject: HomeAnswerSubject? {
         if let selectedSubjectID,
@@ -211,8 +215,105 @@ struct HomeAnswerCardView: View {
             Divider().padding(.horizontal, 14)
             recommendationContent(for: active)
                 .padding(.horizontal, 14)
+            correctionControl(active: active)
         }
         .padding(.bottom, 12)
+    }
+
+    // MARK: - "Not this store"
+
+    /// Everything the card could have named instead, in the order it would have named them.
+    private func alternatives(to active: HomeAnswerSubject) -> [HomeAnswerSubject] {
+        subjects.filter { $0.id != active.id }
+    }
+
+    /// The explicit *negative* signal, which nothing in the app captured before.
+    ///
+    /// Switching subjects with the chip row says "I want this one now". It never said "the one you
+    /// named was wrong", and those are different claims: the first is navigation, the second is
+    /// ground truth. This is the only label the app can collect that costs nothing but a tap —
+    /// a receipt labels a visit only when the owner bought something on a card that posts quickly.
+    @ViewBuilder
+    private func correctionControl(active: HomeAnswerSubject) -> some View {
+        if !alternatives(to: active).isEmpty {
+            Button {
+                UISelectionFeedbackGenerator().selectionChanged()
+                isCorrectingSubject = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "xmark.circle")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("Not this store?")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    Spacer()
+                }
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 14)
+            }
+            .buttonStyle(.plain)
+            .sheet(isPresented: $isCorrectingSubject) {
+                correctionSheet(active: active)
+            }
+        }
+    }
+
+    private func correctionSheet(active: HomeAnswerSubject) -> some View {
+        NavigationStack {
+            List {
+                Section {
+                    ForEach(alternatives(to: active)) { candidate in
+                        Button {
+                            correct(active: active, to: candidate)
+                        } label: {
+                            HStack(spacing: 10) {
+                                MerchantBrandIconView(merchantName: candidate.name,
+                                                      category: candidate.prediction.category,
+                                                      size: 26)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(candidate.name)
+                                        .font(.system(size: 14, weight: .semibold,
+                                                      design: .rounded))
+                                        .foregroundStyle(.primary)
+                                    Text(candidate.prediction.category)
+                                        .font(.system(size: 11, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                if let distance = candidate.distanceMeters {
+                                    Text("\(Int(distance.rounded())) m")
+                                        .font(.system(size: 11, weight: .medium,
+                                                      design: .rounded))
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } header: {
+                    Text("Which store are you in?")
+                } footer: {
+                    Text("Picking the right one teaches PickMe this exact storefront, so the next answer here is instant.")
+                }
+            }
+            .navigationTitle("Not \(active.name)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { isCorrectingSubject = false }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    /// Re-points the card *and* records the rejection. The re-point alone is what `retarget`
+    /// already did; the rejection is the half this group exists to add.
+    private func correct(active: HomeAnswerSubject, to chosen: HomeAnswerSubject) {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        session.correctSubject(rejected: active, chosen: chosen,
+                               offered: alternatives(to: active), using: deps)
+        selectedSubjectID = chosen.id
+        isCorrectingSubject = false
     }
 
     // MARK: - Subject chips

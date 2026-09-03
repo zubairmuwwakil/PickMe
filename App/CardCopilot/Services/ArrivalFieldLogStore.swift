@@ -59,6 +59,24 @@ final class ArrivalFieldLogStore {
         save(records)
     }
 
+    /// Annotates one record with the owner's "not this store" correction.
+    ///
+    /// Keyed on the record's own id rather than on a region, because the caller knows exactly
+    /// which scan produced the subject that was rejected. Engagement has to guess — a notification
+    /// action carries nothing but a region — but a correction does not, and guessing here would
+    /// attach a label to the wrong plaza.
+    ///
+    /// Never overwrites: the first correction is the one about the answer that was on screen.
+    func recordCorrection(rejected: String, chosen: String, offered: [String], recordId: UUID,
+                          at date: Date = .now) {
+        var records = all()
+        guard let index = records.firstIndex(where: { $0.id == recordId }),
+              records[index].correction == nil else { return }
+        records[index] = records[index].correcting(rejected: rejected, chosen: chosen,
+                                                   offered: offered, at: date)
+        save(records)
+    }
+
     func forgetAll() { defaults.removeObject(forKey: key) }
 
     /// The whole log, with receipts joined and the metrics derived, as JSON somebody can open.

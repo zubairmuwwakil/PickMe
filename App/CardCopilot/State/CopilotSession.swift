@@ -239,6 +239,9 @@ final class CopilotSession {
     private var nearbyPreparationTask: Task<FlowOutcome?, Never>?
     private var nearbyExpiryTask: Task<Void, Never>?
     private var nearbyPreparationGeneration = 0
+    /// The field record written by the most recent Radar query, so a correction lands on the scan
+    /// that actually produced the subject rather than on the most recent record of any kind.
+    private var lastRadarFieldRecordId: UUID?
 
     var lastError: FlowError?
 
@@ -276,6 +279,7 @@ final class CopilotSession {
         nearbySnapshot = nil
         preparedNearbyOutcome = nil
         preparedLocationFix = nil
+        lastRadarFieldRecordId = nil
         cachedLocation = nil
         nearbyPreparationState = .idle
         nearbyResultIsStale = false
@@ -574,7 +578,7 @@ final class CopilotSession {
     private func recordRadarFieldLog(fix: CheckoutLocationFix, rawResultCount: Int,
                                      merchants: [NearbyMerchant]) {
         #if FIELD_DIAGNOSTICS
-        fieldLogStore.record(radarFieldRecord(
+        let record = radarFieldRecord(
             recordedAt: .now,
             fix: ArrivalFix(latitude: fix.latitude, longitude: fix.longitude,
                             horizontalAccuracyMeters: fix.horizontalAccuracyMeters,
@@ -586,7 +590,44 @@ final class CopilotSession {
             // about alerting; it is not evidence about which storefront they are standing in, and
             // letting it lift a candidate's confidence here would put a preference into a
             // measurement.
-            frequentedKeys: MerchantPatronageStore().frequentedKeys()))
+            frequentedKeys: MerchantPatronageStore().frequentedKeys())
+        fieldLogStore.record(record)
+        lastRadarFieldRecordId = record.id
+        #endif
+    }
+
+    /// The owner rejecting the store the answer card named, and saying which one it was.
+    ///
+    /// Two things happen, and only one of them is diagnostic. The confirmation is a product
+    /// feature and ships in every build: it goes through `PredictionLog.confirmMerchant`, the same
+    /// writer a reconciled purchase uses, because `confirmedCategory` is what promotes a terminal
+    /// to `.verified` and a second writer would be a second set of rules for it.
+    ///
+    /// The record annotation is the instrument, and is compiled out of anything an owner could
+    /// install.
+    ///
+    /// A brand with no real coordinates confirms nothing. Its id names a brand rather than a
+    /// terminal, and the truth graph is explicit that a confirmation at one Walmart says nothing
+    /// about another. The correction is still recorded — a store the owner had to reach by search
+    /// was never in the candidate set, which is the containment ceiling and worth knowing.
+    func correctSubject(rejected: HomeAnswerSubject, chosen: HomeAnswerSubject,
+                        offered: [HomeAnswerSubject], using graph: DependencyGraph) {
+        if chosen.merchant.hasMonitorableLocation {
+            do {
+                try graph.service.log.confirmMerchant(chosen.merchant,
+                                                      category: chosen.prediction.category)
+                refresh(using: graph)
+            } catch {
+                report(FlowError(error))
+            }
+        }
+
+        #if FIELD_DIAGNOSTICS
+        if let lastRadarFieldRecordId {
+            fieldLogStore.recordCorrection(rejected: rejected.name, chosen: chosen.name,
+                                           offered: offered.map(\.name),
+                                           recordId: lastRadarFieldRecordId)
+        }
         #endif
     }
 

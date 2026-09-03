@@ -303,20 +303,70 @@ public struct PredictionLog {
             predicate: #Predicate { $0.identifier == identifier }))
         guard let merchant = matches.first else { return }
 
-        // The count is a streak, not a total: it answers "how many times has this same result
-        // repeated here", which is the claim `.repeatedTerminal` makes. A terminal that re-codes
-        // starts over rather than accruing confidence its own evidence contradicts.
-        merchant.confirmationCount = merchant.confirmedCategory == observedCategory
-            ? merchant.confirmationCount + 1
-            : 1
-        merchant.confirmedCategory = observedCategory
-        merchant.rawCategory = observedCategory
+        applyOwnerConfirmation(to: merchant, category: observedCategory,
+                               incrementsConfirmation: true, at: date)
+    }
+
+    /// **The only place `StoredMerchant.confirmedCategory` is written.**
+    ///
+    /// That column is what promotes a merchant to `.verified` and the unscaled threshold that
+    /// comes with it, so every route to it — a reconciled purchase, a corrected category, the
+    /// owner saying "not this store" on Home — passes through here. A second writer would be a
+    /// second set of rules for the streak, the confidence score and the taxonomy stamp, and the
+    /// two would disagree the first time one of them changed.
+    ///
+    /// The count is a streak, not a total: it answers "how many times has this same result
+    /// repeated here", which is the claim `.repeatedTerminal` makes. A terminal that re-codes
+    /// starts over rather than accruing confidence its own evidence contradicts.
+    private func applyOwnerConfirmation(to merchant: StoredMerchant, category: String,
+                                        incrementsConfirmation: Bool, at date: Date) {
+        if merchant.confirmedCategory == category {
+            if incrementsConfirmation { merchant.confirmationCount += 1 }
+        } else {
+            merchant.confirmedCategory = category
+            merchant.confirmationCount = 1
+        }
+        merchant.rawCategory = category
         merchant.categoryTaxonomyVersion = CategoryTaxonomy.taxonomyVersion
         merchant.categoryConfidenceScore = merchant.confirmationCount >= 2
             ? ConfidenceSource.repeatedTerminal.defaultScore
             : ConfidenceSource.ownerConfirmedTerminal.defaultScore
-        merchant.merchantGroupID = CategoryTaxonomy.merchantGroupID(for: observedCategory)
+        merchant.merchantGroupID = CategoryTaxonomy.merchantGroupID(for: category)
         merchant.lastConfirmedAt = date
+    }
+
+    /// The owner naming the store they are actually standing in, with no purchase behind it.
+    ///
+    /// Home's "not this store" correction. It is the only ground truth in the field instrument
+    /// that costs nothing but a tap — a receipt join labels perhaps a fifth of visits, this labels
+    /// any visit the owner chooses to correct — and it writes through
+    /// `applyOwnerConfirmation` like every other confirmation.
+    ///
+    /// A category of "other" writes nothing. "Other" is the absence of a category rather than a
+    /// category, and promoting a terminal to `.verified` on the strength of knowing nothing about
+    /// it would spend the unscaled threshold that promotion buys on a guess.
+    public func confirmMerchant(_ merchant: NearbyMerchant, category rawCategory: String,
+                                confirmedAt: Date = Date()) throws {
+        let category = CategoryTaxonomy.canonicalID(rawCategory)
+        guard category != "other" else { return }
+
+        let id = merchant.id
+        let matches = try context.fetch(FetchDescriptor<StoredMerchant>(
+            predicate: #Predicate { $0.identifier == id }))
+        let stored: StoredMerchant
+        if let existing = matches.first {
+            stored = existing
+        } else {
+            stored = StoredMerchant(name: merchant.name, identifier: merchant.id,
+                                    poiCategoryRaw: merchant.poiCategoryRaw,
+                                    latitude: merchant.latitude, longitude: merchant.longitude,
+                                    merchantCategoryCode: merchant.merchantCategoryCode)
+            context.insert(stored)
+        }
+        stored.lastSeenAt = confirmedAt
+        applyOwnerConfirmation(to: stored, category: category,
+                               incrementsConfirmation: true, at: confirmedAt)
+        try context.save()
     }
 
     /// Reclassifies a transaction's category and updates the Merchant Truth Graph.
@@ -391,21 +441,11 @@ public struct PredictionLog {
         }
 
         if let existing {
-            if existing.confirmedCategory == category {
-                if incrementsConfirmation { existing.confirmationCount += 1 }
-            } else {
-                existing.confirmedCategory = category
-                existing.confirmationCount = 1
-            }
             existing.lastSeenAt = purchase.createdAt
-            existing.rawCategory = category
-            existing.categoryTaxonomyVersion = CategoryTaxonomy.taxonomyVersion
-            existing.categoryConfidenceScore = existing.confirmationCount >= 2
-                ? ConfidenceSource.repeatedTerminal.defaultScore
-                : ConfidenceSource.ownerConfirmedTerminal.defaultScore
             existing.merchantCategoryCode = purchase.merchantCategoryCode
-            existing.merchantGroupID = CategoryTaxonomy.merchantGroupID(for: category)
-            existing.lastConfirmedAt = correctedAt
+            applyOwnerConfirmation(to: existing, category: category,
+                                   incrementsConfirmation: incrementsConfirmation,
+                                   at: correctedAt)
             return
         }
 

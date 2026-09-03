@@ -118,6 +118,36 @@ public struct ArrivalCandidateRecord: Equatable, Sendable, Codable {
     public var site: ArrivalSite { ArrivalSite(latitude: latitude, longitude: longitude) }
 }
 
+/// The owner rejecting the store the app named, and saying which one it was.
+///
+/// The only ground truth in this instrument that costs nothing but a tap. A receipt join labels
+/// perhaps a fifth of visits — the ones that ended in a purchase on a card that posts quickly —
+/// while this labels any visit the owner chooses to correct, including the ones where they walked
+/// out empty-handed and the app was still wrong.
+public struct ArrivalCorrection: Equatable, Sendable, Codable {
+    /// The subject the answer card was pointed at when the owner said no.
+    public var rejectedName: String
+    public var chosenName: String
+    /// Where the chosen store sat in the ranking, 0-based. **The payload.** "The right answer was
+    /// second" and "the right answer was ninth" call for different fixes.
+    ///
+    /// Nil when the chosen store was not among the candidates at all — the containment ceiling,
+    /// established here without waiting for a receipt.
+    public var chosenCandidateIndex: Int?
+    /// What the owner was shown to choose from, in the order they were shown.
+    public var offeredNames: [String]
+    public var correctedAt: Date
+
+    public init(rejectedName: String, chosenName: String, chosenCandidateIndex: Int?,
+                offeredNames: [String], correctedAt: Date) {
+        self.rejectedName = rejectedName
+        self.chosenName = chosenName
+        self.chosenCandidateIndex = chosenCandidateIndex
+        self.offeredNames = offeredNames
+        self.correctedAt = correctedAt
+    }
+}
+
 /// A Wallet capture, reduced to what a join needs.
 public struct ArrivalReceipt: Equatable, Sendable, Codable {
     public var merchantDescriptor: String
@@ -190,6 +220,8 @@ public struct ArrivalFieldRecord: Equatable, Sendable, Codable, Identifiable {
 
     public var discriminability: ArrivalDiscriminability?
     public var engagement: ArrivalEngagement?
+    /// The owner's own correction, if they gave one.
+    public var correction: ArrivalCorrection?
     public var receipt: ArrivalReceipt?
     /// Index into `candidates` of the store the receipt says the owner was actually in. Nil when
     /// there is no receipt, or when no candidate matched it — and those two are different: the
@@ -293,6 +325,23 @@ public struct ArrivalFieldRecord: Equatable, Sendable, Codable, Identifiable {
     public var topRankedMissedARecognisedChain: Bool {
         guard let chainCandidateIndex, let chosenCandidateIndex else { return false }
         return chainCandidateIndex != chosenCandidateIndex
+    }
+
+    /// This record annotated with the owner's correction.
+    ///
+    /// Deliberately additive: the chosen candidate, the resolved name and the rest of the decision
+    /// stay exactly as the app made them. Rewriting them to the truth would erase the only thing
+    /// the record is evidence of, which is that the app was wrong.
+    public func correcting(rejected: String, chosen: String, offered: [String],
+                           at date: Date = .now) -> ArrivalFieldRecord {
+        var corrected = self
+        corrected.correction = ArrivalCorrection(
+            rejectedName: rejected,
+            chosenName: chosen,
+            chosenCandidateIndex: candidates.firstIndex { $0.name == chosen },
+            offeredNames: offered,
+            correctedAt: date)
+        return corrected
     }
 
     public var chosenCandidate: ArrivalCandidateRecord? {
