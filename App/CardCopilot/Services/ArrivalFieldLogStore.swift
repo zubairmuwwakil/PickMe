@@ -77,6 +77,28 @@ final class ArrivalFieldLogStore {
         save(records)
     }
 
+    /// The second delivery sample, taken the next time the app is opened.
+    ///
+    /// Applies only to arrivals that actually got a request identifier: an arrival the gate never
+    /// spoke on has nothing to resample, and writing an outcome for it would turn a policy
+    /// decision into a delivery statistic.
+    ///
+    /// Once per record. A second opening hours later says nothing about delivery and would
+    /// overwrite the answer with the owner's tidying habits.
+    func recordForegroundDelivery(deliveredIdentifiers: Set<String>) {
+        var records = all()
+        var changed = false
+        for index in records.indices {
+            guard let identifier = records[index].notificationRequestIdentifier,
+                  records[index].notificationDeliveryOnForeground == nil else { continue }
+            records[index].notificationDeliveryOnForeground = arrivalNotificationDelivery(
+                requestIdentifier: identifier, requestFailed: false,
+                deliveredIdentifiers: deliveredIdentifiers)
+            changed = true
+        }
+        if changed { save(records) }
+    }
+
     func forgetAll() { defaults.removeObject(forKey: key) }
 
     /// The whole log, with receipts joined and the metrics derived, as JSON somebody can open.

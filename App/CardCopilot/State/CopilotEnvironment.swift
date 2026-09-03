@@ -225,6 +225,9 @@ final class CopilotEnvironment {
         ambientFieldLogRecordCount = ambient.fieldLogRecordCount
         ambientEnabled = ambient.isEnabled
         Task { await refreshAmbientRuntimeStatus() }
+        // The second delivery sample. This tick is the app's own definition of "next foreground",
+        // so delivery truth rides it rather than growing a scene observer of its own.
+        Task { await ambient.resampleNotificationDelivery() }
     }
 
     /// Written through the service rather than into a store this type owns, so the value the

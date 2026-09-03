@@ -202,6 +202,10 @@ final class AmbientCoverageStore {
         store.update(at: date) { $0.recordArrival(outcome, source: source) }
     }
 
+    func recordNotificationDelivery(_ outcome: ArrivalNotificationDelivery, at date: Date = .now) {
+        store.update(at: date) { $0.recordNotificationDelivery(outcome) }
+    }
+
     func lastSevenDays(ending date: Date = .now) -> AmbientCoverageLog {
         store.lastSevenDays(ending: date)
     }
@@ -986,6 +990,11 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             categoryAdvantageMultiplier: policy.categoryAdvantageMultiplier
         )
         let decision = AmbientGate.evaluate(gateInput)
+        // Delivery truth. `.neverRequested` is the honest default for every tier below
+        // `.interrupt`: those arrivals asked nothing of iOS, and the field log has to say so
+        // rather than leave a gap a reader would fill with "delivery failed".
+        var notificationRequestIdentifier: String?
+        var notificationDelivery: ArrivalNotificationDelivery = .neverRequested
         // The gate no longer decides whether PickMe is visible — only how loud it is. Silence is
         // now reserved for the one reason that is the owner's own instruction.
         switch decision.tier {
@@ -1017,8 +1026,11 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             @unknown default: notificationPermission = .unknown
             }
             do {
-                try await scheduleArrivalNotification(arrival: arrival, recommendation: recommendation,
-                                                      catalogue: catalogue, regionId: regionId)
+                let identifier = try await scheduleArrivalNotification(
+                    arrival: arrival, recommendation: recommendation,
+                    catalogue: catalogue, regionId: regionId)
+                notificationRequestIdentifier = identifier
+                notificationDelivery = await sampleDelivery(of: identifier, requestFailed: false)
                 let activity = presentArrivalActivity(tier: .interrupt, arrival: arrival,
                                                       recommendation: recommendation, catalogue: catalogue,
                                                       regionId: regionId)
@@ -1028,14 +1040,24 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                 explain(.notificationAccepted, merchant: arrival.merchant, activity: activity,
                         notificationPermission: notificationPermission)
             } catch {
+                notificationDelivery = .requestFailed
                 explain(.notificationFailed, merchant: arrival.merchant, notificationPermission: notificationPermission)
                 runtimeStore.recordIssue("Arrival advice was approved but could not be delivered: \(error.localizedDescription)")
             }
         }
 
+        #if FIELD_DIAGNOSTICS
+        // Gated with the rest of the instrument. The counter holds no identity and no timing, but
+        // the privacy policy does not disclose it either, and everything in this expansion except
+        // the correction loop is removed before submission.
+        coverageStore.recordNotificationDelivery(notificationDelivery)
+        #endif
+
         recordFieldLog(arrival: arrival, regionId: regionId, source: source, fix: fix,
                        policy: policy, estimatedAmountCad: purchase.amountCad,
-                       gateInput: gateInput, decision: decision)
+                       gateInput: gateInput, decision: decision,
+                       notificationRequestIdentifier: notificationRequestIdentifier,
+                       notificationDelivery: notificationDelivery)
     }
 
     /// One record per arrival, dev-only.
@@ -1046,7 +1068,9 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private func recordFieldLog(arrival: ResolvedArrival, regionId: String,
                                 source: AmbientArrivalSource, fix: ArrivalFix?,
                                 policy: AmbientAlertPolicy, estimatedAmountCad: Double,
-                                gateInput: AmbientGateInput, decision: AmbientGateDecision) {
+                                gateInput: AmbientGateInput, decision: AmbientGateDecision,
+                                notificationRequestIdentifier: String?,
+                                notificationDelivery: ArrivalNotificationDelivery) {
         #if FIELD_DIAGNOSTICS
         guard let catalogue, let ownerState else { return }
         // Each candidate carries the card the engine would have chosen for it. Scored here, at
@@ -1088,6 +1112,8 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             gateInput: gateInput, deliveryTier: decision.tier,
             suppressionReasons: Array(decision.suppressionReasons),
             policy: policy,
+            notificationRequestIdentifier: notificationRequestIdentifier,
+            notificationDeliveryAtSchedule: notificationDelivery,
             discriminability: discriminability(candidates: candidates.map(\.site), fix: fix)))
         #endif
     }
@@ -1318,10 +1344,16 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
     // MARK: - Notifications
 
+    /// Returns the request identifier iOS accepted, so delivery can be checked for later.
+    ///
+    /// The identifier used to be built and discarded inside the `enqueue` call. Keeping it is what
+    /// makes "did this specific notification reach Notification Center" answerable at all — the
+    /// alternative is matching by timestamp, which cannot tell two arrivals in one plaza apart.
+    @discardableResult
     private func scheduleArrivalNotification(arrival: ResolvedArrival,
                                              recommendation: Recommendation,
                                              catalogue: Catalogue,
-                                             regionId: String) async throws {
+                                             regionId: String) async throws -> String {
         guard let card = catalogue.cards.first(where: { $0.cardId == recommendation.winner.cardId }) else {
             throw DeliveryError.missingRecommendedCard(recommendation.winner.cardId)
         }
@@ -1360,9 +1392,43 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         ]
         if let poi = arrival.merchant.poiCategoryRaw { info["poiCategoryRaw"] = poi }
         content.userInfo = info
-        try await enqueue(UNNotificationRequest(
-            identifier: "ambient.arrival.\(regionId).\(UUID().uuidString)",
-            content: content, trigger: nil))
+        let identifier = "ambient.arrival.\(regionId).\(UUID().uuidString)"
+        try await enqueue(UNNotificationRequest(identifier: identifier, content: content,
+                                                trigger: nil))
+        return identifier
+    }
+
+    /// How long to wait before asking Notification Center whether the alert landed.
+    ///
+    /// `add` returning is not delivery — it is iOS accepting the request — so a sample taken the
+    /// instant it returns reports an absence that means nothing. Half a second is enough for an
+    /// immediate trigger to land and small enough to spend inside a background region wake, which
+    /// gets on the order of ten seconds in total.
+    private static let deliverySampleDelay: Duration = .milliseconds(500)
+
+    /// Whether Notification Center is holding this notification, shortly after it was scheduled.
+    private func sampleDelivery(of identifier: String?, requestFailed: Bool) async
+    -> ArrivalNotificationDelivery {
+        guard let identifier, !requestFailed else {
+            return arrivalNotificationDelivery(requestIdentifier: identifier,
+                                               requestFailed: requestFailed,
+                                               deliveredIdentifiers: [])
+        }
+        try? await Task.sleep(for: Self.deliverySampleDelay)
+        let delivered = await notificationCenter.deliveredNotifications()
+        return arrivalNotificationDelivery(
+            requestIdentifier: identifier, requestFailed: false,
+            deliveredIdentifiers: Set(delivered.map(\.request.identifier)))
+    }
+
+    /// The second sample, on the next foreground. Called from `refreshAmbientDiagnostics`, which
+    /// is the app's existing scene-active tick.
+    func resampleNotificationDelivery() async {
+        #if FIELD_DIAGNOSTICS
+        let delivered = await notificationCenter.deliveredNotifications()
+        fieldLogStore.recordForegroundDelivery(
+            deliveredIdentifiers: Set(delivered.map(\.request.identifier)))
+        #endif
     }
 
     /// Starts the Live Activity for an arrival at the tier the gate chose.

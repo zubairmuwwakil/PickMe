@@ -319,5 +319,54 @@ final class SynthesisedArrivalCountingTests: XCTestCase {
         let decoded = try JSONDecoder().decode(AmbientCoverageLog.self, from: Data(legacy.utf8))
         XCTAssertEqual(decoded.arrivals, 6)
         XCTAssertEqual(decoded.arrivalsSynthesised, 0)
+        XCTAssertTrue(decoded.notificationDeliveryByOutcome.isEmpty)
+    }
+
+}
+
+/// Delivery truth, counted.
+///
+/// "Fired" only ever counted that iOS accepted a request, which is why an owner who saw nothing
+/// and a policy that never spoke looked identical in the weekly read-out.
+final class NotificationDeliveryCountingTests: XCTestCase {
+
+    /// "Fired" counted only that iOS accepted a request. These four say what became of it, which
+    /// is the difference between a delivery bug, a policy that never speaks, and an alert the
+    /// owner simply missed.
+    func testEachDeliveryOutcomeIsCountedSeparately() {
+        var log = AmbientCoverageLog()
+        log.recordNotificationDelivery(.neverRequested)
+        log.recordNotificationDelivery(.neverRequested)
+        log.recordNotificationDelivery(.requestFailed)
+        log.recordNotificationDelivery(.acceptedThenAbsent)
+        log.recordNotificationDelivery(.acceptedAndPresent)
+
+        XCTAssertEqual(log.notificationDeliveryByOutcome[.neverRequested], 2)
+        XCTAssertEqual(log.notificationDeliveryByOutcome[.requestFailed], 1)
+        XCTAssertEqual(log.notificationDeliveryByOutcome[.acceptedThenAbsent], 1)
+        XCTAssertEqual(log.notificationDeliveryByOutcome[.acceptedAndPresent], 1)
+    }
+
+    /// **The number the investigation turns on.** Of the alerts iOS accepted, how many were
+    /// actually in Notification Center.
+    func testAlertsAskedForAndAlertsThatLandedAreBothDerived() {
+        var log = AmbientCoverageLog()
+        log.recordNotificationDelivery(.neverRequested)
+        log.recordNotificationDelivery(.acceptedThenAbsent)
+        log.recordNotificationDelivery(.acceptedAndPresent)
+        log.recordNotificationDelivery(.acceptedAndPresent)
+
+        XCTAssertEqual(log.notificationsRequested, 3)
+        XCTAssertEqual(log.notificationsThatLanded, 2)
+    }
+
+    func testDeliveryCountsSumOverTheWeek() {
+        var week = AmbientCoverageLog()
+        var today = AmbientCoverageLog()
+        today.recordNotificationDelivery(.acceptedAndPresent)
+        week.merge(today)
+        week.merge(today)
+
+        XCTAssertEqual(week.notificationDeliveryByOutcome[.acceptedAndPresent], 2)
     }
 }

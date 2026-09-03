@@ -218,6 +218,17 @@ public struct ArrivalFieldRecord: Equatable, Sendable, Codable, Identifiable {
     /// made it fire.
     public var policy: AmbientAlertPolicy?
 
+    /// The `UNNotificationRequest` identifier iOS accepted, when one was scheduled. Kept so the
+    /// same notification can be looked for again later rather than guessed at by timestamp.
+    public var notificationRequestIdentifier: String?
+    /// Sampled seconds after scheduling, and again the next time the app is opened.
+    ///
+    /// Two samples rather than one because neither alone is conclusive. Absent seconds after
+    /// scheduling cannot tell a dropped notification from one that had not landed yet; absent on
+    /// next foreground cannot tell a dropped one from one the owner saw and cleared. The pair can.
+    public var notificationDeliveryAtSchedule: ArrivalNotificationDelivery?
+    public var notificationDeliveryOnForeground: ArrivalNotificationDelivery?
+
     public var discriminability: ArrivalDiscriminability?
     public var engagement: ArrivalEngagement?
     /// The owner's own correction, if they gave one.
@@ -241,6 +252,8 @@ public struct ArrivalFieldRecord: Equatable, Sendable, Codable, Identifiable {
                 gateInput: AmbientGateInput, deliveryTier: AmbientDeliveryTier,
                 suppressionReasons: [AmbientSuppressionReason],
                 policy: AmbientAlertPolicy,
+                notificationRequestIdentifier: String? = nil,
+                notificationDeliveryAtSchedule: ArrivalNotificationDelivery? = nil,
                 discriminability: ArrivalDiscriminability? = nil,
                 engagement: ArrivalEngagement? = nil,
                 receipt: ArrivalReceipt? = nil, receiptCandidateIndex: Int? = nil) {
@@ -265,6 +278,8 @@ public struct ArrivalFieldRecord: Equatable, Sendable, Codable, Identifiable {
         self.deliveryTier = deliveryTier
         self.suppressionReasons = suppressionReasons
         self.policy = policy
+        self.notificationRequestIdentifier = notificationRequestIdentifier
+        self.notificationDeliveryAtSchedule = notificationDeliveryAtSchedule
         self.discriminability = discriminability
         self.engagement = engagement
         self.receipt = receipt
@@ -300,6 +315,11 @@ public struct ArrivalFieldRecord: Equatable, Sendable, Codable, Identifiable {
         self.deliveryTier = nil
         self.suppressionReasons = []
         self.policy = nil
+        // A scan asks for nothing, so it has no delivery outcome — not even `.neverRequested`,
+        // which is a statement about an arrival the gate declined to speak on.
+        self.notificationRequestIdentifier = nil
+        self.notificationDeliveryAtSchedule = nil
+        self.notificationDeliveryOnForeground = nil
         self.discriminability = discriminability
     }
 

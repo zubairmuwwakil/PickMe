@@ -47,10 +47,19 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
     /// size of that problem, and pooling them erases the only evidence that asking helped.
     public private(set) var arrivalsSynthesised: Int
 
+    /// What became of each arrival's notification. **"Fired" only ever counted that iOS accepted
+    /// a request**, which cannot separate an alert the app never asked for, one iOS refused, one
+    /// that never reached Notification Center, and one the owner simply missed. Those are four
+    /// different faults with four different fixes, and this is the counter that tells them apart.
+    ///
+    /// No identity, no timing — just how many of each, per day, like every other counter here.
+    public private(set) var notificationDeliveryByOutcome: [ArrivalNotificationDelivery: Int]
+
     public init(rotations: Int = 0, rotationsAtCapacity: Int = 0,
                 evictedByTier: [AmbientRegionTier: Int] = [:],
                 arrivals: Int = 0, arrivalsUnresolved: Int = 0, arrivalsNotAdvised: Int = 0,
-                arrivalsSynthesised: Int = 0) {
+                arrivalsSynthesised: Int = 0,
+                notificationDeliveryByOutcome: [ArrivalNotificationDelivery: Int] = [:]) {
         self.rotations = rotations
         self.rotationsAtCapacity = rotationsAtCapacity
         self.evictedByTier = evictedByTier
@@ -58,6 +67,7 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
         self.arrivalsUnresolved = arrivalsUnresolved
         self.arrivalsNotAdvised = arrivalsNotAdvised
         self.arrivalsSynthesised = arrivalsSynthesised
+        self.notificationDeliveryByOutcome = notificationDeliveryByOutcome
     }
 
     /// Tolerant of days recorded before a counter existed.
@@ -80,6 +90,9 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
                                                            forKey: .arrivalsNotAdvised) ?? 0
         arrivalsSynthesised = try container.decodeIfPresent(Int.self,
                                                             forKey: .arrivalsSynthesised) ?? 0
+        notificationDeliveryByOutcome = try container.decodeIfPresent(
+            [ArrivalNotificationDelivery: Int].self,
+            forKey: .notificationDeliveryByOutcome) ?? [:]
     }
 
     // MARK: - Derived read-outs
@@ -104,6 +117,20 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
         arrivals - arrivalsUnresolved - arrivalsNotAdvised
     }
 
+    /// Arrivals the gate decided were worth interrupting for, whatever became of the request.
+    public var notificationsRequested: Int {
+        notificationDeliveryByOutcome
+            .filter { $0.key != .neverRequested }
+            .values.reduce(0, +)
+    }
+
+    /// …of which the alert was actually in Notification Center when it was looked for. **The
+    /// number the investigation turns on**: a large gap between these two is a delivery defect,
+    /// and no gap at all means the silence was policy and the gate is where to look.
+    public var notificationsThatLanded: Int {
+        notificationDeliveryByOutcome[.acceptedAndPresent] ?? 0
+    }
+
     // MARK: - Recording
 
     public mutating func record(_ allocation: RegionAllocation) {
@@ -125,6 +152,12 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
         }
     }
 
+    /// Recorded for every arrival, including the ones the gate never spoke on — `.neverRequested`
+    /// is the denominator that makes the other three readable as a rate.
+    public mutating func recordNotificationDelivery(_ outcome: ArrivalNotificationDelivery) {
+        notificationDeliveryByOutcome[outcome, default: 0] += 1
+    }
+
     /// Mirrors `SuppressionLog.merge` so a seven-day read-out is assembled the same way for both.
     public mutating func merge(_ other: AmbientCoverageLog) {
         rotations += other.rotations
@@ -136,6 +169,9 @@ public struct AmbientCoverageLog: Codable, Equatable, Sendable {
         arrivalsUnresolved += other.arrivalsUnresolved
         arrivalsNotAdvised += other.arrivalsNotAdvised
         arrivalsSynthesised += other.arrivalsSynthesised
+        for (outcome, count) in other.notificationDeliveryByOutcome {
+            notificationDeliveryByOutcome[outcome, default: 0] += count
+        }
     }
 }
 
