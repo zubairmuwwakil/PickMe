@@ -12,10 +12,25 @@ final class ArrivalFixRequesterTests: XCTestCase {
                    capturedAt: Date(timeIntervalSince1970: 0))
     }
 
+    private func waitForWaiters(
+        _ count: Int,
+        in requester: ArrivalFixRequester,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) async -> Bool {
+        let deadline = ContinuousClock.now.advanced(by: .seconds(1))
+        while requester.waiterCount < count, ContinuousClock.now < deadline {
+            await Task.yield()
+        }
+        XCTAssertEqual(requester.waiterCount, count, "Timed out waiting for \(count) arrival(s)",
+                       file: file, line: line)
+        return requester.waiterCount == count
+    }
+
     func testTheFixIsReturnedWhenItLandsBeforeTheTimeout() async {
         let requester = ArrivalFixRequester(timeout: .seconds(30), start: {})
         async let awaited = requester.fix()
-        await Task.yield()
+        _ = await waitForWaiters(1, in: requester)
         requester.deliver(fix(45))
         let result = await awaited
         XCTAssertEqual(result, fix(45))
@@ -46,7 +61,7 @@ final class ArrivalFixRequesterTests: XCTestCase {
     func testAFailureResolvesImmediatelyAsNoFix() async {
         let requester = ArrivalFixRequester(timeout: .seconds(30), start: {})
         async let awaited = requester.fix()
-        await Task.yield()
+        _ = await waitForWaiters(1, in: requester)
         requester.fail()
         let result = await awaited
         XCTAssertNil(result)
@@ -57,12 +72,26 @@ final class ArrivalFixRequesterTests: XCTestCase {
     func testConcurrentArrivalsShareOneRequest() async {
         var starts = 0
         let requester = ArrivalFixRequester(timeout: .seconds(30), start: { starts += 1 })
-        async let first = requester.fix()
-        async let second = requester.fix()
-        await Task.yield()
-        await Task.yield()
+        let first = Task<ArrivalFix?, Never> {
+            guard !Task.isCancelled else { return nil }
+            return await requester.fix()
+        }
+        let second = Task<ArrivalFix?, Never> {
+            guard !Task.isCancelled else { return nil }
+            return await requester.fix()
+        }
+        guard await waitForWaiters(2, in: requester) else {
+            first.cancel()
+            second.cancel()
+            requester.fail()
+            _ = await first.value
+            _ = await second.value
+            return
+        }
         requester.deliver(fix(45))
-        let results = await [first, second]
+        let firstResult = await first.value
+        let secondResult = await second.value
+        let results = [firstResult, secondResult]
         XCTAssertEqual(results, [fix(45), fix(45)])
         XCTAssertEqual(starts, 1)
     }

@@ -29,6 +29,10 @@ final class ArrivalFixRequester {
     /// resolution work below it is measuring nothing.
     private(set) var timeouts = 0
 
+    /// How many arrivals are currently sharing the outstanding request. Kept read-only so the
+    /// request can be diagnosed without exposing its continuations or mutable state.
+    var waiterCount: Int { waiters.count }
+
     init(timeout: Duration = .seconds(5), start: @escaping @MainActor () -> Void) {
         self.timeout = timeout
         self.start = start
