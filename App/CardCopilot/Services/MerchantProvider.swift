@@ -57,17 +57,21 @@ final class LiveMerchantProvider: MerchantProviding {
                 .distance(from: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude))
         }
         let name = mapItem.name ?? "Unknown merchant"
+        let street = [mapItem.placemark.subThoroughfare, mapItem.placemark.thoroughfare]
+            .compactMap { $0 }.joined(separator: " ")
+        let address = [street, mapItem.placemark.locality, mapItem.placemark.administrativeArea]
+            .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", ")
         return NearbyMerchant(
             id: syntheticId(name: name, coordinate: coordinate),
             name: name,
             poiCategoryRaw: mapItem.pointOfInterestCategory?.rawValue,
             latitude: coordinate.latitude,
             longitude: coordinate.longitude,
-            distanceMeters: distance)
+            distanceMeters: distance,
+            locationDescription: address.isEmpty ? nil : address)
     }
 
     private static func syntheticId(name: String, coordinate: CLLocationCoordinate2D) -> String {
         "\(name)@\(coordinate.latitude),\(coordinate.longitude)"
     }
 }
-

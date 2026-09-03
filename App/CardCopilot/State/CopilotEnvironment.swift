@@ -274,6 +274,11 @@ final class CopilotEnvironment {
         refreshAmbientDiagnostics()
     }
 
+    func makeArrivalPlacesModel() -> ArrivalPlacesModel {
+        ArrivalPlacesModel(context: ModelContext(modelContext.container),
+                           provider: graph?.provider ?? LiveMerchantProvider(), ambient: ambient)
+    }
+
     /// Persists one aggregate credit fact locally first and queues the complete owner state when
     /// this device is account-bound. Credit tracking never creates or edits purchase records.
     @discardableResult

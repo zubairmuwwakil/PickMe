@@ -23,6 +23,11 @@ enum LiveActivityDismissalPolicy {
     }
 }
 
+/// Records acceptance of a request, never a claim that the owner saw the activity.
+public enum LiveActivityRequestOutcome: String, Codable, Sendable {
+    case notRequested, accepted, disabled, dismissed, failed
+}
+
 /// Manages Live Activities for ambient arrivals and checkout recommendations.
 @MainActor
 public final class LiveActivityManager: ObservableObject {
@@ -40,6 +45,7 @@ public final class LiveActivityManager: ObservableObject {
     private init() {}
 
     /// Starts a Live Activity for a merchant recommendation.
+    @discardableResult
     public func startRecommendationActivity(merchantName: String,
                                            merchantLocation: String? = nil,
                                            cardName: String,
@@ -50,8 +56,8 @@ public final class LiveActivityManager: ObservableObject {
                                            categoryIcon: String,
                                            isFork: Bool = false,
                                            tier: AmbientDeliveryTier = .interrupt,
-                                           visitKey: String? = nil) {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+                                           visitKey: String? = nil) -> LiveActivityRequestOutcome {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return .disabled }
 
         // Ask the system, not this object: after a background relaunch `currentActivityId` is nil
         // while a real activity is still on the Lock Screen, and trusting it stacks a second card.
@@ -84,8 +90,9 @@ public final class LiveActivityManager: ObservableObject {
             currentActivityId = activity.id
             self.visitKey = visitKey
             observeDismissal(of: activity, visitKey: visitKey)
+            return .accepted
         } catch {
-            // Live activities request may fail if suppressed or rate-limited by OS
+            return .failed
         }
     }
 

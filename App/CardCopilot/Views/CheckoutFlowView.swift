@@ -405,12 +405,19 @@ struct CheckoutFlowView: View {
                 onTestNotification: {
                     Task { await environment.sendArrivalTestNotification() }
                 },
+                onManagePlaces: { router.push(.arrivalPlaces) },
                 onDone: {
                     environment.refreshAmbientDiagnostics()
                     router.pop()
                 }
             )
             .task { await environment.refreshAmbientRuntimeStatus() }
+            .onReceive(NotificationCenter.default.publisher(for: AmbientLocationService.monitoringDidChange)) { _ in
+                environment.refreshAmbientDiagnostics()
+            }
+        case .arrivalPlaces:
+            ArrivalPlacesView(model: environment.makeArrivalPlacesModel(),
+                              onSetup: { router.pop() })
         case .learnedMerchants:
             LearnedMerchantsView(onDone: { router.pop() })
         }

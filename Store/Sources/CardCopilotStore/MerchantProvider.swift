@@ -10,9 +10,11 @@ public struct NearbyMerchant: Equatable, Sendable, Identifiable {
     public let latitude: Double
     public let longitude: Double
     public let distanceMeters: Double?
+    public let locationDescription: String?
 
     public init(id: String, name: String, poiCategoryRaw: String?, merchantCategoryCode: Int? = nil,
-                latitude: Double, longitude: Double, distanceMeters: Double?) {
+                latitude: Double, longitude: Double, distanceMeters: Double?,
+                locationDescription: String? = nil) {
         self.id = id
         self.name = name
         self.poiCategoryRaw = poiCategoryRaw
@@ -20,6 +22,14 @@ public struct NearbyMerchant: Equatable, Sendable, Identifiable {
         self.latitude = latitude
         self.longitude = longitude
         self.distanceMeters = distanceMeters
+        self.locationDescription = locationDescription
+    }
+
+    /// Brand-only offline results have no physical place to monitor.
+    public var hasMonitorableLocation: Bool {
+        latitude.isFinite && longitude.isFinite
+            && (-90...90).contains(latitude) && (-180...180).contains(longitude)
+            && (latitude != 0 || longitude != 0)
     }
 }
 

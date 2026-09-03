@@ -20,17 +20,20 @@ public struct ArrivalAlertPreference: Codable, Equatable, Sendable, Identifiable
     public let locationIdentifier: String?
     public let latitude: Double?
     public let longitude: Double?
+    public let locationDescription: String?
     public let decidedAt: Date
 
     public init(merchantKey: String, merchantName: String, scope: ArrivalAlertScope,
                 locationIdentifier: String? = nil, latitude: Double? = nil,
-                longitude: Double? = nil, decidedAt: Date = Date()) {
+                longitude: Double? = nil, locationDescription: String? = nil,
+                decidedAt: Date = Date()) {
         self.merchantKey = merchantKey
         self.merchantName = merchantName
         self.scope = scope
         self.locationIdentifier = locationIdentifier
         self.latitude = latitude
         self.longitude = longitude
+        self.locationDescription = locationDescription
         self.decidedAt = decidedAt
     }
 

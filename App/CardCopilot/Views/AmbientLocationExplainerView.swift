@@ -23,6 +23,7 @@ struct AmbientLocationExplainerView: View {
     var onExportFieldLog: () -> URL? = { nil }
     let onEnable: () -> Void
     var onTestNotification: () -> Void = {}
+    var onManagePlaces: () -> Void = {}
     let onDone: () -> Void
 
     var body: some View {
@@ -58,13 +59,13 @@ struct AmbientLocationExplainerView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Get advice when you arrive")
                     .font(.title2.bold())
-                Text("PickMe can recognize arrival at up to 20 merchants you have already saved, then suggest a card before you pay.")
+                Text("PickMe monitors up to 20 shopping areas at a time, including saved stores and places it discovers nearby, then suggests a card before you pay.")
                     .foregroundStyle(.secondary)
             }
 
             VStack(alignment: .leading, spacing: 12) {
-                Label("Location is used only for arrival detection at your saved merchants.", systemImage: "location.fill")
-                Label("It does not continuously track your route, and your location never leaves this phone.", systemImage: "lock.fill")
+                Label("Location helps find nearby shopping areas and recognize when you arrive.", systemImage: "location.fill")
+                Label("No continuous route tracking. Nearby place searches use Apple Maps.", systemImage: "lock.fill")
                 Label("You can keep using manual checkout if you decline.", systemImage: "hand.tap.fill")
             }
             .font(.subheadline)
@@ -74,6 +75,9 @@ struct AmbientLocationExplainerView: View {
 
             Button("Enable arrival alerts", action: onEnable)
                 .buttonStyle(.borderedProminent)
+                .frame(maxWidth: .infinity)
+
+            Button("Manage monitored places", action: onManagePlaces)
                 .frame(maxWidth: .infinity)
 
             Button("Not now", action: onDone)
@@ -120,9 +124,19 @@ struct AmbientLocationExplainerView: View {
                 deliveryReadinessCard(runtimeStatus)
             }
 
+            Button(action: onManagePlaces) {
+                HStack {
+                    Label("Manage monitored places", systemImage: "mappin.and.ellipse")
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                }
+                .padding(16)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+            }
+
             VStack(alignment: .leading, spacing: 14) {
-                Label("Monitoring arrival at up to 20 saved merchants.", systemImage: "mappin.and.ellipse")
-                Label("Your location is processed on-device and never leaves this phone.", systemImage: "lock.fill")
+                Label("Up to 20 shopping areas, each able to cover several stores.", systemImage: "mappin.and.ellipse")
+                Label("Arrival detection runs on-device. Nearby place searches use Apple Maps.", systemImage: "lock.fill")
                 Label("Battery-efficient geofencing with no continuous route tracking.", systemImage: "battery.100.bolt")
             }
             .font(.subheadline)

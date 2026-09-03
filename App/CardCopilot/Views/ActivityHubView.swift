@@ -1408,9 +1408,9 @@ struct ActivityHubView: View {
             merchantKey: prompt.merchantKey,
             merchantName: prompt.merchantName,
             scope: scope,
-            locationIdentifier: scope == .exactLocation ? prompt.locationIdentifier : nil,
-            latitude: scope == .exactLocation ? prompt.latitude : nil,
-            longitude: scope == .exactLocation ? prompt.longitude : nil))
+            locationIdentifier: prompt.locationIdentifier,
+            latitude: prompt.latitude,
+            longitude: prompt.longitude))
         environment.arrivalPreferenceChanged()
         if scope != .disabled, !environment.ambientEnabled { router.push(.ambientSetup) }
     }

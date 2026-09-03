@@ -234,6 +234,14 @@ final class AmbientMerchantMuteStore {
         defaults.set(Array(ids), forKey: key)
     }
 
+    var count: Int { mutedIDs.count }
+
+    func unmute(_ merchantKey: String) {
+        var ids = mutedIDs
+        ids.remove(merchantKey)
+        defaults.set(Array(ids), forKey: key)
+    }
+
     func forgetAll() {
         defaults.removeObject(forKey: key)
     }
@@ -269,6 +277,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
     static let shared = AmbientLocationService()
     static let regionPrefix = "ambient.region."
+    static let monitoringDidChange = Notification.Name("ambientMonitoringDidChange")
     /// Regions registered by the storefront-era build. Still stopped on rotation so an upgrade
     /// does not leave orphaned geofences monitoring forever.
     static let legacyRegionPrefix = "ambient.merchant."
@@ -294,6 +303,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private let notificationCenter = UNUserNotificationCenter.current()
     private let diagnosticsStore = AmbientDiagnosticsStore()
     private let coverageStore = AmbientCoverageStore()
+    private let explanationStore = ArrivalExplanationStore()
     private let runtimeStore = AmbientRuntimeStore()
     private let muteStore = AmbientMerchantMuteStore()
     private let visitStore = AmbientVisitStore()
@@ -388,6 +398,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         self.modelContainer = modelContainer
         self.catalogue = catalogue
         self.ownerState = ownerState
+        _ = explanationStore.snapshot() // Expire diagnostics when the app next runs.
         LiveActivityManager.shared.onDismissal = { [weak self] regionId in
             self?.visitStore.markLiveActivityDismissed(regionId: regionId)
             // A swipe is an answer too — the quietest kind, and the one an alert that fired but
@@ -444,6 +455,72 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         }
     }
 
+    var mutedMerchantCount: Int { muteStore.count }
+    var arrivalExplanations: ArrivalExplanationSnapshot { explanationStore.snapshot() }
+
+    func clearArrivalExplanations() {
+        explanationStore.forgetAll()
+        NotificationCenter.default.post(name: Self.monitoringDidChange, object: nil)
+    }
+    func isMerchantMuted(_ identifier: String) -> Bool { muteStore.isMuted(identifier) }
+
+    func unmuteAllMerchants() {
+        muteStore.forgetAll()
+        refreshNow()
+    }
+
+    func unmuteMerchant(_ identifier: String, merchantKey: String, allBranches: Bool) {
+        muteStore.unmute(identifier)
+        guard allBranches, let modelContainer else { return }
+        let context = ModelContext(modelContainer)
+        let stored = (try? context.fetch(FetchDescriptor<StoredMerchant>())) ?? []
+        for merchant in stored where merchantActivityKey(name: merchant.name, locationIdentifier: merchant.identifier) == merchantKey {
+            muteStore.unmute(merchant.identifier ?? merchant.id.uuidString)
+        }
+        let members = (try? DiscoveryCache(context: context).allMembers()) ?? []
+        for member in members where merchantActivityKey(name: member.name, locationIdentifier: member.identifier) == merchantKey {
+            muteStore.unmute(member.identifier ?? member.name)
+        }
+    }
+
+    /// Read iOS's registered set, never the last proposed allocation. An area expands into the
+    /// stores it covers so one plaza is not misleadingly presented as one merchant.
+    func monitoredPlaces() throws -> [MonitoredArrivalPlace] {
+        guard let modelContainer else { return [] }
+        let context = ModelContext(modelContainer)
+        let stored = try context.fetch(FetchDescriptor<StoredMerchant>())
+        let areas = try DiscoveryCache(context: context).allAreas()
+        return monitoredAmbientRegions.compactMap { region -> MonitoredArrivalPlace? in
+            guard let circle = region as? CLCircularRegion else { return nil }
+            var merchants: [NearbyMerchant] = []
+            let target = Self.target(for: region.identifier)
+            if case .area(let id) = target,
+               let area = areas.first(where: { $0.id == id }) {
+                merchants = area.members.map {
+                    NearbyMerchant(id: $0.identifier ?? $0.name, name: $0.name,
+                                   poiCategoryRaw: $0.poiCategoryRaw, latitude: $0.latitude,
+                                   longitude: $0.longitude, distanceMeters: nil)
+                }
+            }
+            for merchant in stored {
+                switch target {
+                case .merchant(let id): guard merchant.id == id else { continue }
+                case .area:
+                    guard circle.contains(CLLocationCoordinate2D(latitude: merchant.latitude,
+                                                                  longitude: merchant.longitude)) else { continue }
+                case nil: continue
+                }
+                merchants.append(NearbyMerchant(id: merchant.identifier ?? merchant.id.uuidString,
+                                                name: merchant.name, poiCategoryRaw: merchant.poiCategoryRaw,
+                                                latitude: merchant.latitude, longitude: merchant.longitude,
+                                                distanceMeters: nil))
+            }
+            return MonitoredArrivalPlace(id: region.identifier, latitude: circle.center.latitude,
+                                         longitude: circle.center.longitude, radiusMeters: circle.radius,
+                                         merchants: rankNearbyMerchants(merchants))
+        }.sorted { $0.id < $1.id }
+    }
+
     /// Called when the owner erases this iPhone's history.
     ///
     /// Regions are otherwise only refreshed on the next significant location change, which could
@@ -460,6 +537,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         muteStore.forgetAll()
         diagnosticsStore.forgetAll()
         coverageStore.forgetAll()
+        explanationStore.forgetAll()
         runtimeStore.forgetAll()
         visitStore.forgetAll()
         queryLog.forgetAll()
@@ -467,6 +545,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         alertPreferenceStore.forgetAll()
         alertPolicyStore.forgetAll()
         fieldLogStore.forgetAll()
+        NotificationCenter.default.post(name: Self.monitoringDidChange, object: nil)
     }
 
     /// Called only from the dedicated explainer screen, before either system prompt appears.
@@ -498,6 +577,10 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     /// Re-aims regions after an owner changes a merchant-level alert preference.
     func refreshNow() {
         guard manager.authorizationStatus == .authorizedAlways else { return }
+        // Apply edits to the cached set immediately, even if the next location fix fails.
+        if let modelContainer, let location = manager.location {
+            rotateRegions(around: location.coordinate, cache: DiscoveryCache(context: ModelContext(modelContainer)))
+        }
         manager.requestLocation()
     }
 
@@ -507,6 +590,11 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             runtimeStore.recordIssue("Always Location access is required for arrival alerts.")
         }
         startIfAuthorized()
+        NotificationCenter.default.post(name: Self.monitoringDidChange, object: nil)
+    }
+
+    func locationManager(_ manager: CLLocationManager, didStartMonitoringFor region: CLRegion) {
+        NotificationCenter.default.post(name: Self.monitoringDidChange, object: nil)
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -580,12 +668,14 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             return
         }
         runtimeStore.recordIssue("Location monitoring failed: \(error.localizedDescription)")
+        NotificationCenter.default.post(name: Self.monitoringDidChange, object: nil)
     }
 
     func locationManager(_ manager: CLLocationManager, monitoringDidFailFor region: CLRegion?,
                          withError error: Error) {
         let subject = region.map { " for \($0.identifier)" } ?? ""
         runtimeStore.recordIssue("Arrival-region monitoring failed\(subject): \(error.localizedDescription)")
+        NotificationCenter.default.post(name: Self.monitoringDidChange, object: nil)
     }
 
     // MARK: - Discovery
@@ -633,14 +723,26 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         guard let modelContainer, manager.authorizationStatus == .authorizedAlways else { return }
         let context = ModelContext(modelContainer)
 
-        let areas = (try? cache.areasNear(latitude: coordinate.latitude,
-                                          longitude: coordinate.longitude,
-                                          limit: maximumMonitoredRegions)) ?? []
+        let areas = ((try? cache.allAreas()) ?? [])
+            .filter { area in
+                area.members.contains { permitsMonitoring(name: $0.name, identifier: $0.identifier ?? $0.name,
+                                                          latitude: $0.latitude, longitude: $0.longitude) }
+            }
+            .sorted {
+                let left = greatCircleDistanceMeters(fromLatitude: coordinate.latitude, fromLongitude: coordinate.longitude,
+                                                     toLatitude: $0.centroidLatitude, toLongitude: $0.centroidLongitude)
+                let right = greatCircleDistanceMeters(fromLatitude: coordinate.latitude, fromLongitude: coordinate.longitude,
+                                                      toLatitude: $1.centroidLatitude, toLongitude: $1.centroidLongitude)
+                return left == right ? $0.id.uuidString < $1.id.uuidString : left < right
+            }.prefix(maximumMonitoredRegions)
+        let nearbyAreas = Array(areas)
 
         let merchants = ((try? context.fetch(FetchDescriptor<StoredMerchant>())) ?? [])
             .filter { CLLocationCoordinate2DIsValid(CLLocationCoordinate2D(latitude: $0.latitude,
                                                                           longitude: $0.longitude))
-                      && ($0.latitude != 0 || $0.longitude != 0) }
+                      && ($0.latitude != 0 || $0.longitude != 0)
+                      && permitsMonitoring(name: $0.name, identifier: $0.identifier ?? $0.id.uuidString,
+                                           latitude: $0.latitude, longitude: $0.longitude) }
 
         // Read once for the whole rotation, exactly as the arrival path does: this is a background
         // wake and `merchants` can hold every merchant the owner has ever saved.
@@ -661,7 +763,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         // duplicate would burn a slot for nothing), and the area inherits its standing so the
         // coverage counters do not report a weekly grocery run as anonymous ground.
         let coveringAreaIndex = merchants.map { merchant in
-            areas.firstIndex { area in
+            nearbyAreas.firstIndex { area in
                 greatCircleDistanceMeters(fromLatitude: area.centroidLatitude,
                                           fromLongitude: area.centroidLongitude,
                                           toLatitude: merchant.latitude,
@@ -682,7 +784,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                                           toLatitude: merchant.latitude,
                                                           toLongitude: merchant.longitude)))
         }
-        for (areaOffset, area) in areas.enumerated() {
+        for (areaOffset, area) in nearbyAreas.enumerated() {
             let id = "area:\(area.id.uuidString)"
             specs[id] = (area.centroidLatitude, area.centroidLongitude, area.radiusMeters)
             let covered = coveringAreaIndex.enumerated()
@@ -703,9 +805,8 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         let allocation = allocateRegionBudget(candidates, limit: maximumMonitoredRegions)
         coverageStore.record(allocation)
 
-        for region in manager.monitoredRegions
-        where region.identifier.hasPrefix(Self.regionPrefix)
-            || region.identifier.hasPrefix(Self.legacyRegionPrefix) {
+        let desiredIDs = Set(allocation.granted.map { Self.regionPrefix + $0.id })
+        for region in monitoredAmbientRegions where !desiredIDs.contains(region.identifier) {
             manager.stopMonitoring(for: region)
         }
 
@@ -714,10 +815,16 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             guard let spec = specs[candidate.id] else { continue }
             let radius = min(max(spec.radius, minimumAreaRadiusMeters), ceiling)
             guard radius >= minimumAreaRadiusMeters else { continue }
+            let identifier = Self.regionPrefix + candidate.id
+            if let existing = manager.monitoredRegions.first(where: { $0.identifier == identifier }) as? CLCircularRegion,
+               existing.center.latitude == spec.latitude, existing.center.longitude == spec.longitude,
+               existing.radius == radius, existing.notifyOnEntry, existing.notifyOnExit {
+                continue
+            }
             let region = CLCircularRegion(
                 center: CLLocationCoordinate2D(latitude: spec.latitude, longitude: spec.longitude),
                 radius: radius,
-                identifier: Self.regionPrefix + candidate.id)
+                identifier: identifier)
             region.notifyOnEntry = true
             // Exit is what makes dwell measurable, and dwell is what separates a purchase from
             // walking past — and what decides which of several overlapping regions was real.
@@ -731,6 +838,12 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             // `arrivals` counts wakes that happened.
             manager.requestState(for: region)
         }
+        NotificationCenter.default.post(name: Self.monitoringDidChange, object: nil)
+    }
+
+    private func permitsMonitoring(name: String, identifier: String, latitude: Double, longitude: Double) -> Bool {
+        !muteStore.isMuted(identifier)
+            && explicitlyPrioritized(name: name, identifier: identifier, latitude: latitude, longitude: longitude) != false
     }
 
     // MARK: - Arrival
@@ -799,6 +912,19 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     private func evaluateArrival(at target: ArrivalTarget, regionId: String,
                                  source: AmbientArrivalSource = .regionEntry) async {
         guard let modelContainer, let catalogue, let ownerState else { return }
+        let attemptID = UUID()
+        let startedAt = Date.now
+        let explanationGeneration = explanationStore.generation
+        func explain(_ outcome: ArrivalExplanationRecord.Outcome, merchant: NearbyMerchant? = nil,
+                     reasons: Set<AmbientSuppressionReason> = [], activity: LiveActivityRequestOutcome = .notRequested,
+                     notificationPermission: ArrivalExplanationRecord.NotificationPermission? = nil) {
+            explanationStore.record(attemptID: attemptID, startedAt: startedAt, outcome: outcome,
+                                    merchantIdentifier: merchant?.id, regionIdentifier: regionId,
+                                    reasons: reasons, activity: activity, notificationPermission: notificationPermission,
+                                    generation: explanationGeneration)
+            NotificationCenter.default.post(name: Self.monitoringDidChange, object: nil)
+        }
+        explain(.checking)
         // Hold the arrival open until iOS says where the owner is, or until the window closes.
         // `nil` is a complete answer: every use of it below falls back to exactly the behaviour
         // this had before a fix was ever requested.
@@ -808,6 +934,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         // that produced nothing indistinguishable from a wake that never happened.
         guard let arrival = resolve(target, fix: fix, context: context) else {
             coverageStore.recordArrival(.unresolved, source: source)
+            explain(.unresolved)
             return
         }
 
@@ -828,6 +955,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         guard case .advised(let recommendation) = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
             .recommend(purchase, asOf: Date().formatted(.iso8601.year().month().day())) else {
             coverageStore.recordArrival(.notAdvised, source: source)
+            explain(.noRecommendation, merchant: arrival.merchant)
             return
         }
         coverageStore.recordArrival(.resolved, source: source)
@@ -838,8 +966,12 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                              identifier: arrival.merchant.id,
                                              latitude: arrival.merchant.latitude,
                                              longitude: arrival.merchant.longitude)
+        // Choosing a place expresses interest; it does not verify its category. Preserve unknown,
+        // category-only and owner-verified evidence, and do not lift an ambiguous brand like Walmart.
+        let canPrioritize = explicit == true && arrival.confidence == .brandMatched
+            && arrival.prediction.category != "other" && arrival.prediction.candidates.count == 1
         let gateInput = AmbientGateInput(
-            merchantConfidence: explicit == true ? .frequented : arrival.confidence,
+            merchantConfidence: canPrioritize ? .frequented : arrival.confidence,
             recommendedCardId: recommendation.winner.cardId,
             defaultCardId: ownerState.defaultCardId,
             advantage: AmbientAdvantage(percentagePoints: advantagePP, cad: advantageCad),
@@ -855,30 +987,44 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         switch decision.tier {
         case .silent:
             diagnosticsStore.record(decision)
+            explain(.evaluated, merchant: arrival.merchant, reasons: decision.suppressionReasons)
 
         case .presence:
             // Deliberately no recommendation: the merchant could not be identified, and naming a
             // card here would be a confident wrong answer.
-            presentArrivalActivity(tier: .presence, arrival: arrival, recommendation: nil,
-                                   catalogue: catalogue, regionId: regionId)
+            let activity = presentArrivalActivity(tier: .presence, arrival: arrival, recommendation: nil,
+                                                  catalogue: catalogue, regionId: regionId)
             diagnosticsStore.record(decision)
+            explain(.evaluated, merchant: arrival.merchant, reasons: decision.suppressionReasons, activity: activity)
 
         case .confirm:
-            presentArrivalActivity(tier: .confirm, arrival: arrival, recommendation: recommendation,
-                                   catalogue: catalogue, regionId: regionId)
+            let activity = presentArrivalActivity(tier: .confirm, arrival: arrival, recommendation: recommendation,
+                                                  catalogue: catalogue, regionId: regionId)
             diagnosticsStore.record(decision)
+            explain(.evaluated, merchant: arrival.merchant, reasons: decision.suppressionReasons, activity: activity)
 
         case .interrupt:
+            let settings = await notificationCenter.notificationSettings()
+            let notificationPermission: ArrivalExplanationRecord.NotificationPermission
+            switch settings.authorizationStatus {
+            case .authorized, .ephemeral: notificationPermission = .allowed
+            case .provisional: notificationPermission = .quiet
+            case .denied, .notDetermined: notificationPermission = .blocked
+            @unknown default: notificationPermission = .unknown
+            }
             do {
                 try await scheduleArrivalNotification(arrival: arrival, recommendation: recommendation,
                                                       catalogue: catalogue, regionId: regionId)
-                presentArrivalActivity(tier: .interrupt, arrival: arrival,
-                                       recommendation: recommendation, catalogue: catalogue,
-                                       regionId: regionId)
+                let activity = presentArrivalActivity(tier: .interrupt, arrival: arrival,
+                                                      recommendation: recommendation, catalogue: catalogue,
+                                                      regionId: regionId)
                 // A "fired" count means iOS accepted the notification request, not merely that the
                 // pure gate approved one that may have failed before reaching Notification Center.
                 diagnosticsStore.record(decision)
+                explain(.notificationAccepted, merchant: arrival.merchant, activity: activity,
+                        notificationPermission: notificationPermission)
             } catch {
+                explain(.notificationFailed, merchant: arrival.merchant, notificationPermission: notificationPermission)
                 runtimeStore.recordIssue("Arrival advice was approved but could not be delivered: \(error.localizedDescription)")
             }
         }
@@ -989,7 +1135,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             guard let area = try? context.fetch(FetchDescriptor<ShoppingArea>(
                 predicate: #Predicate { $0.id == id })).first else { return nil }
 
-            // Rung 1: an owner-reconciled terminal standing inside this area, measured from the
+            // Rung 1: an owner-reconciled or explicitly chosen store inside this area, measured from the
             // owner rather than from the middle of the plaza. Areas run to
             // `maximumAreaRadiusMeters`, so measuring the 60 m radius from the centroid meant a
             // confirmed store near the edge could never claim its own visit — confirming a
@@ -998,18 +1144,23 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                        areaCentroidLatitude: area.centroidLatitude,
                                        areaCentroidLongitude: area.centroidLongitude)
             let merchants = (try? context.fetch(FetchDescriptor<StoredMerchant>())) ?? []
-            let nearestConfirmed = merchants
+            let nearestChosenOrConfirmed = merchants
                 .map { ($0, greatCircleDistanceMeters(fromLatitude: origin.latitude,
                                                       fromLongitude: origin.longitude,
                                                       toLatitude: $0.latitude,
                                                       toLongitude: $0.longitude)) }
-                .filter { $0.1 <= Self.verifiedMerchantRadiusMeters && $0.0.confirmedCategory != nil }
+                .filter {
+                    $0.1 <= Self.verifiedMerchantRadiusMeters
+                        && ($0.0.confirmedCategory != nil
+                            || explicitlyPrioritized(name: $0.0.name, identifier: $0.0.identifier,
+                                                     latitude: $0.0.latitude, longitude: $0.0.longitude) == true)
+                }
                 .min { $0.1 < $1.1 }?.0
             // Read once for the whole arrival rather than per candidate name: an area holds
             // several members, and this is a background wake.
             let frequentedKeys = effectiveFrequentedKeys()
-            if let nearestConfirmed {
-                return resolved(storedMerchant: nearestConfirmed, frequentedKeys: frequentedKeys,
+            if let nearestChosenOrConfirmed {
+                return resolved(storedMerchant: nearestChosenOrConfirmed, frequentedKeys: frequentedKeys,
                                 fix: fix, rung: .confirmedMerchantNearby, area: area)
             }
 
@@ -1215,34 +1366,34 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     /// Separate from `scheduleArrivalNotification` on purpose. Those two calls used to be one, so
     /// a single boolean decided both whether PickMe spoke and whether PickMe was visible — which
     /// is why the owner saw nothing on most arrivals.
+    @discardableResult
     private func presentArrivalActivity(tier: AmbientDeliveryTier,
                                         arrival: ResolvedArrival,
                                         recommendation: Recommendation?,
                                         catalogue: Catalogue,
-                                        regionId: String) {
+                                        regionId: String) -> LiveActivityRequestOutcome {
         // A swipe is the only "not now" that costs the owner nothing, and it is worth exactly as
         // much as our willingness to honour it. Plaza geofences flap entry/exit/entry during one
         // shop, so without this the card the owner just cleared is back within the minute — which
         // teaches them the swipe does not work, and the next thing they reach for is the Settings
         // toggle we cannot undo. The notification path is deliberately untouched: this suppresses
         // presence, not the alert that earns money.
-        guard !visitStore.liveActivityWasDismissed(regionId: regionId) else { return }
+        guard !visitStore.liveActivityWasDismissed(regionId: regionId) else { return .dismissed }
 
         let meta = CategoryVisuals.meta(for: arrival.prediction.category)
         let merchant = notificationMerchantName(arrival.merchant.name)
 
         guard tier != .presence else {
-            LiveActivityManager.shared.startRecommendationActivity(
+            return LiveActivityManager.shared.startRecommendationActivity(
                 merchantName: merchant, merchantLocation: nil,
                 cardName: "", cardId: "", multiplierHeadline: "",
                 advantageDescription: "", categoryDisplayName: meta.displayName,
                 categoryIcon: meta.icon, tier: .presence, visitKey: regionId)
-            return
         }
 
         guard let recommendation,
               let card = catalogue.cards.first(where: { $0.cardId == recommendation.winner.cardId })
-        else { return }
+        else { return .failed }
 
         let advantageCad = recommendation.advantageOverDefaultCad ?? 0
         let advantage: String
@@ -1259,7 +1410,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                defaultValue: "Best card here")
         }
 
-        LiveActivityManager.shared.startRecommendationActivity(
+        return LiveActivityManager.shared.startRecommendationActivity(
             merchantName: merchant, merchantLocation: nil,
             cardName: Self.shortCardName(card), cardId: card.cardId,
             multiplierHeadline: rewardReason(card, recommendation),
@@ -1324,7 +1475,10 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         switch action {
         case Self.muteActionIdentifier:
             recordEngagement(.mutedMerchant, userInfo: userInfo)
-                        if let key = userInfo["muteKey"] as? String { muteStore.mute(key) }
+                        if let key = userInfo["muteKey"] as? String {
+                muteStore.mute(key)
+                refreshNow()
+            }
 
         case Self.usedRecommendedActionIdentifier:
             recordEngagement(.usedRecommendedCard, userInfo: userInfo)

@@ -26,9 +26,9 @@ on-disk store that survives relaunch:
 | `StoredPrediction` | merchant, predicted category, winning card, **amount spent**, valuation in force, headline, timestamp |
 | `StoredObservation` | card actually used, observed category, reward units posted, miss class, **free-text note** |
 
-Plus three `UserDefaults` keys — `ambientDiagnostics.v1`, `ambientMutedMerchantIDs.v2`, and
-`ambientCoverage.v1` — and, when ambient alerts are enabled, CoreLocation geofences around up to
-20 of those coordinates.
+Local `UserDefaults` stores include `ambientDiagnostics.v1`, `ambientMutedMerchantIDs.v2`,
+`ambientCoverage.v1`, and `arrivalExplanations.v1`. When ambient alerts are enabled, CoreLocation
+also registers geofences around up to 20 shopping areas or saved-store coordinates.
 
 `ambientCoverage.v1` (added 2026-08-27) holds **integers only**, partitioned by calendar day: how
 often the 20-region budget was re-aimed, how often it was full, how many regions were dropped in
@@ -36,6 +36,16 @@ each of four tiers, and how many geofence wakes ended without advice. No coordin
 name, no identifier — nothing that names a place. It is the diagnostic that says whether the
 region cap is costing the owner coverage, and it is deliberately incapable of saying *where*.
 Erased by `AmbientLocationService.forgetLocalHistory()` alongside the other two.
+
+`arrivalExplanations.v1` holds the latest diagnostic per store or shopping area, using hashed
+identifiers to join back to places locally. Each result contains a timestamp, the decision or
+failure, suppression reasons, notification permission at request time, and the Lock Screen card
+request outcome. It contains no raw place
+identifiers, names, coordinates, card details, or spending amounts. It is capped at 200 entries,
+expires entries after seven days on the next read/write or app configuration, and is never uploaded.
+Both **Clear arrival explanations** and `AmbientLocationService.forgetLocalHistory()` erase it;
+an in-flight diagnostic callback cannot recreate erased entries. Clearing explanations does not
+clear purchases, merchant preferences, or monitoring.
 
 Taken together this is a running record of **where the owner shopped, when, how much they spent,
 and which card they used** — including precise coordinates at rest.

@@ -10,9 +10,6 @@
     "!" : {
 
     },
-    "·" : {
-
-    },
     "/ %lld checkouts" : {
       "localizations" : {
         "fr-CA" : {
@@ -245,6 +242,9 @@
     "%lld · no card advice was available" : {
 
     },
+    "%lld · noticed you were already there" : {
+
+    },
     "%lld action%@" : {
       "localizations" : {
         "en" : {
@@ -277,6 +277,9 @@
           }
         }
       }
+    },
+    "%lld arrivals recorded, newest last. One record each: every candidate, the fix, the raw gate input, and the dials above. Wallet captures within 90 minutes are joined on export." : {
+
     },
     "%lld ASK" : {
       "extractionState" : "stale",
@@ -359,6 +362,9 @@
         }
       }
     },
+    "%lld locations muted from notifications" : {
+
+    },
     "%lld logged" : {
 
     },
@@ -432,6 +438,9 @@
       }
     },
     "%lld recorded" : {
+
+    },
+    "%lld saved or discovered stores" : {
 
     },
     "%lld source%@ need a refresh" : {
@@ -624,13 +633,13 @@
     "100% on-device matching · Zero location tracking" : {
 
     },
-    "100% On-Device Privacy · Checkout works offline" : {
-
-    },
     "3739  876543  31001" : {
 
     },
     "7907" : {
+
+    },
+    "A card alert qualified, but the notification request failed. PickMe did not record successful delivery." : {
 
     },
     "A card earns its recurring fee" : {
@@ -652,6 +661,9 @@
           }
         }
       }
+    },
+    "A check started in this shopping area, but no completed result was recorded. This does not establish an arrival at this store." : {
+
     },
     "A delivery requirement needs attention" : {
 
@@ -743,6 +755,12 @@
     "Add a card to get a pick" : {
 
     },
+    "Add a merchant" : {
+
+    },
+    "Add a merchant above, or choose a store from the lists below." : {
+
+    },
     "Add Amount" : {
 
     },
@@ -827,6 +845,9 @@
         }
       }
     },
+    "Alerts off for this merchant" : {
+
+    },
     "All" : {
 
     },
@@ -865,6 +886,9 @@
           }
         }
       }
+    },
+    "Always Location is not enabled, so PickMe cannot monitor background arrivals." : {
+
     },
     "Ambient" : {
       "localizations" : {
@@ -1161,6 +1185,17 @@
         }
       }
     },
+    "ambient.suppressed.below-category" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "PickMe knew the kind of store but not which one, and the gain was below the higher bar that earns, so it confirmed your card quietly"
+          }
+        }
+      }
+    },
     "ambient.suppressed.below-frequented" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -1276,6 +1311,9 @@
         }
       }
     },
+    "Amount estimate" : {
+
+    },
     "Amount Scored" : {
       "localizations" : {
         "fr-CA" : {
@@ -1287,6 +1325,9 @@
       }
     },
     "Amount:" : {
+
+    },
+    "An arrival check started, but no completed result has been recorded. The exact cause is unknown." : {
 
     },
     "Analysis" : {
@@ -1316,6 +1357,9 @@
       }
     },
     "Any %@ location" : {
+
+    },
+    "Any nearby branch" : {
 
     },
     "Any Wallet Shortcut tokens you created. They stop working immediately." : {
@@ -1352,6 +1396,9 @@
     "Are you sure you want to remove %@ from your active wallet?" : {
 
     },
+    "Arrival advice is off for this merchant. Change the alert choice below and save to enable it." : {
+
+    },
     "Arrival alerts" : {
       "localizations" : {
         "fr-CA" : {
@@ -1375,6 +1422,9 @@
 
     },
     "Arrival alerts ready" : {
+
+    },
+    "Arrival detection runs on-device. Nearby place searches use Apple Maps." : {
 
     },
     "Arrived with no location" : {
@@ -1445,6 +1495,9 @@
       }
     },
     "Backed by official issuer certificates (Chubb, Belair, Allianz, Desjardins)." : {
+
+    },
+    "Background App Refresh is unavailable, which can prevent iOS from waking PickMe." : {
 
     },
     "Bank / Issuer (e.g. Scotiabank, Chase)" : {
@@ -1545,6 +1598,9 @@
         }
       }
     },
+    "both floors" : {
+
+    },
     "Both must be true before PickMe suggests switching cards." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1555,6 +1611,9 @@
           }
         }
       }
+    },
+    "brand" : {
+
     },
     "Breakdown" : {
 
@@ -1767,6 +1826,9 @@
         }
       }
     },
+    "category" : {
+
+    },
     "Category" : {
 
     },
@@ -1841,6 +1903,9 @@
     "Check out how much I've saved with PickMe:" : {
 
     },
+    "Check this location in Maps" : {
+
+    },
     "Checking active credentials…" : {
 
     },
@@ -1883,6 +1948,12 @@
           }
         }
       }
+    },
+    "Choose a specific branch from the monitored areas or search results to see its arrival checks." : {
+
+    },
+    "Choose automatically" : {
+
     },
     "Choose every card in your wallet. PickMe only recommends cards you select." : {
       "extractionState" : "stale",
@@ -1939,6 +2010,9 @@
         }
       }
     },
+    "Clear arrival explanations" : {
+
+    },
     "Clear Filter" : {
 
     },
@@ -1946,9 +2020,6 @@
 
     },
     "Clear Recorded Card" : {
-
-    },
-    "Close" : {
 
     },
     "Cloud Sync & Capture" : {
@@ -2080,15 +2151,6 @@
     "Continue Privately" : {
 
     },
-    "Continue Privately (No Account)" : {
-
-    },
-    "Continue with Email" : {
-
-    },
-    "Continue with Google" : {
-
-    },
     "Conversion fee" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2110,6 +2172,9 @@
           }
         }
       }
+    },
+    "Could not update places" : {
+
     },
     "Could not verify active credentials. Retry sync before creating a new token." : {
 
@@ -2151,9 +2216,6 @@
 
     },
     "COVERAGE SUMMARY" : {
-
-    },
-    "Create Account with Email" : {
 
     },
     "Create installation token" : {
@@ -2207,6 +2269,9 @@
       }
     },
     "Currency" : {
+
+    },
+    "Current conditions describe now. The last check describes that attempt only, and does not confirm a purchase or every later visit." : {
 
     },
     "CUSTOM AMOUNT" : {
@@ -2412,9 +2477,6 @@
     "Diagnostic Preview" : {
 
     },
-    "Didn't receive the code?" : {
-
-    },
     "Disable or Pause Wallet Capture" : {
 
     },
@@ -2559,6 +2621,12 @@
     "Effective %@" : {
 
     },
+    "Effective bar by category" : {
+
+    },
+    "either floor" : {
+
+    },
     "Electronics / Tech" : {
       "localizations" : {
         "fr-CA" : {
@@ -2573,6 +2641,9 @@
 
     },
     "Email" : {
+
+    },
+    "Enable Always Location in arrival setup to start monitoring." : {
 
     },
     "Enable arrival alerts" : {
@@ -2592,9 +2663,6 @@
 
     },
     "Enable Wallet Capture" : {
-
-    },
-    "Enter the 6-digit code sent to %@" : {
 
     },
     "Enter the bank and card name. Our pipeline will research official issuer terms." : {
@@ -2842,6 +2910,12 @@
         }
       }
     },
+    "FIELD DIAGNOSTICS · ALERT POLICY" : {
+
+    },
+    "Field log" : {
+
+    },
     "Filled in below. Change anything that looks wrong — an edited figure is recorded as your own, not as the capture's." : {
 
     },
@@ -2942,6 +3016,9 @@
 
     },
     "Frequent Store: %@" : {
+
+    },
+    "frequented" : {
 
     },
     "From your Apple Wallet" : {
@@ -3126,6 +3203,9 @@
     "In Your Wallet" : {
 
     },
+    "Include a city or street to find the right branch. Search works without location permission." : {
+
+    },
     "Include Transaction Metadata" : {
 
     },
@@ -3172,6 +3252,18 @@
     "INTELLIGENCE & AUTOMATION" : {
 
     },
+    "iOS accepted the arrival notification request. That does not confirm it was displayed or seen. Check Focus and notification delivery settings if it did not appear." : {
+
+    },
+    "iOS accepted the Lock Screen card request. PickMe cannot confirm whether you saw it." : {
+
+    },
+    "iOS accepted the request with provisional notification permission, which allows quiet delivery. PickMe cannot confirm whether it was displayed or seen." : {
+
+    },
+    "iOS accepted the request, but notifications were not allowed for PickMe at that time. An accepted request alone does not mean a notification appeared." : {
+
+    },
     "Issuer" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3185,6 +3277,7 @@
     },
     "It does not continuously track your route, and your location never leaves this phone." : {
       "comment" : "human review before public launch",
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3306,6 +3399,12 @@
       }
     },
     "Last attempt %@" : {
+
+    },
+    "Last check for this store" : {
+
+    },
+    "Last check in this shopping area" : {
 
     },
     "Last notification accepted by iOS: %@" : {
@@ -3431,6 +3530,9 @@
     "Live" : {
 
     },
+    "Live Activities were disabled at that time, so the quiet Lock Screen card could not appear." : {
+
+    },
     "Live evaluation using your active cards and customized point valuations." : {
 
     },
@@ -3449,8 +3551,12 @@
     "LOCATION & MERCHANT" : {
 
     },
+    "Location helps find nearby shopping areas and recognize when you arrive." : {
+
+    },
     "Location is used only for arrival detection at your saved merchants." : {
       "comment" : "human review before public launch",
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -3484,6 +3590,12 @@
 
     },
     "Manage in iOS Settings" : {
+
+    },
+    "Manage Live Activities in Settings" : {
+
+    },
+    "Manage monitored places" : {
 
     },
     "MANAGEMENT & TOOLS" : {
@@ -3564,6 +3676,9 @@
     "Merchant & amount for diagnosing parse issues" : {
 
     },
+    "Merchant alerts" : {
+
+    },
     "Merchant Conditions" : {
 
     },
@@ -3593,7 +3708,10 @@
         }
       }
     },
-    "Monitoring arrival at up to 20 saved merchants." : {
+    "Monitored places" : {
+
+    },
+    "Monitoring now · %lld/20 areas" : {
 
     },
     "Most benefits require the full eligible purchase to be charged to the card." : {
@@ -3619,10 +3737,10 @@
     "Name" : {
 
     },
-    "name@example.com" : {
+    "Narrowed to more than one" : {
 
     },
-    "Narrowed to more than one" : {
+    "Near %@" : {
 
     },
     "Nearby" : {
@@ -3735,6 +3853,9 @@
         }
       }
     },
+    "No continuous route tracking. Nearby place searches use Apple Maps." : {
+
+    },
     "No coverage" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3791,7 +3912,16 @@
         }
       }
     },
+    "No physical locations found. Try a store name with a city or street; an internet connection is needed to find branches." : {
+
+    },
+    "No places are registered yet. Refresh nearby monitoring to try again." : {
+
+    },
     "No Purchases Logged Yet" : {
+
+    },
+    "No recent arrival check recorded" : {
 
     },
     "No relevant insurance coverage found in your wallet for this category." : {
@@ -3900,6 +4030,9 @@
         }
       }
     },
+    "Not shipped to the App Store. Changes take effect on the next arrival and are recorded on every field-log record, so an export says which policy produced it." : {
+
+    },
     "Not synced yet — stored cap data remains in use until a sync succeeds." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3944,6 +4077,12 @@
         }
       }
     },
+    "Notification mutes" : {
+
+    },
+    "Notifications are not allowed. Enable them to receive arrival alerts." : {
+
+    },
     "Off" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3975,6 +4114,9 @@
         }
       }
     },
+    "On arrival nothing has been bought, so the engine scores a guessed basket. The CAD floor is divided by that guess, which is what makes the effective bar depend on the category." : {
+
+    },
     "On this iPhone" : {
 
     },
@@ -3987,6 +4129,9 @@
           }
         }
       }
+    },
+    "one amount" : {
+
     },
     "One-tap GPS check at checkout" : {
       "extractionState" : "stale",
@@ -4020,6 +4165,9 @@
         }
       }
     },
+    "Only the latest check per place is kept, for up to seven days, on this iPhone." : {
+
+    },
     "Only the selected server credential is revoked. Purchases already saved on this iPhone are never deleted." : {
 
     },
@@ -4027,6 +4175,9 @@
 
     },
     "Open" : {
+
+    },
+    "Open arrival setup" : {
 
     },
     "Open certificate source" : {
@@ -4039,6 +4190,9 @@
 
     },
     "Open in Maps" : {
+
+    },
+    "Open iPhone Settings" : {
 
     },
     "Open Official Certificate PDF" : {
@@ -4112,7 +4266,7 @@
     "Optional. Enter whole Canadian dollars. PickMe compares these values only with issuer-published income paths and stores them on this device." : {
 
     },
-    "or with email" : {
+    "Orange: the dollar floor is deciding, not the percentage floor. That bar is a consequence of the guessed basket, not a number anyone chose." : {
 
     },
     "Origin Story: PickMe was born out of sheer rage after realizing a grocery store wasn't coded as groceries and gave 1x instead of 5x. Never again!" : {
@@ -4122,6 +4276,9 @@
 
     },
     "Other benefit document" : {
+
+    },
+    "Other saved merchants" : {
 
     },
     "Outbox Up to Date" : {
@@ -4147,8 +4304,21 @@
         }
       }
     },
+    "Override the owner's switch threshold" : {
+
+    },
     "Owner-confirmed cards" : {
 
+    },
+    "Owner's threshold: %@ %@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Owner's threshold: %1$@ %2$@ %3$@"
+          }
+        }
+      }
     },
     "ownerCondition.amazonEligiblePrimeLinked.detail" : {
       "extractionState" : "stale",
@@ -4261,6 +4431,9 @@
         }
       }
     },
+    "per category" : {
+
+    },
     "Personal benefit document for %@" : {
 
     },
@@ -4313,6 +4486,7 @@
     },
     "PickMe can recognize arrival at up to 20 merchants you have already saved, then suggest a card before you pay." : {
       "comment" : "human review before public launch",
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -4325,13 +4499,28 @@
     "PickMe Cloud Active" : {
 
     },
+    "PickMe could not identify the store, so it could not request a card alert." : {
+
+    },
+    "PickMe did not have enough category or merchant evidence to name a card confidently, so no interrupting alert was requested." : {
+
+    },
+    "PickMe evaluated this place but could not produce a card recommendation. Check your wallet setup or try a manual checkout." : {
+
+    },
     "PickMe Experiment Scoreboard" : {
 
     },
     "PickMe for iOS · Version 1.0 (Build 42)" : {
 
     },
+    "PickMe has no retained arrival check for this branch or its current monitored area. It cannot tell whether iOS missed an arrival, the place was outside coverage, or the explanation expired or was cleared." : {
+
+    },
     "PickMe isolates account wallets on this iPhone." : {
+
+    },
+    "PickMe monitors up to 20 shopping areas at a time, including saved stores and places it discovers nearby, then suggests a card before you pay." : {
 
     },
     "PickMe only recommends cards you add here." : {
@@ -4358,6 +4547,9 @@
         }
       }
     },
+    "PickMe received an arrival for this shopping area but could not identify a store. That check cannot be attributed to this branch." : {
+
+    },
     "PICKME REWARDS PROOF" : {
 
     },
@@ -4365,6 +4557,12 @@
 
     },
     "PickMe's highest earning card advised for this purchase." : {
+
+    },
+    "Place details are no longer cached. Refresh nearby monitoring to update this area." : {
+
+    },
+    "Places share up to 20 monitored areas. Saving a choice does not reserve a slot; nearby coverage updates as you move." : {
 
     },
     "Planned Amount" : {
@@ -4445,6 +4643,9 @@
       }
     },
     "PREFERENCES" : {
+
+    },
+    "Prepare export" : {
 
     },
     "Previous Quip" : {
@@ -4672,6 +4873,9 @@
     "Reference" : {
 
     },
+    "Refresh nearby monitoring" : {
+
+    },
     "Relink This iPhone" : {
 
     },
@@ -4779,16 +4983,16 @@
     "Research status" : {
 
     },
-    "Resend Code" : {
-
-    },
-    "Resend in %llds" : {
+    "Reset to shipped policy" : {
 
     },
     "Resets this purchase to card unrecorded status." : {
 
     },
     "Restaurants" : {
+
+    },
+    "Results for %@" : {
 
     },
     "Retest" : {
@@ -4845,6 +5049,9 @@
 
     },
     "Rewards Proof" : {
+
+    },
+    "Right now" : {
 
     },
     "Rogers Red World Elite" : {
@@ -4923,6 +5130,9 @@
         }
       }
     },
+    "Saved choices stay here even when their locations are outside current coverage. Tap any merchant to change its alerts." : {
+
+    },
     "Saved locally on this device." : {
 
     },
@@ -4938,6 +5148,12 @@
       }
     },
     "Saves a Wallet transaction locally, then securely syncs it to In Unity." : {
+
+    },
+    "Saving will also unmute this location." : {
+
+    },
+    "Scales both floors for that tier. The verified tier is never scaled — it is measured against the owner's own floor, which is the one bar here that was earned." : {
 
     },
     "Scenario" : {
@@ -4989,6 +5205,9 @@
         }
       }
     },
+    "Search for a merchant" : {
+
+    },
     "Search merchant (e.g. Costco, Loblaws)" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5007,6 +5226,9 @@
 
     },
     "Search perks, insurance, or cards…" : {
+
+    },
+    "Searching places…" : {
 
     },
     "Searching…" : {
@@ -5046,6 +5268,9 @@
           }
         }
       }
+    },
+    "Semantics" : {
+
     },
     "Send Diagnostic Report" : {
 
@@ -5117,6 +5342,9 @@
     "Setup Ready" : {
 
     },
+    "Share %@" : {
+
+    },
     "Share file" : {
 
     },
@@ -5132,10 +5360,16 @@
     "Share Transaction" : {
 
     },
+    "Shopping area" : {
+
+    },
     "Shortcuts" : {
 
     },
     "Shortcuts Setup" : {
+
+    },
+    "Show %@ in Maps" : {
 
     },
     "Show recommendation for %@, %@" : {
@@ -5199,9 +5433,6 @@
     "Sign in to sync cap limits across your devices and enable automated Apple Wallet Shortcuts capture." : {
 
     },
-    "Sign in with Apple" : {
-
-    },
     "Sign In with PickMe" : {
 
     },
@@ -5232,13 +5463,7 @@
     "Sign out of PickMe?" : {
 
     },
-    "Sign Up" : {
-
-    },
-    "Sign up with Apple" : {
-
-    },
-    "Sign Up with Google" : {
+    "Sign-in unavailable" : {
 
     },
     "Signed in as" : {
@@ -5368,6 +5593,9 @@
         }
       }
     },
+    "Store name, street or city" : {
+
+    },
     "Stored cap data remains active until sync completes" : {
 
     },
@@ -5436,9 +5664,6 @@
         }
       }
     },
-    "Sync card spend caps, shortcuts, and reward math across your Apple devices." : {
-
-    },
     "Sync now" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5451,6 +5676,9 @@
       }
     },
     "Sync Now" : {
+
+    },
+    "Sync PickMe with your In Unity account." : {
 
     },
     "Sync Security" : {
@@ -5588,6 +5816,9 @@
         }
       }
     },
+    "The arrival was evaluated without an interrupting alert. No more specific reason was recorded." : {
+
+    },
     "The certificate confirms no insurance coverage on this card product." : {
       "localizations" : {
         "fr-CA" : {
@@ -5601,6 +5832,12 @@
     "The device credential belongs to another PickMe account. Creating a connection here replaces it safely." : {
 
     },
+    "The estimated gain did not meet the switch threshold in use at that time. PickMe chose quiet advice." : {
+
+    },
+    "The estimated gain did not meet the threshold used for uncertain merchant or category evidence at that time. PickMe chose quiet advice." : {
+
+    },
     "The higher 2% rate requires an eligible Rogers, Fido, Shaw, Comwave, or Sportsnet+ service linked to your account." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5611,6 +5848,21 @@
           }
         }
       }
+    },
+    "The latest arrival check for each place expires after seven days. Clearing explanations leaves purchases and alert choices unchanged." : {
+
+    },
+    "The latest check in this shopping area was attributed to another store. It cannot explain an alert for this branch or confirm that you visited it." : {
+
+    },
+    "The Lock Screen card could not be started. No more specific cause was recorded." : {
+
+    },
+    "The Lock Screen card had been dismissed during this visit. PickMe respected that choice and did not bring it back." : {
+
+    },
+    "The merchant was muted or excluded by your alert choice at the time of this check, so PickMe requested no arrival advice." : {
+
     },
     "The positive results below add more annual reward value than their stated recurring fee." : {
       "localizations" : {
@@ -5631,6 +5883,9 @@
           }
         }
       }
+    },
+    "These areas are registered with iOS. One area can cover several stores, including stores whose alerts are off. Nearby places share 20 slots and update as you move. Monitoring does not guarantee an alert on every visit." : {
+
     },
     "These published benchmarks are starting points. PickMe assumes the cents-per-point values above; recommendations disclose when the answer flips." : {
       "extractionState" : "stale",
@@ -5659,6 +5914,12 @@
       }
     },
     "This card will be prioritized for Travel and bonus reward categories." : {
+
+    },
+    "This choice applies to a merchant, without a specific branch to check." : {
+
+    },
+    "This clears notification mutes. Merchants you set to Alerts off above will stay off." : {
 
     },
     "This iPhone" : {
@@ -5693,6 +5954,9 @@
         }
       }
     },
+    "This location is muted from a notification. Save an enabled alert choice below to unmute it." : {
+
+    },
     "This merchant location may code differently depending on the register terminal. Reconcile this purchase once posted to lock in the exact terminal rule." : {
       "localizations" : {
         "fr-CA" : {
@@ -5719,6 +5983,12 @@
     "This permanently removes the unsent capture and its local diagnostic evidence from this iPhone." : {
 
     },
+    "This place is covered by a registered area and the arrival permissions are ready. iOS still needs to report an arrival before PickMe can evaluate it." : {
+
+    },
+    "This place is outside the currently registered areas. Nearby places share 20 slots; saving a merchant does not reserve one." : {
+
+    },
     "This removes the record from your purchase history." : {
 
     },
@@ -5734,6 +6004,12 @@
           }
         }
       }
+    },
+    "Tier" : {
+
+    },
+    "Tier multipliers" : {
+
     },
     "Timeline" : {
 
@@ -5845,6 +6121,9 @@
     "Unlimited earn" : {
 
     },
+    "Unmute all locations" : {
+
+    },
     "UNRECORDED" : {
 
     },
@@ -5857,6 +6136,9 @@
           }
         }
       }
+    },
+    "Up to 20 shopping areas, each able to cover several stores." : {
+
     },
     "Update" : {
 
@@ -5950,13 +6232,13 @@
     "Verification" : {
 
     },
-    "Verify" : {
-
-    },
-    "Verify & Continue" : {
+    "verified" : {
 
     },
     "View All %lld Purchases" : {
+
+    },
+    "View area in Maps" : {
 
     },
     "View Detailed Dashboard" : {
@@ -6217,6 +6499,9 @@
         }
       }
     },
+    "Why didn't I get an alert?" : {
+
+    },
     "Why this card won" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6252,6 +6537,15 @@
         }
       }
     },
+    "You can save places now. Check arrival setup to receive advice when you get there." : {
+
+    },
+    "You can still use PickMe without an account." : {
+
+    },
+    "You can use PickMe without an account." : {
+
+    },
     "You're already signed in. PickMe is restoring your saved cards." : {
 
     },
@@ -6276,6 +6570,12 @@
           }
         }
       }
+    },
+    "Your alert choice allows a different branch only. Choose this location below and save if you want to switch." : {
+
+    },
+    "Your alert choices" : {
+
     },
     "Your cards" : {
       "extractionState" : "stale",
@@ -6315,6 +6615,9 @@
     "Your default card is already the optimal pick here." : {
 
     },
+    "Your default card was already the recommended card. PickMe chose quiet advice instead of an interrupting alert." : {
+
+    },
     "Your Inunity sign-in. You will not be able to sign in again, here or on the web." : {
       "comment" : "human review before public launch",
       "extractionState" : "stale",
@@ -6326,9 +6629,6 @@
           }
         }
       }
-    },
-    "Your location is processed on-device and never leaves this phone." : {
-
     },
     "Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected." : {
       "comment" : "human review before public launch",

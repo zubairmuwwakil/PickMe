@@ -73,7 +73,7 @@ practices described here.
 Everything in this section is stored in the app's own storage on your device in both modes. If you
 sign in, the wallet configuration in 2(a) through 2(c) is also copied to your account so the server
 can evaluate Wallet Shortcut captures. The merchant history, recommendations, purchase entries,
-statement checks, and location/discovery/patronage history in 2(d) through 2(i) are never
+statement checks, location/discovery/patronage history, and arrival explanations in 2(d) through 2(j) are never
 uploaded.
 
 **a. Your cards.** Which *card products* you selected from the catalogue built into the app — for
@@ -122,9 +122,21 @@ the higher bar applied to a place you rarely visit. Days age out of the 90-day w
 so a shop you stop going to stops counting without you doing anything. You can see this list, and
 remove or block any merchant from it, from within the app; "delete all data" clears it entirely.
 
+**j. The latest arrival explanation for a place.** To explain why arrival advice did or did not
+appear, PickMe keeps the latest check for a store or shopping area: its time, the outcome, the
+reason an interrupting alert was not requested, notification permission when a notification is
+requested, and whether iOS accepted a notification or Lock Screen card request. Acceptance does
+not prove that a notification was displayed or seen. These
+diagnostics use hashed place identifiers that can be matched to places on this iPhone; they do
+not contain raw identifiers, merchant names, coordinates, card details, or spending amounts.
+They are not purchase records or a list of every visit. Storage is capped at 200 store/area entries;
+entries expire after seven days and are removed when the app next accesses them. You can clear
+them from **Arrival alerts → Manage monitored places → Clear arrival explanations**. Erasing this
+iPhone's history clears them too. These explanations are never uploaded.
+
 ### 3. What this adds up to — stated plainly
 
-Sections 2(d) through 2(i) together build a partial record of **where you go, where you shop, how
+Sections 2(d) through 2(j) together build a partial record of **where you go, where you shop, how
 often, when, what you spent, and which cards you carry.** Section 2(b) includes approximate figures
 for your annual spending in certain categories. That is genuinely personal information and we treat
 it as such.

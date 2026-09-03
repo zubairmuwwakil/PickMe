@@ -22,6 +22,7 @@ enum Destination: Hashable {
     case settings
     case walletSetup
     case ambientSetup
+    case arrivalPlaces
     case learnedMerchants
 }
 
