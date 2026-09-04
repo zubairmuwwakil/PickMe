@@ -15,6 +15,23 @@ struct MerchantMCCGraphRuntimeSnapshot {
     let importedObservationCount: Int
     let relevantCommunityCount: Int
 
+    /// Kept explicit instead of relying on the synthesized memberwise initializer so adding an
+    /// evidence source does not break decision-quality fixtures that construct snapshots directly.
+    /// Callers predating issuer-file imports naturally mean zero imported observations.
+    init(baseline: MerchantMCCPrediction,
+         graph: MerchantMCCPrediction,
+         seedConfidence: Double,
+         rewardObservationCount: Int,
+         importedObservationCount: Int = 0,
+         relevantCommunityCount: Int) {
+        self.baseline = baseline
+        self.graph = graph
+        self.seedConfidence = seedConfidence
+        self.rewardObservationCount = rewardObservationCount
+        self.importedObservationCount = importedObservationCount
+        self.relevantCommunityCount = relevantCommunityCount
+    }
+
     var hasRuntimeEvidence: Bool {
         rewardObservationCount > 0 || importedObservationCount > 0 || relevantCommunityCount > 0
     }
