@@ -1,7 +1,7 @@
 # Free-production MCC sources — hard product constraint
 
 **Date:** 2026-09-04  
-**Status:** active product constraint  
+**Status:** active product constraint; strict owner-file importer implemented  
 **Owner decision:** recurring production cost for merchant/MCC enrichment must be **$0** unless the owner explicitly revisits this decision.
 
 ## Decision
@@ -53,6 +53,30 @@ Visa publishes a current public MCC manual and a free consumer-facing Back to Bu
 
 Visa Supplier Matching can return MCCs, but Visa states production requires approval and production fees; sandbox access alone does not satisfy this product constraint.
 
+### Free owner exports can sometimes expose a literal MCC
+
+A materially better free path exists for some **commercial/business card reporting** systems.
+
+RBC's published Visa Business Reporting user guide documents that transaction-detail reporting includes:
+
+- Merchant Name
+- MCC
+- Expense Category
+- Transaction Date
+- Posting Date
+- Billing Amount
+- Billing Currency Code
+
+The same guide documents exporting transaction details/results to **CSV or Excel**. It defines MCC as the four-digit Merchant Category Code.
+
+Primary source:
+
+- RBC / Visa Business Reporting User's Guide: `https://www.rbcroyalbank.com/business/credit-cards/_assets-custom/pdf/Visa_VBR_HelpGuide_EN.pdf`
+
+This is important because it is owner-controlled data and does not require PickMe to pay a data provider or link a bank account.
+
+Do **not** generalize this to every personal credit-card CSV. Public consumer documentation reviewed from major Canadian issuers usually discusses MCC as a rewards-classification mechanism, but does not document a literal MCC column in ordinary transaction exports. For example, TD's consumer card guidance tells users with questions about a purchase's MCC to contact TD rather than documenting an MCC export.
+
 ### No trustworthy free production merchant/location -> exact-MCC API was verified
 
 As of this review, no source was found that simultaneously provides:
@@ -64,6 +88,82 @@ As of this review, no source was found that simultaneously provides:
 5. **$0 recurring production cost**.
 
 Future agents should re-check the market before assuming this remains true.
+
+## Implemented free exact-MCC importer
+
+PickMe now includes:
+
+- `Store/Sources/CardCopilotStore/MerchantMCCExactImport.swift`
+- `Store/Tests/CardCopilotStoreTests/MerchantMCCExactImportTests.swift`
+- `Store/Tests/CardCopilotStoreTests/MerchantMCCLearningEraseTests.swift`
+
+### Accepted input
+
+The first implementation accepts UTF-8 CSV when it contains all three semantic fields:
+
+1. merchant/supplier name;
+2. explicit `MCC`, `MCC Code`, or `Merchant Category Code`;
+3. transaction/posting date.
+
+A Visa Business Reporting mode tags imported evidence with `network = visa` when the export does not provide a network column.
+
+### Explicit rejection rules
+
+The importer intentionally refuses to reinterpret any of the following as a literal MCC:
+
+- generic category labels such as `Grocery`;
+- `SIC`;
+- `NAICS`;
+- reward category outcomes;
+- MapKit POI categories;
+- four-digit numbers in unrelated columns.
+
+This is a provenance rule, not just input validation.
+
+### Privacy and persistence
+
+Raw issuer files are not retained.
+
+The importer persists only normalized MCC evidence:
+
+- canonical PickMe merchant identity;
+- literal MCC;
+- optional network;
+- observation date;
+- a one-way row fingerprint used only for idempotency.
+
+It does **not** persist imported:
+
+- transaction amount;
+- card/account number;
+- raw CSV row;
+- filename;
+- statement text.
+
+Re-importing the same row is idempotent.
+
+### Why imported MCC is a separate evidence kind
+
+`ownerImportedMcc` is intentionally distinct from `directOwnerMcc`.
+
+An issuer export may prove that the owner saw a literal MCC for a merchant, but without a trustworthy join to the specific PickMe store/location it is still **brand-level evidence**. It therefore:
+
+- has high graph weight (`0.90`);
+- may move the predicted MCC/category;
+- is stronger than category inference or community evidence;
+- **cannot** by itself set `MerchantMCCPrediction.isObserved`;
+- **cannot** by itself set `isTrusted` or claim terminal/location verification.
+
+A future safe local join may promote an imported row into `directOwnerMcc` only when PickMe can prove which local purchase/location it belongs to.
+
+### Erase semantics
+
+`Erase This iPhone's History` now clears both:
+
+- reward-derived MCC evidence;
+- imported exact-MCC evidence.
+
+This closes a pre-existing gap where reward MCC evidence could survive the local-history erase.
 
 ## Highest-ROI free architecture
 
@@ -80,7 +180,9 @@ local learned aliases
         +
 owner reward/category reconciliation
         +
-literal owner MCC when available
+owner explicit-MCC CSV imports
+        +
+literal location-anchored owner MCC when available
         +
 opt-in anonymous community MCC observations
                 |
@@ -95,30 +197,53 @@ This has effectively zero incremental data-provider cost and improves as real us
 
 ## Free-source priority order
 
-1. **Direct owner literal MCC** — strongest signal, free when exposed by an issuer/export/reconciliation path.
-2. **Community literal MCC observations** — scalable shared evidence; already live; keep weaker than direct owner truth.
-3. **Reward/category outcomes** — free, lower friction, but never fabricate an exact MCC from them.
-4. **Public researched sources such as AwardWallet** — manual/periodic weak corroboration only, subject to usage rights.
-5. **Open MCC taxonomies** — vocabulary/validation only.
-6. **MapKit/POI category** — merchant/category context, never exact MCC truth.
+1. **Location-anchored direct owner literal MCC** — strongest signal.
+2. **Owner issuer-file literal MCC** — exact MCC but unlocated until safely joined.
+3. **Community literal MCC observations** — scalable shared evidence; keep weaker than owner truth.
+4. **Reward/category outcomes** — free, lower friction, but never fabricate an exact MCC from them.
+5. **Public researched sources such as AwardWallet** — manual/periodic weak corroboration only, subject to usage rights.
+6. **Open MCC taxonomies** — vocabulary/validation only.
+7. **MapKit/POI category** — merchant/category context, never exact MCC truth.
 
 ## Highest-ROI next engineering work under the free constraint
 
-### P0 — let real usage generate evidence
+### P0 — make imports user-accessible
+
+The Store importer is implemented. The next UI slice is a simple local file picker/import result surface in PickMe Settings or reconciliation.
+
+Do not add a second parsing implementation in App. The UI should call `MerchantMCCImportedEvidenceStore.importCSV` and display only aggregate import counts/errors.
+
+Initial UI should support CSV only. Visa Business Reporting may deliver CSV inside a ZIP; automatic ZIP extraction can be added only if it stays dependency-light and reliable. Manual extraction is acceptable for the first UI slice.
+
+### P1 — safe local purchase join
+
+Imported rows become substantially more valuable if PickMe can join them to an existing local purchase/location without ambiguity.
+
+Candidate join keys available transiently during import:
+
+```text
+canonical merchant
+transaction/posting date window
+amount
+card/network when available
+```
+
+Important privacy rule: amount/card/account fields may be used **transiently for matching** but should not be copied into the MCC evidence ledger merely to make matching easier.
+
+Promotion rule:
+
+```text
+unambiguous imported row + exactly one compatible local purchase/location
+    -> location-anchored directOwnerMcc
+ambiguous or zero matches
+    -> keep ownerImportedMcc only
+```
+
+Do not majority-vote ambiguous matches.
+
+### P1 — let real usage generate evidence
 
 The decision-quality instrumentation already records whether MCC uncertainty actually changes the winning card. Do not build a more complex model until this produces enough field data to identify the real bottleneck.
-
-### P1 — improve exact-MCC ingestion from data the owner already has
-
-Investigate issuer-specific sources that cost nothing to the app:
-
-- CSV/downloaded transaction exports;
-- statement data;
-- issuer transaction-detail screens;
-- email/receipt metadata only where it explicitly contains a literal MCC;
-- owner reconciliation input.
-
-Only ingest a value as direct MCC when the source actually labels it as MCC/merchant category code. Do not reinterpret SIC, generic category strings, or inferred rewards as exact MCC.
 
 ### P1 — community flywheel
 
@@ -129,6 +254,19 @@ Because there is no free authoritative merchant-MCC feed, the community graph is
 - preserve location/network/channel provenance;
 - watch conflict and winner-sensitivity metrics;
 - add stronger privacy-preserving abuse controls only if real abuse/scale warrants them.
+
+### P2 — issuer-format adapters
+
+Add source-specific adapters only when a real export is available to test.
+
+Good candidates are business/commercial reporting systems that explicitly label an MCC. A source adapter should mainly provide:
+
+- known column aliases;
+- known date format;
+- known network if contractually/technically true;
+- tests built from synthetic fixtures matching the documented shape.
+
+Never add an adapter based only on an assumed undocumented export format.
 
 ### P2 — manual research automation without scraping
 
@@ -143,7 +281,7 @@ This $0 production constraint may be reconsidered only if the owner explicitly c
 Before proposing paid data again, show:
 
 - measured percentage of checkouts where MCC uncertainty changes the winner;
-- measured failure rate of the free graph/community path;
+- measured failure rate of the free graph/community/import path;
 - expected provider coverage improvement;
 - expected monthly cost at realistic usage;
 - value of recommendation improvement relative to that cost.
