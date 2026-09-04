@@ -2,8 +2,9 @@ import SwiftUI
 import CardCopilotEngine
 import CardCopilotStore
 
-/// What the owner recorded off a statement. A separate type so the view never touches the
-/// store: corrections travel out as data and become an observation elsewhere.
+/// What the owner recorded off a statement. A separate type so the view never mutates the
+/// transaction store directly: corrections travel out as data and become an observation elsewhere.
+/// Optional MCC learning is written to its separate, derived evidence ledger after confirmation.
 struct ReconcileEntry {
     let cardUsed: String
     /// What the charge actually came to. Separate from the pre-purchase figure on the prediction,
@@ -166,6 +167,10 @@ struct ReconcileView: View {
     /// out of the arithmetic denominator via `.notEligible`, which is what "the owner did not
     /// check the math" is supposed to mean. It still counts toward category accuracy, which is
     /// the claim the tap actually makes.
+    ///
+    /// Quick Match also contributes NO MCC-learning evidence. The owner has not said what reward
+    /// category the issuer showed; silently turning the prediction into its own training label
+    /// would create a self-reinforcing loop.
     private func quickConfirm(_ prediction: StoredPrediction) {
         let entry = ReconcileEntry(
             cardUsed: prediction.winnerCardId,
@@ -211,6 +216,7 @@ struct ReconcileEntryView: View {
     @State private var actualAmountText: String = ""
     @State private var missClass: MissClass?
     @State private var note: String = ""
+    @State private var rewardOutcomeCategory: String?
 
     init(prediction: StoredPrediction, cards: [CardProduct], categories: [String],
          onConfirm: @escaping (ReconcileEntry) -> Void, onCancel: @escaping () -> Void) {
@@ -226,6 +232,7 @@ struct ReconcileEntryView: View {
         _actualAmountText = State(initialValue: prediction.purchase?.amountCad.map {
             String(format: "%.2f", $0)
         } ?? "")
+        _rewardOutcomeCategory = State(initialValue: nil)
     }
 
     var body: some View {
@@ -308,9 +315,25 @@ struct ReconcileEntryView: View {
                 }
             }
 
+            if shouldAskRewardFeedback {
+                Section {
+                    Picker("Issuer rewarded it as", selection: $rewardOutcomeCategory) {
+                        Text("Not sure / Skip").tag(nil as String?)
+                        ForEach(MerchantMCCRewardFeedback.options) { option in
+                            Text(option.displayName).tag(Optional(option.category))
+                        }
+                    }
+                } header: {
+                    Text("Help PickMe learn this merchant")
+                } footer: {
+                    Text("Optional. Choose only if your issuer's posted category or rewards make this clear. PickMe stores this as low-confidence MCC evidence, not as an exact network MCC.")
+                        .font(.caption)
+                }
+            }
+
             Section {
                 Button {
-                    onConfirm(entry)
+                    saveObservation()
                 } label: {
                     Text("Save Statement Observation")
                         .font(.system(size: 16, weight: .bold, design: .rounded))
@@ -319,7 +342,7 @@ struct ReconcileEntryView: View {
                 }
                 .disabled(!unitsAreValid || !amountIsValid)
             } footer: {
-                Text("This permanently logs your statement observation and trains the local Merchant Truth Graph for next time.")
+                Text("This permanently logs your statement observation and, when you explicitly provide reward-category feedback, trains the local Merchant MCC Graph for next time.")
             }
         }
         .navigationTitle(prediction.merchantName)
@@ -336,6 +359,18 @@ struct ReconcileEntryView: View {
                 missClass = nil
             }
         }
+    }
+
+    private var shouldAskRewardFeedback: Bool {
+        guard let purchase = prediction.purchase else { return false }
+        return MerchantMCCRewardFeedback.shouldPrompt(for: purchase)
+    }
+
+    private func saveObservation() {
+        onConfirm(entry)
+        guard let rewardOutcomeCategory,
+              let purchase = prediction.purchase else { return }
+        MerchantMCCRewardFeedback.record(category: rewardOutcomeCategory, for: purchase)
     }
 
     private var entry: ReconcileEntry {
