@@ -108,7 +108,6 @@ struct RecommendationView: View {
         let returnText = String(format: "$%.2f back", winnerCard.netValueCad)
 
         VStack(alignment: .leading, spacing: 16) {
-            // Hero Card Visual
             CardArtView(
                 cardId: winnerCard.cardId,
                 officialName: officialName,
@@ -117,7 +116,6 @@ struct RecommendationView: View {
                 isHero: true
             )
 
-            // Value summary banner
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("ESTIMATED RETURN")
@@ -155,13 +153,9 @@ struct RecommendationView: View {
                     routeOpportunityView(route, candidate: resolvedRouteCandidate, graph: graph)
                 }
             } else if let route = routeEvaluation(for: recommendation, graph: graph) {
-                // Keep the existing generic opportunity visible while a nearby lookup runs or when
-                // location is unavailable. A successful scan with no qualifying merchant removes
-                // the generic suggestion rather than pretending a nearby route exists.
                 routeOpportunityView(route, candidate: nil, graph: graph)
             }
 
-            // Dopamine Callout: Instant micro-gain over default card
             if recommendation.switchedFromDefault,
                let advantage = recommendation.advantageOverDefaultCad,
                advantage > 0.005 {
@@ -213,7 +207,6 @@ struct RecommendationView: View {
                 )
             }
 
-            // Chip Mascot Contextual Voice & Rule Insights
             let purchase = ambientPurchaseContext(merchant: result.merchant, category: result.prediction.category)
             let chipInsights = ChipInsightAdvisor.evaluate(
                 recommendation: recommendation,
@@ -255,7 +248,6 @@ struct RecommendationView: View {
                 )
             }
 
-            // Explanations & Insights
             VStack(spacing: 10) {
                 if let why = explanation?.why {
                     insightRow(
@@ -294,7 +286,6 @@ struct RecommendationView: View {
                 }
             }
 
-            // Benefits and protections section
             BenefitsDisclosureSection(
                 result: result,
                 deps: graph,
@@ -310,22 +301,28 @@ struct RecommendationView: View {
                                       graph: DependencyGraph) -> some View {
         let route = evaluation.route
         let acquisitionCard = cardName(evaluation.acquisitionRecommendation.winner.cardId, graph: graph)
+        let hasProtectionTradeoff = evaluation.verdict == .rewardProtectionTradeoff
+        let accent: Color = hasProtectionTradeoff ? .orange : .green
 
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(Color.green.opacity(0.16))
+                        .fill(accent.opacity(0.16))
                         .frame(width: 40, height: 40)
-                    Image(systemName: "point.3.connected.trianglepath.dotted")
+                    Image(systemName: hasProtectionTradeoff
+                          ? "shield.lefthalf.filled.trianglebadge.exclamationmark"
+                          : "point.3.connected.trianglepath.dotted")
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(accent)
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("POTENTIALLY BETTER ROUTE")
+                    Text(hasProtectionTradeoff
+                         ? "MORE REWARDS — PROTECTION TRADE-OFF"
+                         : "POTENTIALLY BETTER ROUTE")
                         .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(accent)
                         .tracking(0.7)
                     Text("Buy a \(route.instrumentLabel) at \(route.acquisitionMerchantLabel).")
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -347,13 +344,37 @@ struct RecommendationView: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("EXTRA VALUE")
+                    Text("EXTRA REWARDS")
                         .font(.system(size: 10, weight: .bold, design: .rounded))
                         .tracking(0.8)
                         .foregroundStyle(.secondary)
                     Text(String(format: "+$%.2f", evaluation.advantageCad))
                         .font(.system(size: 18, weight: .bold, design: .rounded))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(accent)
+                }
+            }
+
+            if hasProtectionTradeoff {
+                HStack(alignment: .top, spacing: 7) {
+                    Image(systemName: "exclamationmark.shield.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.orange)
+                        .padding(.top, 1)
+                    Text(protectionTradeoffText(evaluation.protectionAssessment))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if evaluation.protectionAssessment.status == .purchaseContextNeeded {
+                    HStack(spacing: 8) {
+                        Button("Electronics") { onCompare?(.electronics) }
+                        Button("Phone") { onCompare?(.mobileDevice) }
+                        Button("Appliance") { onCompare?(.applianceFurniture) }
+                    }
+                    .font(.caption.weight(.semibold))
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
                 }
             }
 
@@ -434,22 +455,17 @@ struct RecommendationView: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.green.opacity(0.08))
+                .fill(accent.opacity(0.08))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(Color.green.opacity(0.28), lineWidth: 1)
+                        .stroke(accent.opacity(0.28), lineWidth: 1)
                 )
         )
     }
 
-    /// Fast, synchronous fallback used before nearby merchant resolution completes or when the
-    /// checkout has no physical coordinates. It preserves the V1 generic opportunity instead of
-    /// blocking route advice on a MapKit lookup.
     private func routeEvaluation(for recommendation: Recommendation,
                                  graph: DependencyGraph) -> PurchaseRouteEvaluation? {
         let destination = routeDestinationContext()
-        // Generic acquisition routes must not inherit merchant-specific statement credits. Those
-        // are only defensible when the actual acquisition merchant is known.
         let routeEngine = RecommendationEngine(catalogue: graph.catalogue,
                                                ownerState: graph.ownerState,
                                                includeCheckoutCredits: false)
@@ -459,14 +475,11 @@ struct RecommendationView: View {
             destination: destination,
             destinationMerchantName: result.merchant.name,
             engine: routeEngine,
-            asOf: today
+            asOf: today,
+            benefits: graph.benefits
         )
     }
 
-    /// Resolves the generic acquisition requirement against the actual nearby MapKit scan, then
-    /// runs every qualifying physical merchant through the same route/card scorer. A reconciled
-    /// owner MCC observation participates in the graph and can override the seed; gift-card
-    /// inventory is evaluated independently and can promote or temporarily suppress an exact store.
     @MainActor
     private func resolveNearbyRoute(using graph: DependencyGraph) async {
         resolvedRouteEvaluation = nil
@@ -510,7 +523,8 @@ struct RecommendationView: View {
                     destinationMerchantName: result.merchant.name,
                     routes: [resolved],
                     engine: routeEngine,
-                    asOf: today) else { return nil }
+                    asOf: today,
+                    benefits: graph.benefits) else { return nil }
                 return (candidate, evaluation)
             }
 
@@ -529,13 +543,8 @@ struct RecommendationView: View {
             }
             resolvedRouteEvaluation = best?.evaluation
             resolvedRouteCandidate = best?.candidate
-            // A completed scan is authoritative for whether an actionable nearby route exists. If
-            // none clears the route threshold, suppress the generic placeholder rather than imply
-            // that the user should go hunting for an unspecified store.
             didResolveNearbyRoute = true
         } catch {
-            // Network/MapKit failure is not evidence that no route exists. Leave the generic V1
-            // opportunity in place instead of turning transient lookup failure into a false "none".
             didResolveNearbyRoute = false
         }
     }
@@ -590,7 +599,21 @@ struct RecommendationView: View {
         }
     }
 
-    // MARK: - Fork Outcome View (Ambiguous Merchant)
+    private func protectionTradeoffText(_ assessment: ProtectionDecisionAssessment) -> String {
+        switch assessment.status {
+        case .purchaseContextNeeded:
+            return "This route replaces the direct card charge on a material purchase. PickMe needs to know what you are buying before it can tell whether card-linked purchase protection or warranty makes the direct route preferable."
+        case .potentialTradeoff:
+            let kinds = assessment.relevantKinds
+                .map { BenefitsFormatting.kindDisplayName($0.rawValue).lowercased() }
+                .joined(separator: ", ")
+            return kinds.isEmpty
+                ? "This funding path may change card-linked protection eligibility. Compare protection before treating the reward gain as better overall."
+                : "This funding path may change eligibility for \(kinds). The displayed +$ value is extra rewards, not a claim that the route is better overall."
+        case .notRelevant:
+            return "No material trusted protection trade-off was identified for this route."
+        }
+    }
 
     @ViewBuilder
     private func forkOutcomeView(_ branches: [CheckoutBranch], graph: DependencyGraph) -> some View {
@@ -701,10 +724,6 @@ struct RecommendationView: View {
         graph.catalogue.cards.first { $0.cardId == cardId }?.officialName ?? cardId
     }
 
-    /// Routes through the same shared, catalogue-derived label source the category picker uses
-    /// (`CategoryPickerAdvisor.label`), so a fork branch and a category pill never disagree on
-    /// what to call the same category — and so a category the catalogue grows into never falls
-    /// through to a raw identifier here either.
     private func categoryLabel(_ category: String) -> String {
         CategoryPickerAdvisor.label(for: category)
     }
