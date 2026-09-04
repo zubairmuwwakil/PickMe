@@ -7,10 +7,14 @@ import Foundation
 /// from that history preserves conflicting observations instead of overwriting the merchant with
 /// whichever MCC happened to be seen last.
 public enum MerchantMCCGraphEvidenceBuilder {
-    public static func evidence(from purchases: [StoredPurchase]) -> [MerchantMCCEvidence] {
+    public static func evidence(
+        from purchases: [StoredPurchase],
+        identityStore: MerchantMCCIdentityLearningStore = .shared
+    ) -> [MerchantMCCEvidence] {
         purchases.compactMap { purchase in
             guard let observation = purchase.observation else { return nil }
-            let canonicalName = canonicalMerchantName(purchase.displayMerchant)
+            let canonicalName = canonicalMerchantName(purchase.displayMerchant,
+                                                       identityStore: identityStore)
 
             if let mcc = observation.observedMerchantCategoryCode {
                 return MerchantMCCEvidence(
@@ -44,24 +48,35 @@ public enum MerchantMCCGraphEvidenceBuilder {
     /// Convenience entry point for checkout callers: seed with editorial data, then let actual
     /// reconciled observations compete with it. A current MapKit place contributes identity only;
     /// it never creates MCC evidence on its own.
-    public static func predict(for merchant: NearbyPlace, seedMCC: Int?,
-                               purchases: [StoredPurchase], now: Date = Date())
-        -> MerchantMCCPrediction {
-        let canonicalName = canonicalMerchantName(merchant.name)
+    public static func predict(
+        for merchant: NearbyPlace,
+        seedMCC: Int?,
+        purchases: [StoredPurchase],
+        identityStore: MerchantMCCIdentityLearningStore = .shared,
+        now: Date = Date()
+    ) -> MerchantMCCPrediction {
+        let canonicalName = canonicalMerchantName(merchant.name, identityStore: identityStore)
         let query = MerchantMCCQuery(
             merchantKey: canonicalName,
             placeID: merchant.placeID,
             latitude: merchant.hasMonitorableLocation ? merchant.latitude : nil,
             longitude: merchant.hasMonitorableLocation ? merchant.longitude : nil)
-        return MerchantMCCGraph.predict(for: query, seedMCC: seedMCC,
-                                        evidence: evidence(from: purchases), now: now)
+        return MerchantMCCGraph.predict(
+            for: query,
+            seedMCC: seedMCC,
+            evidence: evidence(from: purchases, identityStore: identityStore),
+            now: now)
     }
 
     /// One identity vocabulary for both graph queries and historical observations. The learned
     /// alias layer is safe here because it activates only after repeated independent joins; before
     /// that threshold this falls back to the same curated recognizer/raw name behavior as before.
-    private static func canonicalMerchantName(_ value: String) -> String {
-        MerchantMCCSeedCatalogue.match(merchantName: value)?.merchant.name
+    private static func canonicalMerchantName(
+        _ value: String,
+        identityStore: MerchantMCCIdentityLearningStore
+    ) -> String {
+        MerchantMCCSeedCatalogue.canonicalMatch(merchantName: value)?.merchant.name
+            ?? identityStore.match(merchantName: value)?.merchant.name
             ?? MerchantRecognizer.recognise(value)?.name
             ?? value
     }
