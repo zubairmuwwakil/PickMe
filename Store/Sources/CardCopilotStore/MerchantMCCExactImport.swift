@@ -102,11 +102,15 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
     /// Imports only normalized evidence. Raw CSV rows, amounts, account/card numbers and filenames
     /// are never persisted.
     ///
-    /// When `localPurchases` is supplied, amount/card-network values are used only while this call
-    /// is executing to attempt a conservative location join. A row becomes `directOwnerMcc` only
-    /// when exactly one located purchase matches the same deterministic merchant, date window,
-    /// amount, and (when the import knows it) card network. Zero or multiple matches fail closed to
-    /// brand-level `ownerImportedMcc` evidence.
+    /// When `localPurchases` is supplied, amount/currency/card-network values are used only while
+    /// this call is executing to attempt a conservative location join. A row becomes
+    /// `directOwnerMcc` only when exactly one located purchase matches the same deterministic
+    /// merchant, date window, CAD amount, and (when the import knows it) card network. Zero or
+    /// multiple matches fail closed to brand-level `ownerImportedMcc` evidence.
+    ///
+    /// `StoredPurchase.amountCad` is explicitly CAD. Therefore numeric equality is never enough to
+    /// join an amount: the issuer row must explicitly identify its billing/transaction currency as
+    /// CAD. Unknown or non-CAD currency keeps the literal MCC useful but unlocated.
     ///
     /// Brand-level idempotency is scoped to non-sensitive facts already retained by the graph
     /// (source + canonical merchant + UTC day + MCC + network). Safely joined rows instead dedupe on
@@ -141,6 +145,9 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
                                            aliases: ["network", "cardnetwork", "paymentnetwork"])
         let amountIndex = Self.firstIndex(in: normalizedHeader,
                                           aliases: ["billingamount", "transactionamount", "purchaseamount", "amount"])
+        let currencyIndex = Self.firstIndex(in: normalizedHeader,
+                                            aliases: ["billingcurrencycode", "billingcurrency",
+                                                      "transactioncurrencycode", "transactioncurrency", "currency"])
         let dateKind: DateKind = ["postingdate", "posteddate"].contains(normalizedHeader[dateIndex])
             ? .posting : .transaction
         let normalizedCardNetworks = cardNetworksByID.reduce(into: [String: String]()) { result, item in
@@ -148,7 +155,6 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
         }
 
         var imported: [MerchantMCCEvidence] = []
-        var joinedRows = 0
         var missingMCC = 0
         var invalidMCC = 0
         var missingDate = 0
@@ -176,16 +182,18 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
             let networkRaw = networkIndex.map { Self.value(row, at: $0) }
             let network = Self.normalizedNetwork(networkRaw) ?? source.defaultNetwork
             let amount = amountIndex.flatMap { Self.parseAmount(Self.value(row, at: $0)) }
+            let currency = currencyIndex.flatMap { Self.normalizedCurrency(Self.value(row, at: $0)) }
 
-            if let purchase = Self.uniqueLocatedPurchaseMatch(
-                importedMerchantRaw: merchantRaw,
-                canonicalMerchantID: match.merchant.id,
-                observedAt: observedAt,
-                dateKind: dateKind,
-                amount: amount,
-                network: network,
-                localPurchases: localPurchases,
-                cardNetworksByID: normalizedCardNetworks) {
+            if currency == "CAD",
+               let purchase = Self.uniqueLocatedPurchaseMatch(
+                    importedMerchantRaw: merchantRaw,
+                    canonicalMerchantID: match.merchant.id,
+                    observedAt: observedAt,
+                    dateKind: dateKind,
+                    amount: amount,
+                    network: network,
+                    localPurchases: localPurchases,
+                    cardNetworksByID: normalizedCardNetworks) {
                 let joinedNetwork = network
                     ?? purchase.cardUsedId.flatMap { normalizedCardNetworks[$0] }
                 let reference = "issuerJoin:\(source.rawValue):\(purchase.id.uuidString.lowercased()):\(mcc):\(joinedNetwork ?? "unknown")"
@@ -201,7 +209,6 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
                     sourceConfidence: 1,
                     observedAt: purchase.createdAt,
                     sourceReference: reference))
-                joinedRows += 1
                 continue
             }
 
@@ -237,9 +244,6 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
         }
         persistLocked()
 
-        // `joinedRows` is deliberately not returned: a re-import of the same joined purchase is a
-        // duplicate, not a newly joined observation. Report only direct rows actually accepted.
-        _ = joinedRows
         return MerchantMCCExactImportSummary(
             totalRows: bodyRows.count,
             importedRows: accepted,
@@ -338,6 +342,11 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
         if normalized.contains("amex") || normalized.contains("americanexpress") { return "amex" }
         if normalized.contains("discover") { return "discover" }
         return nil
+    }
+
+    private static func normalizedCurrency(_ value: String) -> String? {
+        let normalized = value.uppercased().filter(\.isLetter)
+        return normalized.isEmpty ? nil : normalized
     }
 
     private static func parseAmount(_ value: String) -> Double? {
