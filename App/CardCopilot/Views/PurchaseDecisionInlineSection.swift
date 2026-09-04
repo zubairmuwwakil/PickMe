@@ -38,7 +38,10 @@ struct PurchaseDecisionInlineSection: View {
                     PurchaseContextChoiceRow(selection: $selectedContextKind)
                 }
 
-                if let selectedContextKind, assessment.verdict != .purchaseContextNeeded {
+                if let selectedContextKind,
+                   selectedContextKind != .other,
+                   assessment.verdict != .purchaseContextNeeded,
+                   onCompare != nil {
                     Button {
                         onCompare?(selectedContextKind)
                     } label: {
@@ -80,6 +83,9 @@ struct PurchaseDecisionInlineSection: View {
     private var detail: String {
         switch assessment.verdict {
         case .rewardLeader:
+            if selectedContextKind == .other {
+                return "You marked this as an everyday/other purchase, so the modeled shopping-protection contexts do not change the reward result."
+            }
             if let selectedContextKind {
                 return "For \(PurchaseContextChoiceRow.label(for: selectedContextKind).lowercased()), PickMe found no material trusted protection conflict with the reward result."
             }
@@ -123,6 +129,8 @@ struct PurchaseDecisionInlineSection: View {
 
 /// Reusable purchase-type selector shared by direct checkout and alternate-route warnings.
 /// Selection changes only the decision context; it never mutates merchant category or MCC.
+/// `.other` means the user explicitly says none of the modelled protection-sensitive contexts
+/// apply; `nil` remains the separate "purchase type unknown" state.
 struct PurchaseContextChoiceRow: View {
     @Binding var selection: BenefitContextKind?
 
@@ -130,10 +138,13 @@ struct PurchaseContextChoiceRow: View {
         .electronics,
         .mobileDevice,
         .applianceFurniture,
+        .other,
     ]
 
+    private let columns = [GridItem(.adaptive(minimum: 105), spacing: 7)]
+
     var body: some View {
-        HStack(spacing: 7) {
+        LazyVGrid(columns: columns, spacing: 7) {
             ForEach(Self.choices, id: \.rawValue) { kind in
                 Button {
                     selection = kind
@@ -172,6 +183,8 @@ struct PurchaseContextChoiceRow: View {
             return "Phone"
         case .applianceFurniture:
             return "Appliance"
+        case .other:
+            return "Everyday / other"
         case .flight:
             return "Flight"
         case .trip:
