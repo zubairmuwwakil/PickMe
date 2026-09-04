@@ -397,6 +397,12 @@ struct CheckoutFlowView: View {
                 onAlertPolicyChange: { environment.saveAmbientAlertPolicy($0) },
                 fieldLogRecordCount: environment.ambientFieldLogRecordCount,
                 radarMetrics: session.nearbyMetrics,
+                onRadarRadiusChange: { _ in
+                    #if FIELD_DIAGNOSTICS
+                    guard let graph = environment.graph else { return }
+                    Task { await session.rescanNearbyAfterDiagnosticConfigurationChange(using: graph) }
+                    #endif
+                },
                 onExportFieldLog: { environment.exportAmbientFieldLog() },
                 onEnable: {
                     Task {

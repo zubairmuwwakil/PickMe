@@ -27,6 +27,9 @@ struct AmbientDebugPolicySection: View {
     /// on one page.
     var radarMetrics: NearbyLookupMetrics = NearbyLookupMetrics()
     var coverage: AmbientCoverageLog? = nil
+    /// Persists before this fires. The caller cancels any in-flight lookup and forces a fresh scan,
+    /// so the next record cannot carry results from the previous radius.
+    var onRadarRadiusChange: (Double) -> Void = { _ in }
     /// Writes the export and hands back a file URL. Returns nil when there is nothing to write.
     var onExportFieldLog: () -> URL? = { nil }
 
@@ -37,6 +40,8 @@ struct AmbientDebugPolicySection: View {
     /// Which tier's bar the table below reports. `.verified` is included so the unscaled floor is
     /// visible next to the scaled ones — the multipliers only mean anything as a comparison.
     @State private var tier: AmbientMerchantConfidence = .brandMatched
+    @AppStorage(RadarDiagnosticSettings.radiusDefaultsKey)
+    private var radarRadiusMeters = RadarDiagnosticSettings.defaultRadiusMeters
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -55,6 +60,8 @@ struct AmbientDebugPolicySection: View {
             estimateControls
             Divider()
             effectiveBarTable
+            Divider()
+            radarRadiusControl
             Divider()
             radarCounters
             Divider()
@@ -216,6 +223,34 @@ struct AmbientDebugPolicySection: View {
     }
 
     // MARK: - Counters
+
+    @ViewBuilder
+    private var radarRadiusControl: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Radar query radius")
+                .font(.subheadline.weight(.semibold))
+
+            Picker("Radar query radius", selection: Binding(
+                get: {
+                    RadarDiagnosticSettings.allowedRadiusMeters.contains(radarRadiusMeters)
+                        ? radarRadiusMeters
+                        : RadarDiagnosticSettings.defaultRadiusMeters
+                },
+                set: { newRadius in
+                    radarRadiusMeters = newRadius
+                    onRadarRadiusChange(newRadius)
+                })) {
+                    ForEach(RadarDiagnosticSettings.allowedRadiusMeters, id: \.self) { radius in
+                        Text("\(Int(radius)) m").tag(radius)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+            Text("Changing this cancels any in-flight lookup and runs a fresh Radar scan. Every field record stores the radius that produced it.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+    }
 
     /// One row is the reason this section exists: how often a recognised chain was in the result
     /// set and something else was ranked above it.

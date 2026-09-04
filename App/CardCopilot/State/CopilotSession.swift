@@ -418,6 +418,17 @@ final class CopilotSession {
         _ = await findNearby(using: graph)
     }
 
+    #if FIELD_DIAGNOSTICS
+    /// A field-input change must not join a request that captured the previous value. Ordinary
+    /// refreshes may share an in-flight lookup; controlled experiments may not.
+    func rescanNearbyAfterDiagnosticConfigurationChange(using graph: DependencyGraph) async {
+        nearbyPreparationGeneration &+= 1
+        nearbyPreparationTask?.cancel()
+        nearbyPreparationTask = nil
+        await rescanNearby(using: graph)
+    }
+    #endif
+
     /// Warms both the one-shot fix and MapKit results as soon as the app becomes active. This
     /// never asks for new permission: first-time owners still make that choice by tapping Radar.
     /// A shared task lets a tap join an in-flight launch lookup instead of starting a duplicate.
@@ -520,6 +531,7 @@ final class CopilotSession {
                 excludedMissingCategoryResultCount: scan.excludedMissingCategoryResultCount,
                 excludedUnsupportedCategoryResultCount: scan.excludedUnsupportedCategoryResultCount))
             recordRadarFieldLog(fix: fix, rawResultCount: scan.rawResultCount,
+                                queryRadiusMeters: scan.queryRadiusMeters,
                                 merchants: places)
             let outcome: FlowOutcome = places.isEmpty
                 ? .nothingFound(query: nil)
@@ -589,6 +601,7 @@ final class CopilotSession {
     /// was standing in the store and nothing came back" is the single most informative record the
     /// field week can produce, and dropping it would be dropping the evidence.
     private func recordRadarFieldLog(fix: CheckoutLocationFix, rawResultCount: Int,
+                                     queryRadiusMeters: Double?,
                                      merchants: [NearbyPlace]) {
         #if FIELD_DIAGNOSTICS
         let record = radarFieldRecord(
@@ -597,6 +610,7 @@ final class CopilotSession {
                             horizontalAccuracyMeters: fix.horizontalAccuracyMeters,
                             capturedAt: fix.capturedAt),
             rawResultCount: rawResultCount,
+            queryRadiusMeters: queryRadiusMeters,
             merchants: merchants,
             // Patronage only, without the chain-alert opt-in `AmbientLocationService` unions in.
             // That opt-in says the owner wants to *hear about* a chain, which is a policy fact

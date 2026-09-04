@@ -23,6 +23,7 @@ struct AmbientLocationExplainerView: View {
     /// The Radar's own counters. Read beside the coverage log in the field-diagnostics section,
     /// which is the only place either of them is shown.
     var radarMetrics: NearbyLookupMetrics = NearbyLookupMetrics()
+    var onRadarRadiusChange: (Double) -> Void = { _ in }
     var onExportFieldLog: () -> URL? = { nil }
     let onEnable: () -> Void
     var onTestNotification: () -> Void = {}
@@ -228,6 +229,7 @@ extension AmbientLocationExplainerView {
                 fieldLogRecordCount: fieldLogRecordCount,
                 radarMetrics: radarMetrics,
                 coverage: coverage,
+                onRadarRadiusChange: onRadarRadiusChange,
                 onExportFieldLog: onExportFieldLog)
         }
         #else

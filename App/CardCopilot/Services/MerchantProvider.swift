@@ -1,15 +1,40 @@
 import CardCopilotStore
 import CoreLocation
+import Foundation
 @preconcurrency import MapKit
+
+#if FIELD_DIAGNOSTICS
+/// The only owner-adjustable Radar input, compiled out with the rest of the field instrument.
+/// Fixed choices keep exported scans comparable instead of producing a continuum of one-offs.
+enum RadarDiagnosticSettings {
+    static let radiusDefaultsKey = "fieldDiagnostics.radarRadiusMeters"
+    static let defaultRadiusMeters: CLLocationDistance = 100
+    static let allowedRadiusMeters: [CLLocationDistance] = [100, 150, 200]
+
+    static var radiusMeters: CLLocationDistance {
+        guard let stored = UserDefaults.standard.object(forKey: radiusDefaultsKey) as? NSNumber,
+              allowedRadiusMeters.contains(stored.doubleValue) else {
+            return defaultRadiusMeters
+        }
+        return stored.doubleValue
+    }
+}
+#endif
 
 /// MapKit-backed `MerchantProviding`. `nearby` stays inside a small radius, so a result
 /// means "the place you're standing in," not "the whole block." `search` carries no
 /// location bias — it's the Apple guideline 5.1.1 fallback and must work with zero
 /// location access.
 final class LiveMerchantProvider: MerchantProviding {
-    /// Large enough for storefront pins placed at a building centroid, but small enough that
-    /// "nearby" still means the place the owner could plausibly be checking out at.
-    private static let nearbyRadiusMeters: CLLocationDistance = 100
+    /// Production stays at its current 100 m. Field builds can vary one input without changing
+    /// ranking, eligibility, or the manual-search fallback.
+    private static var nearbyRadiusMeters: CLLocationDistance {
+        #if FIELD_DIAGNOSTICS
+        RadarDiagnosticSettings.radiusMeters
+        #else
+        100
+        #endif
+    }
 
     /// Must mirror `isRadarEligiblePOICategory`. The MapKit filter prevents irrelevant places
     /// from consuming its bounded response; the shared Store policy below is the defensive gate.
@@ -33,12 +58,13 @@ final class LiveMerchantProvider: MerchantProviding {
     }
 
     /// The only place that can see how large MapKit's response was before `rankNearbyPlaces`
-    /// dedupes it, so it is the only place that can report it. A 100 m sweep over checkout-eligible
+    /// dedupes it, so it is the only place that can report it. A small sweep over checkout-eligible
     /// categories returns a bounded set, and whether a plaza's anchor tenant was crowded out of
     /// that set or merely outranked inside it is the question the field log exists to settle.
     func nearbyScan(latitude: Double, longitude: Double) async throws -> NearbyScan {
         let center = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-        let request = MKLocalPointsOfInterestRequest(center: center, radius: Self.nearbyRadiusMeters)
+        let queryRadiusMeters = Self.nearbyRadiusMeters
+        let request = MKLocalPointsOfInterestRequest(center: center, radius: queryRadiusMeters)
         request.pointOfInterestFilter = MKPointOfInterestFilter(
             including: Self.radarPOICategories)
         let search = MKLocalSearch(request: request)
@@ -69,6 +95,7 @@ final class LiveMerchantProvider: MerchantProviding {
         }
         return NearbyScan(places: rankNearbyPlaces(mapped),
                           rawResultCount: response.mapItems.count,
+                          queryRadiusMeters: queryRadiusMeters,
                           eligibleResultCount: eligibleResultCount,
                           excludedPublicTransportResultCount: excludedPublicTransportResultCount,
                           excludedMissingCategoryResultCount: excludedMissingCategoryResultCount,

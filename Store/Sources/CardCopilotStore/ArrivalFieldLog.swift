@@ -198,6 +198,9 @@ public struct ArrivalFieldRecord: Equatable, Sendable, Codable, Identifiable {
     /// cached member set rather than issuing a query.
     public var rawResultCount: Int?
     public var dedupedResultCount: Int?
+    /// Radius used by the Radar request that produced this record. Nil on ambient arrivals and
+    /// legacy Radar records written before the radius experiment.
+    public var queryRadiusMeters: Double?
 
     public var resolvedMerchantName: String
     public var resolvedCategory: String
@@ -271,6 +274,7 @@ public struct ArrivalFieldRecord: Equatable, Sendable, Codable, Identifiable {
         self.rung = rung
         self.rawResultCount = nil
         self.dedupedResultCount = nil
+        self.queryRadiusMeters = nil
         self.resolvedMerchantName = resolvedMerchantName
         self.resolvedCategory = resolvedCategory
         self.estimatedAmountCad = estimatedAmountCad
@@ -293,7 +297,8 @@ public struct ArrivalFieldRecord: Equatable, Sendable, Codable, Identifiable {
     /// scan has a query and its result set. Sharing one initialiser would mean every Radar record
     /// naming a region that does not exist and a rung that never ran.
     public init(radarScanAt recordedAt: Date, id: UUID = UUID(), fix: ArrivalFix?,
-                rawResultCount: Int, candidates: [ArrivalCandidateRecord],
+                rawResultCount: Int, queryRadiusMeters: Double? = nil,
+                candidates: [ArrivalCandidateRecord],
                 discriminability: ArrivalDiscriminability? = nil) {
         self.id = id
         self.recordedAt = recordedAt
@@ -308,6 +313,7 @@ public struct ArrivalFieldRecord: Equatable, Sendable, Codable, Identifiable {
         self.rung = nil
         self.rawResultCount = rawResultCount
         self.dedupedResultCount = candidates.count
+        self.queryRadiusMeters = queryRadiusMeters.map { max(0, $0) }
         self.resolvedMerchantName = candidates.first?.name ?? ""
         self.resolvedCategory = candidates.first?.resolvedCategory ?? ""
         self.estimatedAmountCad = nil

@@ -70,6 +70,9 @@ public struct NearbyScan: Equatable, Sendable {
     public let places: [NearbyPlace]
     /// How many places the source returned before ranking and deduping.
     public let rawResultCount: Int
+    /// Radius the source actually queried, when it has a spatial request to report.
+    /// Nil for protocol defaults and test providers that have no view of that input.
+    public let queryRadiusMeters: Double?
     /// Aggregate-only filter outcomes. These carry no place identity or coordinates.
     public let eligibleResultCount: Int
     public let excludedPublicTransportResultCount: Int
@@ -77,12 +80,14 @@ public struct NearbyScan: Equatable, Sendable {
     public let excludedUnsupportedCategoryResultCount: Int
 
     public init(places: [NearbyPlace], rawResultCount: Int,
+                queryRadiusMeters: Double? = nil,
                 eligibleResultCount: Int? = nil,
                 excludedPublicTransportResultCount: Int = 0,
                 excludedMissingCategoryResultCount: Int = 0,
                 excludedUnsupportedCategoryResultCount: Int = 0) {
         self.places = places
         self.rawResultCount = max(0, rawResultCount)
+        self.queryRadiusMeters = queryRadiusMeters.map { max(0, $0) }
         self.eligibleResultCount = max(0, eligibleResultCount ?? places.count)
         self.excludedPublicTransportResultCount = max(0, excludedPublicTransportResultCount)
         self.excludedMissingCategoryResultCount = max(0, excludedMissingCategoryResultCount)

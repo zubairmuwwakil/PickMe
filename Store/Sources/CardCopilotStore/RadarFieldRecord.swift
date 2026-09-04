@@ -23,6 +23,8 @@ public let radarFieldRegionId = "radar"
 ///     which is a fact about the scan, not a zero.
 ///   - rawResultCount: how many places MapKit returned **before** `rankNearbyPlaces` deduped
 ///     them. Taken as an argument because it is gone by the time this sees a list.
+///   - queryRadiusMeters: the radius that produced this result set. Nil only for sources that do
+///     not expose their spatial input and for records written before the radius experiment.
 ///   - merchants: the ranked, deduped results, in the order Radar published them. The first is the
 ///     one Home pointed the answer card at.
 ///   - frequentedKeys: merchants the owner has paid at on several separate days, keyed by
@@ -31,6 +33,7 @@ public func radarFieldRecord(recordedAt: Date = .now,
                              id: UUID = UUID(),
                              fix: ArrivalFix?,
                              rawResultCount: Int,
+                             queryRadiusMeters: Double? = nil,
                              merchants: [NearbyPlace],
                              frequentedKeys: Set<String> = []) -> ArrivalFieldRecord {
     let candidates = merchants.map { merchant -> ArrivalCandidateRecord in
@@ -59,6 +62,7 @@ public func radarFieldRecord(recordedAt: Date = .now,
 
     return ArrivalFieldRecord(
         radarScanAt: recordedAt, id: id, fix: fix, rawResultCount: rawResultCount,
+        queryRadiusMeters: queryRadiusMeters,
         candidates: candidates,
         // The ambient path's own margin function, unchanged. Parity is the point: Radar is tapped
         // far more often than a geofence is crossed, so it is the densest source of margins in the
