@@ -71,14 +71,24 @@ func merchantMCCGraphRuntimeSnapshot(
 /// strengthen an editorial prior, but only a literal MCC from the owner's posted transaction earns
 /// `.observedMcc`. Community rows are external evidence and therefore can never make the graph
 /// `isTrusted`, which is reserved for repeated direct owner observations.
+///
+/// `metrics` remains aggregate-only and on device. It records whether runtime evidence moved the
+/// top MCC, never which merchant/MCC/category caused the move.
 public func merchantMCCGraphPrediction(
     for merchant: NearbyPlace,
     feedbackStore: MerchantMCCRewardFeedbackStore = .shared,
-    communityStore: CommunityMerchantMCCCacheStore = CommunityMerchantMCCCacheStore()
+    communityStore: CommunityMerchantMCCCacheStore = CommunityMerchantMCCCacheStore(),
+    metrics: CategoryResolutionMetricsStore = CategoryResolutionMetricsStore()
 ) -> CategoryPrediction? {
     guard let snapshot = merchantMCCGraphRuntimeSnapshot(
         for: merchant, feedbackStore: feedbackStore, communityStore: communityStore)
     else { return nil }
+
+    if snapshot.hasRuntimeEvidence {
+        metrics.record(.mccRuntimeEvidenceEvaluated(
+            changedTopMCC: snapshot.baseline.bestMCC != snapshot.graph.bestMCC,
+            changedWinner: nil))
+    }
 
     let graph = snapshot.graph
     var categoryProbability: [String: Double] = [:]
