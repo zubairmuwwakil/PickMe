@@ -465,6 +465,10 @@ public struct CheckoutService {
         metrics.record(.walletEnrichmentMatched)
 
         let merchant = resolution.merchant
+        // The resolver has already established a strong GPS/name/category join. Feed that identity
+        // fact into the same ledger as strict checkout matches; the Wallet event id deduplicates
+        // both paths, and the learner still requires repeated independent observations to activate.
+        learnMerchantAliasFromGPSResolution(purchase: purchase, resolution: resolution)
         purchase.merchantIdentifier = merchant.id
         purchase.merchantLatitude = merchant.latitude
         purchase.merchantLongitude = merchant.longitude
