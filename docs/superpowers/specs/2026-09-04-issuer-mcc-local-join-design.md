@@ -25,7 +25,7 @@ issuer CSV row
 canonical merchant
     |
     | transient local matching
-    | merchant + date + amount + network when known
+    | merchant + date + CAD amount + network when known
     v
 exactly one compatible located StoredPurchase?
     |                         |
@@ -54,13 +54,17 @@ The importer does not invent a location and does not use the issuer file to crea
 
 Today `StoredPurchase` does not carry a verified Apple place ID, so a successful issuer join persists the purchase coordinates. If the purchase model later gains a trustworthy place ID, prefer that identifier over coordinate-only anchoring.
 
-### Amount
+### Amount and currency
 
 A direct join requires an explicit imported amount and an existing local `amountCad` within one cent.
 
 Amount exists only as a **transient join key**. It is not copied into the MCC evidence ledger, source reference, community payload, or MCC graph.
 
-Because `StoredPurchase.amountCad` is CAD, **currency equivalence is an invariant**. A future source adapter must not compare a non-CAD issuer amount to `amountCad` merely because the number is equal. When an export exposes billing currency, a non-CAD row must remain unlocated unless a separately verified currency-normalization design is introduced.
+`StoredPurchase.amountCad` is explicitly CAD, so the current implementation also requires an **explicit CAD currency field** in the issuer row before amount can participate in a location join.
+
+Unknown currency and non-CAD currency both fail closed to `ownerImportedMcc`. A numeric `USD 42.17` must never match a local `CAD 42.17` merely because the numbers are equal.
+
+Future non-CAD support needs a separately verified currency-normalization design; do not silently FX-convert to manufacture a match.
 
 ### Card network
 
@@ -102,7 +106,7 @@ For a successful local join, the MCC ledger stores only the facts required by th
 - optional normalized payment network;
 - observation timestamp;
 - evidence kind `directOwnerMcc`;
-- a local idempotency reference based on the opaque local purchase UUID, source, MCC, and network.
+- a local idempotency/correlation reference based on non-sensitive local identifiers.
 
 It does **not** persist from the imported file:
 
@@ -127,9 +131,26 @@ source + canonical merchant + UTC day + MCC + network
 
 That prevents multiple same-day transactions from inflating a brand prior merely because the owner shopped more often.
 
-Successfully joined evidence instead dedupes around the opaque **local purchase UUID**, allowing two genuinely distinct local purchases to become two independent direct observations without persisting amount/card details in the fingerprint.
+Successfully joined evidence normally dedupes around the opaque **local purchase UUID**, allowing two genuinely distinct local purchases to become two independent direct observations without persisting amount/card details in the fingerprint.
 
-Re-importing the same issuer file therefore does not increase confidence.
+### Cross-source dedupe with manual reconciliation
+
+The same transaction can sometimes appear through two acquisition paths:
+
+1. the owner already reconciled a `StoredObservation` with a literal MCC; and
+2. a later issuer CSV import safely joins to that same local purchase.
+
+If both paths report the **same literal MCC**, the imported evidence deliberately reuses the evidence-builder ID:
+
+```text
+observation:<StoredObservation UUID>
+```
+
+The graph dedupes by evidence ID, so one transaction cannot become two independent direct observations and accidentally accelerate `isTrusted`.
+
+If the stored observation and issuer row report **different literal MCCs**, they remain distinct evidence. A disagreement is information and must remain visible rather than being hidden by dedupe.
+
+Re-importing the same issuer file therefore does not increase confidence, and re-observing the same transaction through another local acquisition path does not manufacture corroboration.
 
 ## Location-local trust
 
@@ -144,11 +165,34 @@ Direct evidence from another branch of the same chain may still weakly influence
 
 This distinction is an invariant. The graph's scoring radius and its trust radius do not need to be identical.
 
+## Checkout/category projection
+
+Before this local-join feature existed, every issuer import projected through the category layer as `.brandPrior`, because imports were necessarily unlocated.
+
+That is no longer correct for a safely joined row.
+
+Current rule:
+
+```text
+graph winner has location-matched direct evidence
++ category posterior is not conflicted
+    -> ConfidenceSource.observedMcc
+    -> raw state merchantMccGraph:ownerLocatedExact
+
+unlocated issuer evidence
+    -> ConfidenceSource.brandPrior
+    -> raw state merchantMccGraph:ownerImportedExact
+```
+
+Community evidence alone can never create `.observedMcc`.
+
+A safely joined literal MCC uses the normal observed-MCC confidence floor while still allowing stronger repeated graph corroboration to raise confidence.
+
 ## Confidence semantics
 
 A single successful issuer-file join becomes location-anchored direct evidence, but the graph still applies its normal confidence rules.
 
-`isTrusted` remains reserved for repeated direct evidence plus sufficient aggregate confidence. One joined statement row is not automatically permanent truth.
+`isTrusted` remains reserved for repeated independent direct evidence plus sufficient aggregate confidence. One joined statement row is not automatically permanent truth.
 
 Unlocated issuer imports remain `ownerImportedMcc`, weighted strongly but below direct location evidence and unable by themselves to set `isObserved` or `isTrusted`.
 
@@ -160,10 +204,11 @@ If community sharing is extended later, it must still obey the existing independ
 
 ## Failure behavior
 
-The importer should fail closed in all of these cases:
+The importer fails closed in all of these cases:
 
 - missing amount for a proposed location join;
-- incompatible or unknown currency semantics;
+- missing/unknown currency;
+- non-CAD currency;
 - known network mismatch;
 - no local purchase location;
 - merchant does not deterministically resolve;
@@ -180,16 +225,17 @@ Primary implementation:
 
 - `Store/Sources/CardCopilotStore/MerchantMCCExactImport.swift`
 - `Store/Sources/CardCopilotStore/MerchantMCCGraph.swift`
+- `Store/Sources/CardCopilotStore/MerchantMCCGraphResolution.swift`
 - `App/CardCopilot/Views/SettingsView.swift`
 
 Consumers:
 
-- `Store/Sources/CardCopilotStore/MerchantMCCGraphResolution.swift`
 - `Store/Sources/CardCopilotStore/PurchaseRouteAcquisitionResolver.swift`
 
 Tests:
 
 - `Store/Tests/CardCopilotStoreTests/MerchantMCCExactImportTests.swift`
+- `Store/Tests/CardCopilotStoreTests/MerchantMCCImportedJoinProjectionTests.swift`
 - `Store/Tests/CardCopilotStoreTests/MerchantMCCGraphTests.swift`
 - `Store/Tests/CardCopilotStoreTests/MerchantMCCLearningEraseTests.swift`
 
@@ -207,7 +253,7 @@ Preferred upgrades, in order:
 1. **Verified issuer transaction identifier** — if an export exposes a stable transaction ID that can be safely joined to locally captured data, prefer it over heuristics.
 2. **Verified Apple place ID on StoredPurchase** — persist/use it when the purchase was actually resolved to that MapKit place; prefer exact place identity over coordinate radius.
 3. **Source-specific adapters** — use documented issuer currency/date/network semantics instead of generic column inference.
-4. **Explicit currency handling** — support non-CAD issuer amounts only after a design can prove that the comparison with the local purchase is semantically equivalent; never silently FX-convert to manufacture a match.
+4. **Explicit non-CAD design** — support non-CAD issuer amounts only after a design can prove semantic equivalence with the local purchase; never silently convert to manufacture a match.
 5. **Aggregate join diagnostics** — measure eligible rows, joined rows, ambiguous rows, missing-location rows, network mismatches, and currency mismatches locally without recording merchant/amount/card details in analytics.
 6. **Stronger matching model only if measurements justify it** — a probabilistic matcher is acceptable only if it has a calibrated false-positive bound and still refuses unsafe promotions.
 
