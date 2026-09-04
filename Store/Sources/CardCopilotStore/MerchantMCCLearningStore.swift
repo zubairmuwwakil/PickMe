@@ -11,7 +11,6 @@ public final class MerchantMCCLearningStore: @unchecked Sendable {
 
     private let defaults: UserDefaults
     private let storageKey: String
-    private let seedByID: [String: MerchantMCCSeedMerchant]
     private let seeds: [MerchantMCCSeedMerchant]
     private let lock = NSLock()
     private var evidence: [MerchantMCCRuntimeEvidence]
@@ -22,7 +21,6 @@ public final class MerchantMCCLearningStore: @unchecked Sendable {
         self.defaults = defaults
         self.storageKey = storageKey
         self.seeds = seed.merchants
-        self.seedByID = Dictionary(uniqueKeysWithValues: seed.merchants.map { ($0.id, $0) })
         if let data = defaults.data(forKey: storageKey),
            let decoded = try? JSONDecoder().decode([MerchantMCCRuntimeEvidence].self, from: data) {
             self.evidence = decoded
@@ -169,10 +167,10 @@ public final class MerchantMCCLearningStore: @unchecked Sendable {
 
     private static func normalized(_ value: String) -> String {
         let folded = value.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
-        let scalars = folded.unicodeScalars.map {
-            CharacterSet.alphanumerics.contains($0) ? Character($0) : Character(" ")
-        }
-        return String(scalars).split(whereSeparator: \ .isWhitespace).joined(separator: " ").lowercased()
+        let flattened = folded.unicodeScalars.map {
+            CharacterSet.alphanumerics.contains($0) ? String($0) : " "
+        }.joined()
+        return flattened.split(whereSeparator: \.isWhitespace).joined(separator: " ").lowercased()
     }
 
     private static func containsWholePhrase(_ haystack: String, phrase: String) -> Bool {
