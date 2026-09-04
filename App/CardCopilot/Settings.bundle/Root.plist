@@ -22,6 +22,24 @@
             <key>DefaultValue</key>
             <false/>
         </dict>
+        <dict>
+            <key>Type</key>
+            <string>PSGroupSpecifier</string>
+            <key>Title</key>
+            <string>Community MCC learning</string>
+            <key>FooterText</key>
+            <string>Off by default. If enabled, PickMe can anonymously share literal merchant category codes (MCCs) you confirmed and use privacy-thresholded aggregate MCC evidence for nearby stores. Uploads contain only the canonical merchant identity, rounded store location, confirmed MCC, timestamp, and a random observation ID. They do not contain your card, amount, Wallet descriptor, account, user, or device identity. Community evidence stays weaker than your own observations and can never become trusted terminal truth by itself.</string>
+        </dict>
+        <dict>
+            <key>Type</key>
+            <string>PSToggleSwitchSpecifier</string>
+            <key>Title</key>
+            <string>Share merchant MCC observations</string>
+            <key>Key</key>
+            <string>pickme.communityMerchantMCC.enabled.v1</string>
+            <key>DefaultValue</key>
+            <false/>
+        </dict>
     </array>
     <key>StringsTable</key>
     <string>Root</string>
