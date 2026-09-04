@@ -17,7 +17,7 @@ final class MerchantMCCImportedJoinProjectionTests: XCTestCase {
 
         let prediction = try XCTUnwrap(merchantMCCGraphPrediction(
             for: NearbyPlace(id: "metro", name: "Metro", poiCategoryRaw: nil,
-                             latitude: 43.653, longitude: -79.383),
+                             latitude: 43.653, longitude: -79.383, distanceMeters: nil),
             feedbackStore: feedback,
             importedStore: imported,
             communityStore: community))
@@ -94,7 +94,7 @@ final class MerchantMCCImportedJoinProjectionTests: XCTestCase {
 
         let prediction = try XCTUnwrap(merchantMCCGraphPrediction(
             for: NearbyPlace(id: "metro", name: "Metro", poiCategoryRaw: nil,
-                             latitude: 43.653, longitude: -79.383),
+                             latitude: 43.653, longitude: -79.383, distanceMeters: nil),
             feedbackStore: feedback,
             importedStore: imported,
             communityStore: community))
