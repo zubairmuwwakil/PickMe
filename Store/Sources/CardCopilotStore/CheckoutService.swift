@@ -272,11 +272,11 @@ public struct CheckoutService {
             outcome = .single(primary)
         }
 
-        // Evaluate the MCC graph only when it actually supplied this checkout's category answer.
-        // This is deliberately observational: it re-scores plausible MCC branches with the exact
-        // engine inputs already in force, then stores counts only. Owner-confirmed/MapKit/observed
-        // MCC decisions are not mixed into the denominator, and no identity leaves this method.
-        if prediction.rawCategory?.hasPrefix("merchantMccGraph:") == true,
+        // Evaluate only explicit PickMe checkout decisions. Arrival-alert scoring reuses this
+        // service but can repeat in the background; counting those would overweight frequently
+        // visited merchants and distort the product question this denominator is meant to answer.
+        if purchaseSource == .pickMeCheckout,
+           prediction.rawCategory?.hasPrefix("merchantMccGraph:") == true,
            let snapshot = merchantMCCGraphRuntimeSnapshot(for: merchant) {
             var winnerCache: [Int: String] = [:]
             var unscoreableMCCs: Set<Int> = []
