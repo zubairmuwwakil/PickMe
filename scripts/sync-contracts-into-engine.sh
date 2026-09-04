@@ -24,8 +24,6 @@ cp "$root/contracts/purchase-categories.json" \
    "$root/Engine/Sources/CardCopilotEngine/Resources/purchase-categories.json"
 cp "$root/contracts/merchant-pack.json" \
    "$root/Engine/Sources/CardCopilotEngine/Resources/merchant-pack.json"
-cp "$root/contracts/merchant-mcc-graph/runtime-seed.zlib.b64" \
-   "$root/Engine/Sources/CardCopilotEngine/Resources/merchant-mcc-runtime-seed.zlib.b64"
 cp "$root/contracts/owner-state.json" \
    "$root/Engine/Sources/CardCopilotEngine/Resources/owner-state.json"
 cp "$root/contracts/RELEASE.json" \
