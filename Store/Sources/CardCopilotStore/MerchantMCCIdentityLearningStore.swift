@@ -61,10 +61,10 @@ public final class MerchantMCCIdentityLearningStore: @unchecked Sendable {
         guard !aliasKey.isEmpty, !fingerprint.isEmpty,
               MerchantMCCSeedCatalogue.match(merchantID: merchantID) != nil else { return false }
 
-        // Do not shadow a deterministic curated/seed match. If the alias already means something
-        // else canonically, the learned layer is not allowed to overrule it.
-        if let canonical = MerchantMCCSeedCatalogue.canonicalMatch(merchantName: alias) {
-            return canonical.merchant.id == merchantID ? false : false
+        // Do not shadow deterministic curated/seed evidence. The learned layer exists only for
+        // descriptors the canonical resolver cannot already settle.
+        guard MerchantMCCSeedCatalogue.canonicalMatch(merchantName: alias) == nil else {
+            return false
         }
 
         lock.lock(); defer { lock.unlock() }
