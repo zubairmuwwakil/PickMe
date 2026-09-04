@@ -140,6 +140,10 @@ struct RecommendationView: View {
                     .fill(Color(.secondarySystemGroupedBackground))
             )
 
+            if let route = routeEvaluation(for: recommendation, graph: graph) {
+                routeOpportunityView(route, graph: graph)
+            }
+
             // Dopamine Callout: Instant micro-gain over default card
             if recommendation.switchedFromDefault,
                let advantage = recommendation.advantageOverDefaultCad,
@@ -280,6 +284,116 @@ struct RecommendationView: View {
                 winnerCardId: winnerCard.cardId,
                 onCompare: { onCompare?($0) }
             )
+        }
+    }
+
+    @ViewBuilder
+    private func routeOpportunityView(_ evaluation: PurchaseRouteEvaluation,
+                                      graph: DependencyGraph) -> some View {
+        let route = evaluation.route
+        let acquisitionCard = cardName(evaluation.acquisitionRecommendation.winner.cardId, graph: graph)
+
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.green.opacity(0.16))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "point.3.connected.trianglepath.dotted")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(.green)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("POTENTIALLY BETTER ROUTE")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(.green)
+                        .tracking(0.7)
+                    Text("Buy a \(route.instrumentLabel) at \(route.acquisitionMerchantLabel).")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+            }
+
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("PAY FOR IT WITH")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .tracking(0.8)
+                        .foregroundStyle(.secondary)
+                    Text(acquisitionCard)
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("EXTRA VALUE")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .tracking(0.8)
+                        .foregroundStyle(.secondary)
+                    Text(String(format: "+$%.2f", evaluation.advantageCad))
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(.green)
+                }
+            }
+
+            HStack(alignment: .top, spacing: 6) {
+                Image(systemName: "info.circle")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 1)
+                Text("\(routeEvidenceLabel(route.evidenceLevel)). \(route.disclosure)")
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.green.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.green.opacity(0.28), lineWidth: 1)
+                )
+        )
+    }
+
+    private func routeEvaluation(for recommendation: Recommendation,
+                                 graph: DependencyGraph) -> PurchaseRouteEvaluation? {
+        let brand = canonicalEngineBrand(result.merchant.name)
+        let destination = PurchaseContext(
+            amountCad: result.effectiveAmountCad,
+            category: result.prediction.category,
+            mcc: result.prediction.merchantCategoryCode,
+            merchantBrand: brand,
+            acceptedNetworks: knownAcceptedNetworks(for: brand, merchantName: result.merchant.name)
+        )
+        // Generic acquisition routes must not inherit merchant-specific statement credits. Those
+        // are only defensible when the actual acquisition merchant is known.
+        let routeEngine = RecommendationEngine(catalogue: graph.catalogue,
+                                               ownerState: graph.ownerState,
+                                               includeCheckoutCredits: false)
+        let today = Date().formatted(.iso8601.year().month().day())
+        return PurchaseRouteAdvisor.bestAlternative(
+            directRecommendation: recommendation,
+            destination: destination,
+            destinationMerchantName: result.merchant.name,
+            engine: routeEngine,
+            asOf: today
+        )
+    }
+
+    private func routeEvidenceLabel(_ level: PurchaseRouteEvidenceLevel) -> String {
+        switch level {
+        case .retailerConfirmed:
+            return "Retailer-confirmed route"
+        case .communityObserved:
+            return "Community-observed route; not guaranteed"
+        case .experimental:
+            return "Experimental route"
         }
     }
 
