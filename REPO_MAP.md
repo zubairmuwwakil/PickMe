@@ -11,6 +11,7 @@ nearest `AGENTS.md` for how to work in that area.
 | Swift package resources | `Engine/Sources/CardCopilotEngine/Resources/` | Synchronized by `scripts/sync-contracts-into-engine.sh` |
 | Shared Swift fixtures | `Engine/Tests/CardCopilotEngineTests/Fixtures/` | Synchronized from `contracts/engine-fixtures.json` |
 | Kotlin engine resources | `android/core/engine/src/{main,test}/resources/com/cardcopilot/engine/` | Synchronized by `scripts/sync-contracts-into-android.sh` |
+| Merchant MCC graph | `contracts/merchant-mcc-graph/` | Store runtime copies live under `Store/Sources/CardCopilotStore/Resources/merchant-mcc-*`; sync with `scripts/sync-merchant-mcc-graph-into-store.sh`, never author the copies |
 | Build products | `build/`, `.build/`, `android/**/build/` | Generated and ignored; never compare or edit as source |
 
 ## Source trees
@@ -42,7 +43,8 @@ but put all new designs and implementation plans under `docs/superpowers/`.
 
 Existing automation remains under `scripts/`:
 
-- `sync-contracts-into-{engine,android}.sh` copies canonical contract bytes.
+- `sync-contracts-into-{engine,android}.sh` copies canonical card-contract bytes.
+- `sync-merchant-mcc-graph-into-store.sh` packages canonical MCC-graph seed bytes for offline Store runtime use.
 - `release-catalogue.sh` stamps an immutable content-addressed release;
   `publish-catalogue.sh` performs the separate external publication.
 - `validate-catalogue-schema.py`, `check-id-permanence.sh`,

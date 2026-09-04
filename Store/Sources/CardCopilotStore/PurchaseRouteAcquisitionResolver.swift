@@ -66,11 +66,12 @@ public enum PurchaseRouteAcquisitionResolver {
         let evidenceText = candidate.prediction.isObserved
             ? "local reconciled MCC evidence"
             : "seed/community MCC evidence"
+        let merchantLabel = acquisitionLabel(for: candidate)
         return AlternativePurchaseRoute(
             routeId: "\(template.routeId):\(candidate.seed.merchant.id)",
             destinationMerchantAliases: template.destinationMerchantAliases,
             instrumentLabel: template.instrumentLabel,
-            acquisitionMerchantLabel: candidate.place.name,
+            acquisitionMerchantLabel: merchantLabel,
             acquisitionCategory: template.acquisitionCategory,
             acquisitionMcc: candidate.mcc,
             acquisitionMerchantBrand: candidate.seed.merchantBrand,
@@ -80,6 +81,14 @@ public enum PurchaseRouteAcquisitionResolver {
             evidenceLevel: template.evidenceLevel,
             disclosure: "\(template.disclosure) Nearby merchant MCC uses \(evidenceText) (\(pct)% graph confidence), not a chain-wide guarantee."
         )
+    }
+
+    private static func acquisitionLabel(for candidate: PurchaseRouteAcquisitionCandidate) -> String {
+        guard let metres = candidate.distanceMeters, metres >= 0 else { return candidate.place.name }
+        if metres < 1_000 {
+            return "\(candidate.place.name) (\(Int(metres.rounded())) m away)"
+        }
+        return String(format: "%@ (%.1f km away)", candidate.place.name, metres / 1_000)
     }
 
     private static func candidateOrder(_ lhs: PurchaseRouteAcquisitionCandidate,
