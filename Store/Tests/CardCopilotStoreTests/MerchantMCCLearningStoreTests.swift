@@ -27,7 +27,7 @@ final class MerchantMCCLearningStoreTests: XCTestCase {
         let evidence = store.evidence(for: "Walmart")
         XCTAssertEqual(evidence.count, 2,
                        "correcting one purchase must replace its old reward vote")
-        XCTAssertEqual(Set(evidence.compactMap(\.mcc)), [5812, 5814])
+        XCTAssertEqual(Set(evidence.compactMap(\.mcc)), Set([5812, 5814]))
         XCTAssertEqual(evidence.reduce(0) { $0 + $1.sourceConfidence }, 1, accuracy: 0.0001,
                        "one answer is split across candidates instead of multiplying its vote")
         XCTAssertTrue(evidence.allSatisfy { $0.kind == .rewardOutcomeInference })
@@ -44,7 +44,7 @@ final class MerchantMCCLearningStoreTests: XCTestCase {
         let reloaded = MerchantMCCRewardFeedbackStore(defaults: defaults, storageKey: "evidence")
         let evidence = reloaded.evidence(for: "Walmart")
         XCTAssertEqual(evidence.count, 2)
-        XCTAssertEqual(Set(evidence.compactMap(\.sourceReference)), ["purchase-1"])
+        XCTAssertEqual(Set(evidence.compactMap(\.sourceReference)), Set(["purchase-1"]))
         XCTAssertTrue(evidence.allSatisfy { $0.latitude == 43.6532 && $0.longitude == -79.3832 })
     }
 
