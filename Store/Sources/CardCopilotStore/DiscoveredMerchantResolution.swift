@@ -188,15 +188,11 @@ public func resolveStoredMerchant(name: String, poiCategoryRaw: String?,
 /// What category a merchant is, from whatever evidence the app actually holds. The single entry
 /// point every caller uses, so no two screens can disagree about the same purchase.
 ///
-/// Ordered strongest-first, and deliberately identical to the order `predict` already ranks:
-/// an observed MCC, then a seed brand prior, then a POI place type. An editorial pack row is
-/// consulted only when those signals come up `.fallback`; it earns `.brandPrior`, never
-/// `.observedMcc`, and carries its MCC only as metadata on that prediction.
-///
-/// That last rung is the one nothing was reading. `observedMCCCategory` holds only MCCs with a
-/// single stable meaning, so 5968 (Netflix), 5200 (Canadian Tire) and 4814 (Rogers) are absent by
-/// design; and a merchant the owner reached by tapping a pre-index row carries neither observed
-/// network data nor a POI signal. Both paths landed on `other`, where every card ties at base earn.
+/// Ordered strongest-first. A literal transaction MCC remains the strongest non-owner-confirmed
+/// signal. The learning graph then competes with editorial brand and MapKit priors by confidence:
+/// weak bootstrap data cannot erase a better place-type signal, while repeated user-derived
+/// evidence can promote the graph above a static brand prior. Graph predictions deliberately keep
+/// `.brandPrior` as their source so they can never masquerade as `.observedMcc`.
 ///
 /// Owner-confirmed categories are NOT consulted here. They outrank everything on this ladder and
 /// are looked up per-caller against stored merchants — `CheckoutService.confirmedPrediction` and
@@ -205,6 +201,16 @@ public func resolveCategory(for merchant: NearbyPlace) -> CategoryPrediction {
     let fromSignals = predict(poiCategoryRaw: merchant.poiCategoryRaw,
                               merchantName: merchant.name,
                               merchantCategoryCode: merchant.merchantCategoryCode)
+
+    // A real transaction MCC is already the strongest evidence available at this boundary.
+    if fromSignals.confidenceSource == .observedMcc { return fromSignals }
+
+    if let fromGraph = merchantMCCGraphPrediction(for: merchant),
+       fromSignals.confidenceSource == .fallback
+        || fromGraph.confidenceScore > fromSignals.confidenceScore {
+        return fromGraph
+    }
+
     guard fromSignals.confidenceSource == .fallback else { return fromSignals }
     return resolveDiscoveredMerchant(name: merchant.name,
                                      poiCategoryRaw: merchant.poiCategoryRaw).prediction
