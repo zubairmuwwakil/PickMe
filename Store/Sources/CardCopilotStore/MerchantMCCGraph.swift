@@ -64,6 +64,18 @@ public struct MerchantMCCQuery: Equatable, Sendable {
     }
 }
 
+/// One candidate in an editorial seed profile. Weights are normalized by the graph at runtime, so
+/// malformed or partial callers cannot accidentally multiply the total strength of the prior.
+public struct MerchantMCCPriorCandidate: Equatable, Sendable {
+    public let mcc: Int
+    public let weight: Double
+
+    public init(mcc: Int, weight: Double) {
+        self.mcc = mcc
+        self.weight = weight
+    }
+}
+
 /// One piece of evidence in the graph. `mcc == nil` is valid only for category-only evidence.
 public struct MerchantMCCEvidence: Equatable, Sendable, Codable {
     public let id: String
@@ -135,6 +147,8 @@ public struct MerchantMCCPrediction: Equatable, Sendable {
 public enum MerchantMCCGraph {
     public static func predict(for query: MerchantMCCQuery,
                                seedMCC: Int? = nil,
+                               seedCandidates: [MerchantMCCPriorCandidate] = [],
+                               seedConfidence: Double? = nil,
                                evidence: [MerchantMCCEvidence],
                                now: Date = Date()) -> MerchantMCCPrediction {
         var scores: [Int: Double] = [:]
@@ -142,8 +156,22 @@ public enum MerchantMCCGraph {
         var externalCounts: [Int: Int] = [:]
         var categoryEvidenceCount = 0
 
-        if let seedMCC, (0...9999).contains(seedMCC) {
-            // A seed starts PickMe with a useful prior, but can never be "observed" by itself.
+        let usableSeedCandidates = seedCandidates.filter {
+            (0...9999).contains($0.mcc) && $0.weight > 0 && $0.weight.isFinite
+        }
+        let seedWeightTotal = usableSeedCandidates.reduce(0) { $0 + $1.weight }
+        if seedWeightTotal > 0 {
+            // The profile's confidence is the TOTAL strength of the editorial prior; candidate
+            // weights only distribute that strength. Adding more possible MCCs can never make the
+            // seed itself stronger.
+            let totalSeedStrength = min(1, max(0, seedConfidence
+                ?? MerchantMCCEvidenceKind.researchedSeed.defaultWeight))
+            for candidate in usableSeedCandidates {
+                scores[candidate.mcc, default: 0] +=
+                    (candidate.weight / seedWeightTotal) * totalSeedStrength
+            }
+        } else if let seedMCC, (0...9999).contains(seedMCC) {
+            // Backward-compatible single-MCC prior for callers that have no weighted profile.
             scores[seedMCC, default: 0] += MerchantMCCEvidenceKind.researchedSeed.defaultWeight
         }
 
