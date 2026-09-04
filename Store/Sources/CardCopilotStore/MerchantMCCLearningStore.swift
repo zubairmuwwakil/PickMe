@@ -96,6 +96,12 @@ public final class MerchantMCCRewardFeedbackStore: @unchecked Sendable {
         return candidates.count
     }
 
+    public func forgetAll() {
+        lock.lock(); defer { lock.unlock() }
+        evidenceRows.removeAll()
+        defaults.removeObject(forKey: storageKey)
+    }
+
     private func persistLocked() {
         guard let data = try? JSONEncoder().encode(evidenceRows) else { return }
         defaults.set(data, forKey: storageKey)
