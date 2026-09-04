@@ -127,4 +127,28 @@ final class GiftCardInventoryGraphTests: XCTestCase {
         XCTAssertEqual(observations.map(\.availability), [.available, .unavailable])
         await store.removeAllForTesting()
     }
+
+    func testRapidDuplicateTapCountsOnce() async {
+        let suite = "GiftCardInventoryGraphTests.\(UUID().uuidString)"
+        let store = GiftCardInventoryObservationStore(suiteName: suite)
+        await store.removeAllForTesting()
+
+        _ = await store.record(merchantKey: "Metro",
+                               placeID: "metro-1",
+                               latitude: 43.0,
+                               longitude: -79.0,
+                               instrumentKey: "Shoppers Drug Mart gift card",
+                               availability: .available,
+                               observedAt: now)
+        _ = await store.record(merchantKey: "Metro",
+                               placeID: "metro-1",
+                               latitude: 43.0,
+                               longitude: -79.0,
+                               instrumentKey: "Shoppers Drug Mart gift card",
+                               availability: .available,
+                               observedAt: now.addingTimeInterval(10))
+
+        XCTAssertEqual(await store.observations().count, 1)
+        await store.removeAllForTesting()
+    }
 }
