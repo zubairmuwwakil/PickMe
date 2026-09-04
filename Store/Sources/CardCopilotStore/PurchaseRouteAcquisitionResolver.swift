@@ -17,8 +17,9 @@ public struct PurchaseRouteAcquisitionCandidate: Equatable, Sendable {
 }
 
 /// Bridges MapKit's nearby physical places to the canonical 500-merchant seed and then through the
-/// evidence-weighting graph. Reconciled owner MCCs can override the seed automatically. Inventory
-/// evidence is evaluated independently and can only strengthen/suppress the exact physical place.
+/// evidence-weighting graph. Reconciled owner MCCs and explicit reward-outcome feedback can override
+/// the seed automatically. Inventory evidence is evaluated independently and can only strengthen/
+/// suppress the exact physical place.
 ///
 /// This is deliberately Store-side: Engine owns card/route arithmetic; Store owns merchant
 /// identity, place IDs, coordinates and local evidence composition.
@@ -28,11 +29,12 @@ public enum PurchaseRouteAcquisitionResolver {
         nearby places: [NearbyPlace],
         purchases: [StoredPurchase] = [],
         inventoryEvidence: [GiftCardInventoryObservation] = [],
+        rewardEvidence: [MerchantMCCEvidence] = MerchantMCCRewardFeedbackStore.shared.evidence(),
         limit: Int = 3,
         now: Date = Date()
     ) -> [PurchaseRouteAcquisitionCandidate] {
         guard let requiredMCC = route.acquisitionMcc else { return [] }
-        let ownerEvidence = MerchantMCCGraphEvidenceBuilder.evidence(from: purchases)
+        let ownerEvidence = MerchantMCCGraphEvidenceBuilder.evidence(from: purchases) + rewardEvidence
 
         return places.compactMap { place -> PurchaseRouteAcquisitionCandidate? in
             guard let seed = MerchantMCCSeedCatalogue.match(merchantName: place.name) else {
@@ -86,7 +88,7 @@ public enum PurchaseRouteAcquisitionResolver {
         let pct = Int((candidate.confidence * 100).rounded())
         let evidenceText = candidate.prediction.isObserved
             ? "local reconciled MCC evidence"
-            : "seed/community MCC evidence"
+            : "seed/community/owner reward evidence"
         let merchantLabel = acquisitionLabel(for: candidate)
         let inventoryText = inventoryDisclosure(for: candidate.inventoryPrediction, now: now)
         return AlternativePurchaseRoute(
