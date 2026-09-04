@@ -92,7 +92,11 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
     }
 
     /// Imports only normalized evidence. Raw CSV rows, amounts, account/card numbers and filenames
-    /// are never persisted. A stable one-way row fingerprint is retained solely for idempotency.
+    /// are never persisted. Idempotency is scoped to the non-sensitive facts already retained by
+    /// the graph (source + canonical merchant + UTC day + MCC + network), so unrelated CSV fields
+    /// never leak even indirectly through a whole-row fingerprint. Multiple identical merchant/MCC
+    /// transactions on one day intentionally contribute one brand-level import unit rather than
+    /// letting purchase frequency masquerade as independent corroboration.
     @discardableResult
     public func importCSV(_ data: Data,
                           source: MerchantMCCExactImportSource = .genericCSV) throws
@@ -146,8 +150,9 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
 
             let networkRaw = networkIndex.map { Self.value(row, at: $0) }
             let network = Self.normalizedNetwork(networkRaw) ?? source.defaultNetwork
-            let rowDigest = Self.fnv1a64(row.joined(separator: "\u{1f}"))
-            let reference = "issuerFile:\(source.rawValue):\(rowDigest)"
+            let canonicalKey = MerchantMCCQuery(merchantKey: match.merchant.name).merchantKey
+            let day = Self.utcDay(observedAt)
+            let reference = "issuerFile:\(source.rawValue):\(canonicalKey):\(day):\(mcc):\(network ?? "unknown")"
             imported.append(MerchantMCCEvidence(
                 id: reference,
                 merchantKey: match.merchant.name,
@@ -214,7 +219,7 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
         guard let value else { return nil }
         let normalized = value.lowercased().filter(\.isLetter)
         if normalized.contains("visa") { return "visa" }
-        if normalized.contains("mastercard") || normalized.contains("mastercard") { return "mastercard" }
+        if normalized.contains("mastercard") { return "mastercard" }
         if normalized.contains("amex") || normalized.contains("americanexpress") { return "amex" }
         if normalized.contains("discover") { return "discover" }
         return nil
@@ -237,6 +242,14 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
             if let date = formatter.date(from: trimmed) { return date }
         }
         return nil
+    }
+
+    private static func utcDay(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_CA_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
     }
 
     /// RFC-4180-sized parser: commas, CRLF/LF and doubled quotes inside quoted fields.
@@ -279,14 +292,5 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
         }
         if !field.isEmpty || !row.isEmpty { finishRow() }
         return rows
-    }
-
-    private static func fnv1a64(_ value: String) -> String {
-        var hash: UInt64 = 14_695_981_039_346_656_037
-        for byte in value.utf8 {
-            hash ^= UInt64(byte)
-            hash &*= 1_099_511_628_211
-        }
-        return String(hash, radix: 16)
     }
 }
