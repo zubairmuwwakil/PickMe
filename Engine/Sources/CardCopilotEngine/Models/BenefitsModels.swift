@@ -11,7 +11,7 @@ public enum BenefitVerification: String, Codable, Equatable, Sendable {
 
 /// Known families. `Benefit.family` stays an open string (same idiom as
 /// `PurchaseContext.category`); this enum is the namespace for known values.
-public enum BenefitFamily: String, CaseIterable, Sendable {
+public enum BenefitFamily: String, CaseIterable, Hashable, Sendable {
     case shopping, travelDisruption, rentalCdw, travelMedical
 }
 
