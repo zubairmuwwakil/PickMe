@@ -5,6 +5,7 @@
     "purpose": "Initial Canada seed priors for PickMe's learning merchant-MCC graph.",
     "rule": "Seed MCCs are editorial hypotheses, never observed network MCCs. Runtime observations must override priors as evidence accumulates.",
     "merchantScope": "Exactly the 500 merchants from pickme_canada_500_merchant_seed(1).xlsx.",
+    "runtimeSeedRule": "runtime-seed.zlib.b64 is a compact release artifact derived from the verified 500-merchant seed. It contains priors only; user/runtime evidence is never written back into this file.",
     "taxonomySource": {
       "name": "Adyen DABstep MCC taxonomy",
       "license": "CC-BY-4.0",
@@ -40,6 +41,7 @@
       "merchants-401-450.json",
       "merchants-451-500.json"
     ],
-    "observations": "observations.json"
+    "observations": "observations.json",
+    "runtimeSeed": "runtime-seed.zlib.b64"
   }
 }
