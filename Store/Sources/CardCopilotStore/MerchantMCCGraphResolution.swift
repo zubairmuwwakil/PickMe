@@ -89,11 +89,10 @@ func merchantMCCGraphRuntimeSnapshot(
 
 /// Projects the canonical Store-side MerchantMCCGraph onto PickMe's scoreable category taxonomy.
 ///
-/// The confidence source deliberately remains `.brandPrior`: imported literal MCC rows are strong
-/// owner evidence but, until a safe local purchase/location join exists, they are brand-level and
-/// cannot claim `.observedMcc` terminal truth. Community rows are external evidence and therefore
-/// can never make the graph `isTrusted`, which is reserved for repeated location-anchored direct
-/// owner observations.
+/// Unlocated issuer-file MCC rows remain `.brandPrior`: a literal MCC without a trustworthy store
+/// join is strong brand evidence, not terminal truth. A safely joined issuer row is persisted as
+/// location-anchored `directOwnerMcc`; when that direct evidence wins at the queried location, the
+/// projection may therefore use `.observedMcc`. Community evidence can never create that state.
 ///
 /// `metrics` remains aggregate-only and on device. It records whether runtime evidence moved the
 /// top MCC, never which merchant/MCC/category caused the move.
@@ -133,17 +132,23 @@ public func merchantMCCGraphPrediction(
     // independent purchase fingerprints, not evidence rows, so one answer cannot look like six.
     let categoryMargin = rankedCategories.count > 1 ? top.value - rankedCategories[1].value : top.value
     let categoryConflicted = rankedCategories.count > 1 && categoryMargin <= 0.20
+    let hasObservedLocationMCC = graph.isObserved && !categoryConflicted
 
     let score: Double
     if categoryConflicted {
         score = min(0.55, top.value)
+    } else if hasObservedLocationMCC {
+        // The literal MCC came from owner-controlled evidence and was safely anchored to this
+        // location. Match CategoryMapper's observed-MCC floor while retaining stronger graph
+        // confidence when repeated corroboration earns it.
+        score = min(0.97, max(ConfidenceSource.observedMcc.defaultScore, graph.confidence))
     } else if snapshot.rewardObservationCount >= 3, top.value >= 0.90 {
         score = min(0.97, top.value)
     } else if snapshot.rewardObservationCount >= 2, top.value >= 0.80 {
         score = min(0.94, top.value)
     } else if snapshot.importedObservationCount >= 2, top.value >= 0.85 {
-        // Exact owner MCC evidence is stronger than reward/category inference, but an issuer export
-        // with no trusted store-location join must remain below terminal/location verification.
+        // Exact but unlocated owner MCC evidence is stronger than reward/category inference while
+        // remaining below terminal/location verification.
         score = min(0.92, max(snapshot.seedConfidence, top.value * 0.95))
     } else if snapshot.importedObservationCount > 0 {
         score = min(0.88, max(snapshot.seedConfidence, top.value * 0.92))
@@ -159,6 +164,7 @@ public func merchantMCCGraphPrediction(
 
     let state: String
     if categoryConflicted { state = "conflicted" }
+    else if hasObservedLocationMCC { state = "ownerLocatedExact" }
     else if snapshot.rewardObservationCount >= 3 { state = "strongLearned" }
     else if snapshot.importedObservationCount > 0 { state = "ownerImportedExact" }
     else if snapshot.rewardObservationCount > 0 { state = "rewardLearned" }
@@ -166,7 +172,7 @@ public func merchantMCCGraphPrediction(
     else { state = "priorOnly" }
 
     return CategoryPrediction(category: top.key,
-                              confidenceSource: .brandPrior,
+                              confidenceSource: hasObservedLocationMCC ? .observedMcc : .brandPrior,
                               candidates: rankedCategories.map(\.key),
                               confidenceScore: score,
                               rawCategory: "merchantMccGraph:\(state)",
