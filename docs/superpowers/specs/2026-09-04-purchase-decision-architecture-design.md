@@ -1,6 +1,6 @@
 # Purchase Decision Architecture — rewards + protection + routes
 
-**Status:** Ratified V1 architecture, implemented incrementally on 2026-09-04.
+**Status:** Ratified V1 architecture; direct-checkout and Purchase Route UX integrated 2026-09-04.
 
 **Policy version:** `conservative-multi-attribute-v1`
 
@@ -125,6 +125,19 @@ Current policy version: `conservative-multi-attribute-v1`.
 A future policy change should get a new version. This makes historical recommendations and future
 learning interpretable without pretending the issuer contract changed.
 
+### D7 — Declared purchase type is checkout context, not merchant truth
+
+A user's temporary selection such as `electronics`, `mobileDevice`, or `applianceFurniture` is an
+input to the current purchase decision only. It must not mutate the merchant MCC/category, train the
+merchant graph, or be promoted into a merchant-wide fact.
+
+V1 stores the selection only in `RecommendationView` state. It survives amount refinements and
+nearby Purchase Route refreshes for the active answer screen, but is not written to purchase
+history, UserDefaults, account sync, community evidence, or analytics.
+
+If a future product need justifies durable purchase-type storage, add it deliberately with a clear
+privacy/product purpose and migration plan; do not silently expand the lifetime of this V1 state.
+
 ## V1 direct-purchase policy
 
 `PurchaseDecisionAdvisor` receives:
@@ -158,36 +171,57 @@ The existing `BenefitsAdvisor.comparison` remains the source of protection compa
 It evaluates the declared purchase context and may identify a unique Pareto-maximal card across the
 coverage facts shown to the user.
 
-If exactly one relevant-coverage card exists, V1 treats it as the only protection candidate even
-when there are too few numeric fields for Pareto dominance to name it.
+Only non-`stub` card benefit records are allowed into the **final decision** comparison. Stub data
+may remain visible in reference/disclosure UX, but it must not create a final protection winner.
+
+If exactly one trusted relevant-coverage card exists, V1 treats it as the only protection candidate
+even when there are too few numeric fields for Pareto dominance to name it.
 
 If multiple cards remain Pareto-maximal, the final decision is explicitly unresolved rather than
 silently applying an undocumented preference weight.
 
 ## Checkout UX
 
-For a material purchase, the recommendation screen can still show the reward winner immediately,
-but it must not imply that rewards are necessarily the whole decision.
+The checkout answer always keeps the reward economics visible, but it no longer uses reward copy to
+claim an overall optimum when protection may matter. The hero card is the reward leader; the final
+decision layer is rendered immediately underneath.
 
-The current integration in `BenefitsDisclosureSection` shows:
-
-> Rewards are only part of this decision
-
-and offers purchase-context entry points into the existing protection lens:
+For a material purchase with relevant trusted protections and unknown item type, the screen renders
+an inline **What are you buying?** selector:
 
 - Electronics
 - Phone
-- Appliance / furniture
+- Appliance
 
-The protection lens continues to show certificate-backed facts and provenance rather than promising
-claim eligibility.
+The selection is owned by `RecommendationView` as ephemeral `@State`. One selection drives **both**:
 
-This is an incremental UX. A future version may replace the buttons with a richer purchase-type
-selector shared by checkout, receipts, and post-purchase reconciliation.
+1. `PurchaseDecisionAdvisor` for the direct-card final verdict; and
+2. `PurchaseRouteAdvisor` for alternate-funding protection assessment.
+
+Changing the selection therefore updates the direct verdict in place and changes the route task id,
+causing nearby Purchase Route candidates to be re-evaluated with the same declared context. Amount
+refinement does not discard the selection.
+
+After context is selected, checkout can show:
+
+- **Rewards + protection align** when the reward card also leads the trusted protection comparison;
+- **Reward / protection trade-off** when another card leads on relevant protection facts;
+- **Protection trade-off** when no unique protection winner exists; or
+- **Rewards lead** when no material trusted protection conflict remains for that context.
+
+The existing protection lens remains available as the deeper comparison surface. Inline selection
+finishes the decision; the lens shows the certificate-backed details and provenance behind it.
+
+Copy rules:
+
+- say **reward value** or **extra rewards** for monetary reward outputs;
+- do not call a reward winner simply `optimal` when the final decision is unresolved;
+- do not say a route is `better overall` when `rewardProtectionTradeoff` is present;
+- do not promise that a claim is covered merely because a benefit is listed.
 
 ## Alternate purchase routes
 
-`PurchaseRouteAdvisor` sits above `RecommendationEngine` and now carries a separate protection axis.
+`PurchaseRouteAdvisor` sits above `RecommendationEngine` and carries a separate protection axis.
 
 Routes declare a funding-path fact:
 
@@ -210,6 +244,10 @@ all protection is lost; it tells the protection layer that the destination item 
 charged in the same way and that benefit eligibility must be evaluated before calling the route
 unambiguously better.
 
+When the inline purchase type is known, that same `BenefitContext` is passed into route assessment.
+The UI may still show extra reward dollars, but those dollars are explicitly labelled **extra
+rewards**, not total value.
+
 ## What V1 deliberately does not do
 
 V1 does **not**:
@@ -220,7 +258,8 @@ V1 does **not**:
 - make a coverage/claim promise;
 - merge benefit certificate facts into reward contracts;
 - hide unresolved trade-offs behind one opaque score;
-- assume the highest coverage limit is always the user's preferred choice.
+- assume the highest coverage limit is always the user's preferred choice;
+- persist the temporary purchase-type selector beyond the active checkout.
 
 ## Future replacement paths
 
@@ -300,13 +339,20 @@ When changing final-decision semantics:
 
 ## Testing contract
 
-Current tests cover:
+Current semantic tests cover:
 
 - small purchases remain reward-only;
 - material purchases request item context instead of inferring purchase type from merchant category;
 - declared electronics context produces a protection decision;
+- stub benefits do not influence final verdicts;
 - alternate-funding protection trade-offs are represented separately from reward advantage;
+- declared route context turns an unknown route assessment into an explicit protection trade-off;
 - Swift and Kotlin implement the same decision policy shape.
+
+The iOS integration additionally depends on the app build/test gate to compile the synchronized
+`App/CardCopilot/Views/` source tree. `PurchaseDecisionInlineSection.swift` is automatically included
+because `CardCopilot.xcodeproj` uses `PBXFileSystemSynchronizedRootGroup`; do not hand-edit the
+project file to register it.
 
 Cross-language gate:
 
@@ -337,18 +383,23 @@ Route decision:
 
 Checkout integration:
 
+- `App/CardCopilot/Views/PurchaseDecisionInlineSection.swift`
 - `App/CardCopilot/Views/BenefitsDisclosureSection.swift`
 - `App/CardCopilot/Views/RecommendationView.swift`
 
 ## Open implementation work
 
-The semantic architecture is intentionally ahead of some UX plumbing. Highest-ROI follow-ups are:
+The reward/protection decision architecture and inline shopping-context flow are now wired. The
+highest-ROI remaining extensions are intentionally outside the V1 core:
 
-1. pass `BenefitsCatalogue` into every Purchase Route evaluation call and render
-   `rewardProtectionTradeoff` distinctly from a clean reward advantage;
-2. persist a lightweight purchase-type selection through checkout so the final-decision verdict can
-   update in-place rather than only opening the protection lens;
-3. record the decision policy version with recommendation diagnostics/telemetry once that storage has
-   a clear privacy/product purpose;
-4. add route types (portals, issuer offers, intermediaries) using the same separate reward/protection/
-   reliability dimensions rather than special-casing them in `RecommendationEngine`.
+1. record `policyVersion` with recommendation diagnostics only when that storage has a clear
+   privacy/product purpose, so future policy comparisons are auditable;
+2. extend contextual final-decision UX to travel/car-rental purchase types when those flows expose
+   enough trustworthy purchase context;
+3. add new route types (cashback portals, issuer offers, intermediaries) using the same separate
+   reward/protection/reliability dimensions rather than special-casing them in
+   `RecommendationEngine`;
+4. evaluate explicit user preference weights or a richer Pareto/outranking policy if real usage
+   shows that unresolved protection trade-offs occur often enough to justify the extra complexity;
+5. only consider expected-dollar protection scoring after calibrated, privacy-appropriate loss and
+   claim data exists and the model can be back-tested.
