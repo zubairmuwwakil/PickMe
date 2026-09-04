@@ -10,6 +10,11 @@ struct RecommendationView: View {
     /// place whenever `AmountRefineRow` re-scores at a different amount — a `CheckoutResult` is
     /// all-`let`, so refining means holding a second one here rather than mutating the first.
     @State private var result: CheckoutResult
+    /// Once a physical nearby acquisition merchant has been resolved through the MCC graph, this
+    /// replaces the generic "eligible grocery store" template. Nil is also meaningful after a
+    /// successful nearby scan: it means there was no actionable route around this location.
+    @State private var resolvedRouteEvaluation: PurchaseRouteEvaluation?
+    @State private var didResolveNearbyRoute = false
     @Environment(CopilotEnvironment.self) private var environment
     @Environment(CopilotSession.self) private var session
     @Environment(CheckoutRouter.self) private var router
@@ -83,6 +88,9 @@ struct RecommendationView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationBarBackButtonHidden()
+            .task(id: routeResolutionTaskID) {
+                await resolveNearbyRoute(using: graph)
+            }
         } else {
             EmptyView()
         }
@@ -140,7 +148,14 @@ struct RecommendationView: View {
                     .fill(Color(.secondarySystemGroupedBackground))
             )
 
-            if let route = routeEvaluation(for: recommendation, graph: graph) {
+            if didResolveNearbyRoute {
+                if let route = resolvedRouteEvaluation {
+                    routeOpportunityView(route, graph: graph)
+                }
+            } else if let route = routeEvaluation(for: recommendation, graph: graph) {
+                // Keep the existing generic opportunity visible while a nearby lookup runs or when
+                // location is unavailable. A successful scan with no qualifying merchant removes
+                // the generic suggestion rather than pretending a nearby route exists.
                 routeOpportunityView(route, graph: graph)
             }
 
@@ -361,16 +376,12 @@ struct RecommendationView: View {
         )
     }
 
+    /// Fast, synchronous fallback used before nearby merchant resolution completes or when the
+    /// checkout has no physical coordinates. It preserves the V1 generic opportunity instead of
+    /// blocking route advice on a MapKit lookup.
     private func routeEvaluation(for recommendation: Recommendation,
                                  graph: DependencyGraph) -> PurchaseRouteEvaluation? {
-        let brand = canonicalEngineBrand(result.merchant.name)
-        let destination = PurchaseContext(
-            amountCad: result.effectiveAmountCad,
-            category: result.prediction.category,
-            mcc: result.prediction.merchantCategoryCode,
-            merchantBrand: brand,
-            acceptedNetworks: knownAcceptedNetworks(for: brand, merchantName: result.merchant.name)
-        )
+        let destination = routeDestinationContext()
         // Generic acquisition routes must not inherit merchant-specific statement credits. Those
         // are only defensible when the actual acquisition merchant is known.
         let routeEngine = RecommendationEngine(catalogue: graph.catalogue,
@@ -384,6 +395,82 @@ struct RecommendationView: View {
             engine: routeEngine,
             asOf: today
         )
+    }
+
+    /// Resolves the generic acquisition requirement against the actual nearby MapKit scan, then
+    /// runs every qualifying physical merchant through the same route/card scorer. A reconciled
+    /// owner MCC observation participates in the graph and can override the seed; a seed by itself
+    /// remains a prediction and is disclosed as such.
+    @MainActor
+    private func resolveNearbyRoute(using graph: DependencyGraph) async {
+        resolvedRouteEvaluation = nil
+        didResolveNearbyRoute = false
+
+        guard case .single(let directRecommendation) = result.outcome,
+              result.merchant.hasMonitorableLocation,
+              let template = PurchaseRouteCatalogue.canadaV1.first(where: {
+                  $0.matches(destinationMerchantName: result.merchant.name)
+              }) else { return }
+
+        do {
+            let nearby = try await graph.provider.nearby(
+                latitude: result.merchant.latitude,
+                longitude: result.merchant.longitude)
+            guard !Task.isCancelled else { return }
+
+            let candidates = PurchaseRouteAcquisitionResolver.candidates(
+                for: template,
+                nearby: nearby,
+                purchases: session.purchaseHistory)
+            let routeEngine = RecommendationEngine(catalogue: graph.catalogue,
+                                                   ownerState: graph.ownerState,
+                                                   includeCheckoutCredits: false)
+            let destination = routeDestinationContext()
+            let today = Date().formatted(.iso8601.year().month().day())
+
+            let evaluations = candidates.compactMap { candidate -> PurchaseRouteEvaluation? in
+                let resolved = PurchaseRouteAcquisitionResolver.resolvedRoute(
+                    from: template, candidate: candidate)
+                return PurchaseRouteAdvisor.bestAlternative(
+                    directRecommendation: directRecommendation,
+                    destination: destination,
+                    destinationMerchantName: result.merchant.name,
+                    routes: [resolved],
+                    engine: routeEngine,
+                    asOf: today)
+            }
+
+            guard !Task.isCancelled else { return }
+            resolvedRouteEvaluation = evaluations.max { lhs, rhs in
+                if lhs.advantageCad != rhs.advantageCad {
+                    return lhs.advantageCad < rhs.advantageCad
+                }
+                return lhs.route.routeId > rhs.route.routeId
+            }
+            // A completed scan is authoritative for whether an actionable nearby route exists. If
+            // none clears the route threshold, suppress the generic placeholder rather than imply
+            // that the user should go hunting for an unspecified store.
+            didResolveNearbyRoute = true
+        } catch {
+            // Network/MapKit failure is not evidence that no route exists. Leave the generic V1
+            // opportunity in place instead of turning transient lookup failure into a false "none".
+            didResolveNearbyRoute = false
+        }
+    }
+
+    private func routeDestinationContext() -> PurchaseContext {
+        let brand = canonicalEngineBrand(result.merchant.name)
+        return PurchaseContext(
+            amountCad: result.effectiveAmountCad,
+            category: result.prediction.category,
+            mcc: result.prediction.merchantCategoryCode,
+            merchantBrand: brand,
+            acceptedNetworks: knownAcceptedNetworks(for: brand, merchantName: result.merchant.name)
+        )
+    }
+
+    private var routeResolutionTaskID: String {
+        "\(result.merchant.id)|\(result.effectiveAmountCad)|\(result.prediction.category)"
     }
 
     private func routeEvidenceLabel(_ level: PurchaseRouteEvidenceLevel) -> String {
