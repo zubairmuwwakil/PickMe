@@ -136,7 +136,7 @@ public struct MerchantMCCPrediction: Equatable, Sendable {
     public let categoryEvidenceCount: Int
 
     /// True only when the winning MCC has at least one explicit owner MCC observation anchored to
-    /// the purchase/location. Unlocated issuer-file imports deliberately do not satisfy this.
+    /// this purchase/location. Brand-level or another branch's evidence cannot satisfy this.
     public var isObserved: Bool { bestMCC != nil && directObservationCount > 0 }
 
     /// Two independent direct observations plus a strong aggregate score is the first point at
@@ -205,7 +205,11 @@ public enum MerchantMCCGraph {
 
             switch item.kind {
             case .directOwnerMcc:
-                directCounts[mcc, default: 0] += 1
+                // A direct observation from another branch is still useful evidence about the
+                // brand, but it cannot make THIS terminal observed/trusted. Trust is location-local.
+                if isDirectLocationMatch(query: query, evidence: item) {
+                    directCounts[mcc, default: 0] += 1
+                }
             case .externalLocationReport:
                 externalCounts[mcc, default: 0] += 1
             case .ownerImportedMcc, .researchedSeed, .categoryOutcome, .rewardOutcomeInference:
@@ -255,6 +259,21 @@ public enum MerchantMCCGraph {
         case (_?, _?): return 0.75
         default: return 0.90
         }
+    }
+
+    /// Direct-owner status is intentionally stricter than the scoring multiplier. A different
+    /// branch may weakly inform a brand prior, but only an exact Apple place id or a <=75 m
+    /// coordinate match is allowed to contribute to terminal/location trust.
+    private static func isDirectLocationMatch(query: MerchantMCCQuery,
+                                              evidence: MerchantMCCEvidence) -> Bool {
+        if let queryPlaceID = query.placeID, let evidencePlaceID = evidence.placeID {
+            return queryPlaceID == evidencePlaceID
+        }
+        if let qLat = query.latitude, let qLon = query.longitude,
+           let eLat = evidence.latitude, let eLon = evidence.longitude {
+            return distanceMeters(lat1: qLat, lon1: qLon, lat2: eLat, lon2: eLon) <= 75
+        }
+        return false
     }
 
     private static func locationMultiplier(query: MerchantMCCQuery,
