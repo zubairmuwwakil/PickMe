@@ -38,6 +38,35 @@ final class PurchaseRouteAdvisorTests: XCTestCase {
         XCTAssertEqual(route.route.evidenceLevel, .communityObserved)
     }
 
+    func testMaterialGiftCardRouteKeepsRewardGainSeparateFromProtectionTradeoff() throws {
+        let (_, _, engine) = try fixture()
+        let benefits = try SeedLoader.loadBenefitsCatalogue()
+        let directContext = PurchaseContext(amountCad: 500,
+                                            category: "drugStore",
+                                            mcc: 5912,
+                                            merchantBrand: "shoppers-drug-mart")
+        guard case .advised(let direct) = engine.recommend(directContext, asOf: "2026-09-04") else {
+            return XCTFail("fixture wallet should produce direct advice")
+        }
+
+        let result = try XCTUnwrap(PurchaseRouteAdvisor.bestAlternative(
+            directRecommendation: direct,
+            destination: directContext,
+            destinationMerchantName: "Shoppers Drug Mart",
+            engine: engine,
+            asOf: "2026-09-04",
+            benefits: benefits
+        ))
+
+        XCTAssertGreaterThan(result.advantageCad, 0)
+        XCTAssertEqual(result.verdict, .rewardProtectionTradeoff)
+        XCTAssertNotEqual(result.protectionAssessment.status, .notRelevant)
+        // Protection changes the verdict, not the measured reward advantage.
+        XCTAssertEqual(result.routeValueCad - result.directValueCad,
+                       result.advantageCad,
+                       accuracy: 0.000_001)
+    }
+
     func testSmallPurchaseIsSuppressedByFrictionThreshold() throws {
         let (_, _, engine) = try fixture()
         let directContext = PurchaseContext(amountCad: 5,
