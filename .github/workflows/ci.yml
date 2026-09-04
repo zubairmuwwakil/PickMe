@@ -35,6 +35,12 @@ jobs:
           pip install jsonschema
           python3 scripts/validate-catalogue-schema.py
 
+      # The MCC graph has its own invariants: exactly 500 merchants, unique ids/names, valid profile
+      # references, normalized prior weights, and location-scoped community evidence. Store's Swift
+      # sync test checks bytes; this dependency-free validator checks what those bytes mean.
+      - name: Merchant MCC graph seed is valid
+        run: python3 scripts/validate-merchant-mcc-graph.py
+
       - name: Card ids are permanent
         run: scripts/check-id-permanence.sh
         env:
