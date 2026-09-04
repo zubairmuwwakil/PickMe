@@ -73,6 +73,22 @@ final class MerchantMCCIdentityPipelineTests: XCTestCase {
         XCTAssertEqual(identityStore.match(merchantName: "MART #1234")?.merchant.id, "walmart")
     }
 
+    func testProductionOrderingStillLearnsAfterAutomaticCaptureCompletesPurchase() throws {
+        let prediction = try openWalmartPrediction(id: "poi-walmart-1", at: noon)
+        let event = capture(id: "evt-1", at: noon)
+        let proposal = try XCTUnwrap(
+            CaptureMatcher.automaticProposals(for: [prediction], from: [event]).first)
+
+        let completed = try XCTUnwrap(predictionLog.applyAutomaticCapture(proposal, to: prediction))
+        XCTAssertTrue(completed.isComplete)
+
+        // CheckoutService passes the same reference population to AutoCaptureLog after applying the
+        // proposal. Recomputing "open" at this point would miss the event, which this regression
+        // test protects against.
+        XCTAssertTrue(try autoLog.ingest(feedback: [event], openPredictions: [prediction]).isEmpty)
+        XCTAssertEqual(identityStore.evidenceCount(for: "MART #1234"), 1)
+    }
+
     func testIncompleteCaptureDoesNotTrainIdentity() throws {
         let prediction = try openWalmartPrediction(id: "poi-walmart-1", at: noon)
         _ = try autoLog.ingest(feedback: [capture(id: "evt-1", at: noon, currency: nil)],
