@@ -21,9 +21,26 @@ final class TruthGraphTests: XCTestCase {
                                   context: ModelContext(container))
     }
 
+    /// Two real Toronto branches, at roughly their real coordinates and about four kilometres
+    /// apart.
+    ///
+    /// They used to share one coordinate and differ only by id. That was invisible while merchant
+    /// identity was pure string equality, and stopped being invisible once `MerchantIdentity`
+    /// gained a proximity rung: two Walmart Supercentres zero metres apart are one storefront by
+    /// any honest reading, so the fixture was asserting the terminal-level promotion rule with a
+    /// geometry that cannot express it. Separating them does not weaken these tests — it is what
+    /// makes them test the rule for the reason the rule is true.
+    private static let branches = [
+        "poi-walmart-dufferin": (latitude: 43.6549, longitude: -79.4358),
+        "poi-walmart-stockyards": (latitude: 43.6707, longitude: -79.4718),
+    ]
+
     private func walmart(id: String) -> NearbyPlace {
-        NearbyPlace(id: id, name: "Walmart Supercentre", poiCategoryRaw: "MKPOICategoryFoodMarket",
-                       latitude: 43.65, longitude: -79.38, distanceMeters: 40)
+        let branch = Self.branches[id] ?? (latitude: 43.65, longitude: -79.38)
+        return NearbyPlace(id: id, name: "Walmart Supercentre",
+                           poiCategoryRaw: "MKPOICategoryFoodMarket",
+                           latitude: branch.latitude, longitude: branch.longitude,
+                           distanceMeters: 40)
     }
 
     @discardableResult

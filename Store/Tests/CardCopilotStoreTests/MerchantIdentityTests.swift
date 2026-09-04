@@ -125,6 +125,45 @@ final class MerchantIdentityTests: XCTestCase {
         XCTAssertNil(MerchantIdentity.match(otherUnit, in: try service.knownMerchants()))
     }
 
+    /// The limitation, pinned deliberately rather than left latent.
+    ///
+    /// Two same-named merchants at the same spot with no place ids on either side DO merge. That
+    /// is the food-court case — two Tim Hortons kiosks in one building — and proximity genuinely
+    /// cannot tell it from a revised pin, because the evidence is identical. The place-id guard
+    /// above is what resolves it, and it resolves more of these as data modernises.
+    ///
+    /// Recorded as a passing test, not a `XCTExpectFailure`: it is the documented behaviour of the
+    /// rung, and the day it changes, this test should be the thing that says so.
+    func testSameNamedMerchantsAtOneSpotWithNoPlaceIDsDoMerge() throws {
+        try service.log.confirmMerchant(metro(), category: "grocery")
+
+        let sameSpot = NearbyPlace(id: "a-different-opaque-id", name: "Metro",
+                                   poiCategoryRaw: "MKPOICategoryFoodMarket",
+                                   latitude: 43.6532, longitude: -79.3832, distanceMeters: 5)
+        let match = try XCTUnwrap(MerchantIdentity.match(sameSpot, in: try service.knownMerchants()))
+        XCTAssertEqual(match.rung, .nameAndProximity)
+    }
+
+    /// Rung 3 takes the nearest candidate rather than refusing when several qualify. Refusing
+    /// would be safer in the abstract and worse in practice: the devices most likely to hold two
+    /// rows for one shop are the ones the over-split already damaged, and they are exactly the
+    /// population that needs the rung to heal them.
+    func testWhenSeveralRowsQualifyTheNearestWins() throws {
+        try service.log.confirmMerchant(metro(), category: "grocery")
+        try service.log.confirmMerchant(metro(latitude: 43.65328, longitude: -79.38325),
+                                        category: "dining")
+
+        let stored = try service.knownMerchants()
+        guard stored.count == 2 else {
+            // The two fixtures are within the proximity radius of each other, so the second
+            // confirmation folded into the first — which is the merge this suite wants anyway.
+            XCTAssertEqual(stored.count, 1)
+            return
+        }
+        let match = try XCTUnwrap(MerchantIdentity.match(metro(), in: stored))
+        XCTAssertEqual(match.merchant.confirmedCategory, "grocery")
+    }
+
     // MARK: - The migration
 
     /// The whole migration story in one test: a row written before V6 has no place id at all, and

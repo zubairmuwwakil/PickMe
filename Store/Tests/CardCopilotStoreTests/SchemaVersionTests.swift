@@ -276,13 +276,14 @@ final class SchemaVersionTests: XCTestCase {
     }
 
     func testMigrationPlanCarriesEveryVersionInOrder() {
-        XCTAssertEqual(CardCopilotMigrationPlan.schemas.count, 5)
+        XCTAssertEqual(CardCopilotMigrationPlan.schemas.count, 6)
         XCTAssertTrue(CardCopilotMigrationPlan.schemas[0] == CardCopilotSchemaV1.self)
         XCTAssertTrue(CardCopilotMigrationPlan.schemas[1] == CardCopilotSchemaV2.self)
         XCTAssertTrue(CardCopilotMigrationPlan.schemas[2] == CardCopilotSchemaV3.self)
         XCTAssertTrue(CardCopilotMigrationPlan.schemas[3] == CardCopilotSchemaV4.self)
         XCTAssertTrue(CardCopilotMigrationPlan.schemas[4] == CardCopilotSchemaV5.self)
-        XCTAssertEqual(CardCopilotMigrationPlan.stages.count, 4,
+        XCTAssertTrue(CardCopilotMigrationPlan.schemas[5] == CardCopilotSchemaV6.self)
+        XCTAssertEqual(CardCopilotMigrationPlan.stages.count, 5,
                        "A version with no stage is how a store gets orphaned.")
     }
 
@@ -290,7 +291,7 @@ final class SchemaVersionTests: XCTestCase {
     /// the half-finished migration: a new version added to the plan while every container still
     /// opens at the old one.
     func testCurrentSchemaIsTheNewestInTheMigrationPlan() {
-        XCTAssertTrue(CardCopilotSchema.current == CardCopilotSchemaV5.self)
+        XCTAssertTrue(CardCopilotSchema.current == CardCopilotSchemaV6.self)
         XCTAssertTrue(CardCopilotSchema.current == CardCopilotMigrationPlan.schemas.last!,
                       "The current schema must be the plan's newest, or new stores open behind the plan.")
     }
