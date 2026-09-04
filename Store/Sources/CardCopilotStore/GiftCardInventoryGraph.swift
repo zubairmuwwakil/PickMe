@@ -273,6 +273,20 @@ public actor GiftCardInventoryObservationStore {
             sourceConfidence: 1,
             observedAt: observedAt)
         var current = observations()
+
+        // UI feedback buttons are easy to double-tap. Do not let two taps seconds apart become two
+        // independent pieces of evidence and artificially inflate confidence. A later visit still
+        // appends normally, and changing from "found" to "not here" is always preserved.
+        if let duplicate = current.last(where: { existing in
+            existing.availability == item.availability
+                && existing.merchantKey == item.merchantKey
+                && existing.instrumentKey == item.instrumentKey
+                && sameLocation(existing, item)
+                && abs(existing.observedAt.timeIntervalSince(item.observedAt)) <= 300
+        }) {
+            return duplicate
+        }
+
         current.append(item)
         if let data = try? JSONEncoder().encode(Envelope(schemaVersion: 1, observations: current)) {
             defaults.set(data, forKey: storageKey)
@@ -282,6 +296,16 @@ public actor GiftCardInventoryObservationStore {
 
     public func removeAllForTesting() {
         defaults.removeObject(forKey: storageKey)
+    }
+
+    private func sameLocation(_ lhs: GiftCardInventoryObservation,
+                              _ rhs: GiftCardInventoryObservation) -> Bool {
+        if let lhsPlaceID = lhs.placeID, let rhsPlaceID = rhs.placeID {
+            return lhsPlaceID == rhsPlaceID
+        }
+        guard let lhsLat = lhs.latitude, let lhsLon = lhs.longitude,
+              let rhsLat = rhs.latitude, let rhsLon = rhs.longitude else { return false }
+        return abs(lhsLat - rhsLat) < 0.000_01 && abs(lhsLon - rhsLon) < 0.000_01
     }
 }
 
