@@ -49,21 +49,25 @@ final class MerchantMCCSeedCatalogueTests: XCTestCase {
     }
 
     func testDirectOwnerEvidenceCanOverrideSeedForRouteEligibility() throws {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
         let route = try XCTUnwrap(PurchaseRouteCatalogue.canadaV1.first)
         let place = NearbyPlace(id: "costco", name: "Costco Wholesale", poiCategoryRaw: nil,
                                 merchantCategoryCode: nil,
                                 latitude: 43.1, longitude: -79.1, distanceMeters: 100)
         let purchase = StoredPurchase(
-            merchantName: "Costco Wholesale", amountCad: 10, category: "wholesaleClub",
-            cardId: "test", capturedAt: Date(timeIntervalSince1970: 1_800_000_000),
-            merchantLatitude: 43.1, merchantLongitude: -79.1)
+            createdAt: now,
+            merchantLabel: "Costco Wholesale",
+            merchantKey: "Costco Wholesale",
+            merchantLatitude: 43.1,
+            merchantLongitude: -79.1,
+            categoryAtPurchase: "wholesaleClub")
         purchase.observation = StoredObservation(
-            observedCategory: "grocery", observedMerchantCategoryCode: 5411,
-            confirmedAt: Date(timeIntervalSince1970: 1_800_000_000))
+            observedCategory: "grocery",
+            observedMerchantCategoryCode: 5411,
+            confirmedAt: now)
 
         let candidates = PurchaseRouteAcquisitionResolver.candidates(
-            for: route, nearby: [place], purchases: [purchase],
-            now: Date(timeIntervalSince1970: 1_800_000_000))
+            for: route, nearby: [place], purchases: [purchase], now: now)
         XCTAssertEqual(candidates.first?.mcc, 5411,
                        "local direct evidence must be allowed to beat a 5300 wholesale seed")
     }
