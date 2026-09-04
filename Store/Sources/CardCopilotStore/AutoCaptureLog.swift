@@ -22,9 +22,15 @@ public struct AutoCaptureLog {
     /// reading before deciding the pack needs more rows.
     private let metrics: CategoryResolutionMetricsStore
 
+    /// Learns exact Wallet/processor descriptors from strict one-to-one checkout joins. Separate
+    /// from category learning: this answers only which canonical merchant a descriptor names.
+    private let identityStore: MerchantMCCIdentityLearningStore
+
     public init(context: ModelContext,
-                metrics: CategoryResolutionMetricsStore = CategoryResolutionMetricsStore()) {
+                metrics: CategoryResolutionMetricsStore = CategoryResolutionMetricsStore(),
+                identityStore: MerchantMCCIdentityLearningStore = .shared) {
         self.metrics = metrics
+        self.identityStore = identityStore
         self.context = context
     }
 
@@ -50,6 +56,13 @@ public struct AutoCaptureLog {
     /// `walletEventId`, and a no-op when there is nothing new to log.
     @discardableResult
     public func ingest(feedback: [WalletFeedback], openPredictions: [StoredPrediction]) throws -> [StoredPurchase] {
+        // `CheckoutService` calls this with the ORIGINAL open-prediction population after applying
+        // automatic matches. That is exactly the training set we want: `automaticProposals` repeats
+        // the same strict one-to-one/CAD/resolved-card gate that was just trusted to mutate a
+        // purchase. The event id is the independent fingerprint, so replaying sync cannot inflate
+        // alias confidence.
+        learnMerchantAliases(from: feedback, openPredictions: openPredictions)
+
         let loggedPurchases = try purchasesByWalletEventId()
         var didHydrate = false
         for event in feedback {
@@ -64,6 +77,34 @@ public struct AutoCaptureLog {
         let candidates = CaptureMatcher.unclaimedCaptures(from: feedback, openPredictions: openPredictions)
             .filter { !alreadyLogged.contains($0.eventId) }
         return try candidates.map(record)
+    }
+
+    /// Teaches descriptor identity only when the existing fail-closed capture matcher already says
+    /// one Wallet event belongs to one live checkout and the checkout merchant itself resolves to a
+    /// canonical seed row. Raw and server-normalized descriptors are both useful aliases; they use
+    /// the same event fingerprint and therefore still count as one observation each per alias.
+    private func learnMerchantAliases(from feedback: [WalletFeedback],
+                                      openPredictions: [StoredPrediction]) {
+        let predictionsByID = Dictionary(uniqueKeysWithValues: openPredictions.map { ($0.id, $0) })
+        let eventsByID = Dictionary(grouping: feedback, by: \.eventId)
+
+        for proposal in CaptureMatcher.automaticProposals(for: openPredictions, from: feedback) {
+            guard let prediction = predictionsByID[proposal.predictionId],
+                  let canonical = MerchantMCCSeedCatalogue.canonicalMatch(
+                    merchantName: prediction.merchantName),
+                  let events = eventsByID[proposal.eventId], events.count == 1,
+                  let event = events.first else { continue }
+
+            let aliases = [event.merchantRaw, event.merchantNormalized]
+                .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            for alias in Set(aliases) {
+                identityStore.record(alias: alias,
+                                     merchantID: canonical.merchant.id,
+                                     sourceFingerprint: "wallet:\(event.eventId)",
+                                     observedAt: event.capturedAt)
+            }
+        }
     }
 
     /// Event-id deduplication prevents duplicate purchases, but it must not also freeze an older
@@ -104,13 +145,20 @@ public struct AutoCaptureLog {
     @discardableResult
     private func record(_ capture: CaptureMatcher.UnclaimedCapture) throws -> StoredPurchase {
         let learned = try learnedPrediction(for: capture.merchant)
-        let indexed = MerchantRecognizer.recognise(capture.merchant)
-        let categoryPrediction = learned ?? indexed.flatMap { merchant in
-                guard merchant.category != "other" else { return nil }
-                return CategoryPrediction(category: merchant.category, confidenceSource: .brandPrior,
-                                          candidates: [merchant.category],
-                                          merchantCategoryCode: merchant.mcc)
-            } ?? predict(poiCategoryRaw: nil, merchantName: capture.merchant)
+
+        // Use the same graph-aware resolver as live checkout. A descriptor that has accumulated two
+        // independent identity observations can therefore reach the 500-merchant MCC graph even
+        // with no MapKit lookup, while a one-off descriptor remains a fallback exactly as before.
+        let syntheticMerchant = NearbyPlace(
+            id: merchantActivityKey(name: capture.merchant, locationIdentifier: nil,
+                                    latitude: capture.latitude, longitude: capture.longitude)
+                ?? capture.merchant,
+            name: capture.merchant,
+            poiCategoryRaw: nil,
+            latitude: capture.latitude ?? 0,
+            longitude: capture.longitude ?? 0,
+            distanceMeters: nil)
+        let categoryPrediction = learned ?? resolveCategory(for: syntheticMerchant)
         let category = categoryPrediction.confidenceSource == .fallback
             ? nil : categoryPrediction.category
         metrics.record(.resolved(rung: categoryPrediction.confidenceSource,
