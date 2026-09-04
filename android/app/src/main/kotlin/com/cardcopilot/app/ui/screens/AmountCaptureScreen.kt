@@ -41,12 +41,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cardcopilot.store.CategoryMapper
-import com.cardcopilot.store.models.NearbyMerchant
+import com.cardcopilot.store.models.NearbyPlace
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AmountCaptureScreen(
-    merchant: NearbyMerchant,
+    merchant: NearbyPlace,
     onConfirmAmount: (Double?) -> Unit,
     onBack: () -> Unit
 ) {

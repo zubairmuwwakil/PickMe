@@ -165,7 +165,7 @@ struct ArrivalPlacesView: View {
         searchRequest = UUID()
     }
 
-    private func merchantRow(_ merchant: NearbyMerchant, detail: String,
+    private func merchantRow(_ merchant: NearbyPlace, detail: String,
                              preference: ArrivalAlertPreference? = nil) -> some View {
         HStack(spacing: 12) {
             Button {
@@ -208,7 +208,7 @@ struct ArrivalPlacesView: View {
         return "\(preference.scope.arrivalTitle) · \(status(for: merchant))\(location)"
     }
 
-    private func status(for merchant: NearbyMerchant) -> String {
+    private func status(for merchant: NearbyPlace) -> String {
         if let preference = model.preference(for: merchant) {
             if preference.scope == .disabled { return "Alerts off" }
             if preference.scope == .exactLocation,
@@ -227,7 +227,7 @@ struct ArrivalPlacesView: View {
 
 private struct ArrivalPlaceChoice: Identifiable {
     var id: String { merchant.id }
-    let merchant: NearbyMerchant
+    let merchant: NearbyPlace
     let preference: ArrivalAlertPreference?
 }
 

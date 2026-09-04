@@ -3,8 +3,8 @@ import CardCopilotStore
 
 /// Ranked nearby merchant list — lets the user confirm which merchant they are standing in.
 struct MerchantConfirmView: View {
-    let merchants: [NearbyMerchant]
-    let onConfirm: (NearbyMerchant) -> Void
+    let merchants: [NearbyPlace]
+    let onConfirm: (NearbyPlace) -> Void
     let onSearch: (String) -> Void
     let onCancel: () -> Void
     @State private var searchText = ""

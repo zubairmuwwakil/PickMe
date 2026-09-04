@@ -26,26 +26,26 @@ final class SubjectCorrectionTests: XCTestCase {
     }
 
     private actor StubMerchantProvider: MerchantProviding {
-        let merchants: [NearbyMerchant]
+        let merchants: [NearbyPlace]
 
-        init(merchants: [NearbyMerchant]) { self.merchants = merchants }
+        init(merchants: [NearbyPlace]) { self.merchants = merchants }
 
-        func nearby(latitude: Double, longitude: Double) async throws -> [NearbyMerchant] {
+        func nearby(latitude: Double, longitude: Double) async throws -> [NearbyPlace] {
             merchants
         }
 
-        func search(text: String) async throws -> [NearbyMerchant] { [] }
+        func search(text: String) async throws -> [NearbyPlace] { [] }
     }
 
     private func merchant(_ name: String, metresNorth: Double,
-                          poiCategoryRaw: String? = nil) -> NearbyMerchant {
-        NearbyMerchant(id: "poi.\(name)", name: name, poiCategoryRaw: poiCategoryRaw,
+                          poiCategoryRaw: String? = nil) -> NearbyPlace {
+        NearbyPlace(id: "poi.\(name)", name: name, poiCategoryRaw: poiCategoryRaw,
                        latitude: 45 + metresNorth / 111_000, longitude: -75,
                        distanceMeters: metresNorth)
     }
 
-    private var notaries: NearbyMerchant { merchant("Bergeron Notaries", metresNorth: 12) }
-    private var shoppers: NearbyMerchant {
+    private var notaries: NearbyPlace { merchant("Bergeron Notaries", metresNorth: 12) }
+    private var shoppers: NearbyPlace {
         merchant("Shoppers Drug Mart", metresNorth: 40, poiCategoryRaw: "MKPOICategoryPharmacy")
     }
 
@@ -127,7 +127,7 @@ final class SubjectCorrectionTests: XCTestCase {
     func testChoosingABrandWithNoRealLocationConfirmsNoTerminal() async throws {
         let store = makeFieldLogStore()
         let (session, graph) = try await scannedSession(store: store)
-        let brand = NearbyMerchant(id: "preindex:pharmaprix", name: "Pharmaprix",
+        let brand = NearbyPlace(id: "preindex:pharmaprix", name: "Pharmaprix",
                                    poiCategoryRaw: nil, latitude: 0, longitude: 0,
                                    distanceMeters: nil)
 

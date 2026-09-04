@@ -22,7 +22,7 @@ extension LocationUnavailable: LocalizedError {
 }
 
 /// A validated fix rather than a bare coordinate. Accuracy and age are required to decide
-/// whether a 200 m merchant result is safe to reuse after the app becomes active again.
+/// whether a nearby merchant result is safe to reuse after the app becomes active again.
 struct CheckoutLocationFix: Equatable, Sendable {
     let latitude: Double
     let longitude: Double

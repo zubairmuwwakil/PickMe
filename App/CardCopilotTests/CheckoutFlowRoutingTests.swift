@@ -7,8 +7,8 @@ import CardCopilotStore
 /// calls and @State mutation. Pulling it out as a pure function is the point of the split.
 final class CheckoutFlowRoutingTests: XCTestCase {
 
-    private func merchant(_ name: String) -> NearbyMerchant {
-        NearbyMerchant(id: "test:\(name)", name: name, poiCategoryRaw: nil,
+    private func merchant(_ name: String) -> NearbyPlace {
+        NearbyPlace(id: "test:\(name)", name: name, poiCategoryRaw: nil,
                        latitude: 0, longitude: 0, distanceMeters: nil)
     }
 

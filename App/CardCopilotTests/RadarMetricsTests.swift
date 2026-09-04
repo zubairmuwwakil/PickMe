@@ -160,6 +160,9 @@ final class RadarMetricsTests: XCTestCase {
             "totalTapLatencyMilliseconds", "maximumTapLatencyMilliseconds",
             "radarScans", "radarRawResultBuckets", "radarDedupedResultBuckets",
             "radarScansWithARecognisedChain", "radarScansWhereTopRankedMissedAChain",
+            "radarEligibilityScans", "radarEligibleResults",
+            "radarExcludedPublicTransportResults", "radarExcludedMissingCategoryResults",
+            "radarExcludedUnsupportedCategoryResults",
         ])
     }
 }

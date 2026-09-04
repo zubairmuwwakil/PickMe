@@ -27,22 +27,22 @@ final class CopilotSessionTests: XCTestCase {
     }
 
     private actor StubMerchantProvider: MerchantProviding {
-        var nearbyResult: [NearbyMerchant]
+        var nearbyResult: [NearbyPlace]
         var delay: Duration?
         private(set) var nearbyRequestCount = 0
 
-        init(nearbyResult: [NearbyMerchant], delay: Duration? = nil) {
+        init(nearbyResult: [NearbyPlace], delay: Duration? = nil) {
             self.nearbyResult = nearbyResult
             self.delay = delay
         }
 
-        func nearby(latitude: Double, longitude: Double) async throws -> [NearbyMerchant] {
+        func nearby(latitude: Double, longitude: Double) async throws -> [NearbyPlace] {
             nearbyRequestCount += 1
             if let delay { try await Task.sleep(for: delay) }
             return nearbyResult
         }
 
-        func search(text: String) async throws -> [NearbyMerchant] { [] }
+        func search(text: String) async throws -> [NearbyPlace] { [] }
     }
 
     private func makeContext() throws -> ModelContext {
@@ -163,7 +163,7 @@ final class CopilotSessionTests: XCTestCase {
         let location = StubLocationProvider()
         location.authorizedLocation = CheckoutLocationFix(latitude: 43.6532, longitude: -79.3832,
                                                            horizontalAccuracyMeters: 10)
-        let merchants = [NearbyMerchant(id: "nearby-loblaws", name: "Loblaws",
+        let merchants = [NearbyPlace(id: "nearby-loblaws", name: "Loblaws",
                                         poiCategoryRaw: nil, latitude: 43.6532,
                                         longitude: -79.3832, distanceMeters: 12)]
         let provider = StubMerchantProvider(nearbyResult: merchants)
@@ -185,7 +185,7 @@ final class CopilotSessionTests: XCTestCase {
 
     func testLaunchPrefetchDoesNotPromptBeforeFirstRadarTap() async throws {
         let location = StubLocationProvider()
-        let merchants = [NearbyMerchant(id: "nearby-metro", name: "Metro",
+        let merchants = [NearbyPlace(id: "nearby-metro", name: "Metro",
                                         poiCategoryRaw: nil, latitude: 43.6532,
                                         longitude: -79.3832, distanceMeters: 20)]
         let provider = StubMerchantProvider(nearbyResult: merchants)
@@ -212,7 +212,7 @@ final class CopilotSessionTests: XCTestCase {
         let location = StubLocationProvider()
         location.authorizedLocation = CheckoutLocationFix(latitude: 43.6532, longitude: -79.3832,
                                                            horizontalAccuracyMeters: 10)
-        let merchants = [NearbyMerchant(id: "nearby", name: "Nearby",
+        let merchants = [NearbyPlace(id: "nearby", name: "Nearby",
                                         poiCategoryRaw: nil, latitude: 43.6533,
                                         longitude: -79.3832, distanceMeters: 12)]
         let provider = StubMerchantProvider(nearbyResult: merchants)
@@ -237,9 +237,9 @@ final class CopilotSessionTests: XCTestCase {
         let location = StubLocationProvider()
         location.authorizedLocation = CheckoutLocationFix(latitude: 43.6532, longitude: -79.3832,
                                                            horizontalAccuracyMeters: 10)
-        let first = NearbyMerchant(id: "first", name: "First", poiCategoryRaw: nil,
+        let first = NearbyPlace(id: "first", name: "First", poiCategoryRaw: nil,
                                    latitude: 43.6532, longitude: -79.3832, distanceMeters: 10)
-        let closeSecond = NearbyMerchant(id: "second", name: "Second", poiCategoryRaw: nil,
+        let closeSecond = NearbyPlace(id: "second", name: "Second", poiCategoryRaw: nil,
                                          latitude: 43.6533, longitude: -79.3832, distanceMeters: 30)
         let provider = StubMerchantProvider(nearbyResult: [closeSecond, first])
         let graph = try makeGraph(context: makeContext(), provider: provider)
@@ -283,7 +283,7 @@ final class CopilotSessionTests: XCTestCase {
         let location = StubLocationProvider()
         location.authorizedLocation = CheckoutLocationFix(latitude: 43.6532, longitude: -79.3832,
                                                            horizontalAccuracyMeters: 10)
-        let merchant = NearbyMerchant(id: "nearby", name: "Nearby", poiCategoryRaw: nil,
+        let merchant = NearbyPlace(id: "nearby", name: "Nearby", poiCategoryRaw: nil,
                                       latitude: 43.6532, longitude: -79.3832, distanceMeters: 12)
         let provider = StubMerchantProvider(nearbyResult: [merchant])
         let graph = try makeGraph(context: makeContext(), provider: provider)
@@ -473,9 +473,9 @@ final class CopilotSessionTests: XCTestCase {
 
     func testHomeAnswerSubjectMergedPreservesNearbyAndRecentSeparation() {
         let nearby = [
-            NearbyMerchant(id: "n1", name: "Nearby 1", poiCategoryRaw: "cafe", latitude: 43.65, longitude: -79.38, distanceMeters: 50),
-            NearbyMerchant(id: "n2", name: "Nearby 2", poiCategoryRaw: "grocery", latitude: 43.65, longitude: -79.38, distanceMeters: 120),
-            NearbyMerchant(id: "common", name: "Shared Place", poiCategoryRaw: "restaurant", latitude: 43.65, longitude: -79.38, distanceMeters: 200)
+            NearbyPlace(id: "n1", name: "Nearby 1", poiCategoryRaw: "cafe", latitude: 43.65, longitude: -79.38, distanceMeters: 50),
+            NearbyPlace(id: "n2", name: "Nearby 2", poiCategoryRaw: "grocery", latitude: 43.65, longitude: -79.38, distanceMeters: 120),
+            NearbyPlace(id: "common", name: "Shared Place", poiCategoryRaw: "restaurant", latitude: 43.65, longitude: -79.38, distanceMeters: 200)
         ]
         let remembered = [
             StoredMerchant(name: "Shared Place", identifier: "common", poiCategoryRaw: "restaurant", latitude: 43.65, longitude: -79.38),
@@ -499,7 +499,7 @@ final class CopilotSessionTests: XCTestCase {
 
     func testHomeAnswerSubjectMergedEnforcesPerSectionLimits() {
         let nearby = (1...15).map {
-            NearbyMerchant(id: "n\($0)", name: "Nearby \($0)", poiCategoryRaw: "cafe", latitude: 43.65, longitude: -79.38, distanceMeters: Double($0 * 10))
+            NearbyPlace(id: "n\($0)", name: "Nearby \($0)", poiCategoryRaw: "cafe", latitude: 43.65, longitude: -79.38, distanceMeters: Double($0 * 10))
         }
         let remembered = (1...15).map {
             StoredMerchant(name: "Recent \($0)", identifier: "r\($0)", poiCategoryRaw: "grocery", latitude: 43.65, longitude: -79.38)

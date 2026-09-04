@@ -16,10 +16,10 @@ public struct DiscoveredMerchantResolution: Equatable, Sendable {
 /// the names strongly agree, the POI is close to the captured coordinate, and MapKit maps it to
 /// one unambiguous engine category.
 public struct WalletMerchantResolution: Equatable, Sendable {
-    public let merchant: NearbyMerchant
+    public let merchant: NearbyPlace
     public let prediction: CategoryPrediction
 
-    public init(merchant: NearbyMerchant, prediction: CategoryPrediction) {
+    public init(merchant: NearbyPlace, prediction: CategoryPrediction) {
         self.merchant = merchant
         self.prediction = prediction
     }
@@ -29,7 +29,7 @@ public struct WalletMerchantResolution: Equatable, Sendable {
 /// fix. A loose keyword guess is deliberately insufficient: auto-assignment requires a strong
 /// name overlap, a POI within the capture radius, and a single non-fallback category.
 public func resolveWalletMerchant(capturedName: String,
-                                  nearbyMerchants: [NearbyMerchant],
+                                  nearbyMerchants: [NearbyPlace],
                                   maximumDistanceMeters: Double = 150)
 -> WalletMerchantResolution? {
     let captured = compactMerchantIdentity(capturedName)
@@ -126,7 +126,8 @@ public func resolveDiscoveredMerchant(name: String,
     return DiscoveredMerchantResolution(
         prediction: CategoryPrediction(category: indexed.category,
                                        confidenceSource: .brandPrior,
-                                       candidates: [indexed.category]),
+                                       candidates: [indexed.category],
+                                       merchantCategoryCode: indexed.mcc),
         confidence: frequentedKeys.contains(indexed.id) ? .frequented : .brandMatched,
         mcc: indexed.mcc)
 }
@@ -188,18 +189,19 @@ public func resolveStoredMerchant(name: String, poiCategoryRaw: String?,
 /// point every caller uses, so no two screens can disagree about the same purchase.
 ///
 /// Ordered strongest-first, and deliberately identical to the order `predict` already ranks:
-/// an observed MCC, then a POI place type, then a seed brand prior — all strictly better evidence
-/// than an editorial pack row. Only when every one of them comes up `.fallback` is the pack asked.
+/// an observed MCC, then a seed brand prior, then a POI place type. An editorial pack row is
+/// consulted only when those signals come up `.fallback`; it earns `.brandPrior`, never
+/// `.observedMcc`, and carries its MCC only as metadata on that prediction.
 ///
 /// That last rung is the one nothing was reading. `observedMCCCategory` holds only MCCs with a
 /// single stable meaning, so 5968 (Netflix), 5200 (Canadian Tire) and 4814 (Rogers) are absent by
-/// design; and a merchant the owner reached by tapping a pre-index row carries no POI signal at
-/// all. Both paths landed on `other`, where every card ties at base earn.
+/// design; and a merchant the owner reached by tapping a pre-index row carries neither observed
+/// network data nor a POI signal. Both paths landed on `other`, where every card ties at base earn.
 ///
 /// Owner-confirmed categories are NOT consulted here. They outrank everything on this ladder and
 /// are looked up per-caller against stored merchants — `CheckoutService.confirmedPrediction` and
 /// `predictionForKnownMerchant` — because only a caller with store access can answer them.
-public func resolveCategory(for merchant: NearbyMerchant) -> CategoryPrediction {
+public func resolveCategory(for merchant: NearbyPlace) -> CategoryPrediction {
     let fromSignals = predict(poiCategoryRaw: merchant.poiCategoryRaw,
                               merchantName: merchant.name,
                               merchantCategoryCode: merchant.merchantCategoryCode)

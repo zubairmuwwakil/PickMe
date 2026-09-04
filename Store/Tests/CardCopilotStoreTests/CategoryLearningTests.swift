@@ -74,7 +74,7 @@ final class CategoryLearningTests: XCTestCase {
         let service = CheckoutService(catalogue: try SeedLoader.loadCatalogue(),
                                       ownerState: try SeedLoader.loadOwnerState(),
                                       context: ModelContext(container))
-        let merchant = NearbyMerchant(id: "poi-grocery", name: "Neighbourhood Market",
+        let merchant = NearbyPlace(id: "poi-grocery", name: "Neighbourhood Market",
                                       poiCategoryRaw: "store", merchantCategoryCode: 5411,
                                       latitude: 43.6, longitude: -79.4, distanceMeters: 10)
 

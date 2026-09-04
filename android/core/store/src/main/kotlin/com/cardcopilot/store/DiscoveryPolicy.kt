@@ -1,6 +1,6 @@
 package com.cardcopilot.store
 
-import com.cardcopilot.store.models.NearbyMerchant
+import com.cardcopilot.store.models.NearbyPlace
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.floor
@@ -31,7 +31,7 @@ data class ShoppingAreaCandidate(
     val centroidLatitude: Double,
     val centroidLongitude: Double,
     val radiusMeters: Double,
-    val members: List<NearbyMerchant>
+    val members: List<NearbyPlace>
 )
 
 object DiscoveryPolicy {
@@ -103,7 +103,7 @@ object DiscoveryPolicy {
         return 2 * earthRadius * atan2(sqrt(a), sqrt(1 - a))
     }
 
-    fun clusterIntoAreas(merchants: List<NearbyMerchant>): List<ShoppingAreaCandidate> {
+    fun clusterIntoAreas(merchants: List<NearbyPlace>): List<ShoppingAreaCandidate> {
         val ordered = merchants.sortedWith { a, b ->
             val latC = a.latitude.compareTo(b.latitude)
             if (latC != 0) return@sortedWith latC
@@ -117,8 +117,8 @@ object DiscoveryPolicy {
 
         while (unassigned.isNotEmpty()) {
             val seed = unassigned.first()
-            val members = mutableListOf<NearbyMerchant>()
-            val remaining = mutableListOf<NearbyMerchant>()
+            val members = mutableListOf<NearbyPlace>()
+            val remaining = mutableListOf<NearbyPlace>()
 
             for (candidate in unassigned) {
                 val distance = greatCircleDistanceMeters(

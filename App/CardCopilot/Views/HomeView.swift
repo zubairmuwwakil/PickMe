@@ -19,7 +19,7 @@ struct HomeView: View {
     @State private var selectedSubjectID: String?
     /// Results of an explicit search submission, rendered inline. Home no longer navigates to a
     /// separate list to answer a question the owner asked from this screen.
-    @State private var searchResults: [NearbyMerchant] = []
+    @State private var searchResults: [NearbyPlace] = []
     @State private var searchNotice: String?
     @State private var isSearching = false
     /// A place the owner reached by searching, kept at the head of the chip row so the card can
@@ -235,7 +235,7 @@ struct HomeView: View {
             return ("Preparing nearby merchants…", "location.magnifyingglass", .blue)
         case .ready(let count):
             return count == 0 && answerSubjects.isEmpty
-                ? ("Radar ready · No places within 200 m", "checkmark.circle", .secondary)
+                ? ("Radar ready · No places within 100 m", "checkmark.circle", .secondary)
                 : nil
         case .unavailable:
             return ("Radar couldn't prepare · Tap to retry", "arrow.clockwise", .orange)
@@ -782,7 +782,7 @@ struct HomeView: View {
                             Button {
                                 let impact = UIImpactFeedbackGenerator(style: .light)
                                 impact.impactOccurred()
-                                let merchant = NearbyMerchant(preIndexed: match)
+                                let merchant = NearbyPlace(preIndexed: match)
                                 // Re-points the card instead of scoring immediately. Nothing is
                                 // written until the owner asks for the breakdown, which keeps a
                                 // merchant with no real coordinates out of the store.
@@ -885,7 +885,7 @@ struct HomeView: View {
     }
 
     /// Points the answer card at a place instead of navigating to it.
-    private func retarget(_ merchant: NearbyMerchant, provenance: HomeSubjectProvenance) {
+    private func retarget(_ merchant: NearbyPlace, provenance: HomeSubjectProvenance) {
         UISelectionFeedbackGenerator().selectionChanged()
         isSearchFocused = false
         pinnedSubject = HomeAnswerSubject(nearby: merchant, provenance: provenance)

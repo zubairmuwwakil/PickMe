@@ -33,7 +33,7 @@ import com.cardcopilot.store.ExperimentMetrics
 import com.cardcopilot.store.PredictionLogRepository
 import com.cardcopilot.store.db.CardCopilotDatabase
 import com.cardcopilot.store.models.CaptureSource
-import com.cardcopilot.store.models.NearbyMerchant
+import com.cardcopilot.store.models.NearbyPlace
 import kotlinx.coroutines.launch
 
 @Composable
@@ -68,12 +68,12 @@ fun CardCopilotApp() {
 
         val sampleMerchants = remember {
             listOf(
-                NearbyMerchant("loblaws-1", "Loblaws (Queen & Portland)", "MKPOICategoryFoodMarket", 43.6487, -79.4002, 120.0),
-                NearbyMerchant("costco-1", "Costco Wholesale #541", null, 43.6532, -79.3832, 450.0),
-                NearbyMerchant("pai-1", "Pai Northern Thai Kitchen", "MKPOICategoryRestaurant", 43.6479, -79.3887, 230.0),
-                NearbyMerchant("shoppers-1", "Shoppers Drug Mart", "MKPOICategoryPharmacy", 43.6500, -79.3900, 310.0),
-                NearbyMerchant("shell-1", "Shell Gas Station", "MKPOICategoryGasStation", 43.6450, -79.4100, 580.0),
-                NearbyMerchant("marriott-1", "Toronto Marriott Downtown", "MKPOICategoryHotel", 43.6540, -79.3810, 800.0)
+                NearbyPlace("loblaws-1", "Loblaws (Queen & Portland)", "MKPOICategoryFoodMarket", 43.6487, -79.4002, 120.0),
+                NearbyPlace("costco-1", "Costco Wholesale #541", null, 43.6532, -79.3832, 450.0),
+                NearbyPlace("pai-1", "Pai Northern Thai Kitchen", "MKPOICategoryRestaurant", 43.6479, -79.3887, 230.0),
+                NearbyPlace("shoppers-1", "Shoppers Drug Mart", "MKPOICategoryPharmacy", 43.6500, -79.3900, 310.0),
+                NearbyPlace("shell-1", "Shell Gas Station", "MKPOICategoryGasStation", 43.6450, -79.4100, 580.0),
+                NearbyPlace("marriott-1", "Toronto Marriott Downtown", "MKPOICategoryHotel", 43.6540, -79.3810, 800.0)
             )
         }
 

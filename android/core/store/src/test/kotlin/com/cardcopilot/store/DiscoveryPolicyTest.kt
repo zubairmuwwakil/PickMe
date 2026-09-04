@@ -1,6 +1,6 @@
 package com.cardcopilot.store
 
-import com.cardcopilot.store.models.NearbyMerchant
+import com.cardcopilot.store.models.NearbyPlace
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -42,9 +42,9 @@ class DiscoveryPolicyTest {
 
     @Test
     fun testClusteringPOIs() {
-        val m1 = NearbyMerchant("1", "Store A", null, 43.6532, -79.3832)
-        val m2 = NearbyMerchant("2", "Store B", null, 43.6533, -79.3833) // ~15m away
-        val m3 = NearbyMerchant("3", "Far Store", null, 43.6700, -79.4000) // ~2km away
+        val m1 = NearbyPlace("1", "Store A", null, 43.6532, -79.3832)
+        val m2 = NearbyPlace("2", "Store B", null, 43.6533, -79.3833) // ~15m away
+        val m3 = NearbyPlace("3", "Far Store", null, 43.6700, -79.4000) // ~2km away
 
         val areas = DiscoveryPolicy.clusterIntoAreas(listOf(m1, m2, m3))
         assertEquals(2, areas.size)

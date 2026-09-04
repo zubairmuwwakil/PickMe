@@ -345,7 +345,7 @@ public struct PredictionLog {
     /// A category of "other" writes nothing. "Other" is the absence of a category rather than a
     /// category, and promoting a terminal to `.verified` on the strength of knowing nothing about
     /// it would spend the unscaled threshold that promotion buys on a guess.
-    public func confirmMerchant(_ merchant: NearbyMerchant, category rawCategory: String,
+    public func confirmMerchant(_ merchant: NearbyPlace, category rawCategory: String,
                                 confirmedAt: Date = Date()) throws {
         let category = CategoryTaxonomy.canonicalID(rawCategory)
         guard category != "other" else { return }

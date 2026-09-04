@@ -203,6 +203,12 @@ enum PurchaseActivityEvaluator {
 @Observable
 @MainActor
 final class CopilotSession {
+    /// A candidate can be shown within Radar's wider lookup radius without being asserted as the
+    /// place the owner is standing. The automatic shortcut earns stronger, separate bounds.
+    private static let confidentFixAccuracyMeters: Double = 40
+    private static let confidentMerchantDistanceMeters: Double = 60
+    private static let minimumRunnerUpSeparationMeters: Double = 40
+
     private(set) var valueRecoveredCad: Double = 0
     /// Complete purchases not yet checked against a statement. Shown beside the confirmed
     /// figure rather than added to it — see PredictionLog.ValueRecovered.
@@ -353,7 +359,7 @@ final class CopilotSession {
     /// a scan. Age is surfaced through `nearbyResultIsStale`, not by making the card disappear.
     ///
     /// Trust is a separate question, and `preparedOutcomeForTap` still answers it.
-    var preparedNearbyMerchants: [NearbyMerchant] {
+    var preparedNearbyMerchants: [NearbyPlace] {
         guard case .found(let merchants) = preparedNearbyOutcome else { return [] }
         return merchants
     }
@@ -361,7 +367,7 @@ final class CopilotSession {
     /// When the displayed result was fetched, for the card's age hint.
     var nearbyResultFetchedAt: Date? { nearbySnapshot?.fetchedAt }
 
-    var preparedNearestMerchant: NearbyMerchant? {
+    var preparedNearestMerchant: NearbyPlace? {
         preparedNearbyMerchants.first
     }
 
@@ -371,17 +377,19 @@ final class CopilotSession {
     ///
     /// The freshness term matters more now that `preparedNearbyMerchants` has dropped it: an
     /// aged result may still be shown, but it may not be presented as a confident answer.
-    var confidentPreparedMerchant: NearbyMerchant? {
+    var confidentPreparedMerchant: NearbyPlace? {
         guard nearbySnapshot?.isRecent == true,
               let fix = preparedLocationFix,
-              fix.horizontalAccuracyMeters <= 100,
+              fix.horizontalAccuracyMeters <= Self.confidentFixAccuracyMeters,
               case .found(let merchants) = preparedNearbyOutcome,
               let first = merchants.first,
               let firstDistance = first.distanceMeters,
-              firstDistance <= 100 else { return nil }
+              firstDistance <= Self.confidentMerchantDistanceMeters else { return nil }
         guard merchants.count > 1 else { return first }
+        let requiredSeparation = max(Self.minimumRunnerUpSeparationMeters,
+                                     fix.horizontalAccuracyMeters * 1.5)
         guard let secondDistance = merchants[1].distanceMeters,
-              secondDistance - firstDistance >= 60 else { return nil }
+              secondDistance - firstDistance >= requiredSeparation else { return nil }
         return first
     }
 
@@ -504,14 +512,19 @@ final class CopilotSession {
 
             let scan = try await nearbyScan(latitude: fix.latitude, longitude: fix.longitude,
                                              using: graph.provider)
-            let merchants = rankNearbyMerchants(scan.merchants)
+            let places = rankNearbyPlaces(scan.places)
             guard generation == nearbyPreparationGeneration else { return nil }
+            recordNearbyMetric(.radarEligibility(
+                eligibleResultCount: scan.eligibleResultCount,
+                excludedPublicTransportResultCount: scan.excludedPublicTransportResultCount,
+                excludedMissingCategoryResultCount: scan.excludedMissingCategoryResultCount,
+                excludedUnsupportedCategoryResultCount: scan.excludedUnsupportedCategoryResultCount))
             recordRadarFieldLog(fix: fix, rawResultCount: scan.rawResultCount,
-                                merchants: merchants)
-            let outcome: FlowOutcome = merchants.isEmpty
+                                merchants: places)
+            let outcome: FlowOutcome = places.isEmpty
                 ? .nothingFound(query: nil)
-                : .found(merchants)
-            if merchants.isEmpty { recordNearbyMetric(.emptyResult) }
+                : .found(places)
+            if places.isEmpty { recordNearbyMetric(.emptyResult) }
             nearbySnapshot = NearbySnapshot(outcome: outcome, location: fix, fetchedAt: Date())
             publishPrepared(outcome, fix: fix)
             return outcome
@@ -576,7 +589,7 @@ final class CopilotSession {
     /// was standing in the store and nothing came back" is the single most informative record the
     /// field week can produce, and dropping it would be dropping the evidence.
     private func recordRadarFieldLog(fix: CheckoutLocationFix, rawResultCount: Int,
-                                     merchants: [NearbyMerchant]) {
+                                     merchants: [NearbyPlace]) {
         #if FIELD_DIAGNOSTICS
         let record = radarFieldRecord(
             recordedAt: .now,
@@ -670,13 +683,13 @@ final class CopilotSession {
         guard case .found(let merchants) = outcome else { return outcome }
         let origin = CLLocation(latitude: fix.latitude, longitude: fix.longitude)
         let rebased = merchants.map { merchant in
-            NearbyMerchant(
+            NearbyPlace(
                 id: merchant.id, name: merchant.name, poiCategoryRaw: merchant.poiCategoryRaw,
                 latitude: merchant.latitude, longitude: merchant.longitude,
                 distanceMeters: origin.distance(from: CLLocation(latitude: merchant.latitude,
                                                                   longitude: merchant.longitude)))
         }
-        return .found(rankNearbyMerchants(rebased))
+        return .found(rankNearbyPlaces(rebased))
     }
 
     private func recordTapLatency(since start: ContinuousClock.Instant, prepared: Bool) {
@@ -692,8 +705,8 @@ final class CopilotSession {
     }
 
     private func searchMerchants(_ text: String,
-                                 using provider: any MerchantProviding) async throws -> [NearbyMerchant] {
-        try await withThrowingTaskGroup(of: [NearbyMerchant].self) { group in
+                                 using provider: any MerchantProviding) async throws -> [NearbyPlace] {
+        try await withThrowingTaskGroup(of: [NearbyPlace].self) { group in
             group.addTask { try await provider.search(text: text) }
             group.addTask {
                 try await Task.sleep(for: .seconds(4))
@@ -731,7 +744,7 @@ final class CopilotSession {
     /// owner is about to see, and `RecommendationView`'s Done already refreshes on the way out.
     /// A snapshot fetch here would only add store reads to the one path where the owner is
     /// standing at a till waiting for an answer.
-    func recommend(merchant: NearbyMerchant, amount: Double?,
+    func recommend(merchant: NearbyPlace, amount: Double?,
                    using graph: DependencyGraph) -> CheckoutStep {
         do {
             let today = Date().formatted(.iso8601.year().month().day())

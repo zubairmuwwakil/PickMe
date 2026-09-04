@@ -504,12 +504,14 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         let areas = try DiscoveryCache(context: context).allAreas()
         return monitoredAmbientRegions.compactMap { region -> MonitoredArrivalPlace? in
             guard let circle = region as? CLCircularRegion else { return nil }
-            var merchants: [NearbyMerchant] = []
+            var merchants: [NearbyPlace] = []
             let target = Self.target(for: region.identifier)
             if case .area(let id) = target,
                let area = areas.first(where: { $0.id == id }) {
-                merchants = area.members.map {
-                    NearbyMerchant(id: $0.identifier ?? $0.name, name: $0.name,
+                merchants = area.members.filter {
+                    isRadarEligiblePOICategory($0.poiCategoryRaw)
+                }.map {
+                    NearbyPlace(id: $0.identifier ?? $0.name, name: $0.name,
                                    poiCategoryRaw: $0.poiCategoryRaw, latitude: $0.latitude,
                                    longitude: $0.longitude, distanceMeters: nil)
                 }
@@ -522,14 +524,14 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                                                   longitude: merchant.longitude)) else { continue }
                 case nil: continue
                 }
-                merchants.append(NearbyMerchant(id: merchant.identifier ?? merchant.id.uuidString,
+                merchants.append(NearbyPlace(id: merchant.identifier ?? merchant.id.uuidString,
                                                 name: merchant.name, poiCategoryRaw: merchant.poiCategoryRaw,
                                                 latitude: merchant.latitude, longitude: merchant.longitude,
                                                 distanceMeters: nil))
             }
             return MonitoredArrivalPlace(id: region.identifier, latitude: circle.center.latitude,
                                          longitude: circle.center.longitude, radiusMeters: circle.radius,
-                                         merchants: rankNearbyMerchants(merchants))
+                                         merchants: rankNearbyPlaces(merchants))
         }.sorted { $0.id < $1.id }
     }
 
@@ -743,8 +745,18 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         let key = cellKey(latitude: location.coordinate.latitude,
                           longitude: location.coordinate.longitude)
 
+        // A cache written before Radar gained its checkout-eligible allowlist may contain bus
+        // stops and other infrastructure. Treat that entry as stale immediately so this upgrade
+        // refreshes it instead of waiting out the ordinary 30-day merchant TTL.
+        let existingEntry = try? cache.entry(forCellKey: key)
+        let cacheNeedsEligibilityRefresh = ((try? cache.allAreas()) ?? [])
+            .filter { $0.cellKey == key }
+            .contains { area in
+                area.members.contains { !isRadarEligiblePOICategory($0.poiCategoryRaw) }
+            }
+
         let decision = shouldQueryDiscovery(cellKey: key,
-                                            cachedEntry: try? cache.entry(forCellKey: key),
+                                            cachedEntry: cacheNeedsEligibilityRefresh ? nil : existingEntry,
                                             speedMetersPerSecond: location.speed,
                                             recentQueryTimes: queryLog.recent(),
                                             now: .now)
@@ -777,8 +789,13 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
         let areas = ((try? cache.allAreas()) ?? [])
             .filter { area in
-                area.members.contains { permitsMonitoring(name: $0.name, identifier: $0.identifier ?? $0.name,
-                                                          latitude: $0.latitude, longitude: $0.longitude) }
+                area.members.contains {
+                    isRadarEligiblePOICategory($0.poiCategoryRaw)
+                        && permitsMonitoring(name: $0.name,
+                                             identifier: $0.identifier ?? $0.name,
+                                             latitude: $0.latitude,
+                                             longitude: $0.longitude)
+                }
             }
             .sorted {
                 let left = greatCircleDistanceMeters(fromLatitude: coordinate.latitude, fromLongitude: coordinate.longitude,
@@ -919,7 +936,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
     /// A merchant resolved at the moment of arrival, with the confidence that resolution earns.
     private struct ResolvedArrival {
-        let merchant: NearbyMerchant
+        let merchant: NearbyPlace
         let prediction: CategoryPrediction
         let confidence: AmbientMerchantConfidence
         /// The merchant category code, when the name resolved to a known merchant. Reaches the
@@ -971,7 +988,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         let attemptID = UUID()
         let startedAt = Date.now
         let explanationGeneration = explanationStore.generation
-        func explain(_ outcome: ArrivalExplanationRecord.Outcome, merchant: NearbyMerchant? = nil,
+        func explain(_ outcome: ArrivalExplanationRecord.Outcome, merchant: NearbyPlace? = nil,
                      reasons: Set<AmbientSuppressionReason> = [], activity: LiveActivityRequestOutcome = .notRequested,
                      notificationPermission: ArrivalExplanationRecord.NotificationPermission? = nil) {
             explanationStore.record(attemptID: attemptID, startedAt: startedAt, outcome: outcome,
@@ -1134,7 +1151,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         let today = Date().formatted(.iso8601.year().month().day())
         let candidates = arrival.candidates.map { candidate -> ArrivalCandidateRecord in
             var scored = candidate
-            let merchant = NearbyMerchant(id: candidate.name, name: candidate.name,
+            let merchant = NearbyPlace(id: candidate.name, name: candidate.name,
                                           poiCategoryRaw: candidate.poiCategoryRaw,
                                           latitude: candidate.latitude,
                                           longitude: candidate.longitude, distanceMeters: nil)
@@ -1217,6 +1234,9 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         case .area(let id):
             guard let area = try? context.fetch(FetchDescriptor<ShoppingArea>(
                 predicate: #Predicate { $0.id == id })).first else { return nil }
+            let eligibleMembers = area.members.filter {
+                isRadarEligiblePOICategory($0.poiCategoryRaw)
+            }
 
             // Rung 1: an owner-reconciled or explicitly chosen store inside this area, measured from the
             // owner rather than from the middle of the plaza. Areas run to
@@ -1253,7 +1273,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             // The tier and the category come from one call, deliberately. Deciding them
             // separately is how a notification ends up confident about a store whose coding was
             // guessed from a POI pin — the failure the three tiers exist to prevent.
-            let resolved = area.members.map {
+            let resolved = eligibleMembers.map {
                 ($0, resolveDiscoveredMerchant(name: $0.name, poiCategoryRaw: $0.poiCategoryRaw,
                                                frequentedKeys: frequentedKeys))
             }
@@ -1263,18 +1283,19 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
             // across rotations and silently became the resolution answer, naming the
             // southernmost recognised store in the plaza. That sort is untouched; the ordering
             // happens here, at the point of resolution. With no fix, the input order stands.
-            let ranked = nearestFirstOrder(area.members.map {
+            let ranked = nearestFirstOrder(eligibleMembers.map {
                 ArrivalSite(latitude: $0.latitude, longitude: $0.longitude)
             }, from: fix).map { resolved[$0] }
-            // A plaza holding one recognisable store and four unnamed pins is answered by the
-            // store; a plaza of nothing but pins still answers, at `.unknown`, and is suppressed.
+            // A plaza holding one recognisable store and four eligible unnamed pins is answered
+            // by the store. An obsolete cached area containing no eligible members resolves to
+            // nothing, so infrastructure can no longer reach the gate even before cache refresh.
             // The index, not just the element: the log records the whole ranked set and which
             // position won, and re-finding the winner by name afterwards would silently pick the
             // first of two identically named units in one plaza.
             guard let chosenIndex = ranked.firstIndex(where: { $0.1.confidence != .unknown })
                     ?? (ranked.isEmpty ? nil : 0) else { return nil }
             let (member, resolution) = ranked[chosenIndex]
-            let nearby = NearbyMerchant(id: member.identifier ?? member.name, name: member.name,
+            let nearby = NearbyPlace(id: member.identifier ?? member.name, name: member.name,
                                         poiCategoryRaw: member.poiCategoryRaw,
                                         latitude: member.latitude, longitude: member.longitude,
                                         distanceMeters: nil)
@@ -1307,7 +1328,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                                confirmedCategory: merchant.confirmedCategory,
                                                confirmationCount: merchant.confirmationCount,
                                                frequentedKeys: frequentedKeys)
-        let nearby = NearbyMerchant(id: merchant.identifier ?? merchant.id.uuidString,
+        let nearby = NearbyPlace(id: merchant.identifier ?? merchant.id.uuidString,
                                     name: merchant.name, poiCategoryRaw: merchant.poiCategoryRaw,
                                     latitude: merchant.latitude, longitude: merchant.longitude,
                                     distanceMeters: nil)
@@ -1315,7 +1336,9 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         // stored merchant itself, which is deliberately not one of them: a confirmed terminal
         // is a different kind of row from a cached POI. Appending it keeps `chosenCandidate`
         // meaningful on every rung, which is what card equivalence reads.
-        var candidates = (area?.members ?? []).map { member in
+        var candidates = (area?.members ?? []).filter {
+            isRadarEligiblePOICategory($0.poiCategoryRaw)
+        }.map { member in
             Self.candidateRecord(
                 name: member.name, poiCategoryRaw: member.poiCategoryRaw,
                 latitude: member.latitude, longitude: member.longitude,
@@ -1635,7 +1658,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
 
         let context = ModelContext(modelContainer)
         let service = CheckoutService(catalogue: catalogue, ownerState: ownerState, context: context)
-        let merchant = NearbyMerchant(id: merchantId, name: merchantName,
+        let merchant = NearbyPlace(id: merchantId, name: merchantName,
                                       poiCategoryRaw: userInfo["poiCategoryRaw"] as? String,
                                       latitude: latitude, longitude: longitude,
                                       distanceMeters: nil)

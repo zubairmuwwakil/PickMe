@@ -10,7 +10,7 @@ import com.cardcopilot.engine.models.Recommendation
 import com.cardcopilot.engine.models.RecommendationOutcome
 import com.cardcopilot.store.models.CategoryPrediction
 import com.cardcopilot.store.models.ConfidenceSource
-import com.cardcopilot.store.models.NearbyMerchant
+import com.cardcopilot.store.models.NearbyPlace
 
 data class CheckoutBranch(
     val category: String,
@@ -31,7 +31,7 @@ sealed interface CheckoutOutcome {
 }
 
 data class CheckoutResult(
-    val merchant: NearbyMerchant,
+    val merchant: NearbyPlace,
     val prediction: CategoryPrediction,
     val scoredContext: PurchaseContext,
     val outcome: CheckoutOutcome,
@@ -47,7 +47,7 @@ class CheckoutService(
     private val explainer = RecommendationExplainer(catalogue)
 
     fun evaluate(
-        merchant: NearbyMerchant,
+        merchant: NearbyPlace,
         userAmountCad: Double? = null,
         overrideCategory: String? = null,
         asOf: String

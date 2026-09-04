@@ -5,7 +5,7 @@ import CardCopilotStore
 /// Home's single answer to "which card, here, now".
 ///
 /// This replaces two components that rendered the same thing for different inputs: a nearby
-/// dropdown taking `[NearbyMerchant]` and a Quick Pick carousel taking `StoredMerchant`. They
+/// dropdown taking `[NearbyPlace]` and a Quick Pick carousel taking `StoredMerchant`. They
 /// were 400 points apart on the same screen, so the duplication read as two competing answers.
 /// Both now feed `HomeAnswerSubject`, and the chip row below re-points this one card.
 ///
@@ -172,7 +172,7 @@ struct HomeAnswerCardView: View {
     private func eyebrow(for subject: HomeAnswerSubject) -> String {
         switch subject.provenance {
         case .nearby: return isConfident ? "Likely here" : "Closest nearby"
-        case .recent: return subject.isConfirmed ? "Confirmed here" : "Recent place"
+        case .recent: return subject.isConfirmed ? "Confirmed category" : "Recent place"
         case .searched: return "Searched"
         }
     }

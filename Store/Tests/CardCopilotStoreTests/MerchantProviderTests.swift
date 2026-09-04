@@ -2,8 +2,8 @@ import XCTest
 @testable import CardCopilotStore
 
 final class MerchantProviderTests: XCTestCase {
-    private func merchant(id: String, name: String, distance: Double?) -> NearbyMerchant {
-        NearbyMerchant(id: id, name: name, poiCategoryRaw: "foodMarket",
+    private func merchant(id: String, name: String, distance: Double?) -> NearbyPlace {
+        NearbyPlace(id: id, name: name, poiCategoryRaw: "foodMarket",
                        latitude: 43.65107, longitude: -79.347015, distanceMeters: distance)
     }
 
@@ -12,7 +12,7 @@ final class MerchantProviderTests: XCTestCase {
         let near = merchant(id: "near", name: "Near Shop", distance: 50)
         let mid = merchant(id: "mid", name: "Mid Shop", distance: 150)
 
-        let ranked = rankNearbyMerchants([far, near, mid])
+        let ranked = rankNearbyPlaces([far, near, mid])
 
         XCTAssertEqual(ranked.map(\.id), ["near", "mid", "far"])
     }
@@ -21,7 +21,7 @@ final class MerchantProviderTests: XCTestCase {
         let banana = merchant(id: "b", name: "banana", distance: 100)
         let apple = merchant(id: "a", name: "Apple", distance: 100)
 
-        let ranked = rankNearbyMerchants([banana, apple])
+        let ranked = rankNearbyPlaces([banana, apple])
 
         XCTAssertEqual(ranked.map(\.id), ["a", "b"])
     }
@@ -30,7 +30,7 @@ final class MerchantProviderTests: XCTestCase {
         let unknown = merchant(id: "unknown", name: "Mystery Shop", distance: nil)
         let known = merchant(id: "known", name: "Zzz Shop", distance: 500)
 
-        let ranked = rankNearbyMerchants([unknown, known])
+        let ranked = rankNearbyPlaces([unknown, known])
 
         XCTAssertEqual(ranked.map(\.id), ["known", "unknown"])
     }
@@ -40,7 +40,7 @@ final class MerchantProviderTests: XCTestCase {
         let nearCopy = merchant(id: "dup", name: "Duplicate", distance: 20)
         let other = merchant(id: "other", name: "Other Shop", distance: 100)
 
-        let ranked = rankNearbyMerchants([farCopy, other, nearCopy])
+        let ranked = rankNearbyPlaces([farCopy, other, nearCopy])
 
         XCTAssertEqual(ranked.map(\.id), ["dup", "other"])
         XCTAssertEqual(ranked.first?.distanceMeters, 20)

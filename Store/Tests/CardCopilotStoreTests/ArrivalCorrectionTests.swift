@@ -9,8 +9,8 @@ import CardCopilotEngine
 final class ArrivalCorrectionTests: XCTestCase {
     private let epoch = Date(timeIntervalSince1970: 1_700_000_000)
 
-    private func merchant(_ name: String, metresNorth: Double) -> NearbyMerchant {
-        NearbyMerchant(id: "\(name)@\(metresNorth)", name: name, poiCategoryRaw: nil,
+    private func merchant(_ name: String, metresNorth: Double) -> NearbyPlace {
+        NearbyPlace(id: "\(name)@\(metresNorth)", name: name, poiCategoryRaw: nil,
                        latitude: 45 + metresNorth / 111_000, longitude: -75,
                        distanceMeters: metresNorth)
     }

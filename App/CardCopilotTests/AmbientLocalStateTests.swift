@@ -37,7 +37,7 @@ extension AmbientLocalStateTests {
 
     // MARK: - Mute list
 
-    // Mute identity is `NearbyMerchant.id`: the Apple Maps place identifier the POI carries, not
+    // Mute identity is `NearbyPlace.id`: the Apple Maps place identifier the POI carries, not
     // `StoredMerchant.id`. Discovery reaches merchants that have never been stored locally and so
     // have no local UUID, and the place id is the only identity the stored and discovered rungs
     // share. These stand in for what MapKit hands back.

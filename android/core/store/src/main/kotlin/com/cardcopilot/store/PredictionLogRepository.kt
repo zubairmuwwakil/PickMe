@@ -11,7 +11,7 @@ import com.cardcopilot.store.db.StoredPurchaseEntity
 import com.cardcopilot.store.models.CaptureSource
 import com.cardcopilot.store.models.ConfidenceSource
 import com.cardcopilot.store.models.MissClass
-import com.cardcopilot.store.models.NearbyMerchant
+import com.cardcopilot.store.models.NearbyPlace
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.math.abs
@@ -64,7 +64,7 @@ class PredictionLogRepository(private val db: CardCopilotDatabase) {
     fun observeAllRecords(): Flow<List<PredictionRecord>> = db.predictionDao().observeAllRecords()
 
     suspend fun recordPrediction(
-        merchant: NearbyMerchant,
+        merchant: NearbyPlace,
         predictedCategory: String,
         confidenceSource: ConfidenceSource,
         recommendation: Recommendation,
@@ -189,7 +189,7 @@ class PredictionLogRepository(private val db: CardCopilotDatabase) {
         db.merchantDao().insertOrUpdate(merchant)
     }
 
-    private fun predictionRawCategory(merchant: NearbyMerchant, predictedCategory: String): String? =
+    private fun predictionRawCategory(merchant: NearbyPlace, predictedCategory: String): String? =
         merchant.poiCategoryRaw ?: predictedCategory
 
     fun observeMetrics(): Flow<ExperimentMetrics> {

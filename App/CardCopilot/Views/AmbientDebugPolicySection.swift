@@ -237,6 +237,14 @@ struct AmbientDebugPolicySection: View {
                            "\(radarMetrics.radarScansWhereTopRankedMissedAChain)",
                            tint: radarMetrics.radarScansWhereTopRankedMissedAChain > 0
                                ? .orange : nil)
+                counterRow("Eligible checkout POIs",
+                           "\(radarMetrics.radarEligibleResults)")
+                counterRow("Defensively excluded transit POIs",
+                           "\(radarMetrics.radarExcludedPublicTransportResults)")
+                counterRow("Defensively excluded uncategorized POIs",
+                           "\(radarMetrics.radarExcludedMissingCategoryResults)")
+                counterRow("Defensively excluded unsupported POIs",
+                           "\(radarMetrics.radarExcludedUnsupportedCategoryResults)")
 
                 Text("Raw \(bucketSummary(radarMetrics.radarRawResultBuckets))  ·  deduped \(bucketSummary(radarMetrics.radarDedupedResultBuckets))")
                     .font(.caption2.monospaced())

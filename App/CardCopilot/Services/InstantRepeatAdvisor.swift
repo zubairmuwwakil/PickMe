@@ -81,7 +81,7 @@ public enum InstantRepeatAdvisor {
     }
 
     public static func evaluate(
-        merchant: NearbyMerchant,
+        merchant: NearbyPlace,
         amountCad: Double,
         catalogue: Catalogue,
         ownerState: OwnerState,

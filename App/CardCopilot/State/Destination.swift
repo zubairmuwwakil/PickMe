@@ -42,7 +42,7 @@ enum Destination: Hashable {
 enum CheckoutStep {
     case idle
     case locating
-    case confirming([NearbyMerchant])
+    case confirming([NearbyPlace])
     case recommendation(CheckoutResult)
     /// Reserved for genuine checkout dead ends — nothing nearby, an empty search. Operational
     /// failures (a SwiftData write, a sync call) go to `CopilotSession.lastError` and surface

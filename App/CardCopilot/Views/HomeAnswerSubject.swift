@@ -37,9 +37,9 @@ enum HomeSubjectProvenance: Equatable {
 
 /// One place the answer card can be pointed at, from either source.
 ///
-/// Radar returns `NearbyMerchant`; visit history returns `StoredMerchant`. The two already
+/// Radar returns `NearbyPlace`; visit history returns `StoredMerchant`. The two already
 /// project onto the same shape — `StoredMerchant.identifier` holds the MapKit POI id, which is
-/// also `NearbyMerchant.id` — so home carries this instead of two incompatible types rendered by
+/// also `NearbyPlace.id` — so home carries this instead of two incompatible types rendered by
 /// two near-identical views.
 struct HomeAnswerSubject: Identifiable, Equatable {
     let id: String
@@ -51,9 +51,9 @@ struct HomeAnswerSubject: Identifiable, Equatable {
     /// remembered place: Radar alone cannot establish it.
     let isConfirmed: Bool
     /// Carried verbatim so the card can hand `CopilotSession.recommend` a merchant unchanged.
-    let merchant: NearbyMerchant
+    let merchant: NearbyPlace
 
-    init(nearby: NearbyMerchant, provenance: HomeSubjectProvenance = .nearby) {
+    init(nearby: NearbyPlace, provenance: HomeSubjectProvenance = .nearby) {
         id = nearby.id
         name = nearby.name
         // The same ladder `CheckoutService` scores on. Calling `predict` directly here dropped
@@ -67,7 +67,7 @@ struct HomeAnswerSubject: Identifiable, Equatable {
     }
 
     /// A remembered place keeps `predictionForKnownMerchant`, which prefers a category the owner
-    /// confirmed over one guessed from the POI type. Projecting through `NearbyMerchant` first
+    /// confirmed over one guessed from the POI type. Projecting through `NearbyPlace` first
     /// would silently discard that confirmation.
     init(stored: StoredMerchant) {
         let identifier = stored.identifier ?? stored.id.uuidString
@@ -77,7 +77,7 @@ struct HomeAnswerSubject: Identifiable, Equatable {
         distanceMeters = nil
         provenance = .recent
         isConfirmed = stored.confirmedCategory != nil
-        merchant = NearbyMerchant(id: identifier,
+        merchant = NearbyPlace(id: identifier,
                                   name: stored.name,
                                   poiCategoryRaw: stored.poiCategoryRaw,
                                   latitude: stored.latitude,
@@ -90,10 +90,10 @@ extension HomeAnswerSubject {
     /// Radar results first — they are ranked by distance and provably present — then remembered
     /// places Radar did not already return. A place that is both appears once, as nearby, because
     /// a live fix is better evidence than a past visit.
-    static func merged(nearby: [NearbyMerchant],
+    static func merged(nearby: [NearbyPlace],
                        remembered: [StoredMerchant],
                        limit: Int = 20,
-                       nearbyLimit: Int = 10,
+                       nearbyLimit: Int = 5,
                        rememberedLimit: Int = 10) -> [HomeAnswerSubject] {
         var seen = Set<String>()
         var subjects: [HomeAnswerSubject] = []

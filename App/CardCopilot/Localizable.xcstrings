@@ -668,6 +668,9 @@
     "A delivery requirement needs attention" : {
 
     },
+    "A gap between the first two is a delivery defect. No gap at all means the silence was policy, and the dials above are where to look." : {
+
+    },
     "A possible fee waiver is unresolved; ranking uses the stated fee." : {
       "localizations" : {
         "fr-CA" : {
@@ -687,6 +690,9 @@
           }
         }
       }
+    },
+    "A wake that waits out its whole window for a fix that never comes is the expensive kind. This is the only figure that says whether ambient monitoring is affordable." : {
+
     },
     "About" : {
       "localizations" : {
@@ -844,6 +850,9 @@
           }
         }
       }
+    },
+    "Alert delivery" : {
+
     },
     "Alerts off for this merchant" : {
 
@@ -1498,6 +1507,9 @@
 
     },
     "Background App Refresh is unavailable, which can prevent iOS from waking PickMe." : {
+
+    },
+    "Background wakes (last 7 days)" : {
 
     },
     "Bank / Issuer (e.g. Scotiabank, Chase)" : {
@@ -3822,6 +3834,12 @@
     "No Applicable Coverage in Wallet" : {
 
     },
+    "No arrivals recorded in the last seven days." : {
+
+    },
+    "No background wakes recorded in the last seven days." : {
+
+    },
     "No card conditions" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3947,6 +3965,9 @@
       }
     },
     "No results for \"%@\"" : {
+
+    },
+    "No scans recorded yet. Tap Radar while standing in a store." : {
 
     },
     "No single card dominates every line" : {
@@ -4272,6 +4293,9 @@
     "Optional. Enter whole Canadian dollars. PickMe compares these values only with issuer-published income paths and stores them on this device." : {
 
     },
+    "Orange counts the pin-geometry signature: the store was returned and outranked. A large gap between the raw and deduped buckets is the other mechanism — a bounded response crowding the anchor tenant out." : {
+
+    },
     "Orange: the dollar floor is deciding, not the percentage floor. That bar is a consequence of the guessed basket, not a number anyone chose." : {
 
     },
@@ -4474,6 +4498,9 @@
     "Pick the best card for every purchase, automatically maximizing your rewards and benefits." : {
 
     },
+    "Picking the right one teaches PickMe this exact storefront, so the next answer here is instant." : {
+
+    },
     "PickMe" : {
       "localizations" : {
         "fr-CA" : {
@@ -4563,9 +4590,6 @@
 
     },
     "PickMe's highest earning card advised for this purchase." : {
-
-    },
-    "Picking the right one teaches PickMe this exact storefront, so the next answer here is instant." : {
 
     },
     "Place details are no longer cached. Refresh nearby monitoring to update this area." : {
@@ -4773,12 +4797,25 @@
     "QUICK PRESETS (%@)" : {
 
     },
+    "Radar scans" : {
+
+    },
     "Ranked by recurring net value" : {
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Classées selon la valeur nette récurrente"
+          }
+        }
+      }
+    },
+    "Raw %@  ·  deduped %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Raw %1$@  ·  deduped %2$@"
           }
         }
       }

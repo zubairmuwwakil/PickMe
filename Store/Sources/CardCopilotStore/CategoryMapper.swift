@@ -46,6 +46,49 @@ private let brandPriors: [BrandPrior] = [
     .init(normalizedNeedle: normalizedMerchantName("marriott"), category: "marriottDirect"),
 ]
 
+/// Why a MapKit result is not eligible for automatic checkout discovery.
+public enum RadarPOIExclusionReason: String, Equatable, Sendable {
+    /// Stops and stations are infrastructure; the payment merchant is the transit operator.
+    case publicTransport
+    /// A bare pin supplies no place-type evidence and fails closed.
+    case missingCategory
+    /// A real MapKit category that has not been approved as a checkout location.
+    case unsupportedCategory
+}
+
+/// MapKit place types that strongly imply the owner can pay at this coordinate.
+///
+/// This is deliberately an allowlist. A newly introduced or missing POI category must not become
+/// ambient-notification evidence merely because MapKit returned it. In particular,
+/// `publicTransport` describes stops and stations as well as operators, so it belongs in manual
+/// search and the category picker rather than automatic Radar discovery.
+public func isRadarEligiblePOICategory(_ raw: String?) -> Bool {
+    radarPOIExclusionReason(raw) == nil
+}
+
+/// Nil is the positive answer: the place is eligible. Returning a reason instead of only a Bool
+/// lets operational counters measure policy fallout without retaining place identity.
+public func radarPOIExclusionReason(_ raw: String?) -> RadarPOIExclusionReason? {
+    guard let category = canonicalPoiCategory(raw) else { return .missingCategory }
+    if radarEligiblePOICategories.contains(category) { return nil }
+    return category == "publictransport" ? .publicTransport : .unsupportedCategory
+}
+
+private let radarEligiblePOICategories: Set<String> = [
+    "bakery",
+    "cafe",
+    "carrental",
+    "evcharger",
+    "fitnesscenter",
+    "foodmarket",
+    "gasstation",
+    "hotel",
+    "movietheater",
+    "pharmacy",
+    "restaurant",
+    "store",
+]
+
 public func predict(poiCategoryRaw: String?, merchantName: String,
                     merchantCategoryCode: Int? = nil) -> CategoryPrediction {
     if let merchantCategoryCode,
@@ -58,7 +101,8 @@ public func predict(poiCategoryRaw: String?, merchantName: String,
     if let prior = brandPriors.first(where: { normalizedMerchant.contains($0.normalizedNeedle) }) {
         return CategoryPrediction(category: prior.category,
                                   confidenceSource: .brandPrior,
-                                  candidates: [prior.category], rawCategory: poiCategoryRaw)
+                                  candidates: [prior.category], rawCategory: poiCategoryRaw,
+                                  merchantCategoryCode: MerchantRecognizer.recognise(merchantName)?.mcc)
     }
 
     switch canonicalPoiCategory(poiCategoryRaw) {
@@ -83,6 +127,14 @@ public func predict(poiCategoryRaw: String?, merchantName: String,
         return CategoryPrediction(category: "drugStore",
                                   confidenceSource: .mapKitCategory,
                                   candidates: ["drugStore"], rawCategory: poiCategoryRaw)
+    case "carrental":
+        return CategoryPrediction(category: "carRental",
+                                  confidenceSource: .mapKitCategory,
+                                  candidates: ["carRental"], rawCategory: poiCategoryRaw)
+    case "evcharger":
+        return CategoryPrediction(category: "evCharging",
+                                  confidenceSource: .mapKitCategory,
+                                  candidates: ["evCharging"], rawCategory: poiCategoryRaw)
     case "publictransport":
         return CategoryPrediction(category: "transit",
                                   confidenceSource: .mapKitCategory,

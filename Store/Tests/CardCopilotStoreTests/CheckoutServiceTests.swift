@@ -20,8 +20,8 @@ final class CheckoutServiceTests: XCTestCase {
                                   context: ModelContext(container))
     }
 
-    private func merchant(_ name: String, poi: String?, id: String = "poi-1") -> NearbyMerchant {
-        NearbyMerchant(id: id, name: name, poiCategoryRaw: poi,
+    private func merchant(_ name: String, poi: String?, id: String = "poi-1") -> NearbyPlace {
+        NearbyPlace(id: id, name: name, poiCategoryRaw: poi,
                        latitude: 43.65, longitude: -79.38, distanceMeters: 40)
     }
 
@@ -34,14 +34,14 @@ final class CheckoutServiceTests: XCTestCase {
     /// even though the pack states the category outright.
     func testATappedPreIndexRowScoresItsPackCategoryNotOther() throws {
         let netflix = try XCTUnwrap(CanadianMerchantPreIndex.all.first { $0.name == "Netflix" })
-        let result = try service.recommend(merchant: NearbyMerchant(preIndexed: netflix),
+        let result = try service.recommend(merchant: NearbyPlace(preIndexed: netflix),
                                            amountCad: 20, asOf: asOf)
         XCTAssertEqual(result.prediction.category, "streaming")
     }
 
     func testATappedRowWhoseMccIsAbsentStillResolves() throws {
         let ct = try XCTUnwrap(CanadianMerchantPreIndex.all.first { $0.name == "Canadian Tire" })
-        let result = try service.recommend(merchant: NearbyMerchant(preIndexed: ct),
+        let result = try service.recommend(merchant: NearbyPlace(preIndexed: ct),
                                            amountCad: 60, asOf: asOf)
         XCTAssertEqual(result.prediction.category, "ctFamily")
     }

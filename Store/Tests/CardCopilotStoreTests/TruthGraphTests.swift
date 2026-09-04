@@ -21,13 +21,13 @@ final class TruthGraphTests: XCTestCase {
                                   context: ModelContext(container))
     }
 
-    private func walmart(id: String) -> NearbyMerchant {
-        NearbyMerchant(id: id, name: "Walmart Supercentre", poiCategoryRaw: "MKPOICategoryFoodMarket",
+    private func walmart(id: String) -> NearbyPlace {
+        NearbyPlace(id: id, name: "Walmart Supercentre", poiCategoryRaw: "MKPOICategoryFoodMarket",
                        latitude: 43.65, longitude: -79.38, distanceMeters: 40)
     }
 
     @discardableResult
-    private func checkout(_ merchant: NearbyMerchant, amount: Double = 100) throws -> CheckoutResult {
+    private func checkout(_ merchant: NearbyPlace, amount: Double = 100) throws -> CheckoutResult {
         try service.recommend(merchant: merchant, amountCad: amount, asOf: asOf)
     }
 
@@ -135,7 +135,7 @@ final class TruthGraphTests: XCTestCase {
     func testAConfirmedTerminalOutranksItsBrandPrior() throws {
         // Costco codes as wholesaleClub by brand prior (rung 5). An owner-reconciled result for
         // this exact warehouse is rung 1 and must win.
-        let costco = NearbyMerchant(id: "poi-costco-etobicoke", name: "Costco Wholesale",
+        let costco = NearbyPlace(id: "poi-costco-etobicoke", name: "Costco Wholesale",
                                     poiCategoryRaw: nil, latitude: 43.65, longitude: -79.38,
                                     distanceMeters: 40)
         try checkout(costco, amount: 220)

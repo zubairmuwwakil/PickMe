@@ -189,7 +189,7 @@ public struct ArrivalFieldRecord: Equatable, Sendable, Codable, Identifiable {
     /// Which rung of the arrival ladder answered. Nil for a Radar scan: no ladder ran.
     public var rung: ArrivalResolutionRung?
 
-    /// How many places MapKit returned before `rankNearbyMerchants` deduped them, and how many
+    /// How many places MapKit returned before `rankNearbyPlaces` deduped them, and how many
     /// survived. Radar only.
     ///
     /// Recorded as a pair because a cap that truncates upstream is invisible once the list is

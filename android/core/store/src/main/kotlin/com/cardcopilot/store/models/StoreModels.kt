@@ -69,7 +69,7 @@ enum class MissingPurchaseFact {
     AMOUNT
 }
 
-data class NearbyMerchant(
+data class NearbyPlace(
     val id: String,
     val name: String,
     val poiCategoryRaw: String? = null,

@@ -18,8 +18,8 @@ final class RadarFieldRecordTests: XCTestCase {
     }
 
     private func merchant(_ name: String, metresNorth: Double,
-                          poiCategoryRaw: String? = nil) -> NearbyMerchant {
-        NearbyMerchant(id: "\(name)@\(metresNorth)", name: name, poiCategoryRaw: poiCategoryRaw,
+                          poiCategoryRaw: String? = nil) -> NearbyPlace {
+        NearbyPlace(id: "\(name)@\(metresNorth)", name: name, poiCategoryRaw: poiCategoryRaw,
                        latitude: 45 + metresNorth / 111_000, longitude: -75,
                        distanceMeters: metresNorth)
     }
@@ -111,7 +111,7 @@ final class RadarFieldRecordTests: XCTestCase {
     // MARK: - Raw versus deduped result counts
 
     /// A cap that truncates upstream is invisible once the list is deduped, so the size MapKit
-    /// actually returned has to be recorded before `rankNearbyMerchants` touches it.
+    /// actually returned has to be recorded before `rankNearbyPlaces` touches it.
     func testTheRawResponseSizeIsRecordedAlongsideTheDedupedCount() {
         let record = radarFieldRecord(
             recordedAt: epoch, fix: fix(), rawResultCount: 25,

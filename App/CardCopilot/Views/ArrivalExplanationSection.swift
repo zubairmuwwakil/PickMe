@@ -6,7 +6,7 @@ import SwiftUI
 /// past event, and being inside a monitored plaza does not establish which merchant was visited.
 struct ArrivalExplanationSection: View {
     let model: ArrivalPlacesModel
-    let merchant: NearbyMerchant
+    let merchant: NearbyPlace
 
     var body: some View {
         Section {

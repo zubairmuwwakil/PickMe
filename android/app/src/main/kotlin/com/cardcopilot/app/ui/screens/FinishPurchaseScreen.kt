@@ -43,13 +43,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cardcopilot.app.ui.theme.CardVisualTheme
 import com.cardcopilot.engine.models.CardProduct
-import com.cardcopilot.store.models.NearbyMerchant
+import com.cardcopilot.store.models.NearbyPlace
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FinishPurchaseScreen(
-    merchant: NearbyMerchant,
+    merchant: NearbyPlace,
     initialCardId: String,
     initialAmountCad: Double,
     walletCards: List<CardProduct>,

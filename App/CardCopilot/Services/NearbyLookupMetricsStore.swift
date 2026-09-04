@@ -46,7 +46,7 @@ struct NearbyLookupMetrics: Codable, Equatable {
 
     /// Scans that actually issued a query. A movement-cache hit is not one.
     var radarScans = 0
-    /// What MapKit returned before `rankNearbyMerchants` deduped, and what survived. Both, because
+    /// What MapKit returned before `rankNearbyPlaces` deduped, and what survived. Both, because
     /// a cap that truncates upstream is invisible once the list is deduped.
     var radarRawResultBuckets: [NearbyResultBucket: Int] = [:]
     var radarDedupedResultBuckets: [NearbyResultBucket: Int] = [:]
@@ -58,6 +58,14 @@ struct NearbyLookupMetrics: Codable, Equatable {
     /// the set and something else was ranked above it. Result-set truncation cannot produce that;
     /// a pin sitting at a building centroid can.
     var radarScansWhereTopRankedMissedAChain = 0
+
+    /// Checkout-eligibility filtering, aggregated across scans. Counts only: no category strings,
+    /// names, coordinates, query text, or per-scan timestamps.
+    var radarEligibilityScans = 0
+    var radarEligibleResults = 0
+    var radarExcludedPublicTransportResults = 0
+    var radarExcludedMissingCategoryResults = 0
+    var radarExcludedUnsupportedCategoryResults = 0
 
     var averageTapLatencyMilliseconds: Int? {
         let count = preparedTaps + tapLookups
@@ -95,6 +103,11 @@ struct NearbyLookupMetrics: Codable, Equatable {
             [NearbyResultBucket: Int].self, forKey: .radarDedupedResultBuckets) ?? [:]
         radarScansWithARecognisedChain = try count(.radarScansWithARecognisedChain)
         radarScansWhereTopRankedMissedAChain = try count(.radarScansWhereTopRankedMissedAChain)
+        radarEligibilityScans = try count(.radarEligibilityScans)
+        radarEligibleResults = try count(.radarEligibleResults)
+        radarExcludedPublicTransportResults = try count(.radarExcludedPublicTransportResults)
+        radarExcludedMissingCategoryResults = try count(.radarExcludedMissingCategoryResults)
+        radarExcludedUnsupportedCategoryResults = try count(.radarExcludedUnsupportedCategoryResults)
     }
 }
 
@@ -108,6 +121,10 @@ final class NearbyLookupMetricsStore {
         case merchantTimeout
         case emptyResult
         case failure
+        case radarEligibility(eligibleResultCount: Int,
+                              excludedPublicTransportResultCount: Int,
+                              excludedMissingCategoryResultCount: Int,
+                              excludedUnsupportedCategoryResultCount: Int)
         /// One Radar query, reduced to counts. The identity-bearing version of this scan — which
         /// chain, where, ranked how — is the field-log record, and the two are never derived from
         /// each other.
@@ -152,6 +169,12 @@ final class NearbyLookupMetricsStore {
             metrics.emptyResults += 1
         case .failure:
             metrics.failures += 1
+        case .radarEligibility(let eligible, let publicTransport, let missing, let unsupported):
+            metrics.radarEligibilityScans += 1
+            metrics.radarEligibleResults += max(0, eligible)
+            metrics.radarExcludedPublicTransportResults += max(0, publicTransport)
+            metrics.radarExcludedMissingCategoryResults += max(0, missing)
+            metrics.radarExcludedUnsupportedCategoryResults += max(0, unsupported)
         case .radarScan(let raw, let deduped, let containedChain, let topRankedMissed):
             metrics.radarScans += 1
             metrics.radarRawResultBuckets[NearbyResultBucket(count: raw), default: 0] += 1

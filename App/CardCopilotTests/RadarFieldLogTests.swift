@@ -27,37 +27,37 @@ final class RadarFieldLogTests: XCTestCase {
     }
 
     /// Reports a raw response size the way `LiveMerchantProvider` does — the count MapKit
-    /// returned, before `rankNearbyMerchants` deduped it.
+    /// returned, before `rankNearbyPlaces` deduped it.
     private actor ScanningMerchantProvider: MerchantProviding {
         let scan: NearbyScan
 
         init(scan: NearbyScan) { self.scan = scan }
 
-        func nearby(latitude: Double, longitude: Double) async throws -> [NearbyMerchant] {
-            scan.merchants
+        func nearby(latitude: Double, longitude: Double) async throws -> [NearbyPlace] {
+            scan.places
         }
 
         func nearbyScan(latitude: Double, longitude: Double) async throws -> NearbyScan { scan }
 
-        func search(text: String) async throws -> [NearbyMerchant] { [] }
+        func search(text: String) async throws -> [NearbyPlace] { [] }
     }
 
     /// Implements only the protocol's original requirement, as every other provider double in the
     /// suite does. The default `nearbyScan` has to carry it.
     private actor RankedOnlyMerchantProvider: MerchantProviding {
-        let merchants: [NearbyMerchant]
+        let merchants: [NearbyPlace]
 
-        init(merchants: [NearbyMerchant]) { self.merchants = merchants }
+        init(merchants: [NearbyPlace]) { self.merchants = merchants }
 
-        func nearby(latitude: Double, longitude: Double) async throws -> [NearbyMerchant] {
+        func nearby(latitude: Double, longitude: Double) async throws -> [NearbyPlace] {
             merchants
         }
 
-        func search(text: String) async throws -> [NearbyMerchant] { [] }
+        func search(text: String) async throws -> [NearbyPlace] { [] }
     }
 
-    private func merchant(_ name: String, metresNorth: Double) -> NearbyMerchant {
-        NearbyMerchant(id: "\(name)@\(metresNorth)", name: name, poiCategoryRaw: nil,
+    private func merchant(_ name: String, metresNorth: Double) -> NearbyPlace {
+        NearbyPlace(id: "\(name)@\(metresNorth)", name: name, poiCategoryRaw: nil,
                        latitude: 45 + metresNorth / 111_000, longitude: -75,
                        distanceMeters: metresNorth)
     }
@@ -104,7 +104,7 @@ final class RadarFieldLogTests: XCTestCase {
         let store = makeFieldLogStore()
         let (session, graph) = try makeSession(
             provider: ScanningMerchantProvider(scan: NearbyScan(
-                merchants: [merchant("Bergeron Notaries", metresNorth: 12),
+                places: [merchant("Bergeron Notaries", metresNorth: 12),
                             merchant("Shoppers Drug Mart", metresNorth: 40)],
                 rawResultCount: 9)),
             fieldLogStore: store)
@@ -141,7 +141,7 @@ final class RadarFieldLogTests: XCTestCase {
         let store = makeFieldLogStore()
         let (session, graph) = try makeSession(
             provider: ScanningMerchantProvider(scan: NearbyScan(
-                merchants: [merchant("Shoppers Drug Mart", metresNorth: 40)],
+                places: [merchant("Shoppers Drug Mart", metresNorth: 40)],
                 rawResultCount: 25)),
             fieldLogStore: store)
 
@@ -173,7 +173,7 @@ final class RadarFieldLogTests: XCTestCase {
         let store = makeFieldLogStore()
         let (session, graph) = try makeSession(
             provider: ScanningMerchantProvider(scan: NearbyScan(
-                merchants: [merchant("Bergeron Notaries", metresNorth: 12),
+                places: [merchant("Bergeron Notaries", metresNorth: 12),
                             merchant("Shoppers Drug Mart", metresNorth: 40)],
                 rawResultCount: 2)),
             fieldLogStore: store)
@@ -192,7 +192,7 @@ final class RadarFieldLogTests: XCTestCase {
         let store = makeFieldLogStore()
         let (session, graph) = try makeSession(
             provider: ScanningMerchantProvider(scan: NearbyScan(
-                merchants: [merchant("Bergeron Notaries", metresNorth: 12),
+                places: [merchant("Bergeron Notaries", metresNorth: 12),
                             merchant("Shoppers Drug Mart", metresNorth: 40)],
                 rawResultCount: 2)),
             fieldLogStore: store)
@@ -211,7 +211,7 @@ final class RadarFieldLogTests: XCTestCase {
     func testAnEmptyScanIsStillRecorded() async throws {
         let store = makeFieldLogStore()
         let (session, graph) = try makeSession(
-            provider: ScanningMerchantProvider(scan: NearbyScan(merchants: [],
+            provider: ScanningMerchantProvider(scan: NearbyScan(places: [],
                                                                 rawResultCount: 0)),
             fieldLogStore: store)
 
@@ -228,7 +228,7 @@ final class RadarFieldLogTests: XCTestCase {
         let store = makeFieldLogStore()
         let (session, graph) = try makeSession(
             provider: ScanningMerchantProvider(scan: NearbyScan(
-                merchants: [merchant("Shoppers Drug Mart", metresNorth: 40)],
+                places: [merchant("Shoppers Drug Mart", metresNorth: 40)],
                 rawResultCount: 1)),
             fieldLogStore: store)
 

@@ -21,7 +21,7 @@ public let radarFieldRegionId = "radar"
 /// - Parameters:
 ///   - fix: the owner's position when the scan ran. Nil records a scan that had no usable fix,
 ///     which is a fact about the scan, not a zero.
-///   - rawResultCount: how many places MapKit returned **before** `rankNearbyMerchants` deduped
+///   - rawResultCount: how many places MapKit returned **before** `rankNearbyPlaces` deduped
 ///     them. Taken as an argument because it is gone by the time this sees a list.
 ///   - merchants: the ranked, deduped results, in the order Radar published them. The first is the
 ///     one Home pointed the answer card at.
@@ -31,7 +31,7 @@ public func radarFieldRecord(recordedAt: Date = .now,
                              id: UUID = UUID(),
                              fix: ArrivalFix?,
                              rawResultCount: Int,
-                             merchants: [NearbyMerchant],
+                             merchants: [NearbyPlace],
                              frequentedKeys: Set<String> = []) -> ArrivalFieldRecord {
     let candidates = merchants.map { merchant -> ArrivalCandidateRecord in
         let resolution = resolveDiscoveredMerchant(name: merchant.name,
@@ -43,7 +43,7 @@ public func radarFieldRecord(recordedAt: Date = .now,
             poiCategoryRaw: merchant.poiCategoryRaw,
             latitude: merchant.latitude,
             longitude: merchant.longitude,
-            // Measured from the owner, not carried over from `NearbyMerchant.distanceMeters`.
+            // Measured from the owner, not carried over from `NearbyPlace.distanceMeters`.
             // That field is MapKit's distance from whatever centre the query used, and a scan
             // reused from the movement cache was queried around a different point.
             distanceFromFixMeters: fix.map {

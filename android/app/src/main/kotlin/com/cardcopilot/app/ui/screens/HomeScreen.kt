@@ -49,14 +49,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cardcopilot.store.CategoryMapper
-import com.cardcopilot.store.models.NearbyMerchant
+import com.cardcopilot.store.models.NearbyPlace
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    merchants: List<NearbyMerchant>,
-    recentMerchants: List<NearbyMerchant>,
-    onSelectMerchant: (NearbyMerchant) -> Unit,
+    merchants: List<NearbyPlace>,
+    recentMerchants: List<NearbyPlace>,
+    onSelectMerchant: (NearbyPlace) -> Unit,
     onNavigateDashboard: () -> Unit,
     onNavigateWalletHealth: () -> Unit,
     onNavigateBenefits: () -> Unit,
@@ -180,7 +180,7 @@ fun HomeScreen(
 
 @Composable
 fun QuickRepeatChip(
-    merchant: NearbyMerchant,
+    merchant: NearbyPlace,
     onClick: () -> Unit
 ) {
     Box(
@@ -209,7 +209,7 @@ fun QuickRepeatChip(
 
 @Composable
 fun MerchantListItem(
-    merchant: NearbyMerchant,
+    merchant: NearbyPlace,
     onClick: () -> Unit
 ) {
     val prediction = CategoryMapper.predict(merchant.poiCategoryRaw, merchant.name)

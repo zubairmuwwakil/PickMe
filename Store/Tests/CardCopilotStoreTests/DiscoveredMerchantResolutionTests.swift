@@ -10,7 +10,7 @@ import CardCopilotEngine
 final class DiscoveredMerchantResolutionTests: XCTestCase {
 
     func testWalletDescriptorResolvesAgainstMatchingNearbyRestaurant() throws {
-        let restaurant = NearbyMerchant(
+        let restaurant = NearbyPlace(
             id: "mapkit-moms-kitchen", name: "Mom's Kitchen",
             poiCategoryRaw: "MKPOICategoryRestaurant",
             latitude: 43.85, longitude: -79.02, distanceMeters: 24)
@@ -24,7 +24,7 @@ final class DiscoveredMerchantResolutionTests: XCTestCase {
     }
 
     func testWalletResolutionRejectsANameMatchThatIsTooFarAway() {
-        let restaurant = NearbyMerchant(
+        let restaurant = NearbyPlace(
             id: "far-away", name: "Mom's Kitchen",
             poiCategoryRaw: "MKPOICategoryRestaurant",
             latitude: 43.85, longitude: -79.02, distanceMeters: 180)
@@ -34,7 +34,7 @@ final class DiscoveredMerchantResolutionTests: XCTestCase {
     }
 
     func testWalletResolutionRejectsAnAmbiguousPoiCategory() {
-        let store = NearbyMerchant(
+        let store = NearbyPlace(
             id: "mapkit-store", name: "Mom's Kitchen",
             poiCategoryRaw: "MKPOICategoryStore",
             latitude: 43.85, longitude: -79.02, distanceMeters: 20)
@@ -52,7 +52,7 @@ final class DiscoveredMerchantResolutionTests: XCTestCase {
     /// The engine scores every candidate and collapses the fork when the branches agree, so a
     /// two-element set is an answer it can act on, not a failure.
     func testAGasStationCaptureEnrichesDespiteItsDeliberateFork() throws {
-        let station = NearbyMerchant(
+        let station = NearbyPlace(
             id: "mapkit-petro", name: "Petro-Canada",
             poiCategoryRaw: "MKPOICategoryGasStation",
             latitude: 43.85, longitude: -79.02, distanceMeters: 30)
@@ -104,7 +104,7 @@ final class DiscoveredMerchantResolutionTests: XCTestCase {
     /// read and then dropped on the floor.
     func testAmbientScoringContextCarriesTheRecognisedMcc() {
         let resolution = resolveDiscoveredMerchant(name: "Shoppers Drug Mart", poiCategoryRaw: nil)
-        let merchant = NearbyMerchant(id: "poi-1", name: "Shoppers Drug Mart", poiCategoryRaw: nil,
+        let merchant = NearbyPlace(id: "poi-1", name: "Shoppers Drug Mart", poiCategoryRaw: nil,
                                       latitude: 45.4, longitude: -75.7, distanceMeters: nil)
         let context = ambientPurchaseContext(merchant: merchant,
                                              category: resolution.prediction.category,

@@ -19,8 +19,8 @@ final class ProvenanceCaptureTests: XCTestCase {
         return (service, context)
     }
 
-    private func merchant(_ name: String, poi: String?) -> NearbyMerchant {
-        NearbyMerchant(id: "poi-1", name: name, poiCategoryRaw: poi,
+    private func merchant(_ name: String, poi: String?) -> NearbyPlace {
+        NearbyPlace(id: "poi-1", name: name, poiCategoryRaw: poi,
                        latitude: 43.65, longitude: -79.38, distanceMeters: 40)
     }
 

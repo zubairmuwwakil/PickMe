@@ -7,7 +7,7 @@ import CardCopilotStore
 /// the session would have to import the router and the router would have to know about MapKit,
 /// which is how the previous single object ended up owning everything.
 enum FlowOutcome: Equatable {
-    case found([NearbyMerchant])
+    case found([NearbyPlace])
     /// `query` is nil for a nearby scan, and the search text for a manual search.
     case nothingFound(query: String?)
     case locationDenied

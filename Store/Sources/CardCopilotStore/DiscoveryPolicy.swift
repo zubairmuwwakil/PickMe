@@ -143,7 +143,7 @@ public struct ShoppingAreaCandidate: Equatable, Sendable {
     public let centroidLatitude: Double
     public let centroidLongitude: Double
     public let radiusMeters: Double
-    public let members: [NearbyMerchant]
+    public let members: [NearbyPlace]
 }
 
 /// Spherical-earth distance. A sphere is wrong by ~0.3% against the WGS-84 ellipsoid, which is
@@ -166,7 +166,7 @@ public func greatCircleDistanceMeters(fromLatitude lat1: Double, fromLongitude l
 /// on every rotation — so *stability* matters more than optimality. Seeding from a sorted order
 /// makes the result a pure function of the input set rather than of its arrival order, which is
 /// what stops a rotation from tearing down and re-registering regions that did not change.
-public func clusterIntoAreas(_ merchants: [NearbyMerchant]) -> [ShoppingAreaCandidate] {
+public func clusterIntoAreas(_ merchants: [NearbyPlace]) -> [ShoppingAreaCandidate] {
     let ordered = merchants.sorted {
         ($0.latitude, $0.longitude, $0.id) < ($1.latitude, $1.longitude, $1.id)
     }
@@ -174,8 +174,8 @@ public func clusterIntoAreas(_ merchants: [NearbyMerchant]) -> [ShoppingAreaCand
     var areas: [ShoppingAreaCandidate] = []
 
     while let seed = unassigned.first {
-        var members: [NearbyMerchant] = []
-        var remaining: [NearbyMerchant] = []
+        var members: [NearbyPlace] = []
+        var remaining: [NearbyPlace] = []
         for candidate in unassigned {
             let distance = greatCircleDistanceMeters(fromLatitude: seed.latitude,
                                                      fromLongitude: seed.longitude,

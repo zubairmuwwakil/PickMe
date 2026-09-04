@@ -178,7 +178,7 @@ final class InstantRepeatAdvisorTests: XCTestCase {
         let ownerState = OwnerStateBuilder.firstRun(setup: setup, catalogue: catalogue)
         let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
 
-        let nearby = NearbyMerchant(
+        let nearby = NearbyPlace(
             id: "nearby-starbucks-1",
             name: "Starbucks",
             poiCategoryRaw: "MKPOICategoryCafe",

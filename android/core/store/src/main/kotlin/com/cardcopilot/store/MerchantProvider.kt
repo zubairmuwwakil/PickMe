@@ -1,14 +1,14 @@
 package com.cardcopilot.store
 
-import com.cardcopilot.store.models.NearbyMerchant
+import com.cardcopilot.store.models.NearbyPlace
 
 interface MerchantProvider {
-    suspend fun nearby(latitude: Double, longitude: Double): List<NearbyMerchant>
-    suspend fun search(text: String): List<NearbyMerchant>
+    suspend fun nearby(latitude: Double, longitude: Double): List<NearbyPlace>
+    suspend fun search(text: String): List<NearbyPlace>
 }
 
 object MerchantRanking {
-    fun rankNearbyMerchants(merchants: List<NearbyMerchant>): List<NearbyMerchant> {
+    fun rankNearbyPlaces(merchants: List<NearbyPlace>): List<NearbyPlace> {
         val sorted = merchants.sortedWith { a, b ->
             val distA = a.distanceMeters
             val distB = b.distanceMeters
@@ -21,7 +21,7 @@ object MerchantRanking {
         }
 
         val seenIds = mutableSetOf<String>()
-        val deduped = mutableListOf<NearbyMerchant>()
+        val deduped = mutableListOf<NearbyPlace>()
         for (m in sorted) {
             if (seenIds.add(m.id)) {
                 deduped.add(m)

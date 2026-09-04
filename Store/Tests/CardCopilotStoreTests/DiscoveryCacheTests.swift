@@ -19,8 +19,8 @@ final class DiscoveryCacheTests: XCTestCase {
         cache = DiscoveryCache(context: ModelContext(container))
     }
 
-    private func poi(_ name: String, _ lat: Double, _ lon: Double) -> NearbyMerchant {
-        NearbyMerchant(id: name, name: name, poiCategoryRaw: "store",
+    private func poi(_ name: String, _ lat: Double, _ lon: Double) -> NearbyPlace {
+        NearbyPlace(id: name, name: name, poiCategoryRaw: "store",
                        latitude: lat, longitude: lon, distanceMeters: nil)
     }
 

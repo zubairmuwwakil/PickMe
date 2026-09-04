@@ -89,12 +89,14 @@ final class CategoryResolutionMetricsTests: XCTestCase {
                                       context: ModelContext(container),
                                       metrics: store)
 
-        let netflix = try XCTUnwrap(CanadianMerchantPreIndex.all.first { $0.name == "Netflix" })
-        _ = try service.recommend(merchant: NearbyMerchant(preIndexed: netflix),
+        let loblaws = try XCTUnwrap(CanadianMerchantPreIndex.all.first { $0.name == "Loblaws" })
+        _ = try service.recommend(merchant: NearbyPlace(preIndexed: loblaws),
                                   amountCad: 20, asOf: "2026-08-20")
 
         XCTAssertEqual(store.snapshot.totalResolutions, 1)
         XCTAssertEqual(store.snapshot.resolutionsByRung[ConfidenceSource.brandPrior.rawValue], 1)
+        XCTAssertNil(store.snapshot.resolutionsByRung[ConfidenceSource.observedMcc.rawValue],
+                     "an editorial pack MCC must not inflate the observed-MCC counter")
     }
 
     /// The path where "my Apple Pay purchase has no category" actually happens. A capture with no

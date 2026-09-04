@@ -42,7 +42,7 @@ let fallbackAmountEstimate: Double = 50
 /// Builds the same on-device scoring context used by checkout when no amount has been entered.
 /// Ambient delivery uses a clearly bounded category estimate only to decide whether to stay
 /// silent; it never persists that estimate as a purchase observation.
-public func ambientPurchaseContext(merchant: NearbyMerchant, category: String,
+public func ambientPurchaseContext(merchant: NearbyPlace, category: String,
                                    mcc: Int? = nil,
                                    estimate: AmbientAmountEstimate = .perCategory) -> PurchaseContext {
     let brand = canonicalEngineBrand(merchant.name)
@@ -70,7 +70,7 @@ public enum CheckoutError: Error, Equatable, Sendable {
 }
 
 public struct CheckoutResult: Sendable {
-    public let merchant: NearbyMerchant
+    public let merchant: NearbyPlace
     public let prediction: CategoryPrediction
     public let outcome: CheckoutOutcome
     public let effectiveAmountCad: Double
@@ -181,7 +181,7 @@ public struct CheckoutService {
             }, uniquingKeysWith: { first, _ in first })
     }
 
-    public func recommend(merchant: NearbyMerchant, amountCad: Double?,
+    public func recommend(merchant: NearbyPlace, amountCad: Double?,
                           asOf: String,
                           purchaseSource: PurchaseActivitySource = .pickMeCheckout) throws -> CheckoutResult {
         let prediction = try confirmedPrediction(forMerchantId: merchant.id)
@@ -430,7 +430,7 @@ public struct CheckoutService {
 
         // Retain the Wallet descriptor as the display name so a later name-only capture can join
         // the learned POI even when the descriptor carries a city or processor suffix.
-        try upsertMerchant(NearbyMerchant(
+        try upsertMerchant(NearbyPlace(
             id: merchant.id,
             name: purchase.displayMerchant,
             poiCategoryRaw: merchant.poiCategoryRaw,
@@ -476,7 +476,7 @@ public struct CheckoutService {
         try AutoCaptureLog(context: context).recent(limit: limit)
     }
 
-    private func upsertMerchant(_ merchant: NearbyMerchant) throws {
+    private func upsertMerchant(_ merchant: NearbyPlace) throws {
         let id = merchant.id
         let existing = try context.fetch(FetchDescriptor<StoredMerchant>(
             predicate: #Predicate { $0.identifier == id }))

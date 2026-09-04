@@ -132,7 +132,7 @@ final class LocalDataEraserTests: XCTestCase {
         // coordinates of every shop found in them.
         try DiscoveryCache(context: context).record(
             cellKey: cellKey(latitude: 45.42, longitude: -75.69),
-            areas: clusterIntoAreas([NearbyMerchant(id: "poi-999", name: "Costco",
+            areas: clusterIntoAreas([NearbyPlace(id: "poi-999", name: "Costco",
                                                     poiCategoryRaw: "store",
                                                     latitude: 45.42, longitude: -75.69,
                                                     distanceMeters: nil)]),

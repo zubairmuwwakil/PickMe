@@ -22,8 +22,8 @@ final class MerchantCorrectionTests: XCTestCase {
                                   context: ModelContext(container))
     }
 
-    private func shoppers(id: String = "poi.shoppers.1") -> NearbyMerchant {
-        NearbyMerchant(id: id, name: "Shoppers Drug Mart",
+    private func shoppers(id: String = "poi.shoppers.1") -> NearbyPlace {
+        NearbyPlace(id: id, name: "Shoppers Drug Mart",
                        poiCategoryRaw: "MKPOICategoryPharmacy",
                        latitude: 45, longitude: -75, distanceMeters: 40)
     }

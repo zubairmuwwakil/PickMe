@@ -154,8 +154,8 @@ final class DwellDecisionTests: XCTestCase {
 /// app-wide, and at a 150 m radius twenty storefronts fit inside one suburban plaza — so the
 /// unit of monitoring has to be the plaza, not the shop.
 final class ClusterIntoAreasTests: XCTestCase {
-    private func poi(_ name: String, _ lat: Double, _ lon: Double) -> NearbyMerchant {
-        NearbyMerchant(id: name, name: name, poiCategoryRaw: nil,
+    private func poi(_ name: String, _ lat: Double, _ lon: Double) -> NearbyPlace {
+        NearbyPlace(id: name, name: name, poiCategoryRaw: nil,
                        latitude: lat, longitude: lon, distanceMeters: nil)
     }
 
