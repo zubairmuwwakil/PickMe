@@ -4,9 +4,16 @@
 **Status:** implemented, production-connected, intentionally replaceable  
 **Primary semantic owner:** PickMe `Store/`  
 **Canonical seed:** `contracts/merchant-mcc-graph/`  
-**Backend:** In Unity/MoneyTalks community MCC API
+**Community server:** [In Unity/MoneyTalks decision record](../../../../MoneyTalks/docs/decisions/2026-09-04-community-merchant-mcc.md)
 
-This is the current production handoff for merchant identity + MCC learning. It complements the original graph/seed design in `2026-09-04-merchant-mcc-graph-seed-design.md` and supersedes any stale operational statements there about the community backend not yet being verified.
+This is the authoritative client-side handoff for merchant identity, MCC evidence
+semantics, trust, and the resolver. It complements the original graph/seed
+design in `2026-09-04-merchant-mcc-graph-seed-design.md`. The MoneyTalks
+[decision record](../../../../MoneyTalks/docs/decisions/2026-09-04-community-merchant-mcc.md)
+owns the anonymous community network, privacy contract, storage, retention, and
+abuse model; its [runbook](../../../../MoneyTalks/docs/runbooks/community-merchant-mcc.md)
+owns server operations. This document supersedes only stale client-facing
+community-backend statements in the original design.
 
 The purpose of this document is not to freeze today's implementation. It separates:
 
@@ -85,53 +92,27 @@ Once merchant identity is canonicalized, the graph combines:
 
 Direct owner literal MCC is the strongest evidence class.
 
+Trusted terminal truth still requires repeated direct owner MCC observations.
+
 ### E. Community sharing
 
-If the user explicitly opts in, a reconciled literal MCC can enter a privacy-minimal retry queue and be uploaded opportunistically.
+If the user explicitly opts in, **only** a reconciled literal MCC can enter the
+local retry queue and be uploaded opportunistically. When sharing is disabled,
+PickMe clears that queue and its community cache; local learning remains enabled.
+Network failure is opportunistic and a still-fresh local cache may remain usable.
+Retries are idempotent through the observation UUID; a duplicate upload is a
+successful outcome, not an error.
 
-The initial shared payload contains only:
-
-- schema version;
-- random observation UUID;
-- canonical merchant ID;
-- coarse physical location scope;
-- channel;
-- literal MCC;
-- observation timestamp.
-
-It does not contain amount, card, Wallet descriptor, account, user ID, or device ID.
-
-The community service returns aggregate evidence. PickMe maps that only to `externalLocationReport`.
+The [server decision](../../../../MoneyTalks/docs/decisions/2026-09-04-community-merchant-mcc.md#privacy-and-anonymous-network-contract)
+defines the payload, anonymous boundary, location bucket, retention, and abuse
+controls. The service returns aggregate evidence only; PickMe maps it only to
+`externalLocationReport`.
 
 ### F. Recommendation consumption
 
 Both ordinary checkout recommendations and Purchase Routes consume the same MCC graph. Purchase Routes does not maintain a second merchant-MCC truth system.
 
 Gift-card inventory remains a separate axis: “merchant likely codes as grocery” and “gift card is in stock” are independent claims.
-
-## Production backend status
-
-The backend is live in In Unity/MoneyTalks.
-
-Production verification on 2026-09-04 established all of the following through the real `inunity.ca` hostname:
-
-1. Vercel deployed the current community MCC routes.
-2. The public community route bypasses Clerk account authentication as intended.
-3. The deployed Prisma client includes `CommunityMerchantMCCObservation`.
-4. The production application can reach its configured database.
-5. The manually applied production migration is queryable.
-
-This is verified by a read-only health handler that performs a Prisma `count()` against the MCC table and exposes only `{ok:true,schemaVersion:1}`. An external GitHub Actions smoke test calls that endpoint.
-
-A real issue was found during this verification: Clerk originally returned `401` before the anonymous community handler could run. The production proxy was corrected and the smoke test is now permanently triggered by community route/schema/migration changes **and `src/proxy.ts` changes**.
-
-Backend decision record:
-
-`MoneyTalks/docs/decisions/2026-09-04-community-merchant-mcc.md`
-
-Backend operations/runbook:
-
-`MoneyTalks/docs/runbooks/community-merchant-mcc.md`
 
 ## Non-negotiable semantic invariants
 
@@ -149,6 +130,24 @@ A future agent may replace almost every implementation detail below, but should 
 10. **Local recommendations continue working without community/network access.**
 11. **There is one authoritative runtime MCC resolver. Replace it; do not add a permanent second one.**
 12. **Existing evidence must not become stronger merely because storage/model technology changes.**
+
+## Replacement standard
+
+The following eight cross-boundary invariants are the replacement standard. They
+are intentionally explicit because a seemingly better resolver or backend can
+otherwise erode trust semantics:
+
+1. PickMe still owns card/MCC trust semantics.
+2. Literal observed MCC remains distinguishable from inferred/category/seed evidence.
+3. Community evidence cannot silently become direct-owner truth.
+4. Merchant/location/channel variation remains representable.
+5. Local PickMe recommendations continue to work when the network is unavailable.
+6. Existing evidence is migrated with provenance and without silently increasing its strength.
+7. Privacy impact is no worse without an explicit product/privacy decision.
+8. There is one authoritative MCC resolver, not parallel competing truth systems.
+
+The server-specific controls that uphold item 7 are authoritative in the
+[MoneyTalks decision record](../../../../MoneyTalks/docs/decisions/2026-09-04-community-merchant-mcc.md).
 
 ## Why the current choices were made
 
@@ -176,35 +175,13 @@ A future agent may replace almost every implementation detail below, but should 
 
 **Not sacred:** tune the threshold from measured precision/recall. High-confidence processor IDs may justify one observation; noisier sources may require more.
 
-### No global alias learning from raw GPS/Wallet descriptors yet
+### Community server choices
 
-**Why:** one user's location-derived match should not silently teach every other user. The hub's separate global `MerchantAlias` question remains intentionally open pending multi-user evidence/privacy design.
-
-**Future freedom:** a privacy-safe corroborated global alias model may become high ROI later.
-
-### ~100 m merchant-qualified community location bucket
-
-**Why:** exact location is unnecessary and Wallet-vs-MapKit coordinates drift. Canonical merchant ID prevents different brands in the same plaza from automatically merging.
-
-**Known cost:** two stores of the same brand within one coarse bucket can collide.
-
-**Future freedom:** use H3/geohash/stable place identity or a hybrid key if real collision measurements justify it. Do not increase precision merely because it is easy.
-
-### Anonymous community rows, no contributor ID
-
-**Why:** PickMe can improve shared coverage without requiring an account or creating a persistent cross-event identity attached to financial activity.
-
-**Known cost:** support on three days is **not** proof of three independent people. A patient attacker can span days.
-
-**Current mitigation:** storage/evidence/day caps plus community evidence remaining weaker than direct owner truth.
-
-**Future freedom:** if abuse or community influence becomes material, evaluate edge rate limiting and Apple App Attest/DeviceCheck-style genuine-app admission before adding a persistent contributor identity.
-
-### Raw community observations + query-time aggregation
-
-**Why:** simple, auditable, conflict-preserving, cheap at bootstrap scale, and easy to change while the evidence model is still evolving.
-
-**Future freedom:** move to materialized aggregates, rollups, partitioning, caching, or another backend when measured latency/cost/volume justifies it.
+The anonymous-network boundary, coarse location bucket, contributor-privacy
+tradeoffs, retention, aggregation, and the unresolved global `MerchantAlias`
+question belong to the [MoneyTalks decision record](../../../../MoneyTalks/docs/decisions/2026-09-04-community-merchant-mcc.md).
+PickMe consumes its returned evidence under the semantic invariants above rather
+than duplicating a second server policy here.
 
 ### No mandatory bank linking
 
@@ -215,18 +192,6 @@ A future agent may replace almost every implementation detail below, but should 
 ## Known limitations as of 2026-09-04
 
 These are not bugs to hide; they are decision inputs for future work.
-
-### Community support is day-based, not person-based
-
-`supportDays >= 3` means observations occurred on at least three UTC days. It does not prove unique contributors.
-
-### Community network dimension is underused
-
-The server schema can represent optional card network, but the initial PickMe production payload intentionally does not need to send card/network. If real data shows meaningful network-dependent MCC variation, revisit this with a privacy/value analysis.
-
-### Coarse location collisions are possible
-
-Same-brand locations close together can share a bucket.
 
 ### The weighted graph is heuristic, not statistically calibrated yet
 
@@ -303,14 +268,12 @@ Possible future approaches:
 
 Measure first; do not add complexity until real recodes appear.
 
-### P1 — privacy-preserving abuse hardening when warranted
+### P1 — hand off server-side abuse hardening when warranted
 
-If community evidence begins affecting many decisions or abuse appears:
-
-1. add platform/edge rate limits;
-2. evaluate App Attest/DeviceCheck genuine-app proof;
-3. add aggregate anomaly detection;
-4. consider stronger contributor identity only with explicit privacy approval.
+If community evidence begins affecting many decisions or abuse appears, use the
+[MoneyTalks decision](../../../../MoneyTalks/docs/decisions/2026-09-04-community-merchant-mcc.md#abuse-controls-and-honest-limits)
+for the privacy-preserving hardening order. PickMe's job is to measure whether
+the community signal changed a decision and preserve its weaker trust class.
 
 ### P1/P2 — hierarchical learning after enough data exists
 
@@ -347,13 +310,6 @@ Change any of these when a demonstrably better solution exists:
 - evidence weights;
 - decay/half-life logic;
 - local persistence technology;
-- backend/storage provider;
-- Vercel/Neon/Prisma topology;
-- community aggregation math;
-- support thresholds;
-- retention duration;
-- spatial bucket technology;
-- anti-abuse mechanism;
 - exact-MCC data provider;
 - merchant catalogue size;
 - on-device vs server-side inference placement.
