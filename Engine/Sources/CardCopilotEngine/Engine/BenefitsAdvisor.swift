@@ -128,11 +128,13 @@ public enum BenefitsAdvisor {
     }
 }
 
-/// The purchase kinds a user can declare in the protection lens. Deliberately NOT merchant
-/// categories (spec B6): earn categories describe the merchant and are statement-verifiable;
-/// these describe the purchase and only the buyer knows them.
+/// The purchase kinds a user can declare for protection/final-decision context. Deliberately NOT
+/// merchant categories (spec B6): earn categories describe the merchant and are statement-
+/// verifiable; these describe the item/intent and only the buyer knows them. `other` means the
+/// buyer explicitly says none of the modelled protection-sensitive contexts apply; it is not
+/// equivalent to missing context.
 public enum BenefitContextKind: String, CaseIterable, Sendable {
-    case flight, trip, carRental, electronics, mobileDevice, applianceFurniture
+    case flight, trip, carRental, electronics, mobileDevice, applianceFurniture, other
 }
 
 /// `Hashable` because the App target routes to the protection lens through a SwiftUI
@@ -159,6 +161,8 @@ public struct BenefitContext: Hashable, Sendable {
             return [.purchaseProtection, .extendedWarranty]
         case .mobileDevice:
             return [.purchaseProtection, .extendedWarranty, .mobileDeviceInsurance]
+        case .other:
+            return []
         }
         return abroad ? base + [.travelMedical] : base
     }
