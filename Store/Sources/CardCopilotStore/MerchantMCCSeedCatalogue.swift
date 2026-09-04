@@ -74,6 +74,9 @@ public enum MerchantMCCSeedCatalogue {
         return result
     }()
 
+    private static let merchantByID: [String: MerchantMCCSeedMerchant] =
+        Dictionary(uniqueKeysWithValues: merchants.map { ($0.id, $0) })
+
     /// Multi-word seed names used for a conservative descriptor fallback. One-word brands are not
     /// allowed to expand this way: `Metro Pizza` must never become `Metro`. Curated one-word alias
     /// handling remains MerchantRecognizer's job.
@@ -84,11 +87,17 @@ public enum MerchantMCCSeedCatalogue {
             return (merchant, merchantTokens)
         }
 
-    /// Resolves a MapKit/Wallet merchant name through the curated merchant recognizer first, then
-    /// exact normalized seed-name matching, then a conservative multi-token descriptor match.
-    /// The last rung handles suffixes such as store numbers/cities for the wider 500-row seed while
-    /// retaining token boundaries and longest-match semantics. Raw substring matching is forbidden.
+    /// Resolves a MapKit/Wallet merchant name through deterministic catalogue evidence first. If
+    /// that fails, an exact alias learned from repeated real Wallet-to-checkout joins may resolve
+    /// it. Learned aliases never participate in fuzzy matching and never override curated data.
     public static func match(merchantName: String) -> MerchantMCCSeedMatch? {
+        canonicalMatch(merchantName: merchantName)
+            ?? MerchantMCCIdentityLearningStore.shared.match(merchantName: merchantName)
+    }
+
+    /// Deterministic resolver with no learned state. The identity learner uses this to anchor new
+    /// aliases without recursively consulting itself.
+    public static func canonicalMatch(merchantName: String) -> MerchantMCCSeedMatch? {
         let recognized = MerchantRecognizer.recognise(merchantName)
         let canonicalName = recognized?.name ?? merchantName
 
@@ -103,6 +112,14 @@ public enum MerchantMCCSeedCatalogue {
               let profile = profiles[merchant.profile] else { return nil }
         return MerchantMCCSeedMatch(merchant: merchant, profile: profile,
                                     recognizedMerchant: nil)
+    }
+
+    /// Stable seed-id lookup used after a learned alias has already settled identity.
+    public static func match(merchantID: String) -> MerchantMCCSeedMatch? {
+        guard let merchant = merchantByID[merchantID],
+              let profile = profiles[merchant.profile] else { return nil }
+        return MerchantMCCSeedMatch(merchant: merchant, profile: profile,
+                                    recognizedMerchant: MerchantRecognizer.recognise(merchant.name))
     }
 
     public static func seedMCC(for merchantName: String) -> Int? {
