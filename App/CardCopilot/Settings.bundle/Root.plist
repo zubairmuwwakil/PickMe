@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PreferenceSpecifiers</key>
+    <array>
+        <dict>
+            <key>Type</key>
+            <string>PSGroupSpecifier</string>
+            <key>Title</key>
+            <string>Community inventory</string>
+            <key>FooterText</key>
+            <string>Off by default. If enabled, PickMe can anonymously share and use gift-card stock observations. It sends the store identity (Apple place ID, or rounded store coordinates when no place ID exists), gift-card name, Found it/Not here, timestamp, and a random observation ID. It does not send your card, amount, purchase, account, or device identity.</string>
+        </dict>
+        <dict>
+            <key>Type</key>
+            <string>PSToggleSwitchSpecifier</string>
+            <key>Title</key>
+            <string>Share gift-card inventory</string>
+            <key>Key</key>
+            <string>pickme.communityGiftCardInventory.enabled.v1</string>
+            <key>DefaultValue</key>
+            <false/>
+        </dict>
+    </array>
+    <key>StringsTable</key>
+    <string>Root</string>
+</dict>
+</plist>
