@@ -46,9 +46,12 @@ object PurchaseDecisionAdvisor {
         declaredContext: BenefitContext? = null
     ): PurchaseDecisionAssessment {
         val rewardCardId = rewardRecommendation.winner.cardId
+        val trustedWallet = wallet.filter { cardId ->
+            benefits.card(cardId)?.certificate?.verificationStatus != BenefitVerification.STUB
+        }
 
         if (declaredContext != null) {
-            val comparison = BenefitsAdvisor.comparison(declaredContext, wallet, benefits)
+            val comparison = BenefitsAdvisor.comparison(declaredContext, trustedWallet, benefits)
             val kinds = comparison.relevantKinds
             if (comparison.columns.isEmpty()) {
                 return PurchaseDecisionAssessment(
@@ -96,9 +99,8 @@ object PurchaseDecisionAdvisor {
             return PurchaseDecisionAssessment(PurchaseDecisionVerdict.REWARD_LEADER, rewardCardId)
         }
 
-        val walletHasTrustedShoppingProtection = wallet.any { cardId ->
+        val walletHasTrustedShoppingProtection = trustedWallet.any { cardId ->
             val card = benefits.card(cardId) ?: return@any false
-            if (card.certificate.verificationStatus == BenefitVerification.STUB) return@any false
             card.benefits.any { benefit ->
                 benefit.knownFamily == BenefitFamily.SHOPPING &&
                     benefit.knownKind?.let { shoppingKinds.contains(it) } == true
