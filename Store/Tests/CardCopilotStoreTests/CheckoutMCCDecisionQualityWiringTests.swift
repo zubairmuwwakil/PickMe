@@ -22,6 +22,15 @@ final class CheckoutMCCDecisionQualityWiringTests: XCTestCase {
         // No POI category and no literal transaction MCC: the seeded graph is the answer source.
         let metro = NearbyPlace(id: "quality:metro", name: "Metro", poiCategoryRaw: nil,
                                 latitude: 43.6532, longitude: -79.3832, distanceMeters: nil)
+
+        // Arrival alerts reuse checkout scoring but may repeat in the background. They must not
+        // overweight a frequent merchant in the explicit purchase-decision quality denominator.
+        let arrivalResult = try service.recommend(merchant: metro, amountCad: 60,
+                                                  asOf: "2026-09-04",
+                                                  purchaseSource: .arrivalAlert)
+        XCTAssertTrue(arrivalResult.prediction.rawCategory?.hasPrefix("merchantMccGraph:") == true)
+        XCTAssertEqual(metrics.snapshot.mccGraphDecisionEvaluations, 0)
+
         let graphResult = try service.recommend(merchant: metro, amountCad: 60,
                                                 asOf: "2026-09-04")
         XCTAssertTrue(graphResult.prediction.rawCategory?.hasPrefix("merchantMccGraph:") == true)
