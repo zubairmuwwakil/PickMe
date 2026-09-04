@@ -57,6 +57,50 @@ final class MerchantMCCGraphTests: XCTestCase {
         XCTAssertTrue(prediction.isTrusted)
     }
 
+    func testDirectEvidenceFromAnotherBranchCannotMakeThisLocationObserved() {
+        let evidence = [
+            MerchantMCCEvidence(id: "other-1", merchantKey: "Walmart",
+                                latitude: 43.90, longitude: -79.90,
+                                channel: .inStore, mcc: 5411,
+                                kind: .directOwnerMcc, observedAt: now),
+            MerchantMCCEvidence(id: "other-2", merchantKey: "Walmart",
+                                latitude: 43.90, longitude: -79.90,
+                                channel: .inStore, mcc: 5411,
+                                kind: .directOwnerMcc, observedAt: now)
+        ]
+
+        let prediction = MerchantMCCGraph.predict(
+            for: MerchantMCCQuery(merchantKey: "Walmart",
+                                  latitude: 43.65, longitude: -79.38,
+                                  channel: .inStore),
+            evidence: evidence,
+            now: now)
+
+        XCTAssertEqual(prediction.bestMCC, 5411,
+                       "another branch may remain weak brand evidence")
+        XCTAssertEqual(prediction.directObservationCount, 0,
+                       "another branch must not count toward terminal trust")
+        XCTAssertFalse(prediction.isObserved)
+        XCTAssertFalse(prediction.isTrusted)
+    }
+
+    func testDirectCoordinateEvidenceWithin75MetresCountsAsObserved() {
+        let evidence = MerchantMCCEvidence(
+            id: "nearby", merchantKey: "Metro",
+            latitude: 43.6500, longitude: -79.3800,
+            channel: .inStore, mcc: 5411,
+            kind: .directOwnerMcc, observedAt: now)
+
+        let prediction = MerchantMCCGraph.predict(
+            for: MerchantMCCQuery(merchantKey: "Metro",
+                                  latitude: 43.6503, longitude: -79.3802,
+                                  channel: .inStore),
+            evidence: [evidence], now: now)
+
+        XCTAssertEqual(prediction.directObservationCount, 1)
+        XCTAssertTrue(prediction.isObserved)
+    }
+
     func testConflictingLocationReportsRemainAProbabilityDistribution() {
         let evidence = [
             MerchantMCCEvidence(id: "langley", merchantKey: "McDonald's",
@@ -106,13 +150,15 @@ final class MerchantMCCGraphTests: XCTestCase {
         XCTAssertNil(prediction.bestMCC)
     }
 
-    func testDuplicateEvidenceIdCountsOnce() {
+    func testDuplicateLocationEvidenceIdCountsOnce() {
         let item = MerchantMCCEvidence(
-            id: "same", merchantKey: "Metro", mcc: 5411,
+            id: "same", merchantKey: "Metro", latitude: 43.65, longitude: -79.38,
+            channel: .inStore, mcc: 5411,
             kind: .directOwnerMcc, observedAt: now)
 
         let prediction = MerchantMCCGraph.predict(
-            for: MerchantMCCQuery(merchantKey: "Metro"),
+            for: MerchantMCCQuery(merchantKey: "Metro", latitude: 43.65,
+                                  longitude: -79.38, channel: .inStore),
             evidence: [item, item],
             now: now)
 
