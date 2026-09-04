@@ -38,6 +38,12 @@ final class ContractsSyncTests: XCTestCase {
                          engineRelativePath: "Sources/CardCopilotEngine/Resources/merchant-pack.json")
     }
 
+    func testMerchantMCCRuntimeSeedMatchesContract() throws {
+        try assertSynced(
+            contractsRelativePath: "merchant-mcc-graph/runtime-seed.zlib.b64",
+            engineRelativePath: "Sources/CardCopilotEngine/Resources/merchant-mcc-runtime-seed.zlib.b64")
+    }
+
     func testCandidateCatalogueMatchesContract() throws {
         try assertSynced(contractsRelativePath: "candidate-catalogue.json",
                          engineRelativePath: "Sources/CardCopilotEngine/Resources/candidate-catalogue.json")
