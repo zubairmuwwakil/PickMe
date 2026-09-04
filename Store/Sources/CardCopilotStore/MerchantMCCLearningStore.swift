@@ -82,6 +82,10 @@ public final class MerchantMCCLearningStore: @unchecked Sendable {
     /// Low-friction path for "this earned my grocery/dining/etc. bonus". The caller supplies the
     /// MCCs compatible with that issuer reward outcome; the 0.55 inference weight is split across
     /// those possibilities rather than pretending the answer reveals one exact MCC.
+    ///
+    /// A fingerprint makes the observation replaceable. This matters for UI feedback: if the
+    /// owner corrects a selection, the new answer replaces the old vote instead of letting one
+    /// purchase count twice in contradictory directions.
     @discardableResult
     public func recordRewardOutcome(merchantName: String,
                                     candidateMCCs: [Int],
@@ -95,6 +99,28 @@ public final class MerchantMCCLearningStore: @unchecked Sendable {
         guard !candidates.isEmpty else { return 0 }
         let perCandidateWeight = MerchantMCCEvidenceType.rewardOutcomeInference.defaultWeight
             / Double(candidates.count)
+
+        if let sourceFingerprint {
+            lock.lock(); defer { lock.unlock() }
+            evidence.removeAll {
+                $0.merchantId == seed.id
+                    && $0.type == .rewardOutcomeInference
+                    && $0.sourceFingerprint == sourceFingerprint
+            }
+            for mcc in candidates {
+                evidence.append(MerchantMCCRuntimeEvidence(
+                    merchantId: seed.id, mcc: mcc,
+                    type: .rewardOutcomeInference,
+                    weight: perCandidateWeight,
+                    locationKey: locationKey, network: network,
+                    channel: channel,
+                    sourceFingerprint: sourceFingerprint,
+                    observedAt: observedAt))
+            }
+            persistLocked()
+            return candidates.count
+        }
+
         var inserted = 0
         for mcc in candidates {
             let item = MerchantMCCRuntimeEvidence(merchantId: seed.id, mcc: mcc,
@@ -102,11 +128,22 @@ public final class MerchantMCCLearningStore: @unchecked Sendable {
                                                  weight: perCandidateWeight,
                                                  locationKey: locationKey, network: network,
                                                  channel: channel,
-                                                 sourceFingerprint: sourceFingerprint,
                                                  observedAt: observedAt)
             if appendIfNew(item) { inserted += 1 }
         }
         return inserted
+    }
+
+    /// Whether this exact purchase/source has already contributed reward-outcome evidence.
+    /// Used to suppress repeat prompts without exposing the private evidence ledger itself.
+    public func hasRewardOutcome(merchantName: String, sourceFingerprint: String) -> Bool {
+        guard let seed = seedMerchant(matching: merchantName) else { return false }
+        lock.lock(); defer { lock.unlock() }
+        return evidence.contains {
+            $0.merchantId == seed.id
+                && $0.type == .rewardOutcomeInference
+                && $0.sourceFingerprint == sourceFingerprint
+        }
     }
 
     /// Reserved for a future provider that genuinely returns a payment-network/processor MCC.
