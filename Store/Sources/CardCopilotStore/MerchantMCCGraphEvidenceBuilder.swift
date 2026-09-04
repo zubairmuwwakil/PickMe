@@ -10,8 +10,7 @@ public enum MerchantMCCGraphEvidenceBuilder {
     public static func evidence(from purchases: [StoredPurchase]) -> [MerchantMCCEvidence] {
         purchases.compactMap { purchase in
             guard let observation = purchase.observation else { return nil }
-            let canonicalName = MerchantRecognizer.recognise(purchase.displayMerchant)?.name
-                ?? purchase.displayMerchant
+            let canonicalName = canonicalMerchantName(purchase.displayMerchant)
 
             if let mcc = observation.observedMerchantCategoryCode {
                 return MerchantMCCEvidence(
@@ -48,7 +47,7 @@ public enum MerchantMCCGraphEvidenceBuilder {
     public static func predict(for merchant: NearbyPlace, seedMCC: Int?,
                                purchases: [StoredPurchase], now: Date = Date())
         -> MerchantMCCPrediction {
-        let canonicalName = MerchantRecognizer.recognise(merchant.name)?.name ?? merchant.name
+        let canonicalName = canonicalMerchantName(merchant.name)
         let query = MerchantMCCQuery(
             merchantKey: canonicalName,
             placeID: merchant.placeID,
@@ -56,5 +55,14 @@ public enum MerchantMCCGraphEvidenceBuilder {
             longitude: merchant.hasMonitorableLocation ? merchant.longitude : nil)
         return MerchantMCCGraph.predict(for: query, seedMCC: seedMCC,
                                         evidence: evidence(from: purchases), now: now)
+    }
+
+    /// One identity vocabulary for both graph queries and historical observations. The learned
+    /// alias layer is safe here because it activates only after repeated independent joins; before
+    /// that threshold this falls back to the same curated recognizer/raw name behavior as before.
+    private static func canonicalMerchantName(_ value: String) -> String {
+        MerchantMCCSeedCatalogue.match(merchantName: value)?.merchant.name
+            ?? MerchantRecognizer.recognise(value)?.name
+            ?? value
     }
 }
