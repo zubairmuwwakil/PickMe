@@ -2,8 +2,8 @@ import SwiftUI
 import CardCopilotEngine
 import CardCopilotStore
 
-/// The answer screen. Displays the winning card with a physical card visual,
-/// structured reward breakdown, and honest split-branch scenarios for ambiguous merchants.
+/// The answer screen. Displays the reward winner, the final multi-attribute purchase decision,
+/// route opportunities, and honest split-branch scenarios for ambiguous merchants.
 struct RecommendationView: View {
     let onCompare: ((BenefitContextKind) -> Void)?
     /// What's on screen. Seeded from the answer `CheckoutFlowView` handed in, then replaced in
@@ -17,6 +17,9 @@ struct RecommendationView: View {
     @State private var resolvedRouteCandidate: PurchaseRouteAcquisitionCandidate?
     @State private var didResolveNearbyRoute = false
     @State private var inventoryFeedbackMessage: String?
+    /// Ephemeral checkout context only. This survives amount refinements and nearby-route refreshes
+    /// while this answer is on screen, but is never persisted or synced as purchase history.
+    @State private var selectedBenefitContextKind: BenefitContextKind?
     @Environment(CopilotEnvironment.self) private var environment
     @Environment(CopilotSession.self) private var session
     @Environment(CheckoutRouter.self) private var router
@@ -106,6 +109,10 @@ struct RecommendationView: View {
         let winnerCard = recommendation.winner
         let officialName = cardName(winnerCard.cardId, graph: graph)
         let returnText = String(format: "$%.2f back", winnerCard.netValueCad)
+        let purchaseDecision = purchaseDecisionAssessment(for: recommendation, graph: graph)
+        let protectionLeaderName = purchaseDecision.protectionLeaderCardId.map {
+            cardName($0, graph: graph)
+        }
 
         VStack(alignment: .leading, spacing: 16) {
             CardArtView(
@@ -148,6 +155,14 @@ struct RecommendationView: View {
                     .fill(Color(.secondarySystemGroupedBackground))
             )
 
+            PurchaseDecisionInlineSection(
+                assessment: purchaseDecision,
+                selectedContextKind: $selectedBenefitContextKind,
+                rewardCardName: officialName,
+                protectionLeaderName: protectionLeaderName,
+                onCompare: onCompare
+            )
+
             if didResolveNearbyRoute {
                 if let route = resolvedRouteEvaluation {
                     routeOpportunityView(route, candidate: resolvedRouteCandidate, graph: graph)
@@ -175,7 +190,7 @@ struct RecommendationView: View {
                             .font(.system(size: 12, weight: .bold, design: .rounded))
                             .foregroundStyle(.green)
                             .tracking(0.6)
-                        Text("Extra cash recovered vs tapping \(defaultName)")
+                        Text("Extra reward value vs tapping \(defaultName)")
                             .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(.secondary)
                     }
@@ -195,7 +210,7 @@ struct RecommendationView: View {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.blue)
-                    Text("Your default card is already the optimal pick here.")
+                    Text("Your default card already leads on reward value here.")
                         .font(.system(size: 13, weight: .medium, design: .rounded))
                         .foregroundStyle(.primary)
                     Spacer()
@@ -253,7 +268,7 @@ struct RecommendationView: View {
                     insightRow(
                         icon: "checkmark.circle.fill",
                         iconColor: .green,
-                        title: "Why this card won",
+                        title: "Why this card won on rewards",
                         detail: why
                     )
                 }
@@ -367,12 +382,14 @@ struct RecommendationView: View {
                 }
 
                 if evaluation.protectionAssessment.status == .purchaseContextNeeded {
-                    HStack(spacing: 8) {
-                        Button("Electronics") { onCompare?(.electronics) }
-                        Button("Phone") { onCompare?(.mobileDevice) }
-                        Button("Appliance") { onCompare?(.applianceFurniture) }
+                    PurchaseContextChoiceRow(selection: $selectedBenefitContextKind)
+                } else if let selectedBenefitContextKind {
+                    Button {
+                        onCompare?(selectedBenefitContextKind)
+                    } label: {
+                        Label("Compare protection details", systemImage: "shield.lefthalf.filled")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
                     }
-                    .font(.caption.weight(.semibold))
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                 }
@@ -476,7 +493,8 @@ struct RecommendationView: View {
             destinationMerchantName: result.merchant.name,
             engine: routeEngine,
             asOf: today,
-            benefits: graph.benefits
+            benefits: graph.benefits,
+            declaredBenefitContext: selectedBenefitContext
         )
     }
 
@@ -524,7 +542,8 @@ struct RecommendationView: View {
                     routes: [resolved],
                     engine: routeEngine,
                     asOf: today,
-                    benefits: graph.benefits) else { return nil }
+                    benefits: graph.benefits,
+                    declaredBenefitContext: selectedBenefitContext) else { return nil }
                 return (candidate, evaluation)
             }
 
@@ -584,8 +603,23 @@ struct RecommendationView: View {
         )
     }
 
+    private var selectedBenefitContext: BenefitContext? {
+        selectedBenefitContextKind.map { BenefitContext(kind: $0) }
+    }
+
+    private func purchaseDecisionAssessment(for recommendation: Recommendation,
+                                            graph: DependencyGraph) -> PurchaseDecisionAssessment {
+        PurchaseDecisionAdvisor.assess(
+            rewardRecommendation: recommendation,
+            purchase: routeDestinationContext(),
+            wallet: graph.walletCardIds,
+            benefits: graph.benefits,
+            declaredContext: selectedBenefitContext
+        )
+    }
+
     private var routeResolutionTaskID: String {
-        "\(result.merchant.id)|\(result.effectiveAmountCad)|\(result.prediction.category)"
+        "\(result.merchant.id)|\(result.effectiveAmountCad)|\(result.prediction.category)|\(selectedBenefitContextKind?.rawValue ?? "unknown")"
     }
 
     private func routeEvidenceLabel(_ level: PurchaseRouteEvidenceLevel) -> String {
