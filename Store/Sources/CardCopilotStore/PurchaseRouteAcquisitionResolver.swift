@@ -18,7 +18,8 @@ public struct PurchaseRouteAcquisitionCandidate: Equatable, Sendable {
 
 /// Bridges MapKit's nearby physical places to the canonical 500-merchant seed and then through the
 /// evidence-weighting graph. Reconciled owner MCCs and explicit reward-outcome feedback can override
-/// the seed automatically. Inventory evidence is evaluated independently and can only strengthen/
+/// the seed automatically. Privacy-thresholded community MCC aggregates may improve the prior but
+/// remain external evidence; inventory evidence is evaluated independently and can only strengthen/
 /// suppress the exact physical place.
 ///
 /// This is deliberately Store-side: Engine owns card/route arithmetic; Store owns merchant
@@ -30,11 +31,13 @@ public enum PurchaseRouteAcquisitionResolver {
         purchases: [StoredPurchase] = [],
         inventoryEvidence: [GiftCardInventoryObservation] = [],
         rewardEvidence: [MerchantMCCEvidence] = MerchantMCCRewardFeedbackStore.shared.evidence(),
+        communityMCCEvidence: [MerchantMCCEvidence] = CommunityMerchantMCCCacheStore().evidence(),
         limit: Int = 3,
         now: Date = Date()
     ) -> [PurchaseRouteAcquisitionCandidate] {
         guard let requiredMCC = route.acquisitionMcc else { return [] }
         let ownerEvidence = MerchantMCCGraphEvidenceBuilder.evidence(from: purchases) + rewardEvidence
+        let allMCCEvidence = ownerEvidence + communityMCCEvidence
         let allInventoryEvidence = inventoryEvidence + CommunityGiftCardInventoryCacheStore().evidence(now: now)
 
         return places.compactMap { place -> PurchaseRouteAcquisitionCandidate? in
@@ -55,7 +58,7 @@ public enum PurchaseRouteAcquisitionResolver {
                 for: query,
                 seedCandidates: seedCandidates,
                 seedConfidence: seed.profile.confidence,
-                evidence: MerchantMCCSeedCatalogue.externalEvidence(for: seed.merchant) + ownerEvidence,
+                evidence: MerchantMCCSeedCatalogue.externalEvidence(for: seed.merchant) + allMCCEvidence,
                 now: now)
             guard prediction.bestMCC == requiredMCC else { return nil }
 
