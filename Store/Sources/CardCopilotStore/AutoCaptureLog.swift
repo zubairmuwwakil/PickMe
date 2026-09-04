@@ -56,11 +56,10 @@ public struct AutoCaptureLog {
     /// `walletEventId`, and a no-op when there is nothing new to log.
     @discardableResult
     public func ingest(feedback: [WalletFeedback], openPredictions: [StoredPrediction]) throws -> [StoredPurchase] {
-        // `CheckoutService` calls this with the ORIGINAL open-prediction population after applying
-        // automatic matches. That is exactly the training set we want: `automaticProposals` repeats
-        // the same strict one-to-one/CAD/resolved-card gate that was just trusted to mutate a
-        // purchase. The event id is the independent fingerprint, so replaying sync cannot inflate
-        // alias confidence.
+        // CheckoutService intentionally passes the population that was open at the beginning of
+        // sync. By the time this runs, a strict automatic match may already have completed one of
+        // those purchases. Alias learning therefore recognizes both states: a newly represented
+        // event-id is strongest evidence; an automatic proposal is the pre-mutation/test equivalent.
         learnMerchantAliases(from: feedback, openPredictions: openPredictions)
 
         let loggedPurchases = try purchasesByWalletEventId()
@@ -79,22 +78,21 @@ public struct AutoCaptureLog {
         return try candidates.map(record)
     }
 
-    /// Teaches descriptor identity only when the existing fail-closed capture matcher already says
-    /// one Wallet event belongs to one live checkout and the checkout merchant itself resolves to a
-    /// canonical seed row. Raw and server-normalized descriptors are both useful aliases; they use
-    /// the same event fingerprint and therefore still count as one observation each per alias.
+    /// Teaches descriptor identity only from a checkout/event relationship that PickMe has already
+    /// accepted as one-to-one. In production the strongest marker is `purchase.walletEventId`,
+    /// stamped by `applyAutomaticCapture` immediately before this method runs. The second loop is
+    /// equivalent evidence before mutation and keeps the learner directly testable in isolation.
+    ///
+    /// Raw and server-normalized descriptors are both useful aliases. They share one event
+    /// fingerprint, so replaying a sync or storing two strings from the same transaction can never
+    /// masquerade as two independent observations.
     private func learnMerchantAliases(from feedback: [WalletFeedback],
                                       openPredictions: [StoredPrediction]) {
-        let predictionsByID = Dictionary(uniqueKeysWithValues: openPredictions.map { ($0.id, $0) })
         let eventsByID = Dictionary(grouping: feedback, by: \.eventId)
 
-        for proposal in CaptureMatcher.automaticProposals(for: openPredictions, from: feedback) {
-            guard let prediction = predictionsByID[proposal.predictionId],
-                  let canonical = MerchantMCCSeedCatalogue.canonicalMatch(
-                    merchantName: prediction.merchantName),
-                  let events = eventsByID[proposal.eventId], events.count == 1,
-                  let event = events.first else { continue }
-
+        func learn(prediction: StoredPrediction, event: WalletFeedback) {
+            guard let canonical = MerchantMCCSeedCatalogue.canonicalMatch(
+                merchantName: prediction.merchantName) else { return }
             let aliases = [event.merchantRaw, event.merchantNormalized]
                 .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .filter { !$0.isEmpty }
@@ -104,6 +102,28 @@ public struct AutoCaptureLog {
                                      sourceFingerprint: "wallet:\(event.eventId)",
                                      observedAt: event.capturedAt)
             }
+        }
+
+        // Production path: `CheckoutService` has already applied the automatic proposal, so the
+        // reference-type purchase may now be complete and would no longer appear in a fresh call to
+        // `CaptureMatcher.automaticProposals`. The event id written onto that exact purchase is the
+        // durable proof that the join succeeded.
+        for prediction in openPredictions {
+            guard let eventID = prediction.purchase?.walletEventId,
+                  let events = eventsByID[eventID], events.count == 1,
+                  let event = events.first else { continue }
+            learn(prediction: prediction, event: event)
+        }
+
+        // Pre-mutation equivalent used when AutoCaptureLog is exercised directly and as a safety
+        // net if call ordering changes later. Idempotence in the learning store deduplicates an
+        // event that qualifies through both paths.
+        let predictionsByID = Dictionary(uniqueKeysWithValues: openPredictions.map { ($0.id, $0) })
+        for proposal in CaptureMatcher.automaticProposals(for: openPredictions, from: feedback) {
+            guard let prediction = predictionsByID[proposal.predictionId],
+                  let events = eventsByID[proposal.eventId], events.count == 1,
+                  let event = events.first else { continue }
+            learn(prediction: prediction, event: event)
         }
     }
 
