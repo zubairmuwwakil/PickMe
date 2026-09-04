@@ -22,6 +22,7 @@ This is the cross-language card-semantics gate already run by CI on every push.
 | [`android/AGENTS.md`](android/AGENTS.md) | changing the Kotlin twin or Android resources |
 | [`catalogue-pipeline/AGENTS.md`](catalogue-pipeline/AGENTS.md) | researching, importing, or promoting card data |
 | [`merchant MCC production architecture`](docs/superpowers/specs/2026-09-04-merchant-mcc-production-architecture-design.md) | changing merchant identity, MCC seeds/learning/community evidence, providers, or Purchase Route MCC semantics |
+| [`exact-MCC provider research`](docs/research/2026-09-04-merchant-mcc-provider-evaluation.md) · [`Mastercard Places POC`](docs/superpowers/plans/2026-09-04-mastercard-places-mcc-poc.md) | evaluating external MCC APIs, account-link providers, or implementing the next provider experiment |
 | [`purchase decision architecture`](docs/superpowers/specs/2026-09-04-purchase-decision-architecture-design.md) | changing how rewards, benefits/protection, or alternate routes combine into the final checkout decision |
 | [`product-boundaries.md`](docs/policies/product-boundaries.md) | changing scope, analytics, dashboards, or ecosystem copy |
 | [`ECOSYSTEM.md`](ECOSYSTEM.md) | doing cross-repo work or checking ownership |
