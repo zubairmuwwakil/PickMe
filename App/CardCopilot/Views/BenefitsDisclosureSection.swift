@@ -2,11 +2,9 @@ import SwiftUI
 import CardCopilotEngine
 import CardCopilotStore
 
-/// Benefit facts and the final-decision bridge under a single reward recommendation.
-///
-/// `RecommendationEngine` still owns reward economics. This section makes it explicit when a
-/// material purchase needs item context before rewards should be treated as the whole decision,
-/// then routes the owner into the existing certificate-backed protection lens.
+/// Quiet certificate-backed benefit facts under a reward recommendation.
+/// Final purchase-decision context and verdicts live in `PurchaseDecisionInlineSection`; this view
+/// intentionally stays factual so checkout asks for purchase type only once.
 struct BenefitsDisclosureSection: View {
     let result: CheckoutResult
     let deps: DependencyGraph
@@ -28,31 +26,11 @@ struct BenefitsDisclosureSection: View {
             catalogue: deps.benefits)
     }
 
-    private var decisionAssessment: PurchaseDecisionAssessment {
-        // The checkout does not know the purchased item type yet. The conservative policy therefore
-        // asks for context on material purchases instead of deriving "electronics" or "phone" from
-        // the merchant's MCC/category.
-        guard case .single(let recommendation) = result.outcome else {
-            return PurchaseDecisionAssessment(verdict: .rewardLeader,
-                                              rewardCardId: winnerCardId)
-        }
-        return PurchaseDecisionAdvisor.assess(
-            rewardRecommendation: recommendation,
-            purchase: purchase,
-            wallet: deps.walletCardIds,
-            benefits: deps.benefits)
-    }
-
     var body: some View {
         let disclosures = disclosureResult
-        let decision = decisionAssessment
-        if decision.verdict != .rewardLeader
-            || !disclosures.recommended.isEmpty
-            || !disclosures.nudges.isEmpty {
+        if !disclosures.recommended.isEmpty || !disclosures.nudges.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 Divider()
-
-                decisionBanner(decision)
 
                 ForEach(disclosures.recommended.prefix(2), id: \.kind) { disclosure in
                     Button {
@@ -89,60 +67,6 @@ struct BenefitsDisclosureSection: View {
                 BenefitDetailSheet(disclosure: disclosure, cardName: cardName(disclosure.cardId))
             }
         }
-    }
-
-    @ViewBuilder
-    private func decisionBanner(_ assessment: PurchaseDecisionAssessment) -> some View {
-        switch assessment.verdict {
-        case .purchaseContextNeeded:
-            VStack(alignment: .leading, spacing: 8) {
-                Label("Rewards are only part of this decision",
-                      systemImage: "shield.lefthalf.filled.trianglebadge.exclamationmark")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.orange)
-
-                Text("This is a material purchase and your wallet has verified shopping protection. PickMe will not infer the item from the merchant category; choose what you are buying to compare protection before treating the reward winner as final.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                HStack(spacing: 8) {
-                    contextButton("Electronics", kind: .electronics)
-                    contextButton("Phone", kind: .mobileDevice)
-                    contextButton("Appliance", kind: .applianceFurniture)
-                }
-            }
-            .padding(10)
-            .background(Color.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
-
-        case .rewardProtectionTradeoff:
-            Label("Reward winner and protection leader differ — compare before paying.",
-                  systemImage: "arrow.left.arrow.right.circle")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.orange)
-
-        case .protectionTradeoffUnresolved:
-            Label("Protection has a genuine trade-off; there is no single protection winner.",
-                  systemImage: "scale.3d")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.orange)
-
-        case .rewardProtectionAligned:
-            Label("Reward and protection signals align for the declared purchase.",
-                  systemImage: "checkmark.shield.fill")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.green)
-
-        case .rewardLeader:
-            EmptyView()
-        }
-    }
-
-    private func contextButton(_ label: String, kind: BenefitContextKind) -> some View {
-        Button(label) { onCompare(kind) }
-            .font(.caption.weight(.semibold))
-            .buttonStyle(.bordered)
-            .controlSize(.small)
     }
 
     private func cardName(_ cardId: String) -> String {
