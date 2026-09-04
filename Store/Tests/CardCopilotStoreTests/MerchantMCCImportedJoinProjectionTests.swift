@@ -68,9 +68,10 @@ final class MerchantMCCImportedJoinProjectionTests: XCTestCase {
         _ = try imported.importCSV(Data(csv(mcc: 5411).utf8), localPurchases: [purchase],
                                    cardNetworksByID: ["visa-card": "visa"])
         let historicalEvidence = MerchantMCCGraphEvidenceBuilder.evidence(from: [purchase])
+        let historical = try XCTUnwrap(historicalEvidence.first)
         let importedEvidence = try XCTUnwrap(imported.evidence().first)
 
-        XCTAssertNotEqual(importedEvidence.id, historicalEvidence.first?.id,
+        XCTAssertNotEqual(importedEvidence.id, historical.id,
                           "a disagreement must not be hidden by cross-source dedupe")
         let prediction = MerchantMCCGraph.predict(
             for: MerchantMCCQuery(merchantKey: "Metro", latitude: 43.653,
