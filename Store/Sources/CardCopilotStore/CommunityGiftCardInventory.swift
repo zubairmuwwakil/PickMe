@@ -20,6 +20,54 @@ public struct CommunityGiftCardInventorySettingsStore: @unchecked Sendable {
 
     public func setEnabled(_ enabled: Bool) {
         defaults.set(enabled, forKey: key)
+        if !enabled {
+            CommunityGiftCardInventoryCacheStore().replace([])
+        }
+    }
+}
+
+/// Volatile community evidence is kept separate from the owner's append-only local confirmations.
+/// It is safe to replace wholesale after each nearby query and is cleared immediately on opt-out.
+public struct CommunityGiftCardInventoryCacheStore: @unchecked Sendable {
+    private struct Envelope: Codable {
+        let schemaVersion: Int
+        let evidence: [GiftCardInventoryObservation]
+        let refreshedAt: Date
+    }
+
+    private let defaults: UserDefaults
+    private let key: String
+
+    public init(suiteName: String? = nil,
+                key: String = "pickme.communityGiftCardInventory.cache.v1") {
+        if let suiteName, let scoped = UserDefaults(suiteName: suiteName) {
+            self.defaults = scoped
+        } else {
+            self.defaults = .standard
+        }
+        self.key = key
+    }
+
+    public func evidence(now: Date = Date()) -> [GiftCardInventoryObservation] {
+        guard CommunityGiftCardInventorySettingsStore().isEnabled,
+              let data = defaults.data(forKey: key),
+              let envelope = try? JSONDecoder().decode(Envelope.self, from: data),
+              envelope.schemaVersion == 1,
+              now.timeIntervalSince(envelope.refreshedAt) <= 6 * 60 * 60 else {
+            return []
+        }
+        return envelope.evidence
+    }
+
+    public func replace(_ evidence: [GiftCardInventoryObservation], now: Date = Date()) {
+        if evidence.isEmpty {
+            defaults.removeObject(forKey: key)
+            return
+        }
+        let communityOnly = evidence.filter { $0.source == .communityObserved }
+        guard let data = try? JSONEncoder().encode(
+            Envelope(schemaVersion: 1, evidence: communityOnly, refreshedAt: now)) else { return }
+        defaults.set(data, forKey: key)
     }
 }
 
