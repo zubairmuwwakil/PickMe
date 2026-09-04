@@ -3,7 +3,7 @@ import Foundation
 /// Benefits are card metadata verified only by reading certificates of insurance —
 /// a different truth procedure from earn rules (statement reconciliation) — so they live
 /// in their own catalogue with their own provenance ladder (spec B5).
-public enum BenefitVerification: String, Codable, Sendable {
+public enum BenefitVerification: String, Codable, Equatable, Sendable {
     case stub               // Claude-drafted scaffolding; never trusted display
     case issuerPage         // matches the public marketing page
     case certificateVerified // checked against the owner's actual cardholder document
@@ -17,7 +17,7 @@ public enum BenefitFamily: String, CaseIterable, Sendable {
 
 /// The ten known benefit kinds (spec §4). `Benefit.kind` is an open string;
 /// unknown kinds decode fine and are ignored by advisor logic.
-public enum BenefitKind: String, CaseIterable, Sendable {
+public enum BenefitKind: String, CaseIterable, Hashable, Sendable {
     case purchaseProtection, extendedWarranty, mobileDeviceInsurance
     case flightDelay, baggageDelay, baggageLoss, tripCancellation, tripInterruption
     case rentalCdw, travelMedical
