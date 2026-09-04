@@ -21,6 +21,7 @@ This is the cross-language card-semantics gate already run by CI on every push.
 | [`Engine/AGENTS.md`](Engine/AGENTS.md) | changing Swift semantics or contract bytes |
 | [`android/AGENTS.md`](android/AGENTS.md) | changing the Kotlin twin or Android resources |
 | [`catalogue-pipeline/AGENTS.md`](catalogue-pipeline/AGENTS.md) | researching, importing, or promoting card data |
+| [`merchant MCC architecture`](docs/superpowers/specs/2026-09-04-merchant-mcc-graph-seed-design.md) | changing merchant MCC seeds, learning, community evidence, providers, or Purchase Route MCC semantics |
 | [`product-boundaries.md`](docs/policies/product-boundaries.md) | changing scope, analytics, dashboards, or ecosystem copy |
 | [`ECOSYSTEM.md`](ECOSYSTEM.md) | doing cross-repo work or checking ownership |
 
