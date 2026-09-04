@@ -17,5 +17,12 @@ issuer-confirmed sourcing bar. Read the
 [`card-contract-authoring` skill](../.claude/skills/card-contract-authoring/SKILL.md)
 before changing a contract, schema, fixture, or release stamp.
 
+Before changing how reward economics, benefit/protection facts, or Purchase Routes
+combine into a final recommendation, read
+[`purchase-decision-architecture-design.md`](../docs/superpowers/specs/2026-09-04-purchase-decision-architecture-design.md).
+The current policy is versioned and intentionally replaceable; change it when a
+more defensible/high-ROI model exists, but preserve provenance, tests, and the
+Swift-first/Kotlin-twin migration rules documented there.
+
 Anything not named here and not caught by `swift test` is yours to decide. Work
 directly on `main`; do not create branches or pull requests.
