@@ -68,14 +68,32 @@ final class LiveMerchantProvider: MerchantProviding {
         let cache = CommunityMerchantMCCCacheStore()
         guard settings.isEnabled else {
             cache.replace([])
+            CommunityMerchantMCCPendingStore.shared.clear()
             return
         }
         guard let baseURL = MoneyTalksConfiguration.apiBaseURL else { return }
+        let client = CommunityMerchantMCCClient(baseURL: baseURL)
+
         do {
-            let client = CommunityMerchantMCCClient(baseURL: baseURL)
             cache.replace(try await client.evidence(nearby: places))
         } catch {
             // Keep a still-fresh cache. Community evidence is never required for checkout.
+        }
+
+        // Upload only reconciliation rows that already passed the Store's explicit-MCC gate.
+        // The observation UUID is the server primary key, so a crash after POST but before local
+        // dequeue is harmless: the next attempt receives a duplicate success and clears it then.
+        let pending = CommunityMerchantMCCPendingStore.shared.reports()
+        guard !pending.isEmpty else { return }
+        Task.detached(priority: .utility) {
+            for report in pending {
+                do {
+                    try await client.submit(report)
+                    CommunityMerchantMCCPendingStore.shared.markSubmitted(report.observationID)
+                } catch {
+                    // Leave the row queued. The next nearby refresh will retry it.
+                }
+            }
         }
     }
 
