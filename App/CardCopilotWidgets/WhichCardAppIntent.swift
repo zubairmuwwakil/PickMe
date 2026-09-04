@@ -139,9 +139,19 @@ public struct WhichCardIntent: AppIntent {
         let engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
         let explainer = RecommendationExplainer(catalogue: catalogue)
 
-        // 1. Check Pre-Indexed Canadian Merchants
-        let preIndexed = CanadianMerchantPreIndex.search(trimmedQuery, limit: 1)
-        if let merchant = preIndexed.first {
+        // 1. Check Pre-Indexed Canadian Merchants.
+        //
+        // Recognition first, search only as a fallback for fragments. `search` matches when the
+        // query is a substring of the DISPLAY name, so it cannot see a brand inside a fuller
+        // string — "Costco Wholesale Kanata" and "AMZN MKTP CA" both come back empty — while
+        // `recognise` matches the pack's curated descriptor keys as whole words, longest first.
+        // This block prints "Does not accept American Express", so the row it picks is an
+        // affirmative claim, not a suggestion; the fallback survives only because `search` needs
+        // the query to be a substring of a real brand name, which cannot reach a grocery banner
+        // from an unrelated restaurant's name.
+        let preIndexed = MerchantRecognizer.recognise(trimmedQuery)
+            ?? CanadianMerchantPreIndex.search(trimmedQuery, limit: 1).first
+        if let merchant = preIndexed {
             let context = PurchaseContext(
                 amountCad: purchaseAmount,
                 category: merchant.category,
@@ -232,9 +242,11 @@ public struct AnalyzeCartScreenshotIntent: AppIntent {
             detectedAmount = Double(text[range]) ?? 50.0
         }
 
-        // Scan against known Canadian merchants
-        let preIndexed = CanadianMerchantPreIndex.search(text, limit: 1)
-        if let merchant = preIndexed.first {
+        // Scan against known Canadian merchants. `text` here is a whole sentence or a pasted
+        // receipt line, which is the one shape `search` can never match — it asks whether the
+        // query is inside a brand name, and this is the reverse question. Recognition is the
+        // right tool and the reason this branch starts firing at all.
+        if let merchant = MerchantRecognizer.recognise(text) {
             detectedMerchant = merchant.name
         }
 

@@ -57,6 +57,56 @@ final class CheckoutServiceTests: XCTestCase {
                      "unknown merchants pass no brand — engine predicates must not fire")
     }
 
+    // MARK: network acceptance is recognised, never guessed
+
+    /// Removing `.amex` is an affirmative negative claim: the app renders it as "does not accept
+    /// American Express" and withholds the owner's best dining card. Nothing the owner can see
+    /// ever contradicts it, so it must come from recognition and not from a name that happens to
+    /// share letters with a grocery banner.
+    ///
+    /// Each name below was resolved to the banner in the comment by the substring matcher this
+    /// function used before 2026-09-04, which compared the POI name to each row's DISPLAY name in
+    /// both directions and took the first pack row that matched. Two are fixed by tokenising
+    /// ("maxi" is no longer inside "Maxime's"); two needed the pack to drop a single-token needle
+    /// that was an ordinary English word on a row that removes Amex.
+    ///
+    /// NOT fixed here, and deliberately: "Dominion Square Tavern" still resolves to the Dominion
+    /// grocery banner, because that row's displayName IS "Dominion" and
+    /// `MerchantRecognizerTests.testEveryIndexedMerchantRecognisesItself` requires a row to be
+    /// reachable from its own name. Narrowing the needle to "dominion stores" needs the
+    /// displayName narrowed too, and `PreIndexedMerchant.id` is derived from displayName and
+    /// persisted by `MerchantPatronageStore` — so that is a migration, not an edit. Same shape:
+    /// "No Frills Fitness" -> no-frills.
+    func testAmexIsNotWithheldFromMerchantsThatMerelyShareLettersWithAGrocer() {
+        let open: Set<Network> = [.amex, .visa, .mastercard]
+        // -> real-canadian-superstore, via the bare "superstore" needle
+        XCTAssertEqual(knownAcceptedNetworks(for: nil, merchantName: "Superstore Liquidation"), open)
+        // -> maxi, by substring
+        XCTAssertEqual(knownAcceptedNetworks(for: nil, merchantName: "Maxime's Bistro"), open)
+        // -> metro (which also mis-set the category to grocery)
+        XCTAssertEqual(knownAcceptedNetworks(for: nil, merchantName: "Metropolitan Hotel"), open)
+        // -> fortinos, via the singular "fortino" needle (an Italian surname)
+        XCTAssertEqual(knownAcceptedNetworks(for: nil, merchantName: "Fortino Ristorante"), open)
+    }
+
+    /// The narrowing must still happen for the merchants that earned it, including inside a
+    /// fuller POI string — a store number or city suffix is how these names actually arrive.
+    func testRecognisedGrocersStillNarrowAcceptance() {
+        XCTAssertEqual(knownAcceptedNetworks(for: nil, merchantName: "Costco Wholesale #536"),
+                       [.mastercard])
+        XCTAssertEqual(knownAcceptedNetworks(for: nil, merchantName: "No Frills Bramalea"),
+                       [.mastercard, .visa])
+        XCTAssertEqual(knownAcceptedNetworks(for: nil, merchantName: "Bulk Barn"),
+                       [.mastercard, .visa])
+    }
+
+    /// An unrecognised merchant fails toward the open default. The owner taps a second card and
+    /// learns something; the reverse failure is silent and permanent.
+    func testUnrecognisedMerchantsGetTheOpenDefault() {
+        XCTAssertEqual(knownAcceptedNetworks(for: nil, merchantName: "Fresh Foods Market"),
+                       [.amex, .visa, .mastercard])
+    }
+
     // MARK: single-outcome flow
 
     func testUnambiguousGroceryProducesSingleOutcomeAndPersists() throws {

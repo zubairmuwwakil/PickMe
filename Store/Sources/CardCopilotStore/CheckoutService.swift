@@ -18,15 +18,24 @@ public func canonicalEngineBrand(_ merchantName: String) -> String? {
 }
 
 /// Acceptance constraints knowable from the brand or merchant name.
+///
+/// Recognition, not search. Until this used `MerchantRecognizer` it compared the POI name to
+/// each row's DISPLAY name with a bidirectional substring test — `clean.contains(pre) ||
+/// pre.contains(clean)` — taking whichever row happened to come first in the pack. That resolved
+/// "Dominion Square Tavern" to the Dominion grocery banner, "Maxime's Bistro" to Maxi, and
+/// "No Frills Fitness" to No Frills, each of which narrows acceptance to Mastercard/Visa and
+/// suppresses an Amex winner at a restaurant. It is the exact failure `MerchantRecognizer.tokens`
+/// documents ("Rigatoni's", "Essential Oils", "Metropolitan Hotel") and the reason the pack
+/// curates `matchKeys` at all.
+///
+/// The asymmetry is what makes a wrong answer here expensive. Returning the open default costs
+/// the owner one extra tap at the till and they see it happen. Removing `.amex` prints "does not
+/// accept American Express" and silently withholds their best card, and nothing they can observe
+/// ever contradicts it. So a merchant that cannot be recognised with certainty gets the default,
+/// never a guessed narrowing.
 public func knownAcceptedNetworks(for brand: String?, merchantName: String? = nil) -> Set<Network> {
-    if let merchantName {
-        let clean = merchantName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if let match = CanadianMerchantPreIndex.all.first(where: {
-            let pre = $0.name.lowercased()
-            return clean == pre || clean.contains(pre) || pre.contains(clean)
-        }) {
-            return match.acceptedNetworks
-        }
+    if let merchantName, let match = MerchantRecognizer.recognise(merchantName) {
+        return match.acceptedNetworks
     }
     return brand == "costco" ? [.mastercard] : [.amex, .visa, .mastercard]
 }
