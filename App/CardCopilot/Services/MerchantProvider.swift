@@ -92,13 +92,13 @@ final class LiveMerchantProvider: MerchantProviding {
         }
 
         // Upload recent owner-confirmed inventory in the background. Observation UUIDs make retry
-        // idempotent, so there is no "sent" identifier tied back to an account or device.
+        // idempotent, so there is no "sent" identifier tied back to an account or device. Local
+        // observations already normalize their gift-card key, so do not compare it to a UI label.
         let cutoff = Date().addingTimeInterval(-30 * 86_400)
         let local = await GiftCardInventoryObservationStore.shared.observations()
         let pending = local.filter {
             $0.source == .ownerConfirmed
                 && $0.observedAt >= cutoff
-                && instruments.contains($0.instrumentKey)
                 && ($0.placeID != nil || ($0.latitude != nil && $0.longitude != nil))
         }.suffix(20)
         guard !pending.isEmpty else { return }
