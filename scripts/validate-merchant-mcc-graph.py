@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Validate PickMe's merchant MCC graph seed invariants.
 
-This deliberately uses only the Python standard library so it can run anywhere CI runs.
-JSON Schema remains the shape contract; this script checks cross-record invariants that
-JSON Schema cannot express cleanly.
+Uses only the Python standard library. The graph is intentionally sharded so the
+500-merchant seed stays reviewable; manifest.json defines the shard set.
 """
 from __future__ import annotations
 
@@ -13,7 +12,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-GRAPH = ROOT / "contracts" / "merchant-mcc-graph.seed.json"
+GRAPH_DIR = ROOT / "contracts" / "merchant-mcc-graph"
+MANIFEST = GRAPH_DIR / "manifest.json"
 
 
 def fail(message: str) -> None:
@@ -21,13 +21,32 @@ def fail(message: str) -> None:
     raise SystemExit(1)
 
 
-def main() -> None:
-    data = json.loads(GRAPH.read_text(encoding="utf-8"))
+def load_json(path: Path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        fail(f"missing {path.relative_to(ROOT)}")
+    except json.JSONDecodeError as exc:
+        fail(f"{path.relative_to(ROOT)} is invalid JSON: {exc}")
 
-    merchants = data.get("merchants", [])
-    profiles = data.get("profiles", {})
-    categories = data.get("categories", {})
-    observations = data.get("observations", [])
+
+def main() -> None:
+    manifest = load_json(MANIFEST)
+    files = manifest.get("files", {})
+    categories = manifest.get("categories", {})
+    profiles = load_json(GRAPH_DIR / files["profiles"])
+    observations = load_json(GRAPH_DIR / files["observations"])
+
+    shard_names = files.get("merchantShards", [])
+    if len(shard_names) != 10:
+        fail(f"expected 10 merchant shards, found {len(shard_names)}")
+
+    merchants = []
+    for shard_name in shard_names:
+        shard = load_json(GRAPH_DIR / shard_name)
+        if not isinstance(shard, list) or len(shard) != 50:
+            fail(f"{shard_name} must contain exactly 50 merchants")
+        merchants.extend(shard)
 
     if len(merchants) != 500:
         fail(f"expected exactly 500 seed merchants, found {len(merchants)}")
