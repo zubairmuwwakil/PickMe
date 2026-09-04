@@ -1,7 +1,7 @@
 # Free-production MCC sources — hard product constraint
 
 **Date:** 2026-09-04  
-**Status:** active product constraint; strict owner-file importer implemented  
+**Status:** active product constraint; strict owner-file importer and Settings UI implemented  
 **Owner decision:** recurring production cost for merchant/MCC enrichment must be **$0** unless the owner explicitly revisits this decision.
 
 ## Decision
@@ -96,6 +96,7 @@ PickMe now includes:
 - `Store/Sources/CardCopilotStore/MerchantMCCExactImport.swift`
 - `Store/Tests/CardCopilotStoreTests/MerchantMCCExactImportTests.swift`
 - `Store/Tests/CardCopilotStoreTests/MerchantMCCLearningEraseTests.swift`
+- `App/CardCopilot/Views/SettingsView.swift` — local **Import issuer MCC CSV** file picker and aggregate-only result surface.
 
 ### Accepted input
 
@@ -105,7 +106,7 @@ The first implementation accepts UTF-8 CSV when it contains all three semantic f
 2. explicit `MCC`, `MCC Code`, or `Merchant Category Code`;
 3. transaction/posting date.
 
-A Visa Business Reporting mode tags imported evidence with `network = visa` when the export does not provide a network column.
+A Visa Business Reporting source mode is available to Store adapters and tags imported evidence with `network = visa` when the export does not provide a network column. The generic Settings importer does not guess an issuer/network from the filename.
 
 ### Explicit rejection rules
 
@@ -130,7 +131,7 @@ The importer persists only normalized MCC evidence:
 - literal MCC;
 - optional network;
 - observation date;
-- a one-way row fingerprint used only for idempotency.
+- an idempotency key constructed only from those retained facts plus source type.
 
 It does **not** persist imported:
 
@@ -140,7 +141,30 @@ It does **not** persist imported:
 - filename;
 - statement text.
 
-Re-importing the same row is idempotent.
+The dedupe identity is scoped to:
+
+```text
+source + canonical merchant + UTC day + MCC + network
+```
+
+That design is deliberate. It prevents unrelated CSV fields from leaking indirectly through a whole-row hash and ensures multiple same-day purchases at the same merchant/MCC do not artificially inflate corroboration merely because the owner bought there more often.
+
+Re-importing the same evidence is idempotent.
+
+### User-facing behavior
+
+Settings now exposes **Import issuer MCC CSV** under Merchant MCC learning.
+
+The UI:
+
+- uses the system file picker;
+- reads the selected file locally;
+- calls the Store importer rather than reimplementing parsing in App;
+- displays aggregate imported/duplicate/skipped counts only;
+- never uploads the file;
+- does not persist the raw file.
+
+The first UI slice supports CSV/text only. If a reporting product delivers CSV inside ZIP, manual extraction is acceptable until a dependency-light ZIP path has demonstrated enough value.
 
 ### Why imported MCC is a separate evidence kind
 
@@ -163,7 +187,7 @@ A future safe local join may promote an imported row into `directOwnerMcc` only 
 - reward-derived MCC evidence;
 - imported exact-MCC evidence.
 
-This closes a pre-existing gap where reward MCC evidence could survive the local-history erase.
+The Settings and account-deletion copy explicitly mentions local MCC learning. This also closes a pre-existing gap where reward MCC evidence could survive the local-history erase.
 
 ## Highest-ROI free architecture
 
@@ -207,15 +231,7 @@ This has effectively zero incremental data-provider cost and improves as real us
 
 ## Highest-ROI next engineering work under the free constraint
 
-### P0 — make imports user-accessible
-
-The Store importer is implemented. The next UI slice is a simple local file picker/import result surface in PickMe Settings or reconciliation.
-
-Do not add a second parsing implementation in App. The UI should call `MerchantMCCImportedEvidenceStore.importCSV` and display only aggregate import counts/errors.
-
-Initial UI should support CSV only. Visa Business Reporting may deliver CSV inside a ZIP; automatic ZIP extraction can be added only if it stays dependency-light and reliable. Manual extraction is acceptable for the first UI slice.
-
-### P1 — safe local purchase join
+### P0 — safe local purchase join
 
 Imported rows become substantially more valuable if PickMe can join them to an existing local purchase/location without ambiguity.
 
@@ -239,7 +255,7 @@ ambiguous or zero matches
     -> keep ownerImportedMcc only
 ```
 
-Do not majority-vote ambiguous matches.
+Do not majority-vote ambiguous matches. Do not promote a brand-level import simply because its MCC agrees with the seed.
 
 ### P1 — let real usage generate evidence
 
