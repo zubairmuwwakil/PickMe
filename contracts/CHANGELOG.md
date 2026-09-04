@@ -2,6 +2,25 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-09-04 — card-catalogue 2.21: restore the SavorOne tombstone
+
+**Id permanence repair; no scoring change.** `capital-one-savorone-rewards-from-capital-one`
+shipped in `card-contracts@2.7` and was then *deleted* from the catalogue on 2026-08-31
+(commit 8905600) rather than tombstoned, which is what `scripts/check-id-permanence.sh` has been
+failing on since: prediction rows, owner state and other repos key on these ids, so a deleted id
+is an id that stops resolving in history someone already recorded.
+
+- The row is restored exactly as it shipped in 2.7 — a `status: draft` record with no earn rules —
+  plus `lifecycleStatus: "withdrawn"` and `effectiveTo: "2026-08-31"`, the day it was removed.
+  That date matches `citi-custom-cash-card`, tombstoned in the same cleanup, and the key order
+  follows that row since it is the catalogue's only other tombstone.
+- `status` stays `draft`. Lifecycle is independent of publication status (the schema says so
+  outright), and promoting it to `published` would assert an issuer verification that never
+  happened — the record was a draft when it was removed and it is a draft now.
+- No scoring change. The Scorer excludes it twice over: `isPublished` fails for a draft, and
+  `isScoreable` fails for a card withdrawn before today. It is resolvable by id and nothing else.
+- **MINOR 2.20 → 2.21.**
+
 ## 2026-09-04 — merchant-pack 1.1: a narrowing needs a source
 
 **Additive schema field; one editorial correction.** `acceptedNetworks` treated both directions as
