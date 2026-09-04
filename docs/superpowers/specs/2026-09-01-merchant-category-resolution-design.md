@@ -290,13 +290,10 @@ must stay green.
 
 ## Follow-on, deliberately out of scope
 
-**Stable merchant identity.** `LiveMerchantProvider.syntheticId(name:coordinate:)`
+**Stable merchant identity.** ~~`LiveMerchantProvider.syntheticId(name:coordinate:)`
 produces `"Metro@43.65,-79.38"`. If MapKit nudges a coordinate, it becomes a
-different merchant and the owner's learned confirmations orphan. iOS 18 is the
-deployment target and `MKMapItem.identifier` should be available there — to be
-verified against the SDK before relying on it. This is a precondition for any
-future shared learning, but it is not required by the three fixes above and would
-widen the change.
+different merchant and the owner's learned confirmations orphan.~~ **Done
+(e0b0863)** — see the note below.
 
 **E-receipt evidence.** MoneyTalks owns email ingestion, and the pack already
 carries `emailDomains` for 45 merchants. A receipt names the merchant
@@ -349,3 +346,54 @@ They were generated from display names into a file nothing read, and the moment
 recognition started reading it they made "Taco Bell" a hydro account and every
 business in two cities a transit merchant. The old derivation logic had refused to
 produce exactly these; the pack's own curation rule already forbids them.
+
+
+## Addendum (2026-09-03): stable merchant identity, and one correction to this file
+
+`MKMapItem.identifier` is confirmed available at the 18.0 deployment floor
+(`iPhoneOS26.2.sdk` `MKMapItem.h:24`), nullable. The line this spec did not know
+about is the next one: `alternateIdentifiers`, Apple's continuity mechanism for a
+place record that was merged or reissued. Matching only the primary id produces a
+second, rarer generation of the same orphan, so `MerchantIdentity` matches against
+the whole set.
+
+Adopted **beside** `NearbyPlace.id`, not into it. Four keyspaces are already built
+on that string — the mute list, saved arrival preferences,
+`StoredPrediction.merchantIdentifier`, `StoredPurchase.merchantIdentifier` — and
+moving all four at once to fix an orphan is how you cause one.
+
+**There is no data migration, because there cannot honestly be one.** No offline
+function maps `"Metro@43.65,-79.38"` to an `MKMapItem.Identifier`. Recovering one
+means a live MapKit search per stored merchant — network, on a background budget,
+for a place that may have closed, with no way to tell a correct answer from the
+shop next door. A stage that guessed would bind a confirmed category to the wrong
+storefront, which is strictly worse than the orphan it set out to fix. So schema
+V6 adds one nullable column and the migration is a *read-path ladder*: place id
+→ legacy identifier → same name within 100 m, with the place id backfilled on the
+next real encounter. Every existing row works from day one at rung 2.
+
+`AreaMember.identifier` was checked as a carrier, per this spec's suggestion, and
+is **not** suitable: it is a 90-day cache row deleted and rewritten wholesale on
+every `DiscoveryCache.record(cellKey:)`, holding no owner decision. It is not
+where the orphan lives — `StoredMerchant.identifier` is.
+
+### Correction to the over-merge diagnosis
+
+The follow-on work also fixed `merchantActivityKey` collapsing every same-named
+independent into one `local:` key. The reasoning that motivated it was wrong in
+one respect, recorded here so it is not repeated: pooled `local:` patronage
+**cannot** promote a merchant to `.frequented`. Every promotion path —
+`resolveDiscoveredMerchant` and `AmbientLocationService.rotateRegions` — tests
+`frequentedKeys.contains(indexed.id)` against a `MerchantRecognizer` **chain** id,
+and a `local:` key is never the subject of that test.
+
+What the collapse actually broke was consent, not classification: `block` on one
+"Rose Cafe" wiped every namesake's visits and suppressed them all permanently, a
+`.disabled` preference silenced namesakes and the second save overwrote the
+first, and `learnedMerchants` showed one pooled row. That reclassifies it below
+the over-split in priority — the over-split degrades the top rung of the
+confidence ladder on every checkout — but it does not make it less real.
+
+The fix needed no migration either, for the same structural reason: with no
+coordinates, `merchantActivityKey` returns byte-identical output to before, so
+every stored key, preference and block stays valid as the weaker of two tiers.
