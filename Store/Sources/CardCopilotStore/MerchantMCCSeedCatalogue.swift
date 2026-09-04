@@ -73,19 +73,36 @@ public enum MerchantMCCSeedCatalogue {
         for merchant in merchants { result[normalized(merchant.name)] = merchant }
         return result
     }()
-    private static let merchantById: [String: MerchantMCCSeedMerchant] =
-        Dictionary(uniqueKeysWithValues: merchants.map { ($0.id, $0) })
+
+    /// Multi-word seed names used for a conservative descriptor fallback. One-word brands are not
+    /// allowed to expand this way: `Metro Pizza` must never become `Metro`. Curated one-word alias
+    /// handling remains MerchantRecognizer's job.
+    private static let descriptorTokenIndex: [(merchant: MerchantMCCSeedMerchant, tokens: [String])] =
+        merchants.compactMap { merchant in
+            let merchantTokens = tokens(merchant.name)
+            guard merchantTokens.count >= 2 else { return nil }
+            return (merchant, merchantTokens)
+        }
 
     /// Resolves a MapKit/Wallet merchant name through the curated merchant recognizer first, then
-    /// performs exact normalized seed-name matching. The exact fallback expands coverage to the
-    /// 500-row graph without reintroducing substring failures such as Metro -> Metropolitan Hotel.
+    /// exact normalized seed-name matching, then a conservative multi-token descriptor match.
+    /// The last rung handles suffixes such as store numbers/cities for the wider 500-row seed while
+    /// retaining token boundaries and longest-match semantics. Raw substring matching is forbidden.
     public static func match(merchantName: String) -> MerchantMCCSeedMatch? {
         let recognized = MerchantRecognizer.recognise(merchantName)
         let canonicalName = recognized?.name ?? merchantName
-        guard let merchant = merchantByNormalizedName[normalized(canonicalName)],
+
+        if let merchant = merchantByNormalizedName[normalized(canonicalName)],
+           let profile = profiles[merchant.profile] {
+            return MerchantMCCSeedMatch(merchant: merchant, profile: profile,
+                                        recognizedMerchant: recognized)
+        }
+
+        guard recognized == nil,
+              let merchant = descriptorMatch(merchantName),
               let profile = profiles[merchant.profile] else { return nil }
         return MerchantMCCSeedMatch(merchant: merchant, profile: profile,
-                                    recognizedMerchant: recognized)
+                                    recognizedMerchant: nil)
     }
 
     public static func seedMCC(for merchantName: String) -> Int? {
@@ -116,6 +133,25 @@ public enum MerchantMCCSeedCatalogue {
         }
     }
 
+    private static func descriptorMatch(_ value: String) -> MerchantMCCSeedMerchant? {
+        let haystack = tokens(value)
+        guard !haystack.isEmpty else { return nil }
+
+        var best: (merchant: MerchantMCCSeedMerchant, length: Int)?
+        var tiedAtBestLength = false
+        for entry in descriptorTokenIndex where contains(haystack, entry.tokens) {
+            if best == nil || entry.tokens.count > best!.length {
+                best = (entry.merchant, entry.tokens.count)
+                tiedAtBestLength = false
+            } else if entry.tokens.count == best!.length,
+                      entry.merchant.id != best!.merchant.id {
+                tiedAtBestLength = true
+            }
+        }
+        guard !tiedAtBestLength else { return nil }
+        return best?.merchant
+    }
+
     private static var generatedDate: Date {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -126,13 +162,23 @@ public enum MerchantMCCSeedCatalogue {
     }
 
     private static func normalized(_ value: String) -> String {
+        tokens(value).joined(separator: " ")
+    }
+
+    private static func tokens(_ value: String) -> [String] {
         value.folding(options: [.diacriticInsensitive, .caseInsensitive],
                       locale: Locale(identifier: "en_CA"))
-            .unicodeScalars
-            .map { CharacterSet.alphanumerics.contains($0) ? Character(String($0)) : " " }
-            .split(whereSeparator: { $0 == " " })
-            .map(String.init)
-            .joined(separator: " ")
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+    }
+
+    private static func contains(_ haystack: [String], _ needle: [String]) -> Bool {
+        guard !needle.isEmpty, needle.count <= haystack.count else { return false }
+        for start in 0...(haystack.count - needle.count)
+        where Array(haystack[start..<(start + needle.count)]) == needle {
+            return true
+        }
+        return false
     }
 
     private static func decodeResource<T: Decodable>(_ name: String) -> T {
