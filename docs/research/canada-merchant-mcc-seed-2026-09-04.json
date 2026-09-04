@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "asOf": "2026-09-04",
+  "purpose": "Initial Canadian merchant MCC seed evidence for PickMe's learning merchant graph.",
+  "policy": {
+    "seedIsGroundTruth": false,
+    "notes": [
+      "These are seed priors, not payment-network observations made by PickMe.",
+      "Location-specific evidence must not be promoted to a universal brand MCC without repeated evidence.",
+      "Observed/crowdsourced evidence should supersede seed priors once confidence is sufficient.",
+      "Store merchant, location, channel, network when known, source, timestamp, MCC and confidence separately."
+    ],
+    "suggestedConfidence": {
+      "network_observed": 0.95,
+      "repeated_observation": 0.85,
+      "user_confirmation": 0.70,
+      "external_location_reports": 0.65,
+      "brand_prior": 0.50,
+      "category_prior": 0.30
+    }
+  },
+  "sources": [
+    {
+      "id": "mcc-codes-ca-5411",
+      "url": "https://www.mcc-codes.com/Canada/5411",
+      "type": "community_location_reports",
+      "usage": "Individual merchant/location seed evidence only; not bulk-copied."
+    },
+    {
+      "id": "pickme-merchant-pack",
+      "url": "https://github.com/zubairmuwwakil/PickMe/blob/main/contracts/merchant-pack.json",
+      "type": "pickme_editorial_prior",
+      "usage": "Existing PickMe editorial priors; explicitly not observed network MCC data."
+    }
+  ],
+  "seedEvidence": [
+    {"merchantKey":"walmart","displayName":"Walmart","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
+    {"merchantKey":"costco-wholesale","displayName":"Costco Wholesale","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
+    {"merchantKey":"no-frills","displayName":"No Frills","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
+    {"merchantKey":"real-canadian-superstore","displayName":"Real Canadian Superstore","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
+    {"merchantKey":"food-basics","displayName":"Food Basics","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
+    {"merchantKey":"metro","displayName":"Metro","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
+    {"merchantKey":"sobeys","displayName":"Sobeys","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
+    {"merchantKey":"safeway","displayName":"Safeway","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
+    {"merchantKey":"farm-boy","displayName":"Farm Boy","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
+    {"merchantKey":"quality-foods","displayName":"Quality Foods","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
+    {"merchantKey":"thrifty-foods","displayName":"Thrifty Foods","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
+    {"merchantKey":"whole-foods-market","displayName":"Whole Foods Market","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"}
+  ],
+  "importantCounterexample": {
+    "merchantKey": "shoppers-drug-mart",
+    "displayName": "Shoppers Drug Mart",
+    "reportedMcc": 5411,
+    "expectedCategoryPrior": 5912,
+    "sourceId": "mcc-codes-ca-5411",
+    "lesson": "Do not model a merchant brand as permanently equal to one MCC. Keep observations location/channel-aware and allow a distribution of MCCs."
+  }
+}
