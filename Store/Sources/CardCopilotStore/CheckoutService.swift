@@ -184,8 +184,33 @@ public struct CheckoutService {
     public func recommend(merchant: NearbyPlace, amountCad: Double?,
                           asOf: String,
                           purchaseSource: PurchaseActivitySource = .pickMeCheckout) throws -> CheckoutResult {
-        let prediction = try confirmedPrediction(forMerchantId: merchant.id)
+        // One identity decision per checkout, reused twice below: it settles both which owner
+        // confirmation applies and which identifier this prediction is filed under. Deciding those
+        // separately is how `promoteMerchant` ends up looking for a row that the category lookup
+        // already found under a different string.
+        let known = MerchantIdentity.match(merchant, in: try knownMerchants())
+        if let known, MerchantIdentity.backfill(known.merchant, from: merchant) {
+            // A read path that writes, deliberately: this is the only moment the app holds both a
+            // stored row and a live MapKit answer for it, so it is the only moment the place-id
+            // backfill is free and certain. Failure is swallowed — a checkout must not fail
+            // because a merchant could not be annotated.
+            try? context.save()
+        }
+        let prediction = confirmedPrediction(from: known)
             ?? resolveCategory(for: merchant)
+        // The matched row's own identifier, not the live one. `StoredPrediction` is joined back to
+        // `StoredMerchant` by this string when a reconciled purchase promotes a terminal
+        // (`PredictionLog.promoteMerchant`), and that join is plain equality with no ladder beneath
+        // it — a prediction filed under today's freshly-rendered coordinate string could never
+        // promote the row it was actually scored against. Written out rather than reached for with
+        // `??`, because `known?.merchant.identifier` is doubly optional and a matched row whose own
+        // identifier is nil would otherwise file this prediction under nothing at all.
+        let filedMerchantIdentifier: String
+        if let storedIdentifier = known?.merchant.identifier {
+            filedMerchantIdentifier = storedIdentifier
+        } else {
+            filedMerchantIdentifier = merchant.id
+        }
         metrics.record(.resolved(rung: prediction.confidenceSource,
                                  forked: prediction.candidates.count > 1))
         let brand = canonicalEngineBrand(merchant.name)
@@ -244,7 +269,7 @@ public struct CheckoutService {
         }
         let stored = try log.record(StoredPrediction(
             merchantName: merchant.name,
-            merchantIdentifier: merchant.id,
+            merchantIdentifier: filedMerchantIdentifier,
             predictedCategory: prediction.category,
             confidenceSource: prediction.confidenceSource,
             winnerCardId: primary.winner.cardId,
@@ -327,10 +352,18 @@ public struct CheckoutService {
     /// exact terminal outranks every brand prior and POI guess, and leaves a single candidate —
     /// which is what collapses the fork and makes the fork view's promise ("next time the answer
     /// is instant") literally true.
-    private func confirmedPrediction(forMerchantId id: String) throws -> CategoryPrediction? {
-        let matches = try context.fetch(FetchDescriptor<StoredMerchant>(
-            predicate: #Predicate { $0.identifier == id }))
-        guard let merchant = matches.first,
+    ///
+    /// The terminal is found through `MerchantIdentity`, not `#Predicate { $0.identifier == id }`.
+    /// That predicate compared the incoming `"\(name)@\(lat),\(lon)"` against the stored one as
+    /// text, so a revised pin or a renamed storefront quietly stopped finding the row — and the
+    /// checkout fell back to a POI guess while the owner's confirmation sat one table away,
+    /// unreferenced. This is the promise at the very top of the ladder; it cannot be the rung that
+    /// breaks on a rounding difference.
+    ///
+    /// Takes the match rather than making it, so the caller can file the prediction under the same
+    /// identity this answer came from.
+    private func confirmedPrediction(from match: MerchantIdentity.Match?) -> CategoryPrediction? {
+        guard let merchant = match?.merchant,
               let category = merchant.confirmedCategory else { return nil }
         return CategoryPrediction(
             category: category,
@@ -418,8 +451,15 @@ public struct CheckoutService {
         purchase.merchantIdentifier = merchant.id
         purchase.merchantLatitude = merchant.latitude
         purchase.merchantLongitude = merchant.longitude
+        // Now that a real POI stands behind this descriptor, the activity key can be pinned to
+        // where it is. At ingest there was no fix, so the capture was keyed on the descriptor name
+        // alone — the form that pools every same-named independent in the country. Re-keying here
+        // is what splits them, and `MerchantPatronageStore` unions the old name-only key back in
+        // on read, so the shop keeps the standing it has already earned.
         purchase.merchantKey = merchantActivityKey(name: purchase.displayMerchant,
-                                                   locationIdentifier: merchant.id)
+                                                   locationIdentifier: merchant.id,
+                                                   latitude: merchant.latitude,
+                                                   longitude: merchant.longitude)
         purchase.categoryAtPurchase = prediction.category
         purchase.categoryConfidenceRaw = prediction.confidenceSource.rawValue
         purchase.rawCategoryAtPurchase = prediction.rawCategory
@@ -432,6 +472,8 @@ public struct CheckoutService {
         // the learned POI even when the descriptor carries a city or processor suffix.
         try upsertMerchant(NearbyPlace(
             id: merchant.id,
+            placeID: merchant.placeID,
+            alternatePlaceIDs: merchant.alternatePlaceIDs,
             name: purchase.displayMerchant,
             poiCategoryRaw: merchant.poiCategoryRaw,
             merchantCategoryCode: merchant.merchantCategoryCode,
@@ -476,17 +518,24 @@ public struct CheckoutService {
         try AutoCaptureLog(context: context).recent(limit: limit)
     }
 
+    /// The other half of the over-split, and the half that actually created it.
+    ///
+    /// This used to fetch on `$0.identifier == id` and insert whenever that missed — so a revised
+    /// pin did not merely fail to find the owner's confirmed terminal, it minted a second row for
+    /// the same shop, and every future encounter had two rows to disagree about. Matching through
+    /// `MerchantIdentity` means a nudged coordinate updates the row it already has, and the place
+    /// id it was matched by (or newly given) is recorded on the way past.
     private func upsertMerchant(_ merchant: NearbyPlace) throws {
-        let id = merchant.id
-        let existing = try context.fetch(FetchDescriptor<StoredMerchant>(
-            predicate: #Predicate { $0.identifier == id }))
-        if let found = existing.first {
+        if let match = MerchantIdentity.match(merchant, in: try knownMerchants()) {
+            let found = match.merchant
+            MerchantIdentity.backfill(found, from: merchant)
             found.lastSeenAt = Date()
             found.poiCategoryRaw = merchant.poiCategoryRaw
             found.rawCategory = merchant.poiCategoryRaw
             found.merchantCategoryCode = merchant.merchantCategoryCode
         } else {
             context.insert(StoredMerchant(name: merchant.name, identifier: merchant.id,
+                                          placeID: merchant.placeID,
                                           poiCategoryRaw: merchant.poiCategoryRaw,
                                           latitude: merchant.latitude,
                                           longitude: merchant.longitude,

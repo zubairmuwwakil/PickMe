@@ -296,6 +296,12 @@ public struct PredictionLog {
     /// Terminal-level promotion, never brand-wide. The dossier (§6) is explicit: the owner's
     /// reconciled outcome is the only source that can promote a merchant to "verified", and it
     /// promotes THAT location — a confirmation at one Walmart says nothing about another.
+    ///
+    /// Plain equality on the identifier, with no ladder beneath it, and that is safe because
+    /// `CheckoutService.recommend` files a prediction under the identifier of the `StoredMerchant`
+    /// it actually matched rather than under the freshly-rendered coordinate string of the live
+    /// result. The two sides are the same string by construction; the ladder ran once, at the
+    /// checkout, where the coordinates to run it with were available.
     private func promoteMerchant(for prediction: StoredPrediction,
                                  observedCategory: String, at date: Date) throws {
         guard let identifier = prediction.merchantIdentifier else { return }
@@ -350,14 +356,19 @@ public struct PredictionLog {
         let category = CategoryTaxonomy.canonicalID(rawCategory)
         guard category != "other" else { return }
 
-        let id = merchant.id
-        let matches = try context.fetch(FetchDescriptor<StoredMerchant>(
-            predicate: #Predicate { $0.identifier == id }))
+        // Through the identity ladder, because this is a *writer* of `confirmedCategory` — the
+        // most valuable column the owner can fill in. On exact-identifier matching, correcting the
+        // same shop after Apple revised its pin created a second confirmed row rather than
+        // strengthening the first, so the streak that `.repeatedTerminal` counts restarted at one
+        // and the owner's second confirmation bought nothing.
+        let all = try context.fetch(FetchDescriptor<StoredMerchant>())
         let stored: StoredMerchant
-        if let existing = matches.first {
-            stored = existing
+        if let match = MerchantIdentity.match(merchant, in: all) {
+            stored = match.merchant
+            MerchantIdentity.backfill(stored, from: merchant)
         } else {
             stored = StoredMerchant(name: merchant.name, identifier: merchant.id,
+                                    placeID: merchant.placeID,
                                     poiCategoryRaw: merchant.poiCategoryRaw,
                                     latitude: merchant.latitude, longitude: merchant.longitude,
                                     merchantCategoryCode: merchant.merchantCategoryCode)
@@ -434,10 +445,32 @@ public struct PredictionLog {
         let activityKey = merchantActivityKey(name: purchase.displayMerchant,
                                               locationIdentifier: nil)
         let merchants = try context.fetch(FetchDescriptor<StoredMerchant>())
-        let existing = merchants.first { merchant in
-            if let identifier, merchant.identifier == identifier { return true }
-            return activityKey != nil
-                && merchantActivityKey(name: merchant.name, locationIdentifier: nil) == activityKey
+
+        // A purchase that carries a fix gets the full identity ladder — the same one the checkout
+        // path uses — so a correction lands on the terminal the owner actually paid at even if its
+        // pin has since been revised.
+        //
+        // The name-only fallback below stays, but only for a purchase with no coordinates at all.
+        // That is the Wallet-descriptor case, where a name is genuinely the only identity there is
+        // and merging same-named rows is better than stranding the correction. Applying it to a
+        // located purchase, as this used to unconditionally, meant an owner correcting one
+        // "Rose Cafe" could re-code a different shop across the city.
+        let located = purchase.merchantLatitude.flatMap { latitude in
+            purchase.merchantLongitude.map { longitude in
+                NearbyPlace(id: identifier ?? purchase.displayMerchant,
+                            name: purchase.displayMerchant, poiCategoryRaw: nil,
+                            latitude: latitude, longitude: longitude, distanceMeters: nil)
+            }
+        }
+        let existing: StoredMerchant?
+        if let located, located.hasMonitorableLocation {
+            existing = MerchantIdentity.match(located, in: merchants)?.merchant
+        } else {
+            existing = merchants.first { merchant in
+                if let identifier, merchant.identifier == identifier { return true }
+                return activityKey != nil
+                    && merchantActivityKey(name: merchant.name, locationIdentifier: nil) == activityKey
+            }
         }
 
         if let existing {

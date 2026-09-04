@@ -144,6 +144,14 @@ final class SchemaVersionTests: XCTestCase {
                            "prediction", "rawCategoryAtPurchase", "usedCardValueCad", "walletEventId"],
     ]
 
+    /// V5's shape with exactly one addition. Spelled out rather than derived from `v5Shape` so the
+    /// test can fail on an unintended second column instead of quietly absorbing it.
+    private static let v6Shape: [String: [String]] = {
+        var shape = v5Shape
+        shape["StoredMerchant"] = (v5Shape["StoredMerchant"]! + ["placeID"]).sorted()
+        return shape
+    }()
+
     /// The failure this catches is adding an eighth `@Model` and not registering it. Such a model
     /// compiles, and every test that builds its own `ModelContainer(for:)` passes, because those
     /// name their types directly. It fails only on a real device, where the app's container is
@@ -588,15 +596,101 @@ final class SchemaVersionTests: XCTestCase {
             try context.save()
         }
 
-        let v5 = try ModelContainer(
-            for: Schema(versionedSchema: CardCopilotSchemaV5.self),
+        // Opened at `CardCopilotSchema.current`, like every other migration test in this file, so
+        // the unqualified `StoredPurchase` typealias below always names the container's own type.
+        // Pinning it to V5 made this test silently fetch a type the container had no table for the
+        // moment a V6 arrived.
+        let migrated = try ModelContainer(
+            for: Schema(versionedSchema: CardCopilotSchema.current),
             migrationPlan: CardCopilotMigrationPlan.self,
             configurations: ModelConfiguration(url: url))
-        let row = try XCTUnwrap(ModelContext(v5).fetch(FetchDescriptor<StoredPurchase>()).first)
+        let row = try XCTUnwrap(ModelContext(migrated).fetch(FetchDescriptor<StoredPurchase>()).first)
         XCTAssertEqual(row.categoryAtPurchase, "other")
         XCTAssertNil(row.rawCategoryAtPurchase)
         XCTAssertNil(row.categoryTaxonomyVersion)
         XCTAssertNil(row.categoryConfidenceScore)
         XCTAssertNil(row.merchantCategoryCode)
+    }
+
+    // MARK: - V6: stable merchant identity
+
+    func testV6RegistersEveryModelAndChangesOnlyStoredMerchant() {
+        XCTAssertEqual(CardCopilotSchemaV6.models.count, Self.v6Shape.count)
+        let entities = Schema(versionedSchema: CardCopilotSchemaV6.self).entities
+        let actual = Dictionary(uniqueKeysWithValues:
+            entities.map { ($0.name, $0.properties.map(\.name).sorted()) })
+        XCTAssertEqual(actual, Self.v6Shape)
+
+        for name in Self.v5Shape.keys where name != "StoredMerchant" {
+            XCTAssertEqual(Self.v6Shape[name], Self.v5Shape[name],
+                           "\(name) must not ride along in the identity migration")
+        }
+    }
+
+    func testV5AndV6DeclareDistinctModelTypes() {
+        XCTAssertFalse(CardCopilotSchemaV5.StoredMerchant.self == CardCopilotSchemaV6.StoredMerchant.self)
+    }
+
+    /// The migration's whole claim, asserted rather than argued: a merchant confirmed under V5
+    /// arrives at V6 with its identity, its category and its streak intact, and with `placeID` nil.
+    ///
+    /// Nil is the correct value, not a gap to be filled. There is no offline map from the legacy
+    /// `name@lat,lon` string to an `MKMapItem.Identifier`; a stage that went looking for one would
+    /// be issuing a network search per merchant and could not tell a correct answer from the shop
+    /// next door. `MerchantIdentity` backfills it on a real encounter instead.
+    func testV5StoreOpensUnderV6WithConfirmedMerchantsIntact() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("merchant-identity-migration-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("CardCopilot.store")
+
+        do {
+            let v5 = try ModelContainer(
+                for: Schema(versionedSchema: CardCopilotSchemaV5.self),
+                migrationPlan: CardCopilotMigrationPlan.self,
+                configurations: ModelConfiguration(url: url))
+            let context = ModelContext(v5)
+            context.insert(CardCopilotSchemaV5.StoredMerchant(
+                name: "Metro", identifier: "Metro@43.6532,-79.3832",
+                poiCategoryRaw: "MKPOICategoryFoodMarket",
+                latitude: 43.6532, longitude: -79.3832,
+                confirmedCategory: "grocery", confirmationCount: 2))
+            try context.save()
+        }
+
+        let v6 = try ModelContainer(
+            for: Schema(versionedSchema: CardCopilotSchema.current),
+            migrationPlan: CardCopilotMigrationPlan.self,
+            configurations: ModelConfiguration(url: url))
+        let row = try XCTUnwrap(ModelContext(v6).fetch(FetchDescriptor<StoredMerchant>()).first)
+
+        XCTAssertEqual(row.identifier, "Metro@43.6532,-79.3832")
+        XCTAssertEqual(row.confirmedCategory, "grocery")
+        XCTAssertEqual(row.confirmationCount, 2)
+        XCTAssertNil(row.placeID)
+    }
+
+    /// And the migrated row is still findable — the point of keeping `identifier` frozen rather
+    /// than substituting the place id into it. A migration that carried the data across but left
+    /// nothing able to look it up would be the same orphan under a new name.
+    func testAMigratedRowIsStillFoundByTheIdentityLadder() throws {
+        let container = try ModelContainer(
+            for: Schema(versionedSchema: CardCopilotSchema.current),
+            migrationPlan: CardCopilotMigrationPlan.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let context = ModelContext(container)
+        context.insert(StoredMerchant(name: "Metro", identifier: "Metro@43.6532,-79.3832",
+                                      latitude: 43.6532, longitude: -79.3832,
+                                      confirmedCategory: "grocery", confirmationCount: 2))
+        try context.save()
+
+        let merchants = try context.fetch(FetchDescriptor<StoredMerchant>())
+        let sameStore = NearbyPlace(id: "Metro@43.6532,-79.3832", placeID: "I1A2B3C4",
+                                    name: "Metro", poiCategoryRaw: "MKPOICategoryFoodMarket",
+                                    latitude: 43.6532, longitude: -79.3832, distanceMeters: 12)
+        let match = try XCTUnwrap(MerchantIdentity.match(sameStore, in: merchants))
+        XCTAssertEqual(match.rung, .legacyIdentifier)
+        XCTAssertEqual(match.merchant.confirmedCategory, "grocery")
     }
 }

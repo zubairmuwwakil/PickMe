@@ -51,7 +51,8 @@ final class ArrivalPlacesModel {
         do {
             preferences = preferenceStore.all()
             savedMerchants = try context.fetch(FetchDescriptor<StoredMerchant>()).map {
-                NearbyPlace(id: $0.identifier ?? $0.id.uuidString, name: $0.name,
+                NearbyPlace(id: $0.identifier ?? $0.id.uuidString, placeID: $0.placeID,
+                               name: $0.name,
                                poiCategoryRaw: $0.poiCategoryRaw, latitude: $0.latitude,
                                longitude: $0.longitude, distanceMeters: nil)
             }.filter(\.hasMonitorableLocation).sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
@@ -80,9 +81,16 @@ final class ArrivalPlacesModel {
         }
     }
 
+    /// The owner's choice for this branch.
+    ///
+    /// Reads through the store rather than scanning the cached `preferences` array, because the
+    /// store is what knows that a qualified local key falls back to its provisional ancestor — a
+    /// choice made before local keys carried a place token is still the owner's choice.
     func preference(for merchant: NearbyPlace) -> ArrivalAlertPreference? {
-        guard let key = merchantActivityKey(name: merchant.name, locationIdentifier: merchant.id) else { return nil }
-        return preferences.first { $0.merchantKey == key }
+        guard let key = merchantActivityKey(name: merchant.name, locationIdentifier: merchant.id,
+                                            latitude: merchant.latitude,
+                                            longitude: merchant.longitude) else { return nil }
+        return preferenceStore.preference(for: key)
     }
 
     func isMuted(_ merchant: NearbyPlace) -> Bool { ambient.isMerchantMuted(merchant.id) }
@@ -105,8 +113,11 @@ final class ArrivalPlacesModel {
     /// A chain choice made by an older build may have no selected branch. The detail screen can
     /// still edit it, but cannot manufacture coordinates for "Only this location".
     func merchant(for preference: ArrivalAlertPreference) -> NearbyPlace {
-        let candidates = savedMerchants.filter {
-            merchantActivityKey(name: $0.name, locationIdentifier: $0.id) == preference.merchantKey
+        let candidates = savedMerchants.filter { saved in
+            let key = merchantActivityKey(name: saved.name, locationIdentifier: saved.id,
+                                          latitude: saved.latitude, longitude: saved.longitude)
+            return key == preference.merchantKey
+                || key.flatMap(provisionalMerchantKey(for:)) == preference.merchantKey
         }
         let saved = candidates.first { $0.id == preference.locationIdentifier }
             ?? candidates.first {
@@ -128,7 +139,10 @@ final class ArrivalPlacesModel {
     @discardableResult
     func save(_ scope: ArrivalAlertScope, merchant: NearbyPlace,
               merchantKey: String? = nil) async -> Bool {
-        guard let key = merchantKey ?? merchantActivityKey(name: merchant.name, locationIdentifier: merchant.id),
+        guard let key = merchantKey ?? merchantActivityKey(name: merchant.name,
+                                                           locationIdentifier: merchant.id,
+                                                           latitude: merchant.latitude,
+                                                           longitude: merchant.longitude),
               scope != .exactLocation || merchant.hasMonitorableLocation else {
             error = "Search for a specific store location first."
             return false
@@ -136,12 +150,19 @@ final class ArrivalPlacesModel {
         error = nil
         do {
             if merchant.hasMonitorableLocation {
-                let existing = try context.fetch(FetchDescriptor<StoredMerchant>()).contains {
-                    $0.identifier == merchant.id
-                        || ($0.name == merchant.name && $0.latitude == merchant.latitude && $0.longitude == merchant.longitude)
-                }
-                if !existing {
+                // The exact-coordinate arm of the old check was doing the work of a proximity
+                // rung with no tolerance at all: two `Double`s compared for equality, so the same
+                // shop saved twice after a pin revision inserted a second row. `MerchantIdentity`
+                // is the one place that decides this now, and a row found by a weaker rung gets
+                // Apple's place id recorded on it here.
+                let stored = try context.fetch(FetchDescriptor<StoredMerchant>())
+                if let match = MerchantIdentity.match(merchant, in: stored) {
+                    if MerchantIdentity.backfill(match.merchant, from: merchant) {
+                        try context.save()
+                    }
+                } else {
                     context.insert(StoredMerchant(name: merchant.name, identifier: merchant.id,
+                                                  placeID: merchant.placeID,
                                                   poiCategoryRaw: merchant.poiCategoryRaw,
                                                   latitude: merchant.latitude, longitude: merchant.longitude,
                                                   merchantCategoryCode: merchant.merchantCategoryCode))

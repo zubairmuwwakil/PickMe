@@ -4,6 +4,20 @@ import Foundation
 /// this is the shape `LiveMerchantProvider` (App target) maps `MKMapItem` into.
 public struct NearbyPlace: Equatable, Sendable, Identifiable {
     public let id: String
+    /// Apple's persistent place identifier (`MKMapItem.Identifier.rawValue`), when this place came
+    /// from a MapKit service that supplied one. Nil for pre-index taps, for stub providers, and
+    /// for anything reconstructed from a stored row that predates V6.
+    ///
+    /// Deliberately NOT folded into `id`. `id` is the string the mute list, saved arrival
+    /// preferences, `StoredPrediction.merchantIdentifier` and `StoredPurchase.merchantIdentifier`
+    /// are all already keyed on; changing what it holds would move four keyspaces at once, which
+    /// is the very orphan this field exists to prevent — just paid once, at upgrade, by everyone.
+    /// The place id is better *evidence about* identity, and `MerchantIdentity` is what weighs it.
+    public let placeID: String?
+    /// Identifiers this place is also known by — ids it superseded when Apple merged or revised
+    /// the record (`MKMapItem.alternateIdentifiers`). This is what makes place-id adoption actually
+    /// survive a revision instead of producing a second, rarer generation of the same orphan.
+    public let alternatePlaceIDs: [String]
     public let name: String
     public let poiCategoryRaw: String?
     public let merchantCategoryCode: Int?
@@ -12,10 +26,13 @@ public struct NearbyPlace: Equatable, Sendable, Identifiable {
     public let distanceMeters: Double?
     public let locationDescription: String?
 
-    public init(id: String, name: String, poiCategoryRaw: String?, merchantCategoryCode: Int? = nil,
+    public init(id: String, placeID: String? = nil, alternatePlaceIDs: [String] = [],
+                name: String, poiCategoryRaw: String?, merchantCategoryCode: Int? = nil,
                 latitude: Double, longitude: Double, distanceMeters: Double?,
                 locationDescription: String? = nil) {
         self.id = id
+        self.placeID = placeID
+        self.alternatePlaceIDs = alternatePlaceIDs
         self.name = name
         self.poiCategoryRaw = poiCategoryRaw
         self.merchantCategoryCode = merchantCategoryCode
@@ -23,6 +40,15 @@ public struct NearbyPlace: Equatable, Sendable, Identifiable {
         self.longitude = longitude
         self.distanceMeters = distanceMeters
         self.locationDescription = locationDescription
+    }
+
+    /// Every identifier Apple currently considers this place to be, primary first. Empty when
+    /// MapKit gave us none, which is the signal `MerchantIdentity` reads to decide whether
+    /// proximity is still allowed to speak.
+    public var allPlaceIDs: Set<String> {
+        var ids = Set(alternatePlaceIDs.filter { !$0.isEmpty })
+        if let placeID, !placeID.isEmpty { ids.insert(placeID) }
+        return ids
     }
 
     /// Brand-only offline results have no physical place to monitor.

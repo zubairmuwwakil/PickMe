@@ -683,8 +683,15 @@ final class CopilotSession {
         guard case .found(let merchants) = outcome else { return outcome }
         let origin = CLLocation(latitude: fix.latitude, longitude: fix.longitude)
         let rebased = merchants.map { merchant in
+            // Only `distanceMeters` is being recomputed; everything else is carried through
+            // verbatim. The place identifiers especially — this rewraps a live MapKit result, and
+            // dropping them here would strip the one field that lets the checkout find the owner's
+            // confirmed terminal after a pin revision.
             NearbyPlace(
-                id: merchant.id, name: merchant.name, poiCategoryRaw: merchant.poiCategoryRaw,
+                id: merchant.id, placeID: merchant.placeID,
+                alternatePlaceIDs: merchant.alternatePlaceIDs,
+                name: merchant.name, poiCategoryRaw: merchant.poiCategoryRaw,
+                merchantCategoryCode: merchant.merchantCategoryCode,
                 latitude: merchant.latitude, longitude: merchant.longitude,
                 distanceMeters: origin.distance(from: CLLocation(latitude: merchant.latitude,
                                                                   longitude: merchant.longitude)))
@@ -888,7 +895,9 @@ final class CopilotSession {
     private func recordPatronage(_ purchase: StoredPurchase) {
         guard let key = purchase.merchantKey
                 ?? merchantActivityKey(name: purchase.displayMerchant,
-                                       locationIdentifier: purchase.merchantIdentifier) else { return }
+                                       locationIdentifier: purchase.merchantIdentifier,
+                                       latitude: purchase.merchantLatitude,
+                                       longitude: purchase.merchantLongitude) else { return }
         MerchantPatronageStore().recordVisit(merchantKey: key,
                                              displayName: purchase.displayMerchant,
                                              at: purchase.createdAt)

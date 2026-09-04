@@ -57,8 +57,12 @@ public enum OtherCategoryAuditor {
                          explanation: "The original pre-normalization category is still present.")
         }
 
-        if let identifier = purchase.merchantIdentifier,
-           let merchant = merchants.first(where: { $0.identifier == identifier }),
+        // Matched through `MerchantIdentity` rather than on the identifier alone. A purchase
+        // records the identifier the place had when it was logged; the merchant row keeps the one
+        // it was created with. Those diverge the moment Apple revises a pin, and the audit would
+        // then report "no repeated terminal evidence" for a terminal that has plenty — the exact
+        // silent miss this recovery path exists to catch elsewhere.
+        if let merchant = storedMerchant(for: purchase, in: merchants),
            let category = merchant.confirmedCategory, category != "other",
            merchant.confirmationCount >= 2 {
             return .init(purchaseID: purchase.id, suggestedCategory: category,
@@ -79,6 +83,17 @@ public enum OtherCategoryAuditor {
         return .init(purchaseID: purchase.id, suggestedCategory: nil, confidenceScore: 0,
                      basis: .insufficientEvidence,
                      explanation: "No preserved raw value, repeated terminal evidence, or decisive MCC exists.")
+    }
+
+    private static func storedMerchant(for purchase: StoredPurchase,
+                                       in merchants: [StoredMerchant]) -> StoredMerchant? {
+        guard let identifier = purchase.merchantIdentifier else { return nil }
+        let place = NearbyPlace(id: identifier, name: purchase.displayMerchant,
+                                poiCategoryRaw: nil,
+                                latitude: purchase.merchantLatitude ?? 0,
+                                longitude: purchase.merchantLongitude ?? 0,
+                                distanceMeters: nil)
+        return MerchantIdentity.match(place, in: merchants)?.merchant
     }
 
     public static func apply(_ suggestion: CategoryRecoverySuggestion,

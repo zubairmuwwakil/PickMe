@@ -125,8 +125,17 @@ public struct AutoCaptureLog {
                                       merchantLabel: capture.merchant,
                                       walletEventId: capture.eventId,
                                       activitySource: .walletCapture,
+                                      // Pinned to the capture's own fix when it has one. A
+                                      // descriptor alone cannot tell two same-named independents
+                                      // apart, and the key it produces is the one every namesake
+                                      // in the country shares; the coordinates Wallet sometimes
+                                      // sends are the only thing that can. When they are absent
+                                      // this yields exactly the key it always did, and location
+                                      // enrichment re-keys it later if a POI is ever matched.
                                       merchantKey: merchantActivityKey(name: capture.merchant,
-                                                                       locationIdentifier: nil),
+                                                                       locationIdentifier: nil,
+                                                                       latitude: capture.latitude,
+                                                                       longitude: capture.longitude),
                                       merchantLatitude: capture.latitude,
                                       merchantLongitude: capture.longitude,
                                       categoryAtPurchase: category,
@@ -168,6 +177,12 @@ public struct AutoCaptureLog {
     /// fallback identity for local merchants is the same normalized-name key used by purchase
     /// history, so a corrected or location-resolved "Mom's Kitchen" capture teaches the next
     /// capture even when Wallet supplies no MapKit identifier.
+    ///
+    /// Deliberately keyed on the name alone, without coordinates, even though `merchantActivityKey`
+    /// can now pin a key to a place. What is being looked up here is a *category*, and a category
+    /// is a property of the business rather than of the branch — a descriptor with no fix at all
+    /// should still inherit what the owner taught at the branch they were standing in. Identity is
+    /// what needs splitting by location; classification is not.
     private func learnedPrediction(for merchantName: String) throws -> CategoryPrediction? {
         guard let key = merchantActivityKey(name: merchantName, locationIdentifier: nil) else {
             return nil

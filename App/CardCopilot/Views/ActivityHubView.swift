@@ -168,7 +168,9 @@ struct ActivityHubView: View {
         for purchase in session.recentPurchaseItems {
             guard let merchantKey = purchase.merchantKey
                     ?? merchantActivityKey(name: purchase.displayMerchant,
-                                           locationIdentifier: purchase.merchantIdentifier),
+                                           locationIdentifier: purchase.merchantIdentifier,
+                                           latitude: purchase.merchantLatitude,
+                                           longitude: purchase.merchantLongitude),
                   preferences.preference(for: merchantKey) == nil,
                   patronage.visitDayKeys(for: merchantKey).count >= 2 else { continue }
 
@@ -1351,7 +1353,9 @@ struct ActivityHubView: View {
     private func isFrequented(_ item: StoredPurchase) -> Bool {
         guard let key = item.merchantKey
             ?? merchantActivityKey(name: item.displayMerchant,
-                                   locationIdentifier: item.merchantIdentifier) else {
+                                   locationIdentifier: item.merchantIdentifier,
+                                   latitude: item.merchantLatitude,
+                                   longitude: item.merchantLongitude) else {
             return false
         }
         return MerchantPatronageStore().isFrequented(merchantKey: key)

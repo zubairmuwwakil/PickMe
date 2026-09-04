@@ -37,14 +37,18 @@ public struct ArrivalAlertPreference: Codable, Equatable, Sendable, Identifiable
         self.decidedAt = decidedAt
     }
 
-    /// Exact-location matching survives unstable MapKit identifiers by falling back to 100 m.
+    /// Exact-location matching survives unstable MapKit identifiers by falling back to proximity.
+    ///
+    /// The radius is `MerchantIdentity.proximityMeters` rather than a literal, because this
+    /// predicate and the merchant match ladder are answering the same question — did the pin move,
+    /// or is this a different shop — and two constants would eventually give two answers.
     public func matchesLocation(identifier: String?, latitude: Double, longitude: Double) -> Bool {
         if let locationIdentifier, let identifier, locationIdentifier == identifier { return true }
         guard let savedLatitude = self.latitude, let savedLongitude = self.longitude else { return false }
         return greatCircleDistanceMeters(fromLatitude: savedLatitude,
                                          fromLongitude: savedLongitude,
                                          toLatitude: latitude,
-                                         toLongitude: longitude) <= 100
+                                         toLongitude: longitude) <= MerchantIdentity.proximityMeters
     }
 }
 
@@ -59,8 +63,21 @@ public final class ArrivalAlertPreferenceStore: @unchecked Sendable {
         self.key = key
     }
 
+    /// The owner's choice for this merchant.
+    ///
+    /// Falls back to the provisional key when the qualified one has no entry. Local activity keys
+    /// gained a place token so that two same-named independents stop sharing one preference slot;
+    /// every choice already saved is stored under the older, name-only form, and this fallback is
+    /// what carries those choices forward without rewriting a single stored preference. Once the
+    /// owner edits a choice it is written back under the qualified key and stops being shared.
+    ///
+    /// One-way on purpose: a qualified entry is never overruled by the provisional one. A shop the
+    /// owner has since decided about individually must not be dragged back to a namesake's answer.
     public func preference(for merchantKey: String) -> ArrivalAlertPreference? {
-        load()[merchantKey]
+        let values = load()
+        if let exact = values[merchantKey] { return exact }
+        guard let provisional = provisionalMerchantKey(for: merchantKey) else { return nil }
+        return values[provisional]
     }
 
     public func save(_ preference: ArrivalAlertPreference) {
@@ -69,9 +86,15 @@ public final class ArrivalAlertPreferenceStore: @unchecked Sendable {
         persist(values)
     }
 
+    /// Clears a choice, including the provisional entry `preference(for:)` would otherwise fall
+    /// back to — a removal that left the owner still governed by the older shared entry would not
+    /// be a removal.
     public func remove(merchantKey: String) {
         var values = load()
         values.removeValue(forKey: merchantKey)
+        if let provisional = provisionalMerchantKey(for: merchantKey) {
+            values.removeValue(forKey: provisional)
+        }
         persist(values)
     }
 

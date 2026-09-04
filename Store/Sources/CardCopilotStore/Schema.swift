@@ -144,6 +144,39 @@ public enum CardCopilotSchemaV5: VersionedSchema {
     }
 }
 
+/// Version 6 gives a merchant an identity that survives Apple moving its pin.
+///
+/// `StoredMerchant.identifier` has always been `"\(name)@\(latitude),\(longitude)"` — string
+/// equality over a full-precision float rendering, matched by `#Predicate { $0.identifier == id }`
+/// with no fallback. Any nudge to either coordinate, and any change to the display name, produced
+/// a different merchant; the owner's `confirmedCategory` — the top rung of the whole confidence
+/// ladder — silently orphaned, and nothing errored.
+///
+/// `placeID` carries `MKMapItem.identifier` instead, which iOS 18 guarantees stable across pin
+/// revisions and which reports superseded ids through `alternateIdentifiers`. It is added rather
+/// than substituted: `identifier` stays frozen so `StoredPrediction.merchantIdentifier`,
+/// `StoredPurchase.merchantIdentifier`, saved arrival preferences and the mute list all keep
+/// resolving without a single key moving. Identity is unchanged; what is new is better evidence
+/// about it, and `MerchantIdentity` is the one place that weighs the two.
+///
+/// Nullable, so the stage is `.lightweight` — see `SchemaV6Models.swift` for why no stage could
+/// honestly backfill it.
+public enum CardCopilotSchemaV6: VersionedSchema {
+    public static var versionIdentifier: Schema.Version { Schema.Version(6, 0, 0) }
+
+    public static var models: [any PersistentModel.Type] {
+        [
+            StoredPrediction.self,
+            StoredPurchase.self,
+            StoredObservation.self,
+            StoredMerchant.self,
+            ExploredCell.self,
+            ShoppingArea.self,
+            AreaMember.self,
+        ]
+    }
+}
+
 /// The version every container opens at.
 ///
 /// One name, so moving to a new version is one edit rather than a grep across the app target, this
@@ -154,7 +187,7 @@ public enum CardCopilotSchemaV5: VersionedSchema {
 /// inserted. `SchemaVersionTests.testCurrentSchemaIsTheNewestInTheMigrationPlan` pins this to the
 /// plan's newest entry.
 public enum CardCopilotSchema {
-    public static var current: any VersionedSchema.Type { CardCopilotSchemaV5.self }
+    public static var current: any VersionedSchema.Type { CardCopilotSchemaV6.self }
 }
 
 /// How owners are carried from one schema version to the next.
@@ -169,7 +202,7 @@ public enum CardCopilotSchema {
 public enum CardCopilotMigrationPlan: SchemaMigrationPlan {
     public static var schemas: [any VersionedSchema.Type] {
         [CardCopilotSchemaV1.self, CardCopilotSchemaV2.self, CardCopilotSchemaV3.self,
-         CardCopilotSchemaV4.self, CardCopilotSchemaV5.self]
+         CardCopilotSchemaV4.self, CardCopilotSchemaV5.self, CardCopilotSchemaV6.self]
     }
 
     /// Lightweight because every added property is optional. `.custom` would be required only if
@@ -182,6 +215,7 @@ public enum CardCopilotMigrationPlan: SchemaMigrationPlan {
             .lightweight(fromVersion: CardCopilotSchemaV2.self, toVersion: CardCopilotSchemaV3.self),
             .lightweight(fromVersion: CardCopilotSchemaV3.self, toVersion: CardCopilotSchemaV4.self),
             .lightweight(fromVersion: CardCopilotSchemaV4.self, toVersion: CardCopilotSchemaV5.self),
+            .lightweight(fromVersion: CardCopilotSchemaV5.self, toVersion: CardCopilotSchemaV6.self),
         ]
     }
 }
@@ -190,10 +224,10 @@ public enum CardCopilotMigrationPlan: SchemaMigrationPlan {
 // app and this package are unaffected by the nesting. Repointing these seven lines is what "the
 // current shape" means for every call site at once — and the only reason that is safe is that no
 // call site names a version literally. Containers get theirs from `CardCopilotSchema.current`.
-public typealias StoredPrediction = CardCopilotSchemaV5.StoredPrediction
-public typealias StoredPurchase = CardCopilotSchemaV5.StoredPurchase
-public typealias StoredObservation = CardCopilotSchemaV5.StoredObservation
-public typealias StoredMerchant = CardCopilotSchemaV5.StoredMerchant
-public typealias ExploredCell = CardCopilotSchemaV5.ExploredCell
-public typealias ShoppingArea = CardCopilotSchemaV5.ShoppingArea
-public typealias AreaMember = CardCopilotSchemaV5.AreaMember
+public typealias StoredPrediction = CardCopilotSchemaV6.StoredPrediction
+public typealias StoredPurchase = CardCopilotSchemaV6.StoredPurchase
+public typealias StoredObservation = CardCopilotSchemaV6.StoredObservation
+public typealias StoredMerchant = CardCopilotSchemaV6.StoredMerchant
+public typealias ExploredCell = CardCopilotSchemaV6.ExploredCell
+public typealias ShoppingArea = CardCopilotSchemaV6.ShoppingArea
+public typealias AreaMember = CardCopilotSchemaV6.AreaMember

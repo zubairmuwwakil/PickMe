@@ -115,6 +115,8 @@ final class LiveMerchantProvider: MerchantProviding {
             .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", ")
         return NearbyPlace(
             id: syntheticId(name: name, coordinate: coordinate),
+            placeID: mapItem.identifier?.rawValue,
+            alternatePlaceIDs: mapItem.alternateIdentifiers.map(\.rawValue),
             name: name,
             poiCategoryRaw: mapItem.pointOfInterestCategory?.rawValue,
             latitude: coordinate.latitude,
@@ -123,6 +125,15 @@ final class LiveMerchantProvider: MerchantProviding {
             locationDescription: address.isEmpty ? nil : address)
     }
 
+    /// The identity string every existing keyspace is already built on, and therefore frozen.
+    ///
+    /// It is a poor identity: two `Double`s rendered at full precision and compared as text, so a
+    /// coordinate that shifts in its twelfth decimal is a different merchant, and so is "Metro"
+    /// becoming "Metro Plus". `MKMapItem.identifier` — carried alongside it since iOS 18, which is
+    /// this app's deployment floor — is what actually answers "same store?"; see `MerchantIdentity`
+    /// for how the two are weighed. This stays because the mute list, saved arrival preferences and
+    /// every `merchantIdentifier` already written to the store are keyed on it, and moving four
+    /// keyspaces at once to fix an orphan is how you cause one.
     private static func syntheticId(name: String, coordinate: CLLocationCoordinate2D) -> String {
         "\(name)@\(coordinate.latitude),\(coordinate.longitude)"
     }

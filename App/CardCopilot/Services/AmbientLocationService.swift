@@ -486,11 +486,21 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
         guard allBranches, let modelContainer else { return }
         let context = ModelContext(modelContainer)
         let stored = (try? context.fetch(FetchDescriptor<StoredMerchant>())) ?? []
-        for merchant in stored where merchantActivityKey(name: merchant.name, locationIdentifier: merchant.identifier) == merchantKey {
+        // Matched against both the qualified key and its provisional ancestor: "unmute every
+        // branch" must reach branches whose stored key predates local keys carrying a place token,
+        // or an owner who unmutes would find some branches still silent with nothing to click.
+        func addresses(_ key: String?) -> Bool {
+            key == merchantKey || key.flatMap(provisionalMerchantKey(for:)) == merchantKey
+        }
+        for merchant in stored where addresses(merchantActivityKey(
+            name: merchant.name, locationIdentifier: merchant.identifier,
+            latitude: merchant.latitude, longitude: merchant.longitude)) {
             muteStore.unmute(merchant.identifier ?? merchant.id.uuidString)
         }
         let members = (try? DiscoveryCache(context: context).allMembers()) ?? []
-        for member in members where merchantActivityKey(name: member.name, locationIdentifier: member.identifier) == merchantKey {
+        for member in members where addresses(merchantActivityKey(
+            name: member.name, locationIdentifier: member.identifier,
+            latitude: member.latitude, longitude: member.longitude)) {
             muteStore.unmute(member.identifier ?? member.name)
         }
     }
@@ -525,6 +535,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                 case nil: continue
                 }
                 merchants.append(NearbyPlace(id: merchant.identifier ?? merchant.id.uuidString,
+                                                placeID: merchant.placeID,
                                                 name: merchant.name, poiCategoryRaw: merchant.poiCategoryRaw,
                                                 latitude: merchant.latitude, longitude: merchant.longitude,
                                                 distanceMeters: nil))
@@ -1329,6 +1340,7 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
                                                confirmationCount: merchant.confirmationCount,
                                                frequentedKeys: frequentedKeys)
         let nearby = NearbyPlace(id: merchant.identifier ?? merchant.id.uuidString,
+                                    placeID: merchant.placeID,
                                     name: merchant.name, poiCategoryRaw: merchant.poiCategoryRaw,
                                     latitude: merchant.latitude, longitude: merchant.longitude,
                                     distanceMeters: nil)
@@ -1367,8 +1379,14 @@ final class AmbientLocationService: NSObject, @MainActor CLLocationManagerDelega
     /// and a 100 m coordinate fallback. Nil deliberately preserves automatic learning.
     private func explicitlyPrioritized(name: String, identifier: String?,
                                        latitude: Double, longitude: Double) -> Bool? {
+        // Coordinates are passed so an unrecognised merchant is asked about as *this* shop rather
+        // than as every shop in the country sharing its name. `ArrivalAlertPreferenceStore` falls
+        // back to the provisional key, so a choice the owner made before local keys carried a
+        // place token still answers here.
         guard let merchantKey = merchantActivityKey(name: name,
-                                                    locationIdentifier: identifier) else { return nil }
+                                                    locationIdentifier: identifier,
+                                                    latitude: latitude,
+                                                    longitude: longitude) else { return nil }
         return alertPreferenceStore.permits(merchantKey: merchantKey,
                                             locationIdentifier: identifier,
                                             latitude: latitude,

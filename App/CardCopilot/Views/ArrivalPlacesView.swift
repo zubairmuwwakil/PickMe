@@ -240,7 +240,10 @@ private struct ArrivalPlaceSettingsView: View {
 
     private var merchantKey: String? {
         choice.preference?.merchantKey
-            ?? merchantActivityKey(name: choice.merchant.name, locationIdentifier: choice.merchant.id)
+            ?? merchantActivityKey(name: choice.merchant.name,
+                                   locationIdentifier: choice.merchant.id,
+                                   latitude: choice.merchant.latitude,
+                                   longitude: choice.merchant.longitude)
     }
 
     var body: some View {

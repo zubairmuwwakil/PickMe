@@ -78,6 +78,7 @@ struct HomeAnswerSubject: Identifiable, Equatable {
         provenance = .recent
         isConfirmed = stored.confirmedCategory != nil
         merchant = NearbyPlace(id: identifier,
+                                  placeID: stored.placeID,
                                   name: stored.name,
                                   poiCategoryRaw: stored.poiCategoryRaw,
                                   latitude: stored.latitude,
