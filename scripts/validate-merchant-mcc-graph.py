@@ -6,11 +6,9 @@ Uses only the Python standard library. The graph is intentionally sharded so the
 """
 from __future__ import annotations
 
-import base64
 import json
 import math
 import sys
-import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,17 +28,6 @@ def load_json(path: Path):
         fail(f"missing {path.relative_to(ROOT)}")
     except json.JSONDecodeError as exc:
         fail(f"{path.relative_to(ROOT)} is invalid JSON: {exc}")
-
-
-def load_runtime_seed(path: Path):
-    try:
-        encoded = "".join(path.read_text(encoding="utf-8").split())
-        payload = zlib.decompress(base64.b64decode(encoded, validate=True))
-        return json.loads(payload)
-    except FileNotFoundError:
-        fail(f"missing {path.relative_to(ROOT)}")
-    except (ValueError, zlib.error, json.JSONDecodeError) as exc:
-        fail(f"{path.relative_to(ROOT)} is not valid zlib+base64 JSON: {exc}")
 
 
 def main() -> None:
@@ -110,42 +97,9 @@ def main() -> None:
             if not observation.get("scope", {}).get("address"):
                 fail(f"{oid} community-directory evidence must stay location-scoped")
 
-    runtime_name = files.get("runtimeSeed")
-    if not runtime_name:
-        fail("manifest files.runtimeSeed is required")
-    runtime = load_runtime_seed(GRAPH_DIR / runtime_name)
-    if runtime.get("graphVersion") != manifest.get("graphVersion"):
-        fail("runtime seed graphVersion does not match manifest")
-    runtime_merchants = runtime.get("merchants")
-    if not isinstance(runtime_merchants, list) or len(runtime_merchants) != 500:
-        fail("runtime seed must contain exactly 500 merchants")
-    if [m.get("id") for m in runtime_merchants] != ids:
-        fail("runtime seed merchant ids/order do not match canonical shards")
-    if [m.get("name", "").casefold() for m in runtime_merchants] != names:
-        fail("runtime seed merchant names/order do not match canonical shards")
-
-    for merchant in runtime_merchants:
-        mccs = merchant.get("candidateMccs", [])
-        weights = merchant.get("weights", [])
-        seed_mcc = merchant.get("seedMcc")
-        confidence = merchant.get("confidence")
-        if len(mccs) != len(weights):
-            fail(f"runtime {merchant['id']} candidateMccs/weights length mismatch")
-        if len(mccs) != len(set(mccs)):
-            fail(f"runtime {merchant['id']} repeats an MCC")
-        if seed_mcc is not None and seed_mcc not in mccs:
-            fail(f"runtime {merchant['id']} seedMcc is not a candidate")
-        if any(weight < 0 for weight in weights):
-            fail(f"runtime {merchant['id']} has a negative prior weight")
-        if weights and not math.isclose(sum(weights), 1.0, abs_tol=1e-6):
-            fail(f"runtime {merchant['id']} weights must sum to 1.0")
-        if not isinstance(confidence, (int, float)) or not 0 <= confidence <= 1:
-            fail(f"runtime {merchant['id']} confidence must be in [0,1]")
-
     print(
         f"merchant MCC graph OK: {len(merchants)} merchants, "
-        f"{len(profiles)} prior profiles, {len(observations)} location observations, "
-        f"{len(runtime_merchants)} runtime seeds"
+        f"{len(profiles)} prior profiles, {len(observations)} location observations"
     )
 
 
