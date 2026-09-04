@@ -1,207 +1,302 @@
 # Purchase Route Optimizer — design
 
-**Status:** V1 semantic core + nearby MCC graph + local gift-card inventory learning implemented 2026-09-04.
+**Status:** V1 route core, nearby MCC resolution, local/community inventory learning, community MCC
+learning, and protection-aware route verdicts implemented 2026-09-04.
+
+**Companion decision spec:**
+[`2026-09-04-purchase-decision-architecture-design.md`](2026-09-04-purchase-decision-architecture-design.md)
 
 ## Problem
 
-Checkout currently answers one question well: given the merchant/category in front of the owner,
-which owned card has the highest defensible decision value?
+Checkout answers a local question well: given the merchant/category in front of the owner, which
+owned card has the highest defensible reward/credit decision value?
 
-That is not always the globally best way to fund the purchase. A user may be able to buy a
-merchant gift card at a higher-earning merchant, enter through a cashback portal, use a payment
-intermediary, or activate a promotion before paying. These are alternate *purchase routes*, not
-alternate card rules.
+That is not always the globally best purchase path. The owner may be able to:
 
-## Boundary
+- buy a merchant gift card at a higher-earning merchant;
+- enter through a cashback portal;
+- use a payment intermediary;
+- activate an issuer/merchant promotion;
+- combine several valid route legs.
 
-`RecommendationEngine` remains the sole authority for choosing an owned card for a card-funded
-leg. It must not learn gift-card hacks or portal-specific routing.
+These are alternate **purchase routes**, not new card reward rules.
 
-`PurchaseRouteAdvisor` sits one level above it:
+## Architectural boundary
 
-```
+`RecommendationEngine` remains the sole authority for which owned card wins each card-funded leg.
+It must not absorb gift-card hacks, portal routing, inventory, or route-specific assumptions.
+
+```text
 purchase goal
-  ├─ direct route ───────────────> RecommendationEngine
-  └─ alternate purchase route
-       └─ acquisition/funding leg -> RecommendationEngine
+  |
+  +-- direct route --------------------> RecommendationEngine
+  |
+  +-- alternate route
+       |
+       +-- acquisition/funding leg ----> RecommendationEngine
+       +-- merchant/MCC evidence ------> MerchantMCCGraph
+       +-- inventory evidence ---------> GiftCardInventoryGraph
+       +-- protection effect ----------> ProtectionDecisionAdvisor
 ```
 
-The route layer compares net CAD decision value after route fees/friction. This preserves the
-existing valuation, caps, acceptance, owner-state, and reward-rule semantics instead of creating a
-second rewards calculator.
+`PurchaseRouteAdvisor` compares route reward economics after fees/friction and carries protection as
+an independent decision attribute. It does not assign an invented cash value to insurance.
 
-## V1
+## V1 route
 
-V1 supports one generic route template:
+The first generic route template is:
 
-- destination aliases: Shoppers Drug Mart / Shoppers / Pharmaprix
-- instrument: Shoppers Drug Mart gift card
-- acquisition requirement: an eligible grocery merchant coding as MCC 5411
-- evidence: `communityObserved`
-- disclosure: inventory and reward treatment can vary; availability must be confirmed
+- destination aliases: Shoppers Drug Mart / Shoppers / Pharmaprix;
+- instrument: Shoppers Drug Mart gift card;
+- acquisition requirement: eligible grocery merchant coding MCC 5411;
+- route evidence: `communityObserved`;
+- protection effect: `replacesDestinationCardCharge`.
 
-The card is not hard-coded. If MBNA, Cobalt, or another owned card is worth more on the acquisition
-leg, the normal recommendation engine chooses it.
+The acquisition card is never hard-coded. The ordinary recommendation engine picks the best owned
+card for the actual acquisition merchant/context.
 
-## Noise / friction gate
+## Reward/friction gate
 
-A route is surfaced only if it clears **both**:
+A route must clear both:
 
-- at least CAD $1 incremental value; and
+- at least CAD $1 incremental reward/credit value; and
 - at least 1 percentage point incremental return.
 
-This is intentionally stricter than switching cards at the same till. An alternate route can cost
-another stop, another checkout, or another stored-value instrument.
+This gate is intentionally stricter than switching cards at the same till because alternate routes
+can add travel, another checkout, inventory uncertainty, stored-value handling, or other friction.
 
-## Evidence model
+The numeric route advantage remains **reward economics only**:
 
-Routes carry a distinct evidence level:
+```text
+acquisition decision value
+- fixed route fee
+- estimated route friction
+- direct decision value
+= reward advantage
+```
+
+Protection does not add/subtract a fabricated CAD amount. It changes the route verdict.
+
+## Protection-aware route verdict
+
+Routes declare whether they preserve or replace the destination credit-card charge:
+
+- `preservesDestinationCardCharge`
+- `replacesDestinationCardCharge`
+
+For a replacing route, `ProtectionDecisionAdvisor` checks the direct reward winner's trusted
+shopping benefits when the benefits catalogue is available.
+
+The route result is then one of:
+
+- `rewardAdvantage` — no material trusted protection trade-off identified;
+- `rewardProtectionTradeoff` — reward advantage exists, but the alternate funding path may change
+  relevant card-linked protection or PickMe needs purchase-item context.
+
+The checkout UI must therefore say **extra rewards**, not generic **extra value**, when protection is
+unresolved. For material gift-card routes it renders:
+
+> MORE REWARDS — PROTECTION TRADE-OFF
+
+and routes the owner into the existing protection lens for electronics, phone, or appliance/furniture
+context rather than guessing what was purchased from the merchant MCC.
+
+See the companion purchase-decision spec for the rationale and future replacement rules.
+
+## Evidence axes
+
+Route quality is intentionally not one confidence number. Different facts use different evidence
+systems.
+
+### 1. Route provenance
 
 - `retailerConfirmed`
 - `communityObserved`
 - `experimental`
 
-This is separate from D3 card-contract provenance. A community-observed route may be ranked as a
-potential opportunity, but the UI must not present variable inventory or issuer reward treatment as
-guaranteed.
+This answers: how well do we know the route itself exists/works?
 
-MCC evidence is independently ranked by `MerchantMCCGraph`. The canonical 500-merchant seed is an
-editorial prior, public directory observations are low-confidence external evidence, and reconciled
-owner MCC observations can override those priors. A route never upgrades seed data into observed
-terminal truth merely because it used the graph.
+### 2. Merchant MCC evidence
 
-Gift-card inventory is a third evidence axis, independent from both route provenance and MCC. It is
-resolved by `GiftCardInventoryGraph` from location-specific observations only.
+`MerchantMCCGraph` combines:
 
-## Checkout UI
+- canonical 500-merchant seed priors;
+- external/public evidence;
+- owner-reconciled MCC observations;
+- opt-in anonymous community MCC aggregates.
 
-For a single checkout recommendation, PickMe first evaluates the generic route, then asynchronously
-resolves its acquisition requirement against nearby MapKit places through
-`PurchaseRouteAcquisitionResolver`.
+Owner-observed/reconciled evidence remains stronger than seed/community priors. A category outcome
+does not fabricate an MCC.
 
-A physical candidate must:
+### 3. Gift-card inventory evidence
 
-- resolve safely to a canonical seed merchant;
-- have the route-required MCC as the graph's current best prediction;
-- retain the physical merchant's known network acceptance; and
-- still clear the route's CAD + percentage-point friction threshold after normal card scoring.
+`GiftCardInventoryGraph` answers a different question: does this **exact physical location** appear
+to stock the target gift card?
 
-The recommendation screen then replaces the generic instruction with the best nearby candidate,
-including its distance and MCC-confidence disclosure. Reconciled owner MCC history participates in
-that lookup. If a successful nearby scan finds no qualifying route, the generic placeholder is
-suppressed instead of implying that the user should hunt for an unspecified store.
+Physical identity requires Apple place id when available, otherwise a close coordinate fallback.
+Brand-only inventory claims are ignored.
 
-A physical route card also shows inventory state and two feedback controls:
+Sources include:
 
-- **Found it** records an owner-confirmed `available` observation for that exact location and gift
-  card;
-- **Not here** records an owner-confirmed `unavailable` observation for that exact location and gift
-  card.
+- owner-confirmed;
+- retailer-confirmed;
+- community-observed.
 
-The observation is persisted locally and the route list is re-ranked immediately. Rapid duplicate
-taps of the same answer are deduplicated so UI noise cannot inflate confidence.
+Freshness is asymmetric:
 
-The direct-card recommendation remains unchanged. Ambiguous/forked merchant outcomes do not surface
-an alternate route in V1 because the destination coding has not settled.
+- positive sighting half-life: ~30 days;
+- negative sighting half-life: ~3 days.
 
-## Merchant graph integration
+A recent `Not here` suppresses only that location temporarily. It never changes MCC.
 
-Implemented flow:
+### 4. Protection evidence
 
+Protection comes from the existing certificate-backed benefits catalogue and its verification
+status. Stub benefits do not become trusted decision facts.
+
+## Nearby route resolution
+
+The implemented physical flow is:
+
+```text
+route requires grocery + MCC 5411
+              |
+              v
+MapKit nearby physical places
+              |
+              v
+safe canonical merchant resolution
+              |
+              v
+seed + public + owner + community MCC evidence
+              |
+              v
+MerchantMCCGraph prediction
+              |
+              v
+location-specific inventory graph
+              |
+              v
+actual network acceptance
+              |
+              v
+RecommendationEngine for acquisition leg
+              |
+              v
+reward threshold + protection verdict
 ```
-route requirement: grocery + MCC 5411
-                          |
-                          v
-MapKit nearby places -> canonical 500-merchant seed
-                          |
-                          v
-seed prior + public evidence + reconciled owner MCC evidence
-                          |
-                          v
-MerchantMCCGraph prediction + confidence
-                          |
-                          v
-location-specific gift-card inventory evidence
-                          |
-                          v
-actual merchant network acceptance -> RecommendationEngine
-```
 
-Canonical MCC graph data remains under `contracts/merchant-mcc-graph/`. Store packages
-byte-identical runtime copies through `scripts/sync-merchant-mcc-graph-into-store.sh`; a test fails
-if those copies drift.
+A candidate must resolve safely to a canonical merchant, satisfy the route-required MCC prediction,
+retain real network acceptance, and still clear the route reward threshold.
 
-## Inventory graph
+After a successful nearby scan, if no physical candidate qualifies, the generic placeholder is
+suppressed instead of encouraging the owner to hunt for an unspecified store.
 
-MCC qualification is **not** gift-card inventory evidence. `GiftCardInventoryGraph` therefore
-requires physical identity: an exact Apple place id when both sides have one, or a close coordinate
-match as fallback. Brand-only observations are ignored.
+## Inventory feedback and learning
 
-Evidence fields include:
+At a physical route candidate the owner can tap:
 
-- merchant/location identity;
-- target gift-card/instrument key;
-- `available` / `unavailable`;
-- source (`ownerConfirmed`, `retailerConfirmed`, `communityObserved`);
-- source confidence;
-- observation timestamp and optional source reference.
+- **Found it**
+- **Not here**
 
-Inventory is volatile, so freshness is asymmetric:
+The observation is written locally, de-duplicated against rapid repeat taps, and the route list is
+re-ranked immediately.
 
-- a positive sighting decays over weeks (30-day half-life);
-- a negative sighting decays quickly (3-day half-life), because "not here" may be a temporary
-  stockout rather than a permanent merchandising decision.
+Community inventory sharing is implemented as an explicit opt-in feature and is off by default.
+The shared payload is deliberately narrow: store/location identity, target gift-card instrument,
+availability, observed time, and random observation id. It does not include card, amount, purchase
+history, account/email, or device identity.
 
-A recent actionable positive sighting outranks a closer store with unknown inventory. A sufficiently
-strong recent negative observation temporarily suppresses that exact location. Neither changes the
-merchant's MCC prediction.
+MoneyTalks/In Unity stores the anonymous community observations and returns bounded daily aggregates.
+PickMe continues to own confidence/freshness semantics.
 
-Owner feedback is kept in a small versioned local append-only envelope rather than changing the
-SwiftData purchase schema. This avoids a migration of durable financial history for volatile rack
-inventory, while keeping the observation shape ready for a future opt-in, de-identified community
-aggregator. Community upload is **not implemented yet**.
+## Community MCC learning
+
+A parallel opt-in anonymous pipeline exists for explicit/reconciled merchant MCC observations.
+PickMe queues retry-safe reports, the backend applies privacy/evidence caps, and aggregate evidence
+feeds back into the runtime merchant graph as lower-trust external evidence.
+
+This keeps the system continuously learning without allowing one anonymous report to become payment-
+network truth.
+
+## Current data/storage boundaries
+
+- canonical merchant seed/graph: `contracts/merchant-mcc-graph/`;
+- packaged Store copies: `Store/Sources/CardCopilotStore/Resources/merchant-mcc-*`;
+- local owner inventory feedback: versioned local append-only envelope;
+- community inventory + MCC rows: anonymous In Unity backend tables;
+- card reward/benefit facts: existing PickMe contracts/catalogues.
+
+Do not create a second rewards calculator or a second benefits truth source inside routing.
 
 ## Expansion path
 
-The same model should later support:
+The route abstraction should next grow through additional route types, not merchant-specific hacks:
 
-1. **Opt-in community inventory aggregation** — de-identified location/instrument observations.
-2. **Cashback portals** — portal -> merchant -> card.
-3. **Payment intermediaries** — intermediary fee vs incremental card value.
-4. **Promotions / issuer offers** — activate or route through an offer before checkout.
-5. **Stacked routes** — only when each edge has evidence and the combined stack is valid.
+1. cashback portals / Rakuten-style routes;
+2. issuer/merchant offers;
+3. payment intermediaries and their fees;
+4. credits / prepaid balances;
+5. stacked routes where every edge is independently valid;
+6. learned route completion/reliability once there is enough consented outcome data.
 
-Do not add these as special cases to `RecommendationEngine`. Add route types/legs above it.
+Each route type should declare, at minimum:
 
-## Files
+- funding legs;
+- fees/friction;
+- evidence/provenance;
+- merchant/payment constraints;
+- whether the destination card charge is preserved/replaced;
+- any inventory/activation prerequisite.
 
-Canonical Swift route semantics:
+## Future-proofing rule
+
+This V1 architecture is not sacred. A future agent should replace pieces when a better solution is
+more correct, evidence-backed, scalable, private, and high-ROI.
+
+Do **not** preserve the implementation merely because this document exists. Preserve the invariants:
+
+- issuer facts stay issuer facts;
+- observations carry provenance;
+- reward economics remain deterministic underneath learned layers;
+- unknown/conflict states are representable;
+- a learned/community signal cannot silently become stronger than trusted owner/issuer evidence;
+- final decisions remain explainable.
+
+For changes to reward + protection decision semantics, follow the migration protocol in the companion
+purchase-decision architecture spec and version the policy.
+
+## Canonical files
+
+Swift route semantics:
 
 - `Engine/Sources/CardCopilotEngine/Engine/PurchaseRouteAdvisor.swift`
+- `Engine/Sources/CardCopilotEngine/Engine/ProtectionDecisionAdvisor.swift`
 - `Engine/Tests/CardCopilotEngineTests/PurchaseRouteAdvisorTests.swift`
 
-Store graph/runtime composition:
+Kotlin twin:
+
+- `android/core/engine/src/main/kotlin/com/cardcopilot/engine/engine/PurchaseRouteAdvisor.kt`
+- `android/core/engine/src/main/kotlin/com/cardcopilot/engine/engine/ProtectionDecisionAdvisor.kt`
+- `android/core/engine/src/test/kotlin/com/cardcopilot/engine/PurchaseRouteAdvisorTest.kt`
+
+Store/runtime evidence:
 
 - `Store/Sources/CardCopilotStore/MerchantMCCGraph.swift`
 - `Store/Sources/CardCopilotStore/MerchantMCCGraphEvidenceBuilder.swift`
 - `Store/Sources/CardCopilotStore/MerchantMCCSeedCatalogue.swift`
 - `Store/Sources/CardCopilotStore/GiftCardInventoryGraph.swift`
 - `Store/Sources/CardCopilotStore/PurchaseRouteAcquisitionResolver.swift`
-- `Store/Tests/CardCopilotStoreTests/GiftCardInventoryGraphTests.swift`
-- `Store/Tests/CardCopilotStoreTests/MerchantMCCSeedCatalogueTests.swift`
-- `Store/Tests/CardCopilotStoreTests/MerchantMCCSeedResourceSyncTests.swift`
-
-Kotlin route-semantic twin:
-
-- `android/core/engine/src/main/kotlin/com/cardcopilot/engine/engine/PurchaseRouteAdvisor.kt`
-- `android/core/engine/src/test/kotlin/com/cardcopilot/engine/PurchaseRouteAdvisorTest.kt`
+- community inventory/MCC client and cache files under `Store/Sources/CardCopilotStore/`.
 
 Checkout UI:
 
 - `App/CardCopilot/Views/RecommendationView.swift`
+- `App/CardCopilot/Views/BenefitsDisclosureSection.swift`
 
-## Next product slice
+## Next highest-ROI route work
 
-Add a de-identified, opt-in community aggregation service for inventory observations so confirmed
-availability can improve routes across devices/users while preserving location-level freshness and
-keeping account/card/purchase data out of the payload.
+After this protection-aware slice is stable in CI, the next route type should be chosen by expected
+coverage and implementation leverage. Cashback portals / issuer offers are strong candidates because
+they reuse the same reward, evidence, activation, and final-decision layers without requiring a new
+merchant truth system.
