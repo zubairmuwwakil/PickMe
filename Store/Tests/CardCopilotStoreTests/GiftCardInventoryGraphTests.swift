@@ -148,7 +148,8 @@ final class GiftCardInventoryGraphTests: XCTestCase {
                                availability: .available,
                                observedAt: now.addingTimeInterval(10))
 
-        XCTAssertEqual(await store.observations().count, 1)
+        let observations = await store.observations()
+        XCTAssertEqual(observations.count, 1)
         await store.removeAllForTesting()
     }
 }
