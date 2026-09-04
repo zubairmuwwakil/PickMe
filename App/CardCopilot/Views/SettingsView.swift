@@ -30,6 +30,8 @@ struct SettingsView: View {
     @State private var eraseIsPresented = false
     @State private var signOutIsPresented = false
     @State private var didErase = false
+    @State private var mccImportIsPresented = false
+    @State private var mccImportStatus: String?
     /// Snapshotted rather than observed: these counters change while the owner is out shopping,
     /// not while this screen is open, and a live binding would only add churn.
     @State private var categoryMetrics = CategoryResolutionMetrics()
@@ -92,6 +94,22 @@ struct SettingsView: View {
                 Button("Edit cards and rewards", action: onEditWallet)
                 Text("Change your cards, account conditions, default card, switch threshold, or point values.")
                     .font(.footnote).foregroundStyle(.secondary)
+            }
+
+            Section {
+                Button("Import issuer MCC CSV") {
+                    mccImportStatus = nil
+                    mccImportIsPresented = true
+                }
+                if let mccImportStatus {
+                    Text(mccImportStatus)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Merchant MCC learning")
+            } footer: {
+                Text("Optional and local. PickMe imports only rows that explicitly contain a merchant, a four-digit MCC, and a transaction or posting date. Category, SIC, and NAICS fields are never treated as MCCs. Raw files, amounts, and card/account numbers are not retained.")
             }
 
             Section("Protection & Perks") {
@@ -197,7 +215,7 @@ struct SettingsView: View {
             } header: {
                 Text("This iPhone")
             } footer: {
-                Text("Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to PickMe are not affected.")
+                Text("Erases your prediction log, confirmations, saved merchant locations, and local MCC learning/imports from this iPhone. Your account and anything already synced to PickMe are not affected.")
             }
 
             if isSignedIn {
@@ -224,13 +242,19 @@ struct SettingsView: View {
             Button("Erase History", role: .destructive) {
                 onEraseLocalHistory()
                 didErase = true
+                mccImportStatus = nil
                 // The eraser clears the counters; re-read so the section does not keep showing
                 // totals for history the owner just deleted.
                 categoryMetrics = CategoryResolutionMetricsStore().snapshot
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected.")
+            Text("Your prediction log, confirmations, saved merchant locations, and local MCC learning are deleted from this iPhone. This cannot be undone. Your account is not affected.")
+        }
+        .fileImporter(isPresented: $mccImportIsPresented,
+                      allowedContentTypes: [.commaSeparatedText, .plainText],
+                      allowsMultipleSelection: false) { result in
+            importMCCCSV(result)
         }
         .onAppear { categoryMetrics = CategoryResolutionMetricsStore().snapshot }
         .navigationTitle("Settings")
@@ -242,6 +266,30 @@ struct SettingsView: View {
                                   onDelete: onDeleteAccount,
                                   onCancel: { deleteIsPresented = false })
             }
+        }
+    }
+
+    private func importMCCCSV(_ result: Result<[URL], Error>) {
+        guard case .success(let urls) = result, let url = urls.first else {
+            if case .failure(let error) = result {
+                mccImportStatus = "Import failed: \(error.localizedDescription)"
+            }
+            return
+        }
+
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        do {
+            let data = try Data(contentsOf: url)
+            let summary = try MerchantMCCImportedEvidenceStore.shared.importCSV(data)
+            var parts = ["Imported \(summary.importedRows) MCC observation\(summary.importedRows == 1 ? "" : "s")."]
+            if summary.duplicateRows > 0 { parts.append("\(summary.duplicateRows) already imported.") }
+            let rejected = summary.missingMCCRows + summary.invalidMCCRows
+                + summary.missingDateRows + summary.unrecognizedMerchantRows
+            if rejected > 0 { parts.append("\(rejected) row\(rejected == 1 ? "" : "s") skipped safely.") }
+            mccImportStatus = parts.joined(separator: " ")
+        } catch {
+            mccImportStatus = "Import failed: \(error.localizedDescription)"
         }
     }
 }
@@ -291,7 +339,7 @@ struct DeleteAccountView: View {
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("This iPhone's history").font(.headline)
-                    Text("Your prediction log, your confirmations, and saved merchant locations are stored only on this iPhone — they were never uploaded, so deleting your account does not touch them. Choose what happens to them.")
+                    Text("Your prediction log, confirmations, saved merchant locations, and local MCC learning are stored only on this iPhone. They were never uploaded as account data, so deleting your account does not touch them unless you choose Erase.")
                         .font(.footnote).foregroundStyle(.secondary)
                     Picker("This iPhone's history", selection: $localHistory) {
                         ForEach(LocalHistoryChoice.allCases) { Text($0.rawValue).tag($0) }
