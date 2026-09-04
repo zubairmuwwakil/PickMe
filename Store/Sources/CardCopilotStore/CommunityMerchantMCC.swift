@@ -157,7 +157,7 @@ enum CommunityMerchantMCCWire {
         let channel: String
 
         var identity: String {
-            String(format: "c:%@:%0.4f:%0.4f|%@",
+            String(format: "c:%@:%0.3f:%0.3f|%@",
                    merchantId, latitude ?? 0, longitude ?? 0, channel)
         }
     }
@@ -226,9 +226,9 @@ enum CommunityMerchantMCCWire {
             guard result.count < 25,
                   place.hasMonitorableLocation,
                   let seed = MerchantMCCSeedCatalogue.match(merchantName: place.name) else { continue }
-            // Community MCC uploads intentionally use rounded coordinates rather than a persistent
-            // contributor/device identity. Query the same physical vocabulary so a report can be
-            // found again even when MapKit also supplies a place ID.
+            // Use a coarse ~100 m community bucket plus canonical merchant id. It is deliberately
+            // less precise than the live POI: enough to survive Wallet-vs-MapKit GPS drift while
+            // avoiding a precise visit trace. Different brands in one plaza remain separate.
             let candidate = Candidate(
                 merchantId: seed.merchant.id,
                 placeId: nil,
@@ -287,6 +287,6 @@ enum CommunityMerchantMCCWire {
     }
 
     private static func roundCoordinate(_ value: Double) -> Double {
-        (value * 10_000).rounded() / 10_000
+        (value * 1_000).rounded() / 1_000
     }
 }
