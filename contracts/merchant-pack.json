@@ -134,6 +134,22 @@
       ]
     },
     {
+      "id": "atlantic-superstore",
+      "displayName": "Atlantic Superstore",
+      "category": "grocery",
+      "matchKeys": [
+        "atlantic superstore",
+        "atl superstore"
+      ],
+      "mcc": 5411,
+      "merchantBrand": "loblaws",
+      "acceptedNetworks": [
+        "mastercard",
+        "visa"
+      ],
+      "notes": "Does not accept American Express."
+    },
+    {
       "id": "atmosphere",
       "displayName": "Atmosphere",
       "category": "ctFamily",
@@ -272,6 +288,20 @@
         "mastercard",
         "visa"
       ]
+    },
+    {
+      "id": "bulk-barn",
+      "displayName": "Bulk Barn",
+      "category": "grocery",
+      "matchKeys": [
+        "bulk barn"
+      ],
+      "mcc": 5499,
+      "acceptedNetworks": [
+        "mastercard",
+        "visa"
+      ],
+      "notes": "Does not accept American Express."
     },
     {
       "id": "cactus-club-cafe",
@@ -434,6 +464,21 @@
       ]
     },
     {
+      "id": "dairy-queen",
+      "displayName": "Dairy Queen",
+      "category": "dining",
+      "matchKeys": [
+        "dairy queen",
+        "dq"
+      ],
+      "mcc": 5814,
+      "acceptedNetworks": [
+        "amex",
+        "mastercard",
+        "visa"
+      ]
+    },
+    {
       "id": "disney",
       "displayName": "Disney+",
       "category": "streaming",
@@ -446,6 +491,53 @@
       "emailDomains": [
         "disneyplus.com"
       ],
+      "acceptedNetworks": [
+        "amex",
+        "mastercard",
+        "visa"
+      ]
+    },
+    {
+      "id": "dollarama",
+      "displayName": "Dollarama",
+      "category": "retailShopping",
+      "matchKeys": [
+        "dollarama"
+      ],
+      "mcc": 5331,
+      "acceptedNetworks": [
+        "amex",
+        "mastercard",
+        "visa"
+      ]
+    },
+    {
+      "id": "dominion-stores",
+      "displayName": "Dominion",
+      "category": "grocery",
+      "matchKeys": [
+        "dominion stores",
+        "dominion"
+      ],
+      "mcc": 5411,
+      "merchantBrand": "loblaws",
+      "acceptedNetworks": [
+        "mastercard",
+        "visa"
+      ],
+      "notes": "Does not accept American Express."
+    },
+    {
+      "id": "dominos-pizza",
+      "displayName": "Domino's Pizza",
+      "category": "dining",
+      "matchKeys": [
+        "domino s pizza",
+        "dominos pizza",
+        "domino s",
+        "dominos"
+      ],
+      "mcc": 5814,
       "acceptedNetworks": [
         "amex",
         "mastercard",
@@ -658,6 +750,22 @@
       ]
     },
     {
+      "id": "fortinos",
+      "displayName": "Fortinos",
+      "category": "grocery",
+      "matchKeys": [
+        "fortinos",
+        "fortino"
+      ],
+      "mcc": 5411,
+      "merchantBrand": "loblaws",
+      "acceptedNetworks": [
+        "mastercard",
+        "visa"
+      ],
+      "notes": "Does not accept American Express."
+    },
+    {
       "id": "freedom-mobile",
       "displayName": "Freedom Mobile",
       "category": "householdUtilities",
@@ -704,6 +812,20 @@
       ]
     },
     {
+      "id": "giant-tiger",
+      "displayName": "Giant Tiger",
+      "category": "grocery",
+      "matchKeys": [
+        "giant tiger"
+      ],
+      "mcc": 5411,
+      "acceptedNetworks": [
+        "mastercard",
+        "visa"
+      ],
+      "notes": "Does not accept American Express."
+    },
+    {
       "id": "go-transit",
       "displayName": "GO Transit",
       "category": "transit",
@@ -741,6 +863,21 @@
         "goodlife"
       ],
       "mcc": 7997,
+      "acceptedNetworks": [
+        "amex",
+        "mastercard",
+        "visa"
+      ]
+    },
+    {
+      "id": "green-p-parking",
+      "displayName": "Green P Parking",
+      "category": "transit",
+      "matchKeys": [
+        "green p parking",
+        "green p"
+      ],
+      "mcc": 7523,
       "acceptedNetworks": [
         "amex",
         "mastercard",
@@ -794,6 +931,20 @@
       "emailDomains": [
         "homedepot.ca"
       ],
+      "acceptedNetworks": [
+        "amex",
+        "mastercard",
+        "visa"
+      ]
+    },
+    {
+      "id": "homesense",
+      "displayName": "HomeSense",
+      "category": "retailShopping",
+      "matchKeys": [
+        "homesense"
+      ],
+      "mcc": 5719,
       "acceptedNetworks": [
         "amex",
         "mastercard",
@@ -880,6 +1031,37 @@
       ]
     },
     {
+      "id": "indigo",
+      "displayName": "Indigo",
+      "category": "retailShopping",
+      "matchKeys": [
+        "indigo books",
+        "indigo",
+        "chapters"
+      ],
+      "mcc": 5942,
+      "acceptedNetworks": [
+        "amex",
+        "mastercard",
+        "visa"
+      ]
+    },
+    {
+      "id": "irving-oil",
+      "displayName": "Irving Oil",
+      "category": "gasStation",
+      "matchKeys": [
+        "irving oil",
+        "irving"
+      ],
+      "mcc": 5541,
+      "acceptedNetworks": [
+        "amex",
+        "mastercard",
+        "visa"
+      ]
+    },
+    {
       "id": "jean-coutu",
       "displayName": "Jean Coutu",
       "category": "drugStore",
@@ -956,6 +1138,22 @@
       ]
     },
     {
+      "id": "loblaw-city-market",
+      "displayName": "City Market",
+      "category": "grocery",
+      "matchKeys": [
+        "loblaw city market",
+        "city market"
+      ],
+      "mcc": 5411,
+      "merchantBrand": "loblaws",
+      "acceptedNetworks": [
+        "mastercard",
+        "visa"
+      ],
+      "notes": "Does not accept American Express."
+    },
+    {
       "id": "loblaws",
       "displayName": "Loblaws",
       "category": "grocery",
@@ -968,6 +1166,20 @@
       "emailDomains": [
         "loblaws.ca"
       ],
+      "acceptedNetworks": [
+        "mastercard",
+        "visa"
+      ],
+      "notes": "Does not accept American Express."
+    },
+    {
+      "id": "london-drugs",
+      "displayName": "London Drugs",
+      "category": "drugStore",
+      "matchKeys": [
+        "london drugs"
+      ],
+      "mcc": 5912,
       "acceptedNetworks": [
         "amex",
         "mastercard",
@@ -1042,6 +1254,37 @@
       "emailDomains": [
         "marriott.com"
       ],
+      "acceptedNetworks": [
+        "amex",
+        "mastercard",
+        "visa"
+      ]
+    },
+    {
+      "id": "marshalls",
+      "displayName": "Marshalls",
+      "category": "retailShopping",
+      "matchKeys": [
+        "marshalls"
+      ],
+      "mcc": 5651,
+      "acceptedNetworks": [
+        "amex",
+        "mastercard",
+        "visa"
+      ]
+    },
+    {
+      "id": "mary-browns",
+      "displayName": "Mary Brown's",
+      "category": "dining",
+      "matchKeys": [
+        "mary brown s chicken",
+        "mary browns chicken",
+        "mary brown s",
+        "mary browns"
+      ],
+      "mcc": 5814,
       "acceptedNetworks": [
         "amex",
         "mastercard",
@@ -1273,6 +1516,20 @@
       ]
     },
     {
+      "id": "pizza-pizza",
+      "displayName": "Pizza Pizza",
+      "category": "dining",
+      "matchKeys": [
+        "pizza pizza"
+      ],
+      "mcc": 5814,
+      "acceptedNetworks": [
+        "amex",
+        "mastercard",
+        "visa"
+      ]
+    },
+    {
       "id": "planet-fitness",
       "displayName": "Planet Fitness",
       "category": "memberships",
@@ -1363,10 +1620,10 @@
       "mcc": 5411,
       "merchantBrand": "loblaws",
       "acceptedNetworks": [
-        "amex",
         "mastercard",
         "visa"
-      ]
+      ],
+      "notes": "Does not accept American Express."
     },
     {
       "id": "real-canadian-superstore",
@@ -1381,10 +1638,10 @@
       "mcc": 5411,
       "merchantBrand": "loblaws",
       "acceptedNetworks": [
-        "amex",
         "mastercard",
         "visa"
-      ]
+      ],
+      "notes": "Does not accept American Express."
     },
     {
       "id": "rexall",
@@ -1606,6 +1863,21 @@
       ]
     },
     {
+      "id": "sportsnet-plus",
+      "displayName": "Sportsnet+",
+      "category": "streaming",
+      "matchKeys": [
+        "sportsnet plus",
+        "sportsnet"
+      ],
+      "mcc": 4899,
+      "acceptedNetworks": [
+        "amex",
+        "mastercard",
+        "visa"
+      ]
+    },
+    {
       "id": "spotify",
       "displayName": "Spotify",
       "category": "streaming",
@@ -1726,10 +1998,10 @@
       "mcc": 5411,
       "merchantBrand": "loblaws",
       "acceptedNetworks": [
-        "amex",
         "mastercard",
         "visa"
-      ]
+      ],
+      "notes": "Does not accept American Express in store."
     },
     {
       "id": "telus",
@@ -1832,6 +2104,21 @@
       ]
     },
     {
+      "id": "tsn-plus",
+      "displayName": "TSN+",
+      "category": "streaming",
+      "matchKeys": [
+        "tsn plus",
+        "tsn"
+      ],
+      "mcc": 4899,
+      "acceptedNetworks": [
+        "amex",
+        "mastercard",
+        "visa"
+      ]
+    },
+    {
       "id": "ttc-toronto-transit-commission",
       "displayName": "TTC (Toronto Transit Commission)",
       "category": "transit",
@@ -1899,6 +2186,22 @@
         "mastercard",
         "visa"
       ]
+    },
+    {
+      "id": "valu-mart",
+      "displayName": "Valu-mart",
+      "category": "grocery",
+      "matchKeys": [
+        "valu mart",
+        "valumart"
+      ],
+      "mcc": 5411,
+      "merchantBrand": "loblaws",
+      "acceptedNetworks": [
+        "mastercard",
+        "visa"
+      ],
+      "notes": "Does not accept American Express."
     },
     {
       "id": "via-rail-canada",
@@ -2039,6 +2342,35 @@
       ]
     },
     {
+      "id": "wholesale-club",
+      "displayName": "Wholesale Club",
+      "category": "wholesaleClub",
+      "matchKeys": [
+        "wholesale club"
+      ],
+      "mcc": 5300,
+      "merchantBrand": "loblaws",
+      "acceptedNetworks": [
+        "mastercard",
+        "visa"
+      ],
+      "notes": "Does not accept American Express. Membership not required."
+    },
+    {
+      "id": "winners",
+      "displayName": "Winners",
+      "category": "retailShopping",
+      "matchKeys": [
+        "winners"
+      ],
+      "mcc": 5651,
+      "acceptedNetworks": [
+        "amex",
+        "mastercard",
+        "visa"
+      ]
+    },
+    {
       "id": "xbox-live-microsoft",
       "displayName": "Xbox Live / Microsoft",
       "category": "digitalMedia",
@@ -2071,6 +2403,22 @@
       ]
     },
     {
+      "id": "your-independent-grocer",
+      "displayName": "Your Independent Grocer",
+      "category": "grocery",
+      "matchKeys": [
+        "your independent grocer",
+        "independent grocer"
+      ],
+      "mcc": 5411,
+      "merchantBrand": "loblaws",
+      "acceptedNetworks": [
+        "mastercard",
+        "visa"
+      ],
+      "notes": "Does not accept American Express."
+    },
+    {
       "id": "youtube-premium",
       "displayName": "YouTube Premium",
       "category": "streaming",
@@ -2084,6 +2432,22 @@
         "mastercard",
         "visa"
       ]
+    },
+    {
+      "id": "zehrs",
+      "displayName": "Zehrs",
+      "category": "grocery",
+      "matchKeys": [
+        "zehrs",
+        "zehr"
+      ],
+      "mcc": 5411,
+      "merchantBrand": "loblaws",
+      "acceptedNetworks": [
+        "mastercard",
+        "visa"
+      ],
+      "notes": "Does not accept American Express."
     }
   ]
 }

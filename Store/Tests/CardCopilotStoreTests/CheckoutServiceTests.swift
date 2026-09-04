@@ -60,7 +60,7 @@ final class CheckoutServiceTests: XCTestCase {
     // MARK: single-outcome flow
 
     func testUnambiguousGroceryProducesSingleOutcomeAndPersists() throws {
-        let result = try service.recommend(merchant: merchant("Loblaws", poi: "MKPOICategoryFoodMarket"),
+        let result = try service.recommend(merchant: merchant("Metro", poi: "MKPOICategoryFoodMarket"),
                                            amountCad: 140, asOf: asOf)
         guard case .single(let rec) = result.outcome else {
             return XCTFail("expected single outcome, got \(result.outcome)")
@@ -82,7 +82,7 @@ final class CheckoutServiceTests: XCTestCase {
         // Metric #2 compares posted units against what the app predicted AT THE TIME. Without
         // this snapshot the only way to check the arithmetic would be to re-run today's engine
         // against an old row — which measures today's catalogue, not the advice that was given.
-        let result = try service.recommend(merchant: merchant("Loblaws", poi: "MKPOICategoryFoodMarket"),
+        let result = try service.recommend(merchant: merchant("Metro", poi: "MKPOICategoryFoodMarket"),
                                            amountCad: 140, asOf: asOf)
         guard case .single(let rec) = result.outcome else {
             return XCTFail("expected single outcome, got \(result.outcome)")
@@ -93,6 +93,18 @@ final class CheckoutServiceTests: XCTestCase {
                        "Cobalt earns 5x on $140 of grocery")
         XCTAssertEqual(stored.predictedRewardUnitKind, "point",
                        "the unit decides the comparison tolerance — points post as integers")
+    }
+
+    func testLoblawsExcludesAmexDueToNetworkRestriction() throws {
+        let result = try service.recommend(merchant: merchant("Loblaws", poi: "MKPOICategoryFoodMarket"),
+                                           amountCad: 140, asOf: asOf)
+        guard case .single(let rec) = result.outcome else {
+            return XCTFail("expected single outcome, got \(result.outcome)")
+        }
+        XCTAssertNotEqual(rec.winner.cardId, "amex-cobalt",
+                          "Loblaws terminal policy rejects American Express; Cobalt cannot be recommended")
+        XCTAssertEqual(rec.winner.cardId, "mbna-rewards-we",
+                       "MBNA Rewards World Elite (Mastercard) wins with 5x on grocery at Loblaws")
     }
 
     func testCashBackWinnerSnapshotsDollarUnits() throws {
@@ -292,7 +304,7 @@ final class CheckoutServiceTests: XCTestCase {
     // said at the refined amount, without writing to the store itself.
 
     func testRescoreCheckoutMatchesWhatRecommendWouldHaveSaidAtTheRefinedAmount() throws {
-        let original = try service.recommend(merchant: merchant("Loblaws", poi: "MKPOICategoryFoodMarket"),
+        let original = try service.recommend(merchant: merchant("Metro", poi: "MKPOICategoryFoodMarket"),
                                              amountCad: nil, asOf: asOf)
         let refined = try XCTUnwrap(rescoreCheckout(original, amountCad: 140,
                                                     engine: service.engine, asOf: asOf))

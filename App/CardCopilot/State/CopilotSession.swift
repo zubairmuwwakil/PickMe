@@ -892,18 +892,7 @@ final class CopilotSession {
     }
 
     private func sortedHomeMerchants(_ merchants: [StoredMerchant]) -> [StoredMerchant] {
-        guard let cachedLocation, cachedLocation.isRecent else {
-            return merchants.sorted { $0.lastSeenAt > $1.lastSeenAt }
-        }
-        let origin = CLLocation(latitude: cachedLocation.latitude, longitude: cachedLocation.longitude)
-        return merchants.sorted { lhs, rhs in
-            let lhsDistance = origin.distance(from: CLLocation(latitude: lhs.latitude,
-                                                               longitude: lhs.longitude))
-            let rhsDistance = origin.distance(from: CLLocation(latitude: rhs.latitude,
-                                                               longitude: rhs.longitude))
-            if lhsDistance != rhsDistance { return lhsDistance < rhsDistance }
-            return lhs.lastSeenAt > rhs.lastSeenAt
-        }
+        merchants.sorted { $0.lastSeenAt > $1.lastSeenAt }
     }
 
     private func recordPatronage(_ purchase: StoredPurchase) {

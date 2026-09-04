@@ -54,4 +54,22 @@ class CategoryMapperTest {
         assertEquals("netflix", CategoryMapper.canonicalEngineBrand("Netflix.com"))
         assertEquals(null, CategoryMapper.canonicalEngineBrand("Unknown Corner Store"))
     }
+
+    @Test
+    fun testStoreKeywordHeuristics() {
+        val sports = CategoryMapper.predict(poiCategoryRaw = "MKPOICategoryStore", merchantName = "JRSports")
+        assertEquals("retailShopping", sports.category)
+        assertEquals(ConfidenceSource.MAP_KIT_CATEGORY, sports.confidenceSource)
+        assertEquals(listOf("retailShopping", "other"), sports.candidates)
+
+        val hardware = CategoryMapper.predict(poiCategoryRaw = "MKPOICategoryStore", merchantName = "Downtown Hardware & Tools")
+        assertEquals("homeImprovement", hardware.category)
+        assertEquals(ConfidenceSource.MAP_KIT_CATEGORY, hardware.confidenceSource)
+        assertEquals(listOf("homeImprovement", "other"), hardware.candidates)
+
+        val generalStore = CategoryMapper.predict(poiCategoryRaw = "MKPOICategoryStore", merchantName = "MugUpCanada")
+        assertEquals("other", generalStore.category)
+        assertEquals(ConfidenceSource.MAP_KIT_CATEGORY, generalStore.confidenceSource)
+        assertEquals(listOf("other", "grocery"), generalStore.candidates)
+    }
 }

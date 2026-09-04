@@ -52,6 +52,8 @@ struct HomeAnswerSubject: Identifiable, Equatable {
     let isConfirmed: Bool
     /// Carried verbatim so the card can hand `CopilotSession.recommend` a merchant unchanged.
     let merchant: NearbyPlace
+    /// When this subject was last visited or seen, preserved from StoredMerchant for recency sorting.
+    let lastSeenAt: Date?
 
     init(nearby: NearbyPlace, provenance: HomeSubjectProvenance = .nearby) {
         id = nearby.id
@@ -64,6 +66,7 @@ struct HomeAnswerSubject: Identifiable, Equatable {
         self.provenance = provenance
         isConfirmed = false
         merchant = nearby
+        lastSeenAt = nil
     }
 
     /// A remembered place keeps `predictionForKnownMerchant`, which prefers a category the owner
@@ -78,12 +81,13 @@ struct HomeAnswerSubject: Identifiable, Equatable {
         provenance = .recent
         isConfirmed = stored.confirmedCategory != nil
         merchant = NearbyPlace(id: identifier,
-                                  placeID: stored.placeID,
-                                  name: stored.name,
-                                  poiCategoryRaw: stored.poiCategoryRaw,
-                                  latitude: stored.latitude,
-                                  longitude: stored.longitude,
-                                  distanceMeters: nil)
+                               placeID: stored.placeID,
+                               name: stored.name,
+                               poiCategoryRaw: stored.poiCategoryRaw,
+                               latitude: stored.latitude,
+                               longitude: stored.longitude,
+                               distanceMeters: nil)
+        lastSeenAt = stored.lastSeenAt
     }
 }
 

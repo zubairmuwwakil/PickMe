@@ -34,12 +34,33 @@ final class MerchantPackLoadingTests: XCTestCase {
     /// scoring predicates and `notes` carries acceptance caveats the owner is shown.
     func testPackCarriesEveryFieldTheSwiftArrayHeld() throws {
         let pack = try SeedLoader.loadMerchantPack()
-        XCTAssertEqual(pack.merchants.count, 127)
+        XCTAssertEqual(pack.merchants.count, 151)
 
         let costco = try XCTUnwrap(pack.merchants.first { $0.id == "costco-wholesale" })
         XCTAssertEqual(costco.category, "wholesaleClub")
         XCTAssertEqual(costco.merchantBrand, "costco")
         XCTAssertEqual(costco.acceptedNetworks, [.mastercard])
         XCTAssertNotNil(costco.notes)
+
+        let loblaws = try XCTUnwrap(pack.merchants.first { $0.id == "loblaws" })
+        XCTAssertEqual(loblaws.category, "grocery")
+        XCTAssertEqual(loblaws.merchantBrand, "loblaws")
+        XCTAssertEqual(loblaws.acceptedNetworks, [.mastercard, .visa],
+                       "Loblaws terminal policy excludes American Express")
+        XCTAssertNotNil(loblaws.notes)
+
+        let fortinos = try XCTUnwrap(pack.merchants.first { $0.id == "fortinos" })
+        XCTAssertEqual(fortinos.category, "grocery")
+        XCTAssertEqual(fortinos.merchantBrand, "loblaws")
+        XCTAssertEqual(fortinos.acceptedNetworks, [.mastercard, .visa])
+
+        let bulkBarn = try XCTUnwrap(pack.merchants.first { $0.id == "bulk-barn" })
+        XCTAssertEqual(bulkBarn.category, "grocery")
+        XCTAssertEqual(bulkBarn.acceptedNetworks, [.mastercard, .visa])
+        XCTAssertNotNil(bulkBarn.notes)
+
+        let dollarama = try XCTUnwrap(pack.merchants.first { $0.id == "dollarama" })
+        XCTAssertEqual(dollarama.category, "retailShopping")
+        XCTAssertEqual(dollarama.mcc, 5331)
     }
 }

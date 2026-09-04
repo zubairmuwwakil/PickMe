@@ -10,6 +10,9 @@
     "!" : {
 
     },
+    "**Do not use** the Shortcuts library tab." : {
+
+    },
     "/ %lld checkouts" : {
       "localizations" : {
         "fr-CA" : {
@@ -591,6 +594,9 @@
     "0% (No FX Fee)" : {
 
     },
+    "1" : {
+
+    },
     "1 %@ ≈ %@ CAD benchmark exchange rate." : {
       "localizations" : {
         "en" : {
@@ -622,6 +628,18 @@
       }
     },
     "1-Tap Check" : {
+
+    },
+    "1. Open **iOS Settings** $\\to$ **Action Button**" : {
+
+    },
+    "2" : {
+
+    },
+    "2. Swipe to **Shortcut** and select **'Which Card in PickMe?'**" : {
+
+    },
+    "3" : {
 
     },
     "10/26" : {
@@ -730,6 +748,9 @@
 
     },
     "Account opened" : {
+
+    },
+    "ACTION NAME TO SEARCH:" : {
 
     },
     "ACTION REQUIRED" : {
@@ -1368,6 +1389,9 @@
     "Any %@ location" : {
 
     },
+    "Any Card" : {
+
+    },
     "Any nearby branch" : {
 
     },
@@ -1383,7 +1407,10 @@
         }
       }
     },
-    "Apple Shortcuts Guide" : {
+    "Apple requires users to configure Personal Automations inside the Apple Shortcuts app. This visual walkthrough guides you through the 4 steps in under 60 seconds." : {
+
+    },
+    "Apple Shortcuts passes transaction data through **variables**. Tap each parameter field in the action and select its matching Shortcut variable." : {
 
     },
     "Apple Wallet Capture" : {
@@ -1439,6 +1466,9 @@
     "Arrived with no location" : {
 
     },
+    "Ask PickMe with Action Button & Siri" : {
+
+    },
     "Assign to This Account" : {
 
     },
@@ -1481,6 +1511,9 @@
 
     },
     "Automatic store arrival notifications" : {
+
+    },
+    "Automation" : {
 
     },
     "Awaiting Evidence" : {
@@ -1586,6 +1619,9 @@
     "Better: %@" : {
 
     },
+    "Beyond automatic transaction capture, you can instantly ask PickMe which card to use *before* paying using your iPhone’s Action Button or Siri." : {
+
+    },
     "Big purchase or trip" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1598,6 +1634,9 @@
       }
     },
     "Billing Currency" : {
+
+    },
+    "BONUS PRODUCTIVITY" : {
 
     },
     "Both" : {
@@ -1699,6 +1738,9 @@
 
     },
     "Captured Via" : {
+
+    },
+    "Captures instantly in background without asking" : {
 
     },
     "Car Rental" : {
@@ -1906,10 +1948,16 @@
         }
       }
     },
+    "Changing this cancels any in-flight lookup and runs a fresh Radar scan. Every field record stores the radius that produced it." : {
+
+    },
     "CHARGE (%@)" : {
 
     },
     "Charged" : {
+
+    },
+    "Check Logs" : {
 
     },
     "Check out how much I've saved with PickMe:" : {
@@ -2034,6 +2082,9 @@
     "Clear Recorded Card" : {
 
     },
+    "Close" : {
+
+    },
     "Cloud Sync & Capture" : {
 
     },
@@ -2110,6 +2161,9 @@
     "Configure specific stores and merchants where this card should always be used." : {
 
     },
+    "Configure the automation trigger. **This is the most critical setting** to ensure frictionless background capture." : {
+
+    },
     "Confirm predictions that matched your statement in one tap, or tap the row to record discrepancies." : {
       "localizations" : {
         "fr-CA" : {
@@ -2173,6 +2227,15 @@
           }
         }
       }
+    },
+    "Copied!" : {
+
+    },
+    "Copy" : {
+
+    },
+    "Copy Name" : {
+
     },
     "Copy token" : {
       "extractionState" : "stale",
@@ -2478,6 +2541,9 @@
 
     },
     "Delivery State" : {
+
+    },
+    "Detected" : {
 
     },
     "DEVICE CREDENTIAL" : {
@@ -3008,6 +3074,9 @@
     "Fix" : {
 
     },
+    "Fix Setup" : {
+
+    },
     "Flight" : {
       "localizations" : {
         "fr-CA" : {
@@ -3017,9 +3086,6 @@
           }
         }
       }
-    },
-    "Follow these 3 quick steps to automate Apple Wallet card capture." : {
-
     },
     "Foreign Currency Spend" : {
 
@@ -3031,6 +3097,9 @@
 
     },
     "frequented" : {
+
+    },
+    "From the PickMe app" : {
 
     },
     "From your Apple Wallet" : {
@@ -3053,6 +3122,9 @@
 
     },
     "FX Fee" : {
+
+    },
+    "Gallery" : {
 
     },
     "Gas" : {
@@ -3093,9 +3165,6 @@
     "Guest Mode" : {
 
     },
-    "Guide" : {
-
-    },
     "Haptic Feedback" : {
 
     },
@@ -3123,6 +3192,12 @@
       }
     },
     "How often PickMe could name what a purchase was. Counted on this iPhone only — no merchant, amount, or place is recorded here, and none of it is sent anywhere. Erasing this iPhone's history clears these too." : {
+
+    },
+    "HOW TO MAP IN APPLE SHORTCUTS:" : {
+
+    },
+    "HOW TO RUN A TEST NOW:" : {
 
     },
     "I checked — verify this card" : {
@@ -3185,6 +3260,9 @@
         }
       }
     },
+    "If you leave 'Run After Confirmation' selected, Apple will ask you to confirm the automation on every payment, defeating automatic tap tracking." : {
+
+    },
     "Import my document" : {
 
     },
@@ -3209,6 +3287,9 @@
         }
       }
     },
+    "In Shortcuts, tap on your new automation and tap the **▶️ Play** button at the bottom." : {
+
+    },
     "In Wallet" : {
 
     },
@@ -3228,6 +3309,9 @@
 
     },
     "Income profile" : {
+
+    },
+    "Incomplete Parameter Mapping" : {
 
     },
     "Inspect" : {
@@ -3250,6 +3334,9 @@
     "Instant Matrix" : {
 
     },
+    "Instant recommendation in 1 squeeze" : {
+
+    },
     "Instant Repeats" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3264,6 +3351,9 @@
     "INTELLIGENCE & AUTOMATION" : {
 
     },
+    "Interactive setup, variables & live verification" : {
+
+    },
     "iOS accepted the arrival notification request. That does not confirm it was displayed or seen. Check Focus and notification delivery settings if it did not appear." : {
 
     },
@@ -3274,6 +3364,9 @@
 
     },
     "iOS accepted the request, but notifications were not allowed for PickMe at that time. An accepted request alone does not mean a notification appeared." : {
+
+    },
+    "iPhone Action Button" : {
 
     },
     "Issuer" : {
@@ -3417,6 +3510,9 @@
 
     },
     "Last check in this shopping area" : {
+
+    },
+    "Last invocation %@" : {
 
     },
     "Last notification accepted by iOS: %@" : {
@@ -3694,6 +3790,12 @@
     "Merchant Conditions" : {
 
     },
+    "Merchant identity (instrumentation)" : {
+
+    },
+    "Merchants looked up" : {
+
+    },
     "Minimum Spend Advantage" : {
 
     },
@@ -3706,6 +3808,9 @@
           }
         }
       }
+    },
+    "Missing" : {
+
     },
     "Missing: %@" : {
 
@@ -3970,6 +4075,12 @@
     "No scans recorded yet. Tap Radar while standing in a store." : {
 
     },
+    "No setup needed — pre-registered" : {
+
+    },
+    "No Shortcut Invocations Yet" : {
+
+    },
     "No single card dominates every line" : {
 
     },
@@ -4054,6 +4165,9 @@
         }
       }
     },
+    "Not recognised" : {
+
+    },
     "Not shipped to the App Store. Changes take effect on the next arrival and are recorded on every field-log record, so an export says which policy produced it." : {
 
     },
@@ -4110,6 +4224,9 @@
     "Notifications are not allowed. Enable them to receive arrival alerts." : {
 
     },
+    "Notify When Run" : {
+
+    },
     "Off" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4144,7 +4261,16 @@
     "On arrival nothing has been bought, so the engine scores a guessed basket. The CAD floor is divided by that guess, which is what makes the effective bar depend on the category." : {
 
     },
+    "On the next screen, tap **Add Action** (or **New Blank Automation** $\\to$ **Add Action**), then search for PickMe." : {
+
+    },
+    "On the popup keyboard bar, tap **Shortcut Input**." : {
+
+    },
     "On this iPhone" : {
+
+    },
+    "ON-DEVICE AUDIT LOG" : {
 
     },
     "Once both are recorded, this moves to Reconcile to be checked against your statement." : {
@@ -4228,7 +4354,13 @@
     "Open Purchases in In Unity" : {
 
     },
-    "Open Shortcuts App" : {
+    "Open Shortcuts" : {
+
+    },
+    "Open Shortcuts and tap the **▶️ Play** button on your automation to send a test run, or make a test payment." : {
+
+    },
+    "Open the **Apple Shortcuts** app on your iPhone, and switch to the **Automation** tab at the bottom." : {
 
     },
     "Opens the category breakdown" : {
@@ -4464,6 +4596,9 @@
     "per category" : {
 
     },
+    "Personal Automation" : {
+
+    },
     "Personal benefit document for %@" : {
 
     },
@@ -4510,6 +4645,9 @@
           }
         }
       }
+    },
+    "PickMe • Saves transaction and syncs" : {
+
     },
     "PickMe automatically learns your preferred card at merchants as you make purchases." : {
 
@@ -4579,6 +4717,9 @@
           }
         }
       }
+    },
+    "PICKME PARAMETER" : {
+
     },
     "PickMe received an arrival for this shopping area but could not identify a store. That check cannot be attributed to this branch." : {
 
@@ -4706,6 +4847,9 @@
     "Private on-device checkout active" : {
 
     },
+    "Prompts you with a popup banner on every tap" : {
+
+    },
     "Protection & Perks" : {
 
     },
@@ -4797,6 +4941,9 @@
     "QUICK PRESETS (%@)" : {
 
     },
+    "Radar query radius" : {
+
+    },
     "Radar scans" : {
 
     },
@@ -4866,6 +5013,9 @@
           }
         }
       }
+    },
+    "RECOMMENDED" : {
+
     },
     "Recommended Card" : {
       "localizations" : {
@@ -5053,6 +5203,9 @@
     "Retry Token Check" : {
 
     },
+    "Return here and tap **Check Logs** to confirm PickMe received the event." : {
+
+    },
     "Review issuer sources, import your own certificates, and keep claim instructions close at hand." : {
 
     },
@@ -5065,6 +5218,9 @@
           }
         }
       }
+    },
+    "Review Step 4 (Token Mapping)" : {
+
     },
     "Revoke" : {
 
@@ -5112,6 +5268,12 @@
       }
     },
     "Rows marked Captured were read from your Apple Wallet transaction. Check them and accept, or tap to change anything." : {
+
+    },
+    "Run After Confirmation" : {
+
+    },
+    "Run Immediately" : {
 
     },
     "Runner-up Comparison" : {
@@ -5289,6 +5451,9 @@
     "Select Card" : {
 
     },
+    "SELECT SHORTCUT INPUT" : {
+
+    },
     "Select which card you tapped at checkout. Rewards calculations update automatically." : {
 
     },
@@ -5325,6 +5490,9 @@
 
     },
     "Send test notification" : {
+
+    },
+    "Send Wallet Purchase" : {
 
     },
     "Send Wallet Purchase to In Unity" : {
@@ -5409,10 +5577,16 @@
     "Shopping area" : {
 
     },
+    "Shortcut Connected Successfully" : {
+
+    },
+    "Shortcut Missing Parameters" : {
+
+    },
     "Shortcuts" : {
 
     },
-    "Shortcuts Setup" : {
+    "Shortcuts & Automations" : {
 
     },
     "Show %@ in Maps" : {
@@ -5529,6 +5703,9 @@
 
     },
     "Simulated Checkout Outcomes" : {
+
+    },
+    "Siri Voice Shortcuts" : {
 
     },
     "Skip — just tell me which card" : {
@@ -5776,6 +5953,15 @@
           }
         }
       }
+    },
+    "Tap **+** in the top right and select **Transaction** under the Wallet section." : {
+
+    },
+    "Tap the blue **Shortcut Input** variable chip to change its property to **Merchant**." : {
+
+    },
+    "Tap the empty field (e.g. **Merchant**)." : {
+
     },
     "Tap to set as your primary card" : {
 
@@ -6085,6 +6271,9 @@
     "Track net reward gains & experiment calibration" : {
 
     },
+    "Transaction" : {
+
+    },
     "TRANSACTION CURRENCY" : {
 
     },
@@ -6114,6 +6303,12 @@
 
     },
     "Try selecting another category or clear the filter to view all purchases." : {
+
+    },
+    "Turn OFF to avoid duplicate notifications" : {
+
+    },
+    "Tutorial" : {
 
     },
     "Unassigned Captures Pending" : {
@@ -6281,6 +6476,9 @@
     "verified" : {
 
     },
+    "Verify that your Apple Shortcuts automation connects cleanly to PickMe." : {
+
+    },
     "View All %lld Purchases" : {
 
     },
@@ -6326,6 +6524,9 @@
           }
         }
       }
+    },
+    "Walkthrough" : {
+
     },
     "Wallet" : {
       "localizations" : {
@@ -6504,6 +6705,9 @@
         }
       }
     },
+    "When I tap any card or pass" : {
+
+    },
     "Where" : {
       "localizations" : {
         "fr-CA" : {
@@ -6545,10 +6749,16 @@
         }
       }
     },
+    "Which rung recognised a merchant already on this iPhone. \"Apple place id\" is the stable one; \"saved id\" is a row written before place ids and not yet re-seen; \"same name nearby\" means the pin moved and proximity rescued it. A rising share of the last two says recognition is drifting." : {
+
+    },
     "Which store are you in?" : {
 
     },
     "Why didn't I get an alert?" : {
+
+    },
+    "Why Set Up Automation?" : {
 
     },
     "Why this card won" : {
@@ -6679,6 +6889,9 @@
         }
       }
     },
+    "Your last tap arrived without merchant info. Tap to view the variable mapping guide." : {
+
+    },
     "Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected." : {
       "comment" : "human review before public launch",
       "localizations" : {
@@ -6711,6 +6924,9 @@
 
     },
     "Zero 1x multiplier traps. Maximum effort." : {
+
+    },
+    "Zero-Touch Apple Wallet Capture" : {
 
     }
   },

@@ -22,6 +22,7 @@ struct SyncCenterView: View {
     @State private var isCreatingToken = false
     @State private var isShowingCreateForm = false
     @State private var pendingRevocation: WalletInstallation?
+    @State private var showingShortcutsTutorial = false
 
     private var activeInstallations: [WalletInstallation] {
         sync.walletInstallations.filter { $0.revokedAt == nil }
@@ -65,6 +66,9 @@ struct SyncCenterView: View {
         }
         .sheet(isPresented: $authIsPresented) {
             PickMeAuthSheet()
+        }
+        .sheet(isPresented: $showingShortcutsTutorial) {
+            ShortcutsSetupTutorialView()
         }
         .alert("Revoke this connection?", isPresented: .init(
             get: { pendingRevocation != nil },
@@ -132,12 +136,19 @@ struct SyncCenterView: View {
                         subtitle: "Keep monthly category limits synchronized across all your devices."
                     )
 
-                    valuePropRow(
-                        icon: "wallet.pass.fill",
-                        iconColor: .purple,
-                        title: "Apple Wallet Shortcuts",
-                        subtitle: "Instantly capture transactions when you tap your card at payment terminals."
-                    )
+                    Button {
+                        let generator = UIImpactFeedbackGenerator(style: .light)
+                        generator.impactOccurred()
+                        showingShortcutsTutorial = true
+                    } label: {
+                        valuePropRow(
+                            icon: "wallet.pass.fill",
+                            iconColor: .purple,
+                            title: "Apple Wallet Shortcuts",
+                            subtitle: "Instantly capture transactions when you tap your card at payment terminals."
+                        )
+                    }
+                    .buttonStyle(.plain)
 
                     valuePropRow(
                         icon: "lock.shield.fill",
@@ -445,6 +456,24 @@ struct SyncCenterView: View {
 
                         Spacer()
 
+                        Button {
+                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                            generator.impactOccurred()
+                            showingShortcutsTutorial = true
+                        } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: "book.fill")
+                                    .font(.system(size: 9, weight: .bold))
+                                Text("Tutorial")
+                            }
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundStyle(.blue)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 5)
+                            .background(Color.blue.opacity(0.12), in: Capsule())
+                        }
+                        .buttonStyle(.plain)
+
                         Link(destination: URL(string: "shortcuts://")!) {
                             HStack(spacing: 3) {
                                 Text("Shortcuts")
@@ -452,10 +481,10 @@ struct SyncCenterView: View {
                                     .font(.system(size: 9, weight: .bold))
                             }
                             .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(.purple)
                             .padding(.horizontal, 9)
                             .padding(.vertical, 5)
-                            .background(Color.blue.opacity(0.12), in: Capsule())
+                            .background(Color.purple.opacity(0.12), in: Capsule())
                         }
                     }
 

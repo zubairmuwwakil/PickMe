@@ -152,6 +152,16 @@ public func predict(poiCategoryRaw: String?, merchantName: String,
                                   confidenceSource: .mapKitCategory,
                                   candidates: ["fitness"], rawCategory: poiCategoryRaw)
     case "store":
+        if isHomeImprovement(normalizedMerchant) {
+            return CategoryPrediction(category: "homeImprovement",
+                                      confidenceSource: .mapKitCategory,
+                                      candidates: ["homeImprovement", "other"], rawCategory: poiCategoryRaw)
+        }
+        if isRetailShopping(normalizedMerchant) {
+            return CategoryPrediction(category: "retailShopping",
+                                      confidenceSource: .mapKitCategory,
+                                      candidates: ["retailShopping", "other"], rawCategory: poiCategoryRaw)
+        }
         return CategoryPrediction(category: "other",
                                   confidenceSource: .mapKitCategory,
                                   candidates: ["other", "grocery"], rawCategory: poiCategoryRaw)
@@ -201,6 +211,20 @@ private func isWalmart(_ normalizedMerchant: String) -> Bool {
     normalizedMerchant.contains("walmart")
 }
 
+private func isHomeImprovement(_ normalizedMerchant: String) -> Bool {
+    let keywords = ["hardware", "lumber", "plumbing", "paint", "tools", "home depot", "rona", "lowes", "renodepot"]
+    return keywords.contains(where: { normalizedMerchant.contains($0) })
+}
+
+private func isRetailShopping(_ normalizedMerchant: String) -> Bool {
+    let keywords = [
+        "sport", "athletics", "athletic", "running", "golf", "hockey", "ski",
+        "soccer", "tennis", "outdoors", "apparel", "clothing", "boutique",
+        "shoes", "footwear", "bookstore", "books", "jewellery", "jewelry", "toy", "toys"
+    ]
+    return keywords.contains(where: { normalizedMerchant.contains($0) })
+}
+
 private func canonicalPoiCategory(_ raw: String?) -> String? {
     guard let raw else { return nil }
     let folded = raw.folding(options: [.diacriticInsensitive, .caseInsensitive],
@@ -237,7 +261,7 @@ private func normalizedMerchantName(_ merchantName: String) -> String {
 /// Categories the mapper can predict that no catalogue rule names — they score at each card's
 /// base rate, but the owner can still stand in one of them and must be able to say so.
 private let unscoredPredictableCategories = [
-    "other", "wholesaleClub", "drugStore", "entertainment", "fitness",
+    "other", "wholesaleClub", "drugStore", "entertainment", "fitness", "homeImprovement", "retailShopping",
 ]
 
 /// Rule-side markers that are not merchant categories. `ownerSelectedTangerineCategory` stands

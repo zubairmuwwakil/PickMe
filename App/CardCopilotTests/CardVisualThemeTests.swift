@@ -241,4 +241,61 @@ final class CardVisualThemeTests: XCTestCase {
         lightAttachment.lifetime = .keepAlways
         add(lightAttachment)
     }
+
+    func testMerchantBrandIconMonogramAndColor() {
+        XCTAssertEqual(MerchantBrandIconView.monogram(for: "JRSports"), "JR")
+        XCTAssertEqual(MerchantBrandIconView.monogram(for: "MugUpCanada"), "MU")
+        XCTAssertEqual(MerchantBrandIconView.monogram(for: "Joe's Hardware"), "JH")
+        XCTAssertEqual(MerchantBrandIconView.monogram(for: "A"), "A")
+        XCTAssertEqual(MerchantBrandIconView.monogram(for: ""), "")
+
+        let color1 = MerchantBrandIconView.deterministicColor(for: "JRSports")
+        let color2 = MerchantBrandIconView.deterministicColor(for: "JRSports")
+        XCTAssertEqual(color1, color2, "Deterministic color must be stable for identical merchant names")
+
+        XCTAssertEqual(MerchantBrandIconView.monogramPalette.count, 8)
+    }
+
+    func testMerchantBrandIconVisualConfig() {
+        let mcdonalds = MerchantBrandIconView.visualConfig(for: "McDonald's")
+        XCTAssertEqual(mcdonalds.letter, "M")
+
+        let dollarama = MerchantBrandIconView.visualConfig(for: "Dollarama")
+        XCTAssertEqual(dollarama.letter, "D")
+
+        let petroCan = MerchantBrandIconView.visualConfig(for: "Petro-Canada")
+        XCTAssertEqual(petroCan.icon, "fuelpump.fill")
+
+        let dq = MerchantBrandIconView.visualConfig(for: "Dairy Queen")
+        XCTAssertEqual(dq.letter, "DQ")
+
+        let subway = MerchantBrandIconView.visualConfig(for: "Subway")
+        XCTAssertEqual(subway.letter, "S")
+
+        let wendys = MerchantBrandIconView.visualConfig(for: "Wendy's")
+        XCTAssertEqual(wendys.letter, "W")
+
+        let aw = MerchantBrandIconView.visualConfig(for: "A&W Canada")
+        XCTAssertEqual(aw.letter, "A&W")
+
+        let bulkBarn = MerchantBrandIconView.visualConfig(for: "Bulk Barn")
+        XCTAssertEqual(bulkBarn.letter, "BB")
+
+        let winners = MerchantBrandIconView.visualConfig(for: "Winners")
+        XCTAssertEqual(winners.letter, "W")
+
+        let londonDrugs = MerchantBrandIconView.visualConfig(for: "London Drugs")
+        XCTAssertEqual(londonDrugs.letter, "LD")
+
+        let pizzaPizza = MerchantBrandIconView.visualConfig(for: "Pizza Pizza")
+        XCTAssertEqual(pizzaPizza.icon, "fork.knife")
+
+        let fortinos = MerchantBrandIconView.visualConfig(for: "Fortinos")
+        XCTAssertEqual(fortinos.letter, "L")
+        XCTAssertEqual(fortinos.icon, "cart.fill")
+
+        let zehrs = MerchantBrandIconView.visualConfig(for: "Zehrs")
+        XCTAssertEqual(zehrs.letter, "L")
+        XCTAssertEqual(zehrs.icon, "cart.fill")
+    }
 }

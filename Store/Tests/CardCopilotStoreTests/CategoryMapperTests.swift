@@ -107,4 +107,21 @@ final class CategoryMapperTests: XCTestCase {
                                                        confidenceSource: .fallback,
                                                        candidates: ["other"]))
     }
+
+    func testStoreKeywordHeuristics() {
+        let sports = predict(poiCategoryRaw: "store", merchantName: "JRSports")
+        XCTAssertEqual(sports.category, "retailShopping")
+        XCTAssertEqual(sports.confidenceSource, .mapKitCategory)
+        XCTAssertEqual(sports.candidates, ["retailShopping", "other"])
+
+        let hardware = predict(poiCategoryRaw: "store", merchantName: "Downtown Hardware & Tools")
+        XCTAssertEqual(hardware.category, "homeImprovement")
+        XCTAssertEqual(hardware.confidenceSource, .mapKitCategory)
+        XCTAssertEqual(hardware.candidates, ["homeImprovement", "other"])
+
+        let generalStore = predict(poiCategoryRaw: "store", merchantName: "MugUpCanada")
+        XCTAssertEqual(generalStore.category, "other")
+        XCTAssertEqual(generalStore.confidenceSource, .mapKitCategory)
+        XCTAssertEqual(generalStore.candidates, ["other", "grocery"])
+    }
 }

@@ -27,6 +27,8 @@ struct CaptureStatusView: View {
     @State private var showingQueue = false
     @State private var showingDisable = false
     @State private var showingShortcutsGuide = false
+    @State private var tutorialInitialStep: ShortcutsTutorialStep = .intro
+    @State private var latestShortcutLog: WalletCaptureShortcutRunLog?
     @State private var report: WalletCaptureDiagnosticReport?
     @State private var includeTransactionDetails = false
     @State private var submitted: WalletSubmittedDiagnostic?
@@ -87,7 +89,7 @@ struct CaptureStatusView: View {
         )
         .task { await refresh() }
         .sheet(isPresented: $showingQueue) { queueSheet }
-        .sheet(isPresented: $showingShortcutsGuide) { ShortcutsSetupGuideSheet() }
+        .sheet(isPresented: $showingShortcutsGuide) { ShortcutsSetupTutorialView(initialStep: tutorialInitialStep) }
         .sheet(item: $report, onDismiss: { Task { await refresh() } }) { report in
             DiagnosticReportPreview(
                 report: report,
@@ -365,6 +367,10 @@ struct CaptureStatusView: View {
                 }
             }
 
+            if let latest = latestShortcutLog, latest.outcome == "mappingIncomplete" || !latest.input.merchantPresent {
+                incompleteMappingWarningCard(latest)
+            }
+
             VStack(spacing: 0) {
                 // Step 1: Notifications
                 setupStepRow(
@@ -434,9 +440,12 @@ struct CaptureStatusView: View {
                 ) {
                     HStack(spacing: 6) {
                         Button {
+                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                            generator.impactOccurred()
+                            tutorialInitialStep = .openAutomationTab
                             showingShortcutsGuide = true
                         } label: {
-                            Text("Guide")
+                            Text("Walkthrough")
                                 .font(.system(size: 12, weight: .bold, design: .rounded))
                                 .foregroundStyle(.blue)
                                 .padding(.horizontal, 9)
@@ -866,6 +875,11 @@ struct CaptureStatusView: View {
         records = (try? await diagnostics.records()) ?? []
         submittedReports = (try? await onListSubmittedDiagnostics()) ?? []
         connection = WalletCaptureSettingsStore().load()
+        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        if let runLogs = try? WalletCaptureShortcutRunLogStore(documentsDirectory: documents),
+           let allLogs = try? await runLogs.records() {
+            latestShortcutLog = allLogs.first
+        }
         await refreshPermissions()
     }
 
@@ -986,122 +1000,53 @@ struct CaptureStatusView: View {
         FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.ca.inunity.pickme")
             ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
-}
 
-// MARK: - Apple Shortcuts Setup Interactive Visual Guide Sheet
+    // MARK: - Incomplete Mapping Warning Card
 
-struct ShortcutsSetupGuideSheet: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // Hero
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 8) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(LinearGradient(colors: [.purple, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
-                                    .frame(width: 36, height: 36)
-                                Image(systemName: "bolt.fill")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundStyle(.white)
-                            }
-                            Text("Apple Shortcuts Guide")
-                                .font(.system(size: 20, weight: .bold, design: .rounded))
-                        }
-                        Text("Follow these 3 quick steps to automate Apple Wallet card capture.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.top, 8)
-
-                    // Step 1 Card
-                    guideStepCard(
-                        number: "1",
-                        title: "Create a Transaction Automation",
-                        bodyText: "Open the Apple Shortcuts app, go to the Automation tab, tap “+”, and scroll down to select “Transaction”.",
-                        symbol: "plus.circle.fill",
-                        color: .blue
-                    )
-
-                    // Step 2 Card
-                    guideStepCard(
-                        number: "2",
-                        title: "Choose Trigger & Run Immediately",
-                        bodyText: "Select “Any Card” (or choose specific credit cards), and make sure to select “Run Immediately” without asking.",
-                        symbol: "creditcard.and.123",
-                        color: .purple
-                    )
-
-                    // Step 3 Card
-                    guideStepCard(
-                        number: "3",
-                        title: "Add PickMe Action & Map Fields",
-                        bodyText: "Search for “Send Wallet Purchase to In Unity” from PickMe. Tap the input parameters and select the Shortcut variables for Merchant, Amount, Currency Code, and Card or Pass.",
-                        symbol: "arrow.triangle.branch",
-                        color: .teal
-                    )
-
-                    // Open Shortcuts CTA
-                    Link(destination: URL(string: "shortcuts://")!) {
-                        HStack {
-                            Spacer()
-                            Image(systemName: "bolt.fill")
-                            Text("Open Shortcuts App")
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
-                            Spacer()
-                        }
-                        .padding(.vertical, 14)
-                        .background(Color.blue, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .foregroundStyle(.white)
-                        .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 3)
-                    }
-                    .padding(.top, 6)
+    private func incompleteMappingWarningCard(_ log: WalletCaptureShortcutRunLog) -> some View {
+        Button {
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred()
+            tutorialInitialStep = .mapParameters
+            showingShortcutsGuide = true
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.orange.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                        .font(.system(size: 16, weight: .bold))
                 }
-                .padding(20)
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Shortcuts Setup")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                        .font(.headline)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        Text("Shortcut Missing Parameters")
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .foregroundStyle(.orange)
+                        Spacer()
+                        Text("Fix Setup")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color.orange, in: Capsule())
+                    }
+                    Text("Your last tap arrived without merchant info. Tap to view the variable mapping guide.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
                 }
             }
+            .padding(12)
+            .background(Color.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+            )
         }
-    }
-
-    private func guideStepCard(number: String, title: String, bodyText: String, symbol: String, color: Color) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 38, height: 38)
-                Text(number)
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundStyle(color)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
-                Text(bodyText)
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(2)
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 2)
-        )
+        .buttonStyle(.plain)
     }
 }
 

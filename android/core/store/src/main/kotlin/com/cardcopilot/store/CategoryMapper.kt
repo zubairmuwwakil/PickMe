@@ -59,7 +59,15 @@ object CategoryMapper {
             "hotel" -> CategoryPrediction("lodging", ConfidenceSource.MAP_KIT_CATEGORY, listOf("lodging"))
             "movietheater" -> CategoryPrediction("entertainment", ConfidenceSource.MAP_KIT_CATEGORY, listOf("entertainment"))
             "fitnesscenter" -> CategoryPrediction("fitness", ConfidenceSource.MAP_KIT_CATEGORY, listOf("fitness"))
-            "store" -> CategoryPrediction("other", ConfidenceSource.MAP_KIT_CATEGORY, listOf("other", "grocery"))
+            "store" -> {
+                if (isHomeImprovement(normalizedMerchant)) {
+                    CategoryPrediction("homeImprovement", ConfidenceSource.MAP_KIT_CATEGORY, listOf("homeImprovement", "other"))
+                } else if (isRetailShopping(normalizedMerchant)) {
+                    CategoryPrediction("retailShopping", ConfidenceSource.MAP_KIT_CATEGORY, listOf("retailShopping", "other"))
+                } else {
+                    CategoryPrediction("other", ConfidenceSource.MAP_KIT_CATEGORY, listOf("other", "grocery"))
+                }
+            }
             else -> CategoryPrediction("other", ConfidenceSource.FALLBACK, listOf("other"))
         }
     }
@@ -124,6 +132,20 @@ object CategoryMapper {
 
     private fun isWalmart(normalizedMerchant: String): Boolean = normalizedMerchant.contains("walmart")
 
+    private fun isHomeImprovement(normalizedMerchant: String): Boolean {
+        val keywords = listOf("hardware", "lumber", "plumbing", "paint", "tools", "home depot", "rona", "lowes", "renodepot")
+        return keywords.any { normalizedMerchant.contains(it) }
+    }
+
+    private fun isRetailShopping(normalizedMerchant: String): Boolean {
+        val keywords = listOf(
+            "sport", "athletics", "athletic", "running", "golf", "hockey", "ski",
+            "soccer", "tennis", "outdoors", "apparel", "clothing", "boutique",
+            "shoes", "footwear", "bookstore", "books", "jewellery", "jewelry", "toy", "toys"
+        )
+        return keywords.any { normalizedMerchant.contains(it) }
+    }
+
     private fun canonicalPoiCategory(raw: String?): String? {
         if (raw == null) return null
         val normalized = Normalizer.normalize(raw, Normalizer.Form.NFD)
@@ -153,7 +175,7 @@ object CategoryMapper {
     }
 
     private val unscoredPredictableCategories = listOf(
-        "other", "wholesaleClub", "drugStore", "entertainment", "fitness"
+        "other", "wholesaleClub", "drugStore", "entertainment", "fitness", "homeImprovement", "retailShopping"
     )
 
     private val ruleSideMarkers = CategoryTaxonomy.ruleSideCategoryIds

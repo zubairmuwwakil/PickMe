@@ -17,6 +17,7 @@ struct YouHubView: View {
     @State private var authIsPresented = false
     @State private var eraseIsPresented = false
     @State private var didErase = false
+    @State private var shortcutsTutorialIsPresented = false
 
     private static let privacyPolicyURL = URL(string: "https://moneytalks.zubairmuwwakil.com/privacy")!
 
@@ -89,6 +90,9 @@ struct YouHubView: View {
         }
         .sheet(isPresented: $authIsPresented) {
             PickMeAuthSheet()
+        }
+        .sheet(isPresented: $shortcutsTutorialIsPresented) {
+            ShortcutsSetupTutorialView()
         }
         .confirmationDialog("Erase this iPhone's history?", isPresented: $eraseIsPresented, titleVisibility: .visible) {
             Button("Erase On-Device History", role: .destructive) {
@@ -278,6 +282,27 @@ struct YouHubView: View {
                                     .foregroundStyle(.orange)
                                     .font(.system(size: 14))
                             }
+                        }
+                    )
+                }
+                .buttonStyle(SettingsRowPressStyle())
+
+                rowDivider
+
+                // Apple Shortcuts & Automations Tutorial
+                Button {
+                    triggerHaptic()
+                    shortcutsTutorialIsPresented = true
+                } label: {
+                    settingsRow(
+                        icon: "bolt.fill",
+                        iconBackground: .purple,
+                        title: "Shortcuts & Automations",
+                        subtitle: "Interactive setup, variables & live verification",
+                        trailingContent: {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(.tertiary)
                         }
                     )
                 }

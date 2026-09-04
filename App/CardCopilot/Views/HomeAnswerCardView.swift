@@ -323,7 +323,11 @@ struct HomeAnswerCardView: View {
     }
 
     private var recentSubjects: [HomeAnswerSubject] {
-        subjects.filter { $0.provenance == .recent }
+        let recents = subjects.filter { $0.provenance == .recent }
+        return recents.sorted { lhs, rhs in
+            guard let lDate = lhs.lastSeenAt, let rDate = rhs.lastSeenAt else { return false }
+            return lDate > rDate
+        }
     }
 
     private var searchedSubjects: [HomeAnswerSubject] {
