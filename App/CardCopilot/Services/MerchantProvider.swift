@@ -1,3 +1,4 @@
+import CardCopilotEngine
 import CardCopilotStore
 import CoreLocation
 import Foundation
@@ -54,7 +55,59 @@ final class LiveMerchantProvider: MerchantProviding {
     ]
 
     func nearby(latitude: Double, longitude: Double) async throws -> [NearbyPlace] {
-        try await nearbyScan(latitude: latitude, longitude: longitude).places
+        let places = try await nearbyScan(latitude: latitude, longitude: longitude).places
+        await refreshCommunityGiftCardInventory(nearby: places)
+        return places
+    }
+
+    /// Community inventory is a separately consented network feature. The normal MapKit result is
+    /// still the source of candidate places; when sharing is off this function performs no request
+    /// to In Unity and removes any cached community evidence immediately.
+    private func refreshCommunityGiftCardInventory(nearby places: [NearbyPlace]) async {
+        let settings = CommunityGiftCardInventorySettingsStore()
+        let cache = CommunityGiftCardInventoryCacheStore()
+        guard settings.isEnabled else {
+            cache.replace([])
+            return
+        }
+        guard let baseURL = MoneyTalksConfiguration.apiBaseURL else { return }
+
+        let client = CommunityGiftCardInventoryClient(baseURL: baseURL)
+        let instruments = Array(Set(PurchaseRouteCatalogue.canadaV1.map(\.instrumentLabel))).sorted()
+        var communityEvidence: [GiftCardInventoryObservation] = []
+        var didRefresh = false
+
+        for instrument in instruments {
+            do {
+                communityEvidence += try await client.evidence(instrumentKey: instrument,
+                                                                nearby: places)
+                didRefresh = true
+            } catch {
+                // Community evidence is opportunistic. A server/network failure must never make
+                // local checkout fail or erase a still-fresh cache.
+            }
+        }
+        if didRefresh {
+            cache.replace(communityEvidence)
+        }
+
+        // Upload recent owner-confirmed inventory in the background. Observation UUIDs make retry
+        // idempotent, so there is no "sent" identifier tied back to an account or device.
+        let cutoff = Date().addingTimeInterval(-30 * 86_400)
+        let local = await GiftCardInventoryObservationStore.shared.observations()
+        let pending = local.filter {
+            $0.source == .ownerConfirmed
+                && $0.observedAt >= cutoff
+                && instruments.contains($0.instrumentKey)
+                && ($0.placeID != nil || ($0.latitude != nil && $0.longitude != nil))
+        }.suffix(20)
+        guard !pending.isEmpty else { return }
+
+        Task.detached(priority: .utility) {
+            for observation in pending {
+                try? await client.submit(observation)
+            }
+        }
     }
 
     /// The only place that can see how large MapKit's response was before `rankNearbyPlaces`
