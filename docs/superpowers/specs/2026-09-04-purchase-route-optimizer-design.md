@@ -1,6 +1,6 @@
 # Purchase Route Optimizer — design
 
-**Status:** V1 semantic core + checkout UI implemented 2026-09-04.
+**Status:** V1 semantic core + nearby MCC-graph checkout UI implemented 2026-09-04.
 
 ## Problem
 
@@ -40,11 +40,8 @@ V1 supports one generic route template:
 - evidence: `communityObserved`
 - disclosure: inventory and reward treatment can vary; availability must be confirmed
 
-The route deliberately does **not** claim that a specific Metro/Sobeys/FreshCo/etc. location stocks
-the card. That belongs to merchant-location evidence and eventually the merchant/MCC graph.
-
-The card is also not hard-coded. If MBNA, Cobalt, or another owned card is worth more on the
-acquisition leg, the normal recommendation engine chooses it.
+The card is not hard-coded. If MBNA, Cobalt, or another owned card is worth more on the acquisition
+leg, the normal recommendation engine chooses it.
 
 ## Noise / friction gate
 
@@ -68,26 +65,71 @@ This is separate from D3 card-contract provenance. A community-observed route ma
 potential opportunity, but the UI must not present variable inventory or issuer reward treatment as
 guaranteed.
 
+MCC evidence is independently ranked by `MerchantMCCGraph`. The canonical 500-merchant seed is an
+editorial prior, public directory observations are low-confidence external evidence, and reconciled
+owner MCC observations can override those priors. A route never upgrades seed data into observed
+terminal truth merely because it used the graph.
+
 ## Checkout UI
 
-For a single checkout recommendation, PickMe evaluates matching alternate routes using a separate
-`RecommendationEngine` instance with merchant-specific checkout credits disabled for the generic
-acquisition leg. When a route clears the friction gate, the recommendation screen shows a compact
-**Potentially better route** card containing:
+For a single checkout recommendation, PickMe first evaluates the generic route, then asynchronously
+resolves its acquisition requirement against nearby MapKit places through
+`PurchaseRouteAcquisitionResolver`.
 
-- acquisition instruction;
-- the owned card chosen for that acquisition leg;
-- incremental CAD value over the direct route;
-- evidence label and disclosure.
+A physical candidate must:
+
+- resolve safely to a canonical seed merchant;
+- have the route-required MCC as the graph's current best prediction;
+- retain the physical merchant's known network acceptance; and
+- still clear the route's CAD + percentage-point friction threshold after normal card scoring.
+
+The recommendation screen then replaces the generic instruction with the best nearby candidate,
+including its distance and MCC-confidence disclosure. Reconciled owner MCC history participates in
+that lookup. If a successful nearby scan finds no qualifying route, the generic placeholder is
+suppressed instead of implying that the user should hunt for an unspecified store.
 
 The direct-card recommendation remains unchanged. Ambiguous/forked merchant outcomes do not surface
 an alternate route in V1 because the destination coding has not settled.
+
+## Merchant graph integration
+
+Implemented flow:
+
+```
+route requirement: grocery + MCC 5411
+                          |
+                          v
+MapKit nearby places -> canonical 500-merchant seed
+                          |
+                          v
+seed prior + public evidence + reconciled owner MCC evidence
+                          |
+                          v
+MerchantMCCGraph prediction + confidence
+                          |
+                          v
+actual merchant network acceptance -> RecommendationEngine
+```
+
+Canonical graph data remains under `contracts/merchant-mcc-graph/`. Store packages byte-identical
+runtime copies through `scripts/sync-merchant-mcc-graph-into-store.sh`; a test fails if those copies
+drift.
+
+## Inventory boundary
+
+MCC qualification is **not** gift-card inventory evidence. V1 can say that a nearby Metro/Sobeys/etc.
+is a plausible MCC-5411 acquisition merchant, but it does not claim that a particular location
+currently has a Shoppers gift card in stock. The route disclosure explicitly requires availability
+to be confirmed.
+
+Gift-card inventory should become its own evidence edge later, with source, location, confidence,
+and freshness. It must not be inferred from MCC or chain identity.
 
 ## Expansion path
 
 The same model should later support:
 
-1. **Gift-card routes** — acquire destination stored value at a better reward category.
+1. **Gift-card inventory evidence** — location-specific observations with freshness/confidence.
 2. **Cashback portals** — portal -> merchant -> card.
 3. **Payment intermediaries** — intermediary fee vs incremental card value.
 4. **Promotions / issuer offers** — activate or route through an offer before checkout.
@@ -95,28 +137,23 @@ The same model should later support:
 
 Do not add these as special cases to `RecommendationEngine`. Add route types/legs above it.
 
-## Merchant graph integration
-
-The merchant/MCC graph should eventually answer the acquisition feasibility question:
-
-```
-route requirement: grocery + MCC 5411 + Amex accepted + target gift card observed
-                          |
-                          v
-merchant graph: nearby terminals ranked by confidence/freshness
-```
-
-That turns the V1 generic instruction ("an eligible grocery store") into nearby actionable options
-without hard-coding chain-wide assumptions.
-
 ## Files
 
-Canonical Swift semantics:
+Canonical Swift route semantics:
 
 - `Engine/Sources/CardCopilotEngine/Engine/PurchaseRouteAdvisor.swift`
 - `Engine/Tests/CardCopilotEngineTests/PurchaseRouteAdvisorTests.swift`
 
-Kotlin twin:
+Store graph/runtime composition:
+
+- `Store/Sources/CardCopilotStore/MerchantMCCGraph.swift`
+- `Store/Sources/CardCopilotStore/MerchantMCCGraphEvidenceBuilder.swift`
+- `Store/Sources/CardCopilotStore/MerchantMCCSeedCatalogue.swift`
+- `Store/Sources/CardCopilotStore/PurchaseRouteAcquisitionResolver.swift`
+- `Store/Tests/CardCopilotStoreTests/MerchantMCCSeedCatalogueTests.swift`
+- `Store/Tests/CardCopilotStoreTests/MerchantMCCSeedResourceSyncTests.swift`
+
+Kotlin route-semantic twin:
 
 - `android/core/engine/src/main/kotlin/com/cardcopilot/engine/engine/PurchaseRouteAdvisor.kt`
 - `android/core/engine/src/test/kotlin/com/cardcopilot/engine/PurchaseRouteAdvisorTest.kt`
@@ -127,6 +164,6 @@ Checkout UI:
 
 ## Next product slice
 
-Connect route acquisition requirements to the merchant/MCC graph so PickMe can replace the generic
-"eligible grocery store" instruction with nearby, freshness-ranked stores where the required gift
-card has actually been observed. Keep inventory confidence separate from MCC confidence.
+Add a location-specific **gift-card inventory evidence edge** so a route can distinguish
+"nearby merchant likely codes 5411" from "this exact location recently had the target gift card in
+stock." Keep inventory confidence/freshness separate from MCC confidence.
