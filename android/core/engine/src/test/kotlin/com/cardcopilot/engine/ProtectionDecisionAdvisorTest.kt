@@ -104,6 +104,20 @@ class ProtectionDecisionAdvisorTest {
     }
 
     @Test
+    fun `declared other context clears unknown route protection state`() {
+        val assessment = ProtectionDecisionAdvisor.alternateFundingAssessment(
+            directCardId = "direct-card",
+            purchase = PurchaseContext(amountCad = 500.0, category = "drugStore"),
+            benefits = catalogue(),
+            declaredContext = BenefitContext(BenefitContextKind.OTHER)
+        )
+
+        assertEquals(ProtectionDecisionStatus.NOT_RELEVANT, assessment.status)
+        assertTrue(assessment.relevantKinds.isEmpty())
+        assertEquals(BenefitVerification.ISSUER_PAGE, assessment.verification)
+    }
+
+    @Test
     fun `stub benefit facts never influence decision`() {
         val assessment = ProtectionDecisionAdvisor.alternateFundingAssessment(
             directCardId = "direct-card",
