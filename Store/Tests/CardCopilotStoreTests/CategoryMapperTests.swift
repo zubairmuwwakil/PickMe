@@ -134,4 +134,23 @@ final class CategoryMapperTests: XCTestCase {
             XCTAssertEqual(prediction.confidenceSource, .mapKitCategory, merchantName)
         }
     }
+
+    func testStoreKeywordHeuristicsMatchSeparatedAndRunTogetherBrands() {
+        let examples: [(merchantName: String, expectedCategory: String, expectedSource: ConfidenceSource)] = [
+            ("SportChek", "ctFamily", .brandPrior),
+            ("SPORTCHEK #4021", "ctFamily", .brandPrior),
+            ("Sport Chek", "ctFamily", .brandPrior),
+            ("Reno-Depot", "homeImprovement", .mapKitCategory),
+            ("Lowe's", "homeImprovement", .mapKitCategory),
+            ("Home Depot", "homeImprovement", .mapKitCategory),
+            ("RONA", "homeImprovement", .mapKitCategory),
+            ("Golf Town", "retailShopping", .mapKitCategory),
+        ]
+
+        for example in examples {
+            let prediction = predict(poiCategoryRaw: "store", merchantName: example.merchantName)
+            XCTAssertEqual(prediction.category, example.expectedCategory, example.merchantName)
+            XCTAssertEqual(prediction.confidenceSource, example.expectedSource, example.merchantName)
+        }
+    }
 }

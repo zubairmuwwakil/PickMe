@@ -35,7 +35,9 @@ object CategoryMapper {
                 rawCategory = poiCategoryRaw, merchantCategoryCode = merchantCategoryCode)
         }
         val normalizedMerchant = normalizedMerchantName(merchantName)
-        val prior = brandPriors.firstOrNull { normalizedMerchant.contains(it.normalizedNeedle) }
+        val prior = brandPriors.firstOrNull {
+            containsMerchantKeyword(normalizedMerchant, listOf(it.normalizedNeedle))
+        }
         if (prior != null) {
             return CategoryPrediction(
                 category = prior.category,
@@ -133,7 +135,7 @@ object CategoryMapper {
     private fun isWalmart(normalizedMerchant: String): Boolean = normalizedMerchant.contains("walmart")
 
     private fun isHomeImprovement(normalizedMerchant: String): Boolean {
-        val keywords = listOf("hardware", "lumber", "plumbing", "paint", "tools", "home depot", "rona", "lowes", "renodepot")
+        val keywords = listOf("hardware", "lumber", "plumbing", "paint", "tools", "home depot", "rona", "lowe s", "reno depot")
         return containsMerchantKeyword(normalizedMerchant, keywords)
     }
 
@@ -150,7 +152,21 @@ object CategoryMapper {
     // names (for example `toy` in Toyota or `rona` in Coronation).
     private fun containsMerchantKeyword(normalizedMerchant: String, keywords: List<String>): Boolean {
         val boundedMerchant = " $normalizedMerchant "
-        return keywords.any { boundedMerchant.contains(" $it ") }
+        val merchantTokens = normalizedMerchant.split(' ').filter { it.isNotEmpty() }.toSet()
+
+        return keywords.any { keyword ->
+            val normalizedKeyword = normalizedMerchantName(keyword)
+            if (boundedMerchant.contains(" $normalizedKeyword ")) {
+                true
+            } else if (normalizedKeyword.contains(' ')) {
+                // A run-together token may be a separator-stripped multiword brand (for example,
+                // `SportChek` or `HomeDepot`). Do not apply this to one-word hints: that would
+                // reintroduce fragment matches such as `toy` in Toyota.
+                merchantTokens.contains(normalizedKeyword.replace(" ", ""))
+            } else {
+                false
+            }
+        }
     }
 
     private fun canonicalPoiCategory(raw: String?): String? {

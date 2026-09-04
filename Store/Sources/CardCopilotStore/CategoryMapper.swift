@@ -98,7 +98,9 @@ public func predict(poiCategoryRaw: String?, merchantName: String,
                                   merchantCategoryCode: merchantCategoryCode)
     }
     let normalizedMerchant = normalizedMerchantName(merchantName)
-    if let prior = brandPriors.first(where: { normalizedMerchant.contains($0.normalizedNeedle) }) {
+    if let prior = brandPriors.first(where: {
+        containsMerchantKeyword(normalizedMerchant, keywords: [$0.normalizedNeedle])
+    }) {
         return CategoryPrediction(category: prior.category,
                                   confidenceSource: .brandPrior,
                                   candidates: [prior.category], rawCategory: poiCategoryRaw,
@@ -212,7 +214,7 @@ private func isWalmart(_ normalizedMerchant: String) -> Bool {
 }
 
 private func isHomeImprovement(_ normalizedMerchant: String) -> Bool {
-    let keywords = ["hardware", "lumber", "plumbing", "paint", "tools", "home depot", "rona", "lowes", "renodepot"]
+    let keywords = ["hardware", "lumber", "plumbing", "paint", "tools", "home depot", "rona", "lowe s", "reno depot"]
     return containsMerchantKeyword(normalizedMerchant, keywords: keywords)
 }
 
@@ -229,7 +231,20 @@ private func isRetailShopping(_ normalizedMerchant: String) -> Bool {
 /// a fragment inside an unrelated merchant (for example `toy` in Toyota or `rona` in Coronation).
 private func containsMerchantKeyword(_ normalizedMerchant: String, keywords: [String]) -> Bool {
     let boundedMerchant = " \(normalizedMerchant) "
-    return keywords.contains { boundedMerchant.contains(" \($0) ") }
+    let merchantTokens = Set(normalizedMerchant.split(separator: " ").map(String.init))
+
+    return keywords.contains { keyword in
+        let normalizedKeyword = normalizedMerchantName(keyword)
+        if boundedMerchant.contains(" \(normalizedKeyword) ") {
+            return true
+        }
+
+        // A run-together token may be a separator-stripped multiword brand (for example,
+        // `SportChek` or `HomeDepot`). Do not apply this to one-word hints: that would
+        // reintroduce fragment matches such as `toy` in Toyota.
+        guard normalizedKeyword.contains(" ") else { return false }
+        return merchantTokens.contains(normalizedKeyword.replacingOccurrences(of: " ", with: ""))
+    }
 }
 
 private func canonicalPoiCategory(_ raw: String?) -> String? {

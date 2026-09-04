@@ -83,4 +83,24 @@ class CategoryMapperTest {
             assertEquals(ConfidenceSource.MAP_KIT_CATEGORY, prediction.confidenceSource, merchantName)
         }
     }
+
+    @Test
+    fun `store keyword heuristics match separated and run together brands`() {
+        val examples = listOf(
+            Triple("SportChek", "ctFamily", ConfidenceSource.BRAND_PRIOR),
+            Triple("SPORTCHEK #4021", "ctFamily", ConfidenceSource.BRAND_PRIOR),
+            Triple("Sport Chek", "ctFamily", ConfidenceSource.BRAND_PRIOR),
+            Triple("Reno-Depot", "homeImprovement", ConfidenceSource.MAP_KIT_CATEGORY),
+            Triple("Lowe's", "homeImprovement", ConfidenceSource.MAP_KIT_CATEGORY),
+            Triple("Home Depot", "homeImprovement", ConfidenceSource.MAP_KIT_CATEGORY),
+            Triple("RONA", "homeImprovement", ConfidenceSource.MAP_KIT_CATEGORY),
+            Triple("Golf Town", "retailShopping", ConfidenceSource.MAP_KIT_CATEGORY)
+        )
+
+        for ((merchantName, expectedCategory, expectedSource) in examples) {
+            val prediction = CategoryMapper.predict("MKPOICategoryStore", merchantName)
+            assertEquals(expectedCategory, prediction.category, merchantName)
+            assertEquals(expectedSource, prediction.confidenceSource, merchantName)
+        }
+    }
 }
