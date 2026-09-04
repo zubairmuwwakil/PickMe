@@ -19,11 +19,17 @@ import SwiftData
 public struct LocalDataEraser {
     private let context: ModelContext
     private let metrics: CategoryResolutionMetricsStore
+    private let rewardFeedbackStore: MerchantMCCRewardFeedbackStore
+    private let importedEvidenceStore: MerchantMCCImportedEvidenceStore
 
     public init(context: ModelContext,
-                metrics: CategoryResolutionMetricsStore = CategoryResolutionMetricsStore()) {
+                metrics: CategoryResolutionMetricsStore = CategoryResolutionMetricsStore(),
+                rewardFeedbackStore: MerchantMCCRewardFeedbackStore = .shared,
+                importedEvidenceStore: MerchantMCCImportedEvidenceStore = .shared) {
         self.context = context
         self.metrics = metrics
+        self.rewardFeedbackStore = rewardFeedbackStore
+        self.importedEvidenceStore = importedEvidenceStore
     }
 
     public func eraseLocalHistory() throws {
@@ -34,9 +40,12 @@ public struct LocalDataEraser {
         try context.delete(model: StoredPrediction.self)
         try context.delete(model: StoredMerchant.self)
         try DiscoveryCache(context: context).eraseAll()
-        // Derived from the rows just deleted. Counters that outlived their purchases would keep
-        // describing activity the owner asked us to forget.
+        // Derived from the rows just deleted or from issuer files the owner supplied locally.
+        // A history wipe that left these ledgers standing would keep describing activity the owner
+        // explicitly asked the app to forget.
         metrics.forgetAll()
+        rewardFeedbackStore.forgetAll()
+        importedEvidenceStore.forgetAll()
         try context.save()
     }
 }
