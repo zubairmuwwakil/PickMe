@@ -1,58 +1,119 @@
 {
-  "version": 1,
+  "version": 2,
   "asOf": "2026-09-04",
-  "purpose": "Initial Canadian merchant MCC seed evidence for PickMe's learning merchant graph.",
+  "purpose": "Seed evidence for PickMe's Canadian learning merchant-to-MCC graph. External evidence is a prior, never an observed MCC.",
   "policy": {
     "seedIsGroundTruth": false,
-    "notes": [
-      "These are seed priors, not payment-network observations made by PickMe.",
-      "Location-specific evidence must not be promoted to a universal brand MCC without repeated evidence.",
-      "Observed/crowdsourced evidence should supersede seed priors once confidence is sufficient.",
-      "Store merchant, location, channel, network when known, source, timestamp, MCC and confidence separately."
+    "externalSourcesPopulateObservedMcc": false,
+    "observedMccDefinition": "An MCC learned from PickMe's own user/network evidence path. Public databases, issuer lists, and editorial research never populate observedMcc.",
+    "automaticObservedOverrideThreshold": 0.70,
+    "rules": [
+      "Keep merchant, location, channel and network scope when available.",
+      "Preserve conflicting MCC distributions instead of forcing brand = one MCC.",
+      "External current location reports are seed evidence only.",
+      "Historical issuer evidence is useful but decays with age.",
+      "Only sufficiently confident PickMe-observed evidence may override the seed automatically."
     ],
     "suggestedConfidence": {
       "network_observed": 0.95,
-      "repeated_observation": 0.85,
+      "repeated_pickme_observation": 0.85,
       "user_confirmation": 0.70,
       "external_location_reports": 0.65,
+      "issuer_historical_exact": 0.55,
+      "issuer_current_category_family": 0.45,
       "brand_prior": 0.50,
       "category_prior": 0.30
     }
   },
+  "verificationSummary": {
+    "merchantSeedRows": 500,
+    "corroboratedSeed": 9,
+    "currentLocationEvidenceOnly": 4,
+    "conflictingCurrentReports": 6,
+    "issuerHistoricalEvidenceOnly": 57,
+    "currentIssuerCategoryFamilyOnly": 16,
+    "unverified": 408,
+    "pickmeObservedMccRows": 0
+  },
   "sources": [
     {
-      "id": "mcc-codes-ca-5411",
-      "url": "https://www.mcc-codes.com/Canada/5411",
-      "type": "community_location_reports",
-      "usage": "Individual merchant/location seed evidence only; not bulk-copied."
+      "id": "mcc-codes-ca-merchants",
+      "url": "https://mcc-codes.com/Canada/merchants",
+      "type": "external_community_location_reports",
+      "usage": "Individual matches and aggregate counts for merchants already in PickMe's seed list; no bulk database copy.",
+      "licenseNote": "Site footer states All rights reserved."
+    },
+    {
+      "id": "rbc-popular-merchant-list-2016",
+      "url": "https://www.rbcroyalbank.com/credit-cards/cardholders/additional-documents/rvc_popular_merchant_list_en.pdf",
+      "type": "issuer_historical_visa_purchase_data",
+      "vintage": "Visa purchase data Oct 2015; list Aug 2016",
+      "usage": "Historical merchant classification evidence for grocery 5411, drug 5912, and gas 5541/5542."
+    },
+    {
+      "id": "atb-gold-cash-rewards-current",
+      "url": "https://www.atb.com/personal/everyday-banking/credit-cards/gold-cash-rewards-mastercard/",
+      "type": "issuer_current_category_family",
+      "usage": "Current merchant examples tied to eligible MCC families; does not prove one exact terminal MCC."
+    },
+    {
+      "id": "mcc-explorer-public",
+      "url": "https://www.mccexplorer.com/",
+      "type": "external_community_brand_mapping",
+      "usage": "Secondary cross-check only."
     },
     {
       "id": "pickme-merchant-pack",
       "url": "https://github.com/zubairmuwwakil/PickMe/blob/main/contracts/merchant-pack.json",
       "type": "pickme_editorial_prior",
-      "usage": "Existing PickMe editorial priors; explicitly not observed network MCC data."
+      "usage": "Existing category/MCC priors; explicitly not observed network data."
     }
   ],
-  "seedEvidence": [
-    {"merchantKey":"walmart","displayName":"Walmart","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
-    {"merchantKey":"costco-wholesale","displayName":"Costco Wholesale","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
-    {"merchantKey":"no-frills","displayName":"No Frills","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
-    {"merchantKey":"real-canadian-superstore","displayName":"Real Canadian Superstore","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
-    {"merchantKey":"food-basics","displayName":"Food Basics","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
-    {"merchantKey":"metro","displayName":"Metro","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
-    {"merchantKey":"sobeys","displayName":"Sobeys","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
-    {"merchantKey":"safeway","displayName":"Safeway","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
-    {"merchantKey":"farm-boy","displayName":"Farm Boy","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
-    {"merchantKey":"quality-foods","displayName":"Quality Foods","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
-    {"merchantKey":"thrifty-foods","displayName":"Thrifty Foods","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"},
-    {"merchantKey":"whole-foods-market","displayName":"Whole Foods Market","mcc":5411,"scope":"brand_seed_from_location_reports","confidence":0.70,"sourceId":"mcc-codes-ca-5411"}
+  "currentLocationEvidence": [
+    {"merchantKey":"walmart","seedMcc":5411,"confidence":0.45,"reports":[{"mcc":5411,"count":7},{"mcc":5441,"count":1}],"status":"conflicting"},
+    {"merchantKey":"costco-wholesale","seedMcc":5300,"confidence":0.45,"reports":[{"mcc":5411,"count":14},{"mcc":5300,"count":2},{"mcc":5441,"count":1}],"status":"conflicting"},
+    {"merchantKey":"no-frills","seedMcc":5411,"confidence":0.65,"reports":[{"mcc":5411,"count":3}],"status":"current_location_evidence"},
+    {"merchantKey":"real-canadian-superstore","seedMcc":5411,"confidence":0.72,"reports":[{"mcc":5411,"count":3}],"status":"corroborated"},
+    {"merchantKey":"food-basics","seedMcc":5411,"confidence":0.72,"reports":[{"mcc":5411,"count":1}],"status":"corroborated"},
+    {"merchantKey":"sobeys","seedMcc":5411,"confidence":0.55,"reports":[{"mcc":5411,"count":2},{"mcc":5921,"count":1}],"status":"conflicting"},
+    {"merchantKey":"safeway","seedMcc":5411,"confidence":0.72,"reports":[{"mcc":5411,"count":2}],"status":"corroborated"},
+    {"merchantKey":"metro","seedMcc":5411,"confidence":0.72,"reports":[{"mcc":5411,"count":1}],"status":"corroborated"},
+    {"merchantKey":"farm-boy","seedMcc":5411,"confidence":0.72,"reports":[{"mcc":5411,"count":1}],"status":"corroborated"},
+    {"merchantKey":"quality-foods","seedMcc":5411,"confidence":0.72,"reports":[{"mcc":5411,"count":1}],"status":"corroborated"},
+    {"merchantKey":"thrifty-foods","seedMcc":5411,"confidence":0.72,"reports":[{"mcc":5411,"count":1}],"status":"corroborated"},
+    {"merchantKey":"whole-foods-market","seedMcc":5411,"confidence":0.72,"reports":[{"mcc":5411,"count":1}],"status":"corroborated"},
+    {"merchantKey":"shoppers-drug-mart","seedMcc":5912,"confidence":0.55,"reports":[{"mcc":5411,"count":2},{"mcc":5912,"count":1}],"status":"conflicting"},
+    {"merchantKey":"mcdonald-s","seedMcc":5814,"confidence":0.45,"reports":[{"mcc":5812,"count":1},{"mcc":5814,"count":1}],"status":"conflicting"},
+    {"merchantKey":"petro-canada","seedMcc":5541,"confidence":0.72,"reports":[{"mcc":5541,"count":2}],"status":"corroborated"},
+    {"merchantKey":"canada-computers","seedMcc":5045,"confidence":0.65,"reports":[{"mcc":5045,"count":1}],"status":"current_location_evidence"},
+    {"merchantKey":"air-canada","seedMcc":3009,"confidence":0.65,"reports":[{"mcc":3009,"count":1}],"status":"current_location_evidence"},
+    {"merchantKey":"freshco","seedMcc":5411,"confidence":0.55,"reports":[{"mcc":5552,"count":1}],"status":"external_outlier_vs_issuer_history"},
+    {"merchantKey":"best-buy","confidence":0.25,"reports":[{"mcc":5411,"count":1}],"status":"external_outlier_not_promoted"}
   ],
-  "importantCounterexample": {
-    "merchantKey": "shoppers-drug-mart",
-    "displayName": "Shoppers Drug Mart",
-    "reportedMcc": 5411,
-    "expectedCategoryPrior": 5912,
-    "sourceId": "mcc-codes-ca-5411",
-    "lesson": "Do not model a merchant brand as permanently equal to one MCC. Keep observations location/channel-aware and allow a distribution of MCCs."
-  }
+  "knownConflicts": [
+    {
+      "merchantKey": "costco-wholesale",
+      "decision": "Keep PickMe merchant-pack MCC 5300 as the conservative brand seed; retain 5411 and 5441 as location-level alternatives."
+    },
+    {
+      "merchantKey": "shoppers-drug-mart",
+      "decision": "Keep issuer-backed 5912 as the brand seed while preserving current 5411 location reports."
+    },
+    {
+      "merchantKey": "walmart",
+      "decision": "Use 5411 as the seed while preserving 5441 as a location-level alternative."
+    },
+    {
+      "merchantKey": "mcdonald-s",
+      "decision": "Use 5814 as the QSR prior while preserving 5812."
+    },
+    {
+      "merchantKey": "freshco",
+      "decision": "Keep issuer-backed grocery 5411; treat the single 5552 location report as an outlier until repeated."
+    },
+    {
+      "merchantKey": "best-buy",
+      "decision": "Do not promote the single 5411 report to a brand-wide Best Buy MCC."
+    }
+  ]
 }
