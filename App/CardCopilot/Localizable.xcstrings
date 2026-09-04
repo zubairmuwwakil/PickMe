@@ -208,6 +208,16 @@
         }
       }
     },
+    "%@. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@. %2$@"
+          }
+        }
+      }
+    },
     "%@x points" : {
       "comment" : "human review before public launch — reward-program terminology",
       "localizations" : {
@@ -1672,6 +1682,16 @@
     "Browse Canadian & US cards" : {
 
     },
+    "Buy a %@ at %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Buy a %1$@ at %2$@."
+          }
+        }
+      }
+    },
     "CAD" : {
 
     },
@@ -2122,6 +2142,9 @@
 
     },
     "Compare insurance and warranty coverage across your wallet before making major bookings or purchases." : {
+
+    },
+    "Compare protection details" : {
 
     },
     "Compare specific limit lines below (e.g. medical limits vs delay payout)." : {
@@ -2975,7 +2998,10 @@
     "Export" : {
 
     },
-    "Extra cash recovered vs tapping %@" : {
+    "Extra reward value vs tapping %@" : {
+
+    },
+    "EXTRA REWARDS" : {
 
     },
     "fee" : {
@@ -3093,6 +3119,9 @@
     "Found %lld taps saved before this account was signed in." : {
 
     },
+    "Found it" : {
+
+    },
     "Frequent Store: %@" : {
 
     },
@@ -3143,6 +3172,12 @@
     "Get Started" : {
 
     },
+    "Gift card recently found at this location" : {
+
+    },
+    "Gift-card availability is not confirmed here yet" : {
+
+    },
     "GOLD" : {
 
     },
@@ -3166,6 +3201,9 @@
 
     },
     "Haptic Feedback" : {
+
+    },
+    "Help PickMe learn this merchant" : {
 
     },
     "Hide" : {
@@ -3379,6 +3417,9 @@
           }
         }
       }
+    },
+    "Issuer rewarded it as" : {
+
     },
     "It does not continuously track your route, and your location never leaves this phone." : {
       "comment" : "human review before public launch",
@@ -3831,6 +3872,9 @@
     "Monitoring now · %lld/20 areas" : {
 
     },
+    "MORE REWARDS — PROTECTION TRADE-OFF" : {
+
+    },
     "Most benefits require the full eligible purchase to be charged to the card." : {
 
     },
@@ -4155,6 +4199,9 @@
     "Not compared" : {
 
     },
+    "Not here" : {
+
+    },
     "Not now" : {
       "localizations" : {
         "fr-CA" : {
@@ -4169,6 +4216,9 @@
 
     },
     "Not shipped to the App Store. Changes take effect on the next arrival and are recorded on every field-log record, so an export says which policy produced it." : {
+
+    },
+    "Not sure / Skip" : {
 
     },
     "Not synced yet — stored cap data remains in use until a sync succeeds." : {
@@ -4422,6 +4472,9 @@
         }
       }
     },
+    "Optional. Choose only if your issuer's posted category or rewards make this clear. PickMe stores this as low-confidence MCC evidence, not as an exact network MCC." : {
+
+    },
     "Optional. Enter whole Canadian dollars. PickMe compares these values only with issuer-published income paths and stores them on this device." : {
 
     },
@@ -4569,6 +4622,9 @@
 
     },
     "Paused" : {
+
+    },
+    "PAY FOR IT WITH" : {
 
     },
     "Pay with" : {
@@ -4793,6 +4849,9 @@
       }
     },
     "Policies verified against official issuer certificates" : {
+
+    },
+    "POTENTIALLY BETTER ROUTE" : {
 
     },
     "Predicted Category" : {
@@ -6203,6 +6262,7 @@
 
     },
     "This permanently logs your statement observation and trains the local Merchant Truth Graph for next time." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -6211,6 +6271,9 @@
           }
         }
       }
+    },
+    "This permanently logs your statement observation and, when you explicitly provide reward-category feedback, trains the local Merchant MCC Graph for next time." : {
+
     },
     "This permanently removes the unsent capture and its local diagnostic evidence from this iPhone." : {
 
@@ -6871,7 +6934,7 @@
         }
       }
     },
-    "Your default card is already the optimal pick here." : {
+    "Your default card already leads on reward value here." : {
 
     },
     "Your default card was already the recommended card. PickMe chose quiet advice instead of an interrupting alert." : {

@@ -111,4 +111,36 @@ final class PurchaseRouteAdvisorTests: XCTestCase {
         XCTAssertTrue(route.matches(destinationMerchantName: "Pharmaprix - Montréal"))
         XCTAssertFalse(route.matches(destinationMerchantName: "Rexall Pharmacy"))
     }
+
+    func testEqualRewardRoutesUseStableRouteIdTieBreak() throws {
+        let (_, _, engine) = try fixture()
+        let directContext = PurchaseContext(amountCad: 100,
+                                            category: "drugStore",
+                                            mcc: 5912,
+                                            merchantBrand: "shoppers-drug-mart")
+        guard case .advised(let direct) = engine.recommend(directContext, asOf: "2026-09-04") else {
+            return XCTFail("fixture wallet should produce direct advice")
+        }
+        func route(_ routeId: String) -> AlternativePurchaseRoute {
+            AlternativePurchaseRoute(
+                routeId: routeId,
+                destinationMerchantAliases: ["Shoppers"],
+                instrumentLabel: "Test gift card",
+                acquisitionMerchantLabel: "Test grocery store",
+                acquisitionCategory: "grocery",
+                acquisitionMcc: 5411,
+                evidenceLevel: .experimental,
+                disclosure: "Test only")
+        }
+
+        let result = PurchaseRouteAdvisor.bestAlternative(
+            directRecommendation: direct,
+            destination: directContext,
+            destinationMerchantName: "Shoppers Drug Mart",
+            routes: [route("z-route"), route("a-route")],
+            engine: engine,
+            asOf: "2026-09-04")
+
+        XCTAssertEqual(result?.route.routeId, "a-route")
+    }
 }

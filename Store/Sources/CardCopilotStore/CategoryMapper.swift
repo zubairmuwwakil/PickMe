@@ -213,16 +213,23 @@ private func isWalmart(_ normalizedMerchant: String) -> Bool {
 
 private func isHomeImprovement(_ normalizedMerchant: String) -> Bool {
     let keywords = ["hardware", "lumber", "plumbing", "paint", "tools", "home depot", "rona", "lowes", "renodepot"]
-    return keywords.contains(where: { normalizedMerchant.contains($0) })
+    return containsMerchantKeyword(normalizedMerchant, keywords: keywords)
 }
 
 private func isRetailShopping(_ normalizedMerchant: String) -> Bool {
     let keywords = [
-        "sport", "athletics", "athletic", "running", "golf", "hockey", "ski",
+        "sport", "sports", "athletics", "athletic", "running", "golf", "hockey", "ski",
         "soccer", "tennis", "outdoors", "apparel", "clothing", "boutique",
         "shoes", "footwear", "bookstore", "books", "jewellery", "jewelry", "toy", "toys"
     ]
-    return keywords.contains(where: { normalizedMerchant.contains($0) })
+    return containsMerchantKeyword(normalizedMerchant, keywords: keywords)
+}
+
+/// These weak category hints can affect reward ranking, so prefer a false negative over matching
+/// a fragment inside an unrelated merchant (for example `toy` in Toyota or `rona` in Coronation).
+private func containsMerchantKeyword(_ normalizedMerchant: String, keywords: [String]) -> Bool {
+    let boundedMerchant = " \(normalizedMerchant) "
+    return keywords.contains { boundedMerchant.contains(" \($0) ") }
 }
 
 private func canonicalPoiCategory(_ raw: String?) -> String? {

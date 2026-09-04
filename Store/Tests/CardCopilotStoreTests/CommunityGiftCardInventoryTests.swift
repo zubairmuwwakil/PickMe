@@ -12,6 +12,35 @@ final class CommunityGiftCardInventoryTests: XCTestCase {
         XCTAssertFalse(settings.isEnabled)
     }
 
+    func testRevocationPreventsLateRefreshFromRestoringCachedEvidence() throws {
+        let suite = "CommunityGiftCardInventoryTests.revocation.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let settings = CommunityGiftCardInventorySettingsStore(suiteName: suite)
+        let cache = CommunityGiftCardInventoryCacheStore(suiteName: suite)
+        let evidence = GiftCardInventoryObservation(
+            merchantKey: "metro",
+            placeID: "metro-oshawa",
+            instrumentKey: "Shoppers Drug Mart gift card",
+            availability: .available,
+            source: .communityObserved)
+
+        settings.setEnabled(true)
+        cache.replace([evidence])
+        XCTAssertEqual(cache.evidence().count, 1)
+
+        // Emulate Settings.bundle, which writes UserDefaults without calling `setEnabled`.
+        defaults.set(false, forKey: "pickme.communityGiftCardInventory.enabled.v1")
+        cache.replace([evidence])
+        XCTAssertNil(defaults.data(forKey: "pickme.communityGiftCardInventory.cache.v1"))
+
+        settings.setEnabled(true)
+        cache.replace([evidence])
+        defaults.set(false, forKey: "pickme.communityGiftCardInventory.enabled.v1")
+        settings.reconcileConsent()
+        XCTAssertNil(defaults.data(forKey: "pickme.communityGiftCardInventory.cache.v1"))
+    }
+
     func testSubmissionWithPlaceIDOmitCoordinatesAndFinancialFields() throws {
         let observation = GiftCardInventoryObservation(
             id: "52d3231d-d17b-47ac-a7d7-4cd3604a618a",

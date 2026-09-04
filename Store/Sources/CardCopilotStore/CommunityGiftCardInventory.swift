@@ -5,9 +5,11 @@ import Foundation
 public struct CommunityGiftCardInventorySettingsStore: @unchecked Sendable {
     private let defaults: UserDefaults
     private let key: String
+    private let suiteName: String?
 
     public init(suiteName: String? = nil,
                 key: String = "pickme.communityGiftCardInventory.enabled.v1") {
+        self.suiteName = suiteName
         if let suiteName, let scoped = UserDefaults(suiteName: suiteName) {
             self.defaults = scoped
         } else {
@@ -20,9 +22,14 @@ public struct CommunityGiftCardInventorySettingsStore: @unchecked Sendable {
 
     public func setEnabled(_ enabled: Bool) {
         defaults.set(enabled, forKey: key)
-        if !enabled {
-            CommunityGiftCardInventoryCacheStore().replace([])
-        }
+        reconcileConsent()
+    }
+
+    /// Settings.bundle writes UserDefaults directly, bypassing `setEnabled`. Reconcile whenever
+    /// the app becomes active and at network boundaries so opt-out also removes volatile data.
+    public func reconcileConsent() {
+        guard !isEnabled else { return }
+        CommunityGiftCardInventoryCacheStore(suiteName: suiteName).replace([])
     }
 }
 
@@ -37,9 +44,11 @@ public struct CommunityGiftCardInventoryCacheStore: @unchecked Sendable {
 
     private let defaults: UserDefaults
     private let key: String
+    private let suiteName: String?
 
     public init(suiteName: String? = nil,
                 key: String = "pickme.communityGiftCardInventory.cache.v1") {
+        self.suiteName = suiteName
         if let suiteName, let scoped = UserDefaults(suiteName: suiteName) {
             self.defaults = scoped
         } else {
@@ -49,7 +58,7 @@ public struct CommunityGiftCardInventoryCacheStore: @unchecked Sendable {
     }
 
     public func evidence(now: Date = Date()) -> [GiftCardInventoryObservation] {
-        guard CommunityGiftCardInventorySettingsStore().isEnabled,
+        guard CommunityGiftCardInventorySettingsStore(suiteName: suiteName).isEnabled,
               let data = defaults.data(forKey: key),
               let envelope = try? JSONDecoder().decode(Envelope.self, from: data),
               envelope.schemaVersion == 1,
@@ -60,6 +69,10 @@ public struct CommunityGiftCardInventoryCacheStore: @unchecked Sendable {
     }
 
     public func replace(_ evidence: [GiftCardInventoryObservation], now: Date = Date()) {
+        guard CommunityGiftCardInventorySettingsStore(suiteName: suiteName).isEnabled else {
+            defaults.removeObject(forKey: key)
+            return
+        }
         if evidence.isEmpty {
             defaults.removeObject(forKey: key)
             return

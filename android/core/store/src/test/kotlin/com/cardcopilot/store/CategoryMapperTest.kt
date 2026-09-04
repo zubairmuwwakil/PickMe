@@ -57,7 +57,7 @@ class CategoryMapperTest {
 
     @Test
     fun testStoreKeywordHeuristics() {
-        val sports = CategoryMapper.predict(poiCategoryRaw = "MKPOICategoryStore", merchantName = "JRSports")
+        val sports = CategoryMapper.predict(poiCategoryRaw = "MKPOICategoryStore", merchantName = "JR Sports")
         assertEquals("retailShopping", sports.category)
         assertEquals(ConfidenceSource.MAP_KIT_CATEGORY, sports.confidenceSource)
         assertEquals(listOf("retailShopping", "other"), sports.candidates)
@@ -71,5 +71,16 @@ class CategoryMapperTest {
         assertEquals("other", generalStore.category)
         assertEquals(ConfidenceSource.MAP_KIT_CATEGORY, generalStore.confidenceSource)
         assertEquals(listOf("other", "grocery"), generalStore.candidates)
+    }
+
+    @Test
+    fun `store keyword heuristics do not match name fragments`() {
+        val examples = listOf("Toyota", "Coronation Market", "Transport Services", "Skin Care")
+
+        for (merchantName in examples) {
+            val prediction = CategoryMapper.predict("MKPOICategoryStore", merchantName)
+            assertEquals("other", prediction.category, merchantName)
+            assertEquals(ConfidenceSource.MAP_KIT_CATEGORY, prediction.confidenceSource, merchantName)
+        }
     }
 }

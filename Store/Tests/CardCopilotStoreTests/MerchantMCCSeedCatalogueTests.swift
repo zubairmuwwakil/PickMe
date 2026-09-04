@@ -43,7 +43,7 @@ final class MerchantMCCSeedCatalogueTests: XCTestCase {
             PurchaseRouteAcquisitionResolver.candidates(for: route, nearby: [place]).first)
         let resolved = PurchaseRouteAcquisitionResolver.resolvedRoute(from: route,
                                                                        candidate: candidate)
-        XCTAssertEqual(resolved.acquisitionMerchantLabel, "No Frills")
+        XCTAssertEqual(resolved.acquisitionMerchantLabel, "No Frills (50 m away)")
         XCTAssertEqual(resolved.acquisitionMcc, 5411)
         XCTAssertFalse(resolved.acceptedNetworks.contains(.amex),
                        "No Frills route must not recommend an Amex acquisition leg")

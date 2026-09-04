@@ -3,6 +3,7 @@ package com.cardcopilot.engine
 import com.cardcopilot.engine.engine.PurchaseRouteAdvisor
 import com.cardcopilot.engine.engine.PurchaseRouteCatalogue
 import com.cardcopilot.engine.engine.PurchaseRouteEvidenceLevel
+import com.cardcopilot.engine.engine.AlternativePurchaseRoute
 import com.cardcopilot.engine.engine.PurchaseRouteVerdict
 import com.cardcopilot.engine.engine.ProtectionDecisionStatus
 import com.cardcopilot.engine.engine.RecommendationEngine
@@ -124,5 +125,38 @@ class PurchaseRouteAdvisorTest {
         assertTrue(route.matches("SHOPPERS DRUG MART #1234"))
         assertTrue(route.matches("Pharmaprix - Montreal"))
         assertFalse(route.matches("Rexall Pharmacy"))
+    }
+
+    @Test
+    fun `equal reward routes use stable route id tie break`() {
+        val engine = engine()
+        val directContext = PurchaseContext(
+            amountCad = 100.0,
+            category = "drugStore",
+            mcc = 5912,
+            merchantBrand = "shoppers-drug-mart"
+        )
+        val direct = (engine.recommend(directContext, "2026-09-04") as RecommendationOutcome.Advised).recommendation
+        fun route(routeId: String) = AlternativePurchaseRoute(
+            routeId = routeId,
+            destinationMerchantAliases = listOf("Shoppers"),
+            instrumentLabel = "Test gift card",
+            acquisitionMerchantLabel = "Test grocery store",
+            acquisitionCategory = "grocery",
+            acquisitionMcc = 5411,
+            evidenceLevel = PurchaseRouteEvidenceLevel.EXPERIMENTAL,
+            disclosure = "Test only"
+        )
+
+        val result = PurchaseRouteAdvisor.bestAlternative(
+            directRecommendation = direct,
+            destination = directContext,
+            destinationMerchantName = "Shoppers Drug Mart",
+            routes = listOf(route("z-route"), route("a-route")),
+            engine = engine,
+            asOf = "2026-09-04"
+        )
+
+        assertEquals("a-route", result?.route?.routeId)
     }
 }

@@ -1,5 +1,6 @@
 import XCTest
 import SwiftData
+import CardCopilotEngine
 @testable import CardCopilotStore
 
 final class WalletGPSIdentityIntegrationTests: XCTestCase {

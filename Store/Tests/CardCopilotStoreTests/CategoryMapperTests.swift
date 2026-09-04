@@ -109,7 +109,7 @@ final class CategoryMapperTests: XCTestCase {
     }
 
     func testStoreKeywordHeuristics() {
-        let sports = predict(poiCategoryRaw: "store", merchantName: "JRSports")
+        let sports = predict(poiCategoryRaw: "store", merchantName: "JR Sports")
         XCTAssertEqual(sports.category, "retailShopping")
         XCTAssertEqual(sports.confidenceSource, .mapKitCategory)
         XCTAssertEqual(sports.candidates, ["retailShopping", "other"])
@@ -123,5 +123,15 @@ final class CategoryMapperTests: XCTestCase {
         XCTAssertEqual(generalStore.category, "other")
         XCTAssertEqual(generalStore.confidenceSource, .mapKitCategory)
         XCTAssertEqual(generalStore.candidates, ["other", "grocery"])
+    }
+
+    func testStoreKeywordHeuristicsDoNotMatchNameFragments() {
+        let examples = ["Toyota", "Coronation Market", "Transport Services", "Skin Care"]
+
+        for merchantName in examples {
+            let prediction = predict(poiCategoryRaw: "store", merchantName: merchantName)
+            XCTAssertEqual(prediction.category, "other", merchantName)
+            XCTAssertEqual(prediction.confidenceSource, .mapKitCategory, merchantName)
+        }
     }
 }

@@ -6,6 +6,7 @@ import ClerkKit
 @main
 struct CardCopilotApp: App {
     @UIApplicationDelegateAdaptor(CardCopilotAppDelegate.self) private var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
     @State private var sync = SyncCoordinator()
     @State private var session = CopilotSession()
     @State private var router = CheckoutRouter()
@@ -31,6 +32,11 @@ struct CardCopilotApp: App {
             .environment(sync)
             .environment(session)
             .environment(router)
+            .onChange(of: scenePhase, initial: true) { _, phase in
+                guard phase == .active else { return }
+                CommunityMerchantMCCSettingsStore().reconcileConsent()
+                CommunityGiftCardInventorySettingsStore().reconcileConsent()
+            }
         }
         .modelContainer(Self.sharedModelContainer)
     }

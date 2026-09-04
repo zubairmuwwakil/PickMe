@@ -36,6 +36,23 @@ final class MerchantMCCGraphEvidenceBuilderTests: XCTestCase {
         XCTAssertNil(prediction.bestMCC)
     }
 
+    func testUnlocatedLiteralMccRemainsImportedEvidenceWithoutTerminalTrust() {
+        let purchase = StoredPurchase(merchantLabel: "Local Pharmacy")
+        purchase.observation = StoredObservation(observedCategory: "drugStore",
+                                                 observedMerchantCategoryCode: 5912)
+
+        let evidence = MerchantMCCGraphEvidenceBuilder.evidence(from: [purchase])
+        let prediction = MerchantMCCGraph.predict(
+            for: MerchantMCCQuery(merchantKey: "Local Pharmacy"),
+            evidence: evidence)
+
+        XCTAssertEqual(evidence.first?.kind, .ownerImportedMcc)
+        XCTAssertEqual(prediction.bestMCC, 5912)
+        XCTAssertEqual(prediction.directObservationCount, 0)
+        XCTAssertFalse(prediction.isObserved)
+        XCTAssertFalse(prediction.isTrusted)
+    }
+
     func testRepeatedHistoryIsPreservedInsteadOfLastWriteWinning() {
         func purchase(mcc: Int) -> StoredPurchase {
             let purchase = StoredPurchase(merchantLabel: "McDonald's",

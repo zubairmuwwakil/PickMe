@@ -17,6 +17,9 @@ public enum MerchantMCCGraphEvidenceBuilder {
                                                        identityStore: identityStore)
 
             if let mcc = observation.observedMerchantCategoryCode {
+                let evidenceKind: MerchantMCCEvidenceKind = purchase.hasPreciseLocation
+                    ? .directOwnerMcc
+                    : .ownerImportedMcc
                 return MerchantMCCEvidence(
                     id: "observation:\(observation.id.uuidString)",
                     merchantKey: canonicalName,
@@ -24,7 +27,7 @@ public enum MerchantMCCGraphEvidenceBuilder {
                     longitude: purchase.merchantLongitude,
                     mcc: mcc,
                     category: observation.observedCategory,
-                    kind: .directOwnerMcc,
+                    kind: evidenceKind,
                     sourceConfidence: 1,
                     observedAt: observation.confirmedAt,
                     sourceReference: "storedObservation:\(observation.id.uuidString)")

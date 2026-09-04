@@ -149,7 +149,11 @@ object PurchaseRouteAdvisor {
             )
         }
 
-        return eligible.maxByOrNull { it.advantageCad }
+        return eligible.maxWithOrNull { lhs, rhs ->
+            val advantageOrder = lhs.advantageCad.compareTo(rhs.advantageCad)
+            if (advantageOrder != 0) advantageOrder
+            else rhs.route.routeId.compareTo(lhs.route.routeId)
+        }
     }
 }
 

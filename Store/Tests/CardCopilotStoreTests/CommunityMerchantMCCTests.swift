@@ -23,6 +23,35 @@ final class CommunityMerchantMCCTests: XCTestCase {
         defaults.removePersistentDomain(forName: suite)
     }
 
+    func testRevocationPreventsLateRefreshFromRestoringCachedEvidence() throws {
+        let suite = "CommunityMerchantMCCTests.revocation.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let settings = CommunityMerchantMCCSettingsStore(suiteName: suite)
+        let cache = CommunityMerchantMCCCacheStore(suiteName: suite)
+        let evidence = MerchantMCCEvidence(
+            merchantKey: "walmart",
+            placeID: "apple-walmart",
+            mcc: 5411,
+            kind: .externalLocationReport,
+            sourceReference: "community-mcc-v1:test")
+
+        settings.setEnabled(true)
+        cache.replace([evidence])
+        XCTAssertEqual(cache.evidence().count, 1)
+
+        // Emulate Settings.bundle, which writes UserDefaults without calling `setEnabled`.
+        defaults.set(false, forKey: settingKey)
+        cache.replace([evidence])
+        XCTAssertNil(defaults.data(forKey: "pickme.communityMerchantMCC.cache.v1"))
+
+        settings.setEnabled(true)
+        cache.replace([evidence])
+        defaults.set(false, forKey: settingKey)
+        settings.reconcileConsent()
+        XCTAssertNil(defaults.data(forKey: "pickme.communityMerchantMCC.cache.v1"))
+    }
+
     func testOnlyLiteralLocatedCanonicalMccCanBecomeAReport() {
         let purchase = StoredPurchase(merchantLabel: "Walmart",
                                       merchantLatitude: 43.85,

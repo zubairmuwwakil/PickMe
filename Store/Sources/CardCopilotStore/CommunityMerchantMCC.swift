@@ -5,9 +5,11 @@ import Foundation
 public struct CommunityMerchantMCCSettingsStore: @unchecked Sendable {
     private let defaults: UserDefaults
     private let key: String
+    private let suiteName: String?
 
     public init(suiteName: String? = nil,
                 key: String = "pickme.communityMerchantMCC.enabled.v1") {
+        self.suiteName = suiteName
         if let suiteName, let scoped = UserDefaults(suiteName: suiteName) {
             defaults = scoped
         } else {
@@ -20,8 +22,15 @@ public struct CommunityMerchantMCCSettingsStore: @unchecked Sendable {
 
     public func setEnabled(_ enabled: Bool) {
         defaults.set(enabled, forKey: key)
-        if !enabled {
-            CommunityMerchantMCCCacheStore().replace([])
+        reconcileConsent()
+    }
+
+    /// Settings.bundle writes UserDefaults directly, bypassing `setEnabled`. Reconcile whenever
+    /// the app becomes active and at network boundaries so opt-out also removes volatile data.
+    public func reconcileConsent() {
+        guard !isEnabled else { return }
+        CommunityMerchantMCCCacheStore(suiteName: suiteName).replace([])
+        if suiteName == nil {
             CommunityMerchantMCCPendingStore.shared.clear()
         }
     }
@@ -38,9 +47,11 @@ public struct CommunityMerchantMCCCacheStore: @unchecked Sendable {
 
     private let defaults: UserDefaults
     private let key: String
+    private let suiteName: String?
 
     public init(suiteName: String? = nil,
                 key: String = "pickme.communityMerchantMCC.cache.v1") {
+        self.suiteName = suiteName
         if let suiteName, let scoped = UserDefaults(suiteName: suiteName) {
             defaults = scoped
         } else {
@@ -50,7 +61,7 @@ public struct CommunityMerchantMCCCacheStore: @unchecked Sendable {
     }
 
     public func evidence(now: Date = Date()) -> [MerchantMCCEvidence] {
-        guard CommunityMerchantMCCSettingsStore().isEnabled,
+        guard CommunityMerchantMCCSettingsStore(suiteName: suiteName).isEnabled,
               let data = defaults.data(forKey: key),
               let envelope = try? JSONDecoder().decode(Envelope.self, from: data),
               envelope.schemaVersion == 1,
@@ -62,6 +73,10 @@ public struct CommunityMerchantMCCCacheStore: @unchecked Sendable {
     }
 
     public func replace(_ evidence: [MerchantMCCEvidence], now: Date = Date()) {
+        guard CommunityMerchantMCCSettingsStore(suiteName: suiteName).isEnabled else {
+            defaults.removeObject(forKey: key)
+            return
+        }
         if evidence.isEmpty {
             defaults.removeObject(forKey: key)
             return

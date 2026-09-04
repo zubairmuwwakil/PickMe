@@ -56,8 +56,17 @@ final class LiveMerchantProvider: MerchantProviding {
 
     func nearby(latitude: Double, longitude: Double) async throws -> [NearbyPlace] {
         let places = try await nearbyScan(latitude: latitude, longitude: longitude).places
-        await refreshCommunityGiftCardInventory(nearby: places)
-        await refreshCommunityMerchantMCC(nearby: places)
+
+        // Community evidence improves later decisions, but it must never extend the critical path
+        // from a local MapKit result to the checkout UI. Refresh both independent caches in the
+        // background; current checkout can use the last still-fresh cache and the next one gets
+        // the newly fetched evidence.
+        Task(priority: .utility) { [weak self] in
+            guard let self else { return }
+            async let inventory: Void = refreshCommunityGiftCardInventory(nearby: places)
+            async let merchantMCC: Void = refreshCommunityMerchantMCC(nearby: places)
+            _ = await (inventory, merchantMCC)
+        }
         return places
     }
 
@@ -67,15 +76,19 @@ final class LiveMerchantProvider: MerchantProviding {
         let settings = CommunityMerchantMCCSettingsStore()
         let cache = CommunityMerchantMCCCacheStore()
         guard settings.isEnabled else {
-            cache.replace([])
-            CommunityMerchantMCCPendingStore.shared.clear()
+            settings.reconcileConsent()
             return
         }
         guard let baseURL = MoneyTalksConfiguration.apiBaseURL else { return }
         let client = CommunityMerchantMCCClient(baseURL: baseURL)
 
         do {
-            cache.replace(try await client.evidence(nearby: places))
+            let evidence = try await client.evidence(nearby: places)
+            guard settings.isEnabled else {
+                settings.reconcileConsent()
+                return
+            }
+            cache.replace(evidence)
         } catch {
             // Keep a still-fresh cache. Community evidence is never required for checkout.
         }
@@ -83,12 +96,25 @@ final class LiveMerchantProvider: MerchantProviding {
         // Upload only reconciliation rows that already passed the Store's explicit-MCC gate.
         // The observation UUID is the server primary key, so a crash after POST but before local
         // dequeue is harmless: the next attempt receives a duplicate success and clears it then.
+        guard settings.isEnabled else {
+            settings.reconcileConsent()
+            return
+        }
         let pending = CommunityMerchantMCCPendingStore.shared.reports()
         guard !pending.isEmpty else { return }
         Task.detached(priority: .utility) {
             for report in pending {
+                let currentSettings = CommunityMerchantMCCSettingsStore()
+                guard currentSettings.isEnabled else {
+                    currentSettings.reconcileConsent()
+                    return
+                }
                 do {
                     try await client.submit(report)
+                    guard currentSettings.isEnabled else {
+                        currentSettings.reconcileConsent()
+                        return
+                    }
                     CommunityMerchantMCCPendingStore.shared.markSubmitted(report.observationID)
                 } catch {
                     // Leave the row queued. The next nearby refresh will retry it.
@@ -104,7 +130,7 @@ final class LiveMerchantProvider: MerchantProviding {
         let settings = CommunityGiftCardInventorySettingsStore()
         let cache = CommunityGiftCardInventoryCacheStore()
         guard settings.isEnabled else {
-            cache.replace([])
+            settings.reconcileConsent()
             return
         }
         guard let baseURL = MoneyTalksConfiguration.apiBaseURL else { return }
@@ -125,6 +151,10 @@ final class LiveMerchantProvider: MerchantProviding {
             }
         }
         if didRefresh {
+            guard settings.isEnabled else {
+                settings.reconcileConsent()
+                return
+            }
             cache.replace(communityEvidence)
         }
 
@@ -138,10 +168,19 @@ final class LiveMerchantProvider: MerchantProviding {
                 && $0.observedAt >= cutoff
                 && ($0.placeID != nil || ($0.latitude != nil && $0.longitude != nil))
         }.suffix(20)
+        guard settings.isEnabled else {
+            settings.reconcileConsent()
+            return
+        }
         guard !pending.isEmpty else { return }
 
         Task.detached(priority: .utility) {
             for observation in pending {
+                let currentSettings = CommunityGiftCardInventorySettingsStore()
+                guard currentSettings.isEnabled else {
+                    currentSettings.reconcileConsent()
+                    return
+                }
                 try? await client.submit(observation)
             }
         }

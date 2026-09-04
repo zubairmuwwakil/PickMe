@@ -134,16 +134,23 @@ object CategoryMapper {
 
     private fun isHomeImprovement(normalizedMerchant: String): Boolean {
         val keywords = listOf("hardware", "lumber", "plumbing", "paint", "tools", "home depot", "rona", "lowes", "renodepot")
-        return keywords.any { normalizedMerchant.contains(it) }
+        return containsMerchantKeyword(normalizedMerchant, keywords)
     }
 
     private fun isRetailShopping(normalizedMerchant: String): Boolean {
         val keywords = listOf(
-            "sport", "athletics", "athletic", "running", "golf", "hockey", "ski",
+            "sport", "sports", "athletics", "athletic", "running", "golf", "hockey", "ski",
             "soccer", "tennis", "outdoors", "apparel", "clothing", "boutique",
             "shoes", "footwear", "bookstore", "books", "jewellery", "jewelry", "toy", "toys"
         )
-        return keywords.any { normalizedMerchant.contains(it) }
+        return containsMerchantKeyword(normalizedMerchant, keywords)
+    }
+
+    // Weak category hints can affect reward ranking, so never match fragments inside unrelated
+    // names (for example `toy` in Toyota or `rona` in Coronation).
+    private fun containsMerchantKeyword(normalizedMerchant: String, keywords: List<String>): Boolean {
+        val boundedMerchant = " $normalizedMerchant "
+        return keywords.any { boundedMerchant.contains(" $it ") }
     }
 
     private fun canonicalPoiCategory(raw: String?): String? {
