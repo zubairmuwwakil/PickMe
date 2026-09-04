@@ -9,6 +9,21 @@ public enum PurchaseRouteEvidenceLevel: String, Codable, Equatable, Sendable {
     case experimental
 }
 
+/// Whether the alternate route still charges the destination purchase itself to a credit card.
+/// This is a funding-path fact, not an insurance conclusion. The protection advisor separately
+/// decides whether card-linked coverage is relevant for the owner's purchase.
+public enum PurchaseRouteProtectionEffect: String, Codable, Equatable, Sendable {
+    case preservesDestinationCardCharge
+    case replacesDestinationCardCharge
+}
+
+/// Final route verdict remains multi-attribute: a route can clearly win on rewards while creating
+/// a protection trade-off. We do not collapse that conflict into an invented CAD insurance value.
+public enum PurchaseRouteVerdict: String, Equatable, Sendable {
+    case rewardAdvantage
+    case rewardProtectionTradeoff
+}
+
 /// A known alternative way to fund a purchase. The route does not hard-code a card: the existing
 /// `RecommendationEngine` re-scores the acquisition leg against the owner's actual wallet.
 public struct AlternativePurchaseRoute: Codable, Equatable, Sendable, Identifiable {
@@ -23,6 +38,7 @@ public struct AlternativePurchaseRoute: Codable, Equatable, Sendable, Identifiab
     public let fixedFeeCad: Double
     public let estimatedFrictionCad: Double
     public let evidenceLevel: PurchaseRouteEvidenceLevel
+    public let protectionEffect: PurchaseRouteProtectionEffect
     public let disclosure: String
 
     public var id: String { routeId }
@@ -38,6 +54,7 @@ public struct AlternativePurchaseRoute: Codable, Equatable, Sendable, Identifiab
                 fixedFeeCad: Double = 0,
                 estimatedFrictionCad: Double = 0,
                 evidenceLevel: PurchaseRouteEvidenceLevel,
+                protectionEffect: PurchaseRouteProtectionEffect = .preservesDestinationCardCharge,
                 disclosure: String) {
         self.routeId = routeId
         self.destinationMerchantAliases = destinationMerchantAliases
@@ -50,6 +67,7 @@ public struct AlternativePurchaseRoute: Codable, Equatable, Sendable, Identifiab
         self.fixedFeeCad = fixedFeeCad
         self.estimatedFrictionCad = estimatedFrictionCad
         self.evidenceLevel = evidenceLevel
+        self.protectionEffect = protectionEffect
         self.disclosure = disclosure
     }
 
@@ -87,10 +105,13 @@ public struct PurchaseRouteThreshold: Equatable, Sendable {
 public struct PurchaseRouteEvaluation: Equatable, Sendable {
     public let route: AlternativePurchaseRoute
     public let acquisitionRecommendation: Recommendation
+    /// Reward/credit decision value only. Protection stays separate in `protectionAssessment`.
     public let directValueCad: Double
     public let routeValueCad: Double
     public let advantageCad: Double
     public let advantagePercentagePoints: Double
+    public let protectionAssessment: ProtectionDecisionAssessment
+    public let verdict: PurchaseRouteVerdict
 }
 
 /// Compares the best direct card with known alternate funding paths. This sits above
@@ -104,7 +125,9 @@ public enum PurchaseRouteAdvisor {
         routes: [AlternativePurchaseRoute] = PurchaseRouteCatalogue.canadaV1,
         engine: RecommendationEngine,
         asOf: String,
-        threshold: PurchaseRouteThreshold = .shipped
+        threshold: PurchaseRouteThreshold = .shipped,
+        benefits: BenefitsCatalogue? = nil,
+        declaredBenefitContext: BenefitContext? = nil
     ) -> PurchaseRouteEvaluation? {
         guard destination.amountCad > 0 else { return nil }
 
@@ -135,10 +158,28 @@ public enum PurchaseRouteAdvisor {
             let advantage = routeValue - directValue
             let advantagePP = advantage / destination.amountCad * 100
 
-            // Require BOTH floors. A route that earns 4% more on a $5 purchase is still not worth
-            // another checkout; a $5 gain on a $2,000 purchase can likewise be beneath the noise.
+            // Require BOTH reward floors. Protection does not add or subtract an invented CAD
+            // amount; it changes the final verdict below.
             guard advantage >= threshold.minAdvantageCad,
                   advantagePP >= threshold.minAdvantagePercentagePoints else { continue }
+
+            let protectionAssessment: ProtectionDecisionAssessment
+            if route.protectionEffect == .replacesDestinationCardCharge,
+               let benefits {
+                protectionAssessment = ProtectionDecisionAdvisor.alternateFundingAssessment(
+                    directCardId: directRecommendation.winner.cardId,
+                    purchase: destination,
+                    benefits: benefits,
+                    declaredContext: declaredBenefitContext)
+            } else {
+                protectionAssessment = ProtectionDecisionAssessment(
+                    status: .notRelevant,
+                    directCardId: directRecommendation.winner.cardId)
+            }
+
+            let verdict: PurchaseRouteVerdict = protectionAssessment.status == .notRelevant
+                ? .rewardAdvantage
+                : .rewardProtectionTradeoff
 
             eligible.append(PurchaseRouteEvaluation(
                 route: route,
@@ -146,10 +187,14 @@ public enum PurchaseRouteAdvisor {
                 directValueCad: directValue,
                 routeValueCad: routeValue,
                 advantageCad: advantage,
-                advantagePercentagePoints: advantagePP
+                advantagePercentagePoints: advantagePP,
+                protectionAssessment: protectionAssessment,
+                verdict: verdict
             ))
         }
 
+        // Reward ordering remains explicit rather than pretending an unresolved protection
+        // trade-off has a dollar price. The UI must render `verdict` beside the reward advantage.
         return eligible.max { lhs, rhs in
             if lhs.advantageCad != rhs.advantageCad {
                 return lhs.advantageCad < rhs.advantageCad
@@ -172,6 +217,7 @@ public enum PurchaseRouteCatalogue {
             acquisitionCategory: "grocery",
             acquisitionMcc: 5411,
             evidenceLevel: .communityObserved,
+            protectionEffect: .replacesDestinationCardCharge,
             disclosure: "Gift-card inventory and issuer reward treatment can vary by store and transaction. Confirm availability before relying on this route."
         )
     ]
