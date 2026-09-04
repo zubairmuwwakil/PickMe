@@ -4,18 +4,19 @@ import CardCopilotEngine
 /// The two posteriors needed to answer whether runtime learning is actually helping checkout.
 ///
 /// `baseline` is the shipped weighted seed plus static researched/location evidence. `graph` adds
-/// volatile runtime evidence (owner reward outcomes + community aggregates). Keeping both here
-/// prevents analytics callers from rebuilding the graph with subtly different evidence semantics.
-/// Nothing in this value is persisted by the metrics layer; it exists only during one checkout.
+/// volatile runtime evidence (owner reward outcomes + imported owner MCCs + community aggregates).
+/// Keeping both here prevents analytics callers from rebuilding the graph with subtly different
+/// evidence semantics. Nothing in this value is persisted by the metrics layer.
 struct MerchantMCCGraphRuntimeSnapshot {
     let baseline: MerchantMCCPrediction
     let graph: MerchantMCCPrediction
     let seedConfidence: Double
     let rewardObservationCount: Int
+    let importedObservationCount: Int
     let relevantCommunityCount: Int
 
     var hasRuntimeEvidence: Bool {
-        rewardObservationCount > 0 || relevantCommunityCount > 0
+        rewardObservationCount > 0 || importedObservationCount > 0 || relevantCommunityCount > 0
     }
 }
 
@@ -24,6 +25,7 @@ struct MerchantMCCGraphRuntimeSnapshot {
 func merchantMCCGraphRuntimeSnapshot(
     for merchant: NearbyPlace,
     feedbackStore: MerchantMCCRewardFeedbackStore = .shared,
+    importedStore: MerchantMCCImportedEvidenceStore = .shared,
     communityStore: CommunityMerchantMCCCacheStore = CommunityMerchantMCCCacheStore()
 ) -> MerchantMCCGraphRuntimeSnapshot? {
     guard let seed = MerchantMCCSeedCatalogue.match(merchantName: merchant.name) else { return nil }
@@ -35,6 +37,7 @@ func merchantMCCGraphRuntimeSnapshot(
         longitude: merchant.hasMonitorableLocation ? merchant.longitude : nil,
         channel: .inStore)
     let rewardEvidence = feedbackStore.evidence(for: merchant.name)
+    let importedEvidence = importedStore.evidence(for: merchant.name)
     let communityEvidence = communityStore.evidence()
     let staticEvidence = MerchantMCCSeedCatalogue.externalEvidence(for: seed.merchant)
     let seedCandidates = zip(seed.profile.candidateMccs, seed.profile.weights).map {
@@ -50,9 +53,10 @@ func merchantMCCGraphRuntimeSnapshot(
         for: query,
         seedCandidates: seedCandidates,
         seedConfidence: seed.profile.confidence,
-        evidence: staticEvidence + communityEvidence + rewardEvidence)
+        evidence: staticEvidence + communityEvidence + rewardEvidence + importedEvidence)
 
     let rewardObservationCount = Set(rewardEvidence.compactMap(\.sourceReference)).count
+    let importedObservationCount = Set(importedEvidence.compactMap(\.sourceReference)).count
     let relevantCommunityCount = communityEvidence.filter {
         MerchantMCCQuery(merchantKey: $0.merchantKey).merchantKey == query.merchantKey
     }.count
@@ -62,26 +66,30 @@ func merchantMCCGraphRuntimeSnapshot(
         graph: graph,
         seedConfidence: seed.profile.confidence,
         rewardObservationCount: rewardObservationCount,
+        importedObservationCount: importedObservationCount,
         relevantCommunityCount: relevantCommunityCount)
 }
 
 /// Projects the canonical Store-side MerchantMCCGraph onto PickMe's scoreable category taxonomy.
 ///
-/// The confidence source deliberately remains `.brandPrior`: derived reward/community evidence may
-/// strengthen an editorial prior, but only a literal MCC from the owner's posted transaction earns
-/// `.observedMcc`. Community rows are external evidence and therefore can never make the graph
-/// `isTrusted`, which is reserved for repeated direct owner observations.
+/// The confidence source deliberately remains `.brandPrior`: imported literal MCC rows are strong
+/// owner evidence but, until a safe local purchase/location join exists, they are brand-level and
+/// cannot claim `.observedMcc` terminal truth. Community rows are external evidence and therefore
+/// can never make the graph `isTrusted`, which is reserved for repeated location-anchored direct
+/// owner observations.
 ///
 /// `metrics` remains aggregate-only and on device. It records whether runtime evidence moved the
 /// top MCC, never which merchant/MCC/category caused the move.
 public func merchantMCCGraphPrediction(
     for merchant: NearbyPlace,
     feedbackStore: MerchantMCCRewardFeedbackStore = .shared,
+    importedStore: MerchantMCCImportedEvidenceStore = .shared,
     communityStore: CommunityMerchantMCCCacheStore = CommunityMerchantMCCCacheStore(),
     metrics: CategoryResolutionMetricsStore = CategoryResolutionMetricsStore()
 ) -> CategoryPrediction? {
     guard let snapshot = merchantMCCGraphRuntimeSnapshot(
-        for: merchant, feedbackStore: feedbackStore, communityStore: communityStore)
+        for: merchant, feedbackStore: feedbackStore, importedStore: importedStore,
+        communityStore: communityStore)
     else { return nil }
 
     if snapshot.hasRuntimeEvidence {
@@ -116,6 +124,12 @@ public func merchantMCCGraphPrediction(
         score = min(0.97, top.value)
     } else if snapshot.rewardObservationCount >= 2, top.value >= 0.80 {
         score = min(0.94, top.value)
+    } else if snapshot.importedObservationCount >= 2, top.value >= 0.85 {
+        // Exact owner MCC evidence is stronger than reward/category inference, but an issuer export
+        // with no trusted store-location join must remain below terminal/location verification.
+        score = min(0.92, max(snapshot.seedConfidence, top.value * 0.95))
+    } else if snapshot.importedObservationCount > 0 {
+        score = min(0.88, max(snapshot.seedConfidence, top.value * 0.92))
     } else if snapshot.rewardObservationCount > 0 {
         score = min(0.89, max(snapshot.seedConfidence, top.value * 0.90))
     } else if snapshot.relevantCommunityCount > 0 {
@@ -129,6 +143,7 @@ public func merchantMCCGraphPrediction(
     let state: String
     if categoryConflicted { state = "conflicted" }
     else if snapshot.rewardObservationCount >= 3 { state = "strongLearned" }
+    else if snapshot.importedObservationCount > 0 { state = "ownerImportedExact" }
     else if snapshot.rewardObservationCount > 0 { state = "rewardLearned" }
     else if snapshot.relevantCommunityCount > 0 { state = "communityLearned" }
     else { state = "priorOnly" }
