@@ -1,6 +1,6 @@
 # Purchase Route Optimizer — design
 
-**Status:** V1 semantic core implemented 2026-09-04.
+**Status:** V1 semantic core + checkout UI implemented 2026-09-04.
 
 ## Problem
 
@@ -68,6 +68,21 @@ This is separate from D3 card-contract provenance. A community-observed route ma
 potential opportunity, but the UI must not present variable inventory or issuer reward treatment as
 guaranteed.
 
+## Checkout UI
+
+For a single checkout recommendation, PickMe evaluates matching alternate routes using a separate
+`RecommendationEngine` instance with merchant-specific checkout credits disabled for the generic
+acquisition leg. When a route clears the friction gate, the recommendation screen shows a compact
+**Potentially better route** card containing:
+
+- acquisition instruction;
+- the owned card chosen for that acquisition leg;
+- incremental CAD value over the direct route;
+- evidence label and disclosure.
+
+The direct-card recommendation remains unchanged. Ambiguous/forked merchant outcomes do not surface
+an alternate route in V1 because the destination coding has not settled.
+
 ## Expansion path
 
 The same model should later support:
@@ -106,15 +121,12 @@ Kotlin twin:
 - `android/core/engine/src/main/kotlin/com/cardcopilot/engine/engine/PurchaseRouteAdvisor.kt`
 - `android/core/engine/src/test/kotlin/com/cardcopilot/engine/PurchaseRouteAdvisorTest.kt`
 
+Checkout UI:
+
+- `App/CardCopilot/Views/RecommendationView.swift`
+
 ## Next product slice
 
-The next UI slice should surface a compact **Potentially better route** card under a single checkout
-recommendation. It should show:
-
-- acquisition instruction;
-- the owned card chosen for that acquisition leg;
-- incremental CAD value;
-- evidence label/disclosure.
-
-Do not surface it when the route fails the friction threshold, and do not alter the direct-card
-recommendation itself.
+Connect route acquisition requirements to the merchant/MCC graph so PickMe can replace the generic
+"eligible grocery store" instruction with nearby, freshness-ranked stores where the required gift
+card has actually been observed. Keep inventory confidence separate from MCC confidence.
