@@ -7,6 +7,12 @@ public struct MerchantMCCRuntimeSeed: Codable, Sendable, Equatable {
     public let graphVersion: String
     public let generatedAt: String
     public let merchants: [MerchantMCCSeedMerchant]
+
+    public init(graphVersion: String, generatedAt: String, merchants: [MerchantMCCSeedMerchant]) {
+        self.graphVersion = graphVersion
+        self.generatedAt = generatedAt
+        self.merchants = merchants
+    }
 }
 
 public struct MerchantMCCSeedMerchant: Codable, Sendable, Equatable, Identifiable {
@@ -16,6 +22,16 @@ public struct MerchantMCCSeedMerchant: Codable, Sendable, Equatable, Identifiabl
     public let candidateMccs: [Int]
     public let weights: [Double]
     public let confidence: Double
+
+    public init(id: String, name: String, seedMcc: Int?, candidateMccs: [Int],
+                weights: [Double], confidence: Double) {
+        self.id = id
+        self.name = name
+        self.seedMcc = seedMcc
+        self.candidateMccs = candidateMccs
+        self.weights = weights
+        self.confidence = confidence
+    }
 }
 
 /// Evidence PickMe itself can collect without linking a financial account.
@@ -74,6 +90,11 @@ public struct MerchantMCCRuntimeEvidence: Codable, Sendable, Equatable, Identifi
 public struct MerchantMCCPosteriorCandidate: Codable, Sendable, Equatable {
     public let mcc: Int
     public let probability: Double
+
+    public init(mcc: Int, probability: Double) {
+        self.mcc = mcc
+        self.probability = probability
+    }
 }
 
 public enum MerchantMCCPosteriorState: String, Codable, Sendable, Equatable {
@@ -89,6 +110,15 @@ public struct MerchantMCCPosterior: Codable, Sendable, Equatable {
     public let confidence: Double
     public let evidenceCount: Int
     public let state: MerchantMCCPosteriorState
+
+    public init(merchantId: String, candidates: [MerchantMCCPosteriorCandidate], confidence: Double,
+                evidenceCount: Int, state: MerchantMCCPosteriorState) {
+        self.merchantId = merchantId
+        self.candidates = candidates
+        self.confidence = confidence
+        self.evidenceCount = evidenceCount
+        self.state = state
+    }
 
     public var topMcc: Int? { candidates.first?.mcc }
 }
@@ -178,10 +208,13 @@ public enum MerchantMCCRuntimeSeedCodec {
 
         let capacity = 2_000_000
         var output = [UInt8](repeating: 0, count: capacity)
-        let decodedCount = compressed.withUnsafeBytes { source -> Int in
-            guard let sourceBase = source.bindMemory(to: UInt8.self).baseAddress else { return 0 }
-            return compression_decode_buffer(&output, capacity, sourceBase, compressed.count,
-                                             nil, COMPRESSION_ZLIB)
+        let decodedCount = output.withUnsafeMutableBytes { destination -> Int in
+            compressed.withUnsafeBytes { source -> Int in
+                guard let destinationBase = destination.bindMemory(to: UInt8.self).baseAddress,
+                      let sourceBase = source.bindMemory(to: UInt8.self).baseAddress else { return 0 }
+                return compression_decode_buffer(destinationBase, capacity, sourceBase,
+                                                 compressed.count, nil, COMPRESSION_ZLIB)
+            }
         }
         guard decodedCount > 0 else { throw CodecError.decompressionFailed }
         let json = Data(output.prefix(decodedCount))
