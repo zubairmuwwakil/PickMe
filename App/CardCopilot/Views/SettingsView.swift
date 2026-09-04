@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import ClerkKit
 import ClerkKitUI
 import CardCopilotStore
@@ -10,6 +11,9 @@ import CardCopilotStore
 /// last section, where a reviewer looks first. It is shown only while signed in: there is no
 /// account to delete otherwise, and checkout never required one.
 struct SettingsView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(CopilotEnvironment.self) private var environment
+
     let isSignedIn: Bool
     let accountEmail: String?
     let lastSyncedAt: Date?
@@ -109,7 +113,7 @@ struct SettingsView: View {
             } header: {
                 Text("Merchant MCC learning")
             } footer: {
-                Text("Optional and local. PickMe imports only rows that explicitly contain a merchant, a four-digit MCC, and a transaction or posting date. Category, SIC, and NAICS fields are never treated as MCCs. Raw files, amounts, and card/account numbers are not retained.")
+                Text("Optional and local. PickMe accepts only explicit four-digit MCC rows. Amount and card network may be used transiently to match exactly one purchase already on this iPhone; they are not retained by the MCC learner. Ambiguous matches stay unlocated instead of being guessed.")
             }
 
             Section("Protection & Perks") {
@@ -281,8 +285,19 @@ struct SettingsView: View {
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         do {
             let data = try Data(contentsOf: url)
-            let summary = try MerchantMCCImportedEvidenceStore.shared.importCSV(data)
+            let localPurchases = try modelContext.fetch(FetchDescriptor<StoredPurchase>())
+            let cardNetworksByID = environment.graph.map { graph in
+                Dictionary(graph.catalogue.cards.map { ($0.cardId, $0.network.rawValue) },
+                           uniquingKeysWith: { first, _ in first })
+            } ?? [:]
+            let summary = try MerchantMCCImportedEvidenceStore.shared.importCSV(
+                data,
+                localPurchases: localPurchases,
+                cardNetworksByID: cardNetworksByID)
             var parts = ["Imported \(summary.importedRows) MCC observation\(summary.importedRows == 1 ? "" : "s")."]
+            if summary.locationJoinedRows > 0 {
+                parts.append("\(summary.locationJoinedRows) matched safely to an exact local purchase/location.")
+            }
             if summary.duplicateRows > 0 { parts.append("\(summary.duplicateRows) already imported.") }
             let rejected = summary.missingMCCRows + summary.invalidMCCRows
                 + summary.missingDateRows + summary.unrecognizedMerchantRows
