@@ -20,7 +20,10 @@ public struct CommunityMerchantMCCSettingsStore: @unchecked Sendable {
 
     public func setEnabled(_ enabled: Bool) {
         defaults.set(enabled, forKey: key)
-        if !enabled { CommunityMerchantMCCCacheStore().replace([]) }
+        if !enabled {
+            CommunityMerchantMCCCacheStore().replace([])
+            CommunityMerchantMCCPendingStore.shared.clear()
+        }
     }
 }
 
@@ -154,9 +157,8 @@ enum CommunityMerchantMCCWire {
         let channel: String
 
         var identity: String {
-            if let placeId { return "p:\(placeId)|\(channel)" }
-            return String(format: "c:%@:%0.4f:%0.4f|%@",
-                          merchantId, latitude ?? 0, longitude ?? 0, channel)
+            String(format: "c:%@:%0.4f:%0.4f|%@",
+                   merchantId, latitude ?? 0, longitude ?? 0, channel)
         }
     }
 
@@ -222,14 +224,16 @@ enum CommunityMerchantMCCWire {
         var result: [Candidate] = []
         for place in places {
             guard result.count < 25,
+                  place.hasMonitorableLocation,
                   let seed = MerchantMCCSeedCatalogue.match(merchantName: place.name) else { continue }
-            let hasPlaceID = place.placeID != nil
-            guard hasPlaceID || place.hasMonitorableLocation else { continue }
+            // Community MCC uploads intentionally use rounded coordinates rather than a persistent
+            // contributor/device identity. Query the same physical vocabulary so a report can be
+            // found again even when MapKit also supplies a place ID.
             let candidate = Candidate(
                 merchantId: seed.merchant.id,
-                placeId: place.placeID,
-                latitude: hasPlaceID ? nil : roundCoordinate(place.latitude),
-                longitude: hasPlaceID ? nil : roundCoordinate(place.longitude),
+                placeId: nil,
+                latitude: roundCoordinate(place.latitude),
+                longitude: roundCoordinate(place.longitude),
                 channel: "inStore")
             guard seen.insert(candidate.identity).inserted else { continue }
             result.append(candidate)
