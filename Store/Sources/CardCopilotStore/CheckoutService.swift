@@ -272,6 +272,47 @@ public struct CheckoutService {
             outcome = .single(primary)
         }
 
+        // Evaluate the MCC graph only when it actually supplied this checkout's category answer.
+        // This is deliberately observational: it re-scores plausible MCC branches with the exact
+        // engine inputs already in force, then stores counts only. Owner-confirmed/MapKit/observed
+        // MCC decisions are not mixed into the denominator, and no identity leaves this method.
+        if prediction.rawCategory?.hasPrefix("merchantMccGraph:") == true,
+           let snapshot = merchantMCCGraphRuntimeSnapshot(for: merchant) {
+            var winnerCache: [Int: String] = [:]
+            var unscoreableMCCs: Set<Int> = []
+            func winnerForMCC(_ mcc: Int) -> String? {
+                if let cached = winnerCache[mcc] { return cached }
+                if unscoreableMCCs.contains(mcc) { return nil }
+                guard let category = MerchantMCCRewardFeedback.inferredCategory(for: mcc) else {
+                    unscoreableMCCs.insert(mcc)
+                    return nil
+                }
+                let candidate = PurchaseContext(amountCad: effectiveAmount,
+                                                category: category,
+                                                mcc: mcc,
+                                                merchantBrand: brand,
+                                                acceptedNetworks: acceptedNetworks)
+                guard case .advised(let recommendation) = engine.recommend(candidate, asOf: asOf) else {
+                    unscoreableMCCs.insert(mcc)
+                    return nil
+                }
+                let winner = recommendation.winner.cardId
+                winnerCache[mcc] = winner
+                return winner
+            }
+
+            let quality = MerchantMCCDecisionQuality.assess(
+                snapshot: snapshot, winnerForMCC: winnerForMCC)
+            metrics.record(.mccGraphDecisionEvaluated(
+                multiplePlausibleMCCs: quality.hasMultiplePlausibleMCCs,
+                winnerSensitive: quality.winnerSensitiveToMCC))
+            if quality.hasRuntimeEvidence {
+                metrics.record(.mccRuntimeEvidenceEvaluated(
+                    changedTopMCC: quality.runtimeEvidenceChangedTopMCC,
+                    changedWinner: quality.runtimeEvidenceChangedWinner))
+            }
+        }
+
         let purchase = PurchaseContext(amountCad: effectiveAmount,
                                        category: prediction.category,
                                        mcc: prediction.merchantCategoryCode,
