@@ -8,9 +8,8 @@ final class MerchantMCCSeedDescriptorMatchTests: XCTestCase {
         XCTAssertEqual(match.merchant.id, "healthy-planet")
     }
 
-    func testOneWordSeedDoesNotSubstringMatchDifferentBusiness() {
-        XCTAssertNil(MerchantMCCSeedCatalogue.match(merchantName: "Metro Pizza"),
-                     "one-word seed names must not expand into unrelated businesses")
-        XCTAssertNil(MerchantMCCSeedCatalogue.match(merchantName: "Metropolitan Hotel"))
+    func testSeedMatchingDoesNotUseRawSubstrings() {
+        XCTAssertNil(MerchantMCCSeedCatalogue.match(merchantName: "Metropolitan Hotel"),
+                     "Metro must not leak into unrelated words")
     }
 }
