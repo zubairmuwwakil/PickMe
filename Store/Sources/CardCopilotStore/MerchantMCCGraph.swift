@@ -12,12 +12,16 @@ public enum MerchantMCCEvidenceKind: String, Codable, Sendable, CaseIterable {
     case researchedSeed
     /// Owner-confirmed reward/category outcome with no literal MCC attached.
     case categoryOutcome
+    /// A reward outcome narrows the MCC to a bounded set without revealing one literal MCC.
+    /// One observation is split across every compatible candidate using `sourceConfidence`.
+    case rewardOutcomeInference
 
     var defaultWeight: Double {
         switch self {
         case .directOwnerMcc: return 1.0
         case .externalLocationReport: return 0.65
         case .researchedSeed: return 0.40
+        case .rewardOutcomeInference: return 0.55
         case .categoryOutcome: return 0.0
         }
     }
@@ -171,7 +175,7 @@ public enum MerchantMCCGraph {
                 directCounts[mcc, default: 0] += 1
             case .externalLocationReport:
                 externalCounts[mcc, default: 0] += 1
-            case .researchedSeed, .categoryOutcome:
+            case .researchedSeed, .categoryOutcome, .rewardOutcomeInference:
                 break
             }
         }
