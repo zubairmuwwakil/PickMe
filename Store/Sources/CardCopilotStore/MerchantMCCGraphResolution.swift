@@ -16,7 +16,7 @@ public func merchantMCCGraphPrediction(for merchant: NearbyPlace,
 
     var categoryProbability: [String: Double] = [:]
     for candidate in posterior.candidates {
-        guard let category = observedMCCCategory(candidate.mcc) else { continue }
+        guard let category = MerchantMCCRewardFeedback.inferredCategory(for: candidate.mcc) else { continue }
         categoryProbability[category, default: 0] += candidate.probability
     }
     guard !categoryProbability.isEmpty else { return nil }
