@@ -177,11 +177,10 @@ public enum GiftCardInventoryGraph {
     fileprivate static func normalizedKey(_ value: String) -> String {
         let folded = value.folding(options: [.caseInsensitive, .diacriticInsensitive],
                                    locale: Locale(identifier: "en_CA"))
-        return folded.unicodeScalars.map { scalar -> Character in
+        let pieces = folded.unicodeScalars.map { scalar -> Character in
             CharacterSet.alphanumerics.contains(scalar) ? Character(String(scalar)) : " "
         }
-        .split(whereSeparator: { $0.isWhitespace })
-        .joined(separator: " ")
+        return String(pieces).split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
     }
 
     private static func locationMatches(query: GiftCardInventoryQuery,
@@ -240,7 +239,11 @@ public actor GiftCardInventoryObservationStore {
 
     public init(suiteName: String? = nil,
                 storageKey: String = "pickme.giftCardInventory.v1") {
-        self.defaults = suiteName.flatMap(UserDefaults.init(suiteName:)) ?? .standard
+        if let suiteName, let scoped = UserDefaults(suiteName: suiteName) {
+            self.defaults = scoped
+        } else {
+            self.defaults = .standard
+        }
         self.storageKey = storageKey
     }
 
