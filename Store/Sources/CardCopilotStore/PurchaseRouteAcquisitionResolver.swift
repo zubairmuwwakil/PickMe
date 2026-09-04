@@ -47,9 +47,13 @@ public enum PurchaseRouteAcquisitionResolver {
                 latitude: place.hasMonitorableLocation ? place.latitude : nil,
                 longitude: place.hasMonitorableLocation ? place.longitude : nil,
                 channel: .inStore)
+            let seedCandidates = zip(seed.profile.candidateMccs, seed.profile.weights).map {
+                MerchantMCCPriorCandidate(mcc: $0.0, weight: $0.1)
+            }
             let prediction = MerchantMCCGraph.predict(
                 for: query,
-                seedMCC: seed.profile.primaryMcc,
+                seedCandidates: seedCandidates,
+                seedConfidence: seed.profile.confidence,
                 evidence: MerchantMCCSeedCatalogue.externalEvidence(for: seed.merchant) + ownerEvidence,
                 now: now)
             guard prediction.bestMCC == requiredMCC else { return nil }
