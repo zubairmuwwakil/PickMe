@@ -35,6 +35,7 @@ struct ProtectionLensView: View {
         case .electronics: return "Tech & Electronics"
         case .mobileDevice: return "Mobile Device"
         case .applianceFurniture: return "Appliance & Furniture"
+        case .other: return "Everyday / Other"
         }
     }
 
@@ -228,6 +229,8 @@ struct ProtectionLensView: View {
             return "Purchase protection covers theft/loss (typically 90-120 days) and warranty doubles manufacturer terms."
         case .mobileDevice:
             return "Cell phone insurance requires paying monthly bill or full phone price with the eligible card."
+        case .other:
+            return "No modelled protection-sensitive scenario applies to this checkout context."
         }
     }
 
