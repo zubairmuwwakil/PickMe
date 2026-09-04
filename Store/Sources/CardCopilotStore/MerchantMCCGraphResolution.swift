@@ -18,9 +18,13 @@ public func merchantMCCGraphPrediction(
         longitude: merchant.hasMonitorableLocation ? merchant.longitude : nil,
         channel: .inStore)
     let rewardEvidence = feedbackStore.evidence(for: merchant.name)
+    let seedCandidates = zip(seed.profile.candidateMccs, seed.profile.weights).map {
+        MerchantMCCPriorCandidate(mcc: $0.0, weight: $0.1)
+    }
     let graph = MerchantMCCGraph.predict(
         for: query,
-        seedMCC: seed.profile.primaryMcc,
+        seedCandidates: seedCandidates,
+        seedConfidence: seed.profile.confidence,
         evidence: MerchantMCCSeedCatalogue.externalEvidence(for: seed.merchant) + rewardEvidence)
 
     var categoryProbability: [String: Double] = [:]
