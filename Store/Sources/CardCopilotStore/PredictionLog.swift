@@ -45,10 +45,14 @@ extension StoredPrediction {
         guard let purchase, let observation = purchase.observation,
               observation.observedCategory == predictedCategory,
               purchase.cardUsedId == winnerCardId,
+              // The *actual* charge, not the pre-purchase estimate: reward units predicted from
+              // a preset button cannot meaningfully disagree with a statement.
               purchase.amountCad != nil,
               let predicted = predictedRewardUnits,
               let observed = observation.observedRewardUnits else { return .notEligible }
         let tolerance = rewardUnitTolerance(predictedRewardUnitKind)
+        // 1e-9 absorbs binary-floating-point noise (2.00 - 1.99 is not exactly 0.01), not
+        // reward error.
         return abs(predicted - observed) <= tolerance + 1e-9 ? .matches : .mismatch
     }
 }
@@ -59,19 +63,27 @@ public struct ExperimentMetrics: Equatable, Sendable {
     public let categoryCorrectCount: Int
     public let missBreakdown: [MissClass: Int]
     public let targetCheckouts: Int
+    /// Confirmed rows that cleared the eligibility rule above — the arithmetic denominator.
     public let arithmeticEligibleCount: Int
     public let arithmeticCorrectCount: Int
 
+    /// No evidence at all — what the app shows before it has read the store. Deliberately the
+    /// only ExperimentMetrics value constructible from outside this module: metrics are
+    /// something the log computes, never something a caller can assert.
     public static let empty = ExperimentMetrics(confirmedCount: 0, categoryCorrectCount: 0,
                                                 missBreakdown: [:],
                                                 targetCheckouts: PredictionLog.targetCheckouts,
                                                 arithmeticEligibleCount: 0,
                                                 arithmeticCorrectCount: 0)
 
+    /// Nil rather than zero when there is no evidence — an unmeasured experiment is not a
+    /// failing one, and a dashboard showing "0%" on day one would be a lie.
     public var categoryAccuracy: Double? {
         confirmedCount > 0 ? Double(categoryCorrectCount) / Double(confirmedCount) : nil
     }
 
+    /// Nil when no confirmed row could be checked. A dashboard that printed "0%" here would be
+    /// reporting a failure the evidence does not support.
     public var arithmeticCorrectRate: Double? {
         arithmeticEligibleCount > 0
             ? Double(arithmeticCorrectCount) / Double(arithmeticEligibleCount) : nil
@@ -79,6 +91,7 @@ public struct ExperimentMetrics: Equatable, Sendable {
 
     public var progressToTarget: Int { confirmedCount }
     public var meetsCategoryBar: Bool? { categoryAccuracy.map { $0 >= 0.85 } }
+    /// The bar is 100%: one row of wrong catalogue math fails the metric (design §3).
     public var meetsArithmeticBar: Bool? { arithmeticCorrectRate.map { $0 == 1.0 } }
 }
 
@@ -102,6 +115,19 @@ public struct PredictionLog {
         return prediction
     }
 
+    /// Creates the till record for a prediction, or returns the one already there.
+    ///
+    /// Get-or-create rather than insert: the same purchase can be reached from a notification
+    /// action, from the app, and from reconcile. A second call must never orphan the first
+    /// record — that would silently discard a card the owner already told us about.
+    ///
+    /// `walletEventId`, when the caller is saving a `CaptureProposal`'s facts, stamps which
+    /// Wallet-captured event supplied them. This is NOT what makes the purchase "auto-logged" —
+    /// `StoredPurchase.isAutoLogged` is `prediction == nil`, and this purchase plainly has one — it
+    /// is what keeps `AutoCaptureLog` from later mistaking the SAME tap for an orphaned one once
+    /// this checkout completes and its prediction drops out of the open set. Set once: a purchase
+    /// answered by two different captures across two syncs keeps the first, since the dedup key
+    /// only needs to name ONE representative event, not enumerate every one that ever touched it.
     @discardableResult
     public func recordPurchase(for prediction: StoredPrediction,
                                cardUsedId: String? = nil, cardSource: CaptureSource? = nil,
@@ -151,6 +177,8 @@ public struct PredictionLog {
         return purchase
     }
 
+    /// Saves the comparison as it was evaluated for this purchase. Activity reads this snapshot
+    /// first, so a later wallet/catalogue edit does not rewrite history on screen.
     public func recordAssessment(on purchase: StoredPurchase, bestCardId: String,
                                  bestCardValueCad: Double?, usedCardValueCad: Double?,
                                  evaluatedAt: Date = Date()) throws {
@@ -173,6 +201,13 @@ public struct PredictionLog {
         try context.save()
     }
 
+    /// Refines the pre-payment estimate on an already-answered checkout — the owner adjusting
+    /// the amount on the recommendation screen, before tapping Pay. Deliberately NOT
+    /// `recordAmount`: that records the actual charge on the *purchase*, and conflating the two
+    /// is exactly what `scoredAmountCad`'s split from `StoredPurchase.amountCad` exists to
+    /// prevent. Takes an id rather than the object because the caller (`CopilotSession`, which
+    /// holds no `ModelContext`) only ever has the id a `CheckoutResult` carries. Silent no-op if
+    /// the row is gone, matching `recordAssessment`'s tolerance for a stale reference.
     public func recordScoredAmount(_ amountCad: Double, forPredictionId id: UUID) throws {
         guard let prediction = try context.fetch(FetchDescriptor<StoredPrediction>(
             predicate: #Predicate { $0.id == id })).first else { return }
@@ -188,6 +223,10 @@ public struct PredictionLog {
         try context.save()
     }
 
+    /// Atomically applies a complete, unambiguous Wallet capture to its checkout purchase.
+    ///
+    /// Existing owner-entered facts always win. Event-id ownership is checked before any mutation,
+    /// so replaying a sync is a no-op and one capture can never complete two purchases.
     @discardableResult
     public func applyAutomaticCapture(_ proposal: CaptureProposal,
                                       to prediction: StoredPrediction) throws -> StoredPurchase? {
@@ -225,6 +264,8 @@ public struct PredictionLog {
         try context.save()
     }
 
+    /// Completion is derived, never asserted by a caller — a purchase is complete exactly when
+    /// both facts are present, and no code path gets to claim otherwise.
     private func refreshCompletion(_ purchase: StoredPurchase, at date: Date) {
         let hasBoth = purchase.cardUsedId != nil && purchase.amountCad != nil
         if hasBoth, purchase.completedAt == nil { purchase.completedAt = date }
@@ -250,11 +291,20 @@ public struct PredictionLog {
             try promoteMerchant(for: prediction, observedCategory: observedCategory, at: confirmedAt)
         }
         try context.save()
-        // Queue only a literal MCC the owner actually reconciled. The queue itself checks the
-        // explicit opt-in, canonical merchant identity and precise-location privacy requirements.
+        // A community upload is queued only when the owner opted in and supplied a literal MCC.
+        // Category-only feedback and reward inference still cannot be turned into a shared MCC.
         CommunityMerchantMCCPendingStore.shared.enqueue(purchase: purchase)
     }
 
+    /// Terminal-level promotion, never brand-wide. The dossier (§6) is explicit: the owner's
+    /// reconciled outcome is the only source that can promote a merchant to "verified", and it
+    /// promotes THAT location — a confirmation at one Walmart says nothing about another.
+    ///
+    /// Plain equality on the identifier, with no ladder beneath it, and that is safe because
+    /// `CheckoutService.recommend` files a prediction under the identifier of the `StoredMerchant`
+    /// it actually matched rather than under the freshly-rendered coordinate string of the live
+    /// result. The two sides are the same string by construction; the ladder ran once, at the
+    /// checkout, where the coordinates to run it with were available.
     private func promoteMerchant(for prediction: StoredPrediction,
                                  observedCategory: String, at date: Date) throws {
         guard let identifier = prediction.merchantIdentifier else { return }
@@ -266,6 +316,17 @@ public struct PredictionLog {
                                incrementsConfirmation: true, at: date)
     }
 
+    /// **The only place `StoredMerchant.confirmedCategory` is written.**
+    ///
+    /// That column is what promotes a merchant to `.verified` and the unscaled threshold that
+    /// comes with it, so every route to it — a reconciled purchase, a corrected category, the
+    /// owner saying "not this store" on Home — passes through here. A second writer would be a
+    /// second set of rules for the streak, the confidence score and the taxonomy stamp, and the
+    /// two would disagree the first time one of them changed.
+    ///
+    /// The count is a streak, not a total: it answers "how many times has this same result
+    /// repeated here", which is the claim `.repeatedTerminal` makes. A terminal that re-codes
+    /// starts over rather than accruing confidence its own evidence contradicts.
     private func applyOwnerConfirmation(to merchant: StoredMerchant, category: String,
                                         incrementsConfirmation: Bool, at date: Date) {
         if merchant.confirmedCategory == category {
@@ -283,11 +344,26 @@ public struct PredictionLog {
         merchant.lastConfirmedAt = date
     }
 
+    /// The owner naming the store they are actually standing in, with no purchase behind it.
+    ///
+    /// Home's "not this store" correction. It is the only ground truth in the field instrument
+    /// that costs nothing but a tap — a receipt join labels perhaps a fifth of visits, this labels
+    /// any visit the owner chooses to correct — and it writes through
+    /// `applyOwnerConfirmation` like every other confirmation.
+    ///
+    /// A category of "other" writes nothing. "Other" is the absence of a category rather than a
+    /// category, and promoting a terminal to `.verified` on the strength of knowing nothing about
+    /// it would spend the unscaled threshold that promotion buys on a guess.
     public func confirmMerchant(_ merchant: NearbyPlace, category rawCategory: String,
                                 confirmedAt: Date = Date()) throws {
         let category = CategoryTaxonomy.canonicalID(rawCategory)
         guard category != "other" else { return }
 
+        // Through the identity ladder, because this is a *writer* of `confirmedCategory` — the
+        // most valuable column the owner can fill in. On exact-identifier matching, correcting the
+        // same shop after Apple revised its pin created a second confirmed row rather than
+        // strengthening the first, so the streak that `.repeatedTerminal` counts restarted at one
+        // and the owner's second confirmation bought nothing.
         let all = try context.fetch(FetchDescriptor<StoredMerchant>())
         let stored: StoredMerchant
         if let match = MerchantIdentity.match(merchant, in: all) {
@@ -307,6 +383,11 @@ public struct PredictionLog {
         try context.save()
     }
 
+    /// Reclassifies a transaction's category and updates the Merchant Truth Graph.
+    ///
+    /// Stamps `categoryCorrectedAt`. Rewriting the category makes the prediction agree with the
+    /// observation, which would otherwise turn a recorded miss into an indistinguishable hit; the
+    /// stamp is what lets the accuracy math exclude the row instead of silently counting it.
     public func updateCategory(for prediction: StoredPrediction, to newCategory: String,
                                correctedAt: Date = Date()) throws {
         let rawCategory = newCategory
@@ -328,6 +409,12 @@ public struct PredictionLog {
         try context.save()
     }
 
+    /// Records an owner-supplied category on a purchase that may not have checkout advice.
+    ///
+    /// Automatic Wallet captures deliberately have no `StoredPrediction`, so rewriting a
+    /// prediction cannot be the only category-edit path. Keep the capture-time category snapshot
+    /// intact and store the owner's later answer as an observation; `displayCategory` already
+    /// prefers that observation, while the original machine evidence remains auditable.
     public func updateCategory(for purchase: StoredPurchase, to newCategory: String,
                                correctedAt: Date = Date()) throws {
         let rawCategory = newCategory
@@ -362,6 +449,15 @@ public struct PredictionLog {
                                               locationIdentifier: nil)
         let merchants = try context.fetch(FetchDescriptor<StoredMerchant>())
 
+        // A purchase that carries a fix gets the full identity ladder — the same one the checkout
+        // path uses — so a correction lands on the terminal the owner actually paid at even if its
+        // pin has since been revised.
+        //
+        // The name-only fallback below stays, but only for a purchase with no coordinates at all.
+        // That is the Wallet-descriptor case, where a name is genuinely the only identity there is
+        // and merging same-named rows is better than stranding the correction. Applying it to a
+        // located purchase, as this used to unconditionally, meant an owner correcting one
+        // "Rose Cafe" could re-code a different shop across the city.
         let located = purchase.merchantLatitude.flatMap { latitude in
             purchase.merchantLongitude.map { longitude in
                 NearbyPlace(id: identifier ?? purchase.displayMerchant,
@@ -410,6 +506,7 @@ public struct PredictionLog {
             sortBy: [SortDescriptor(\.recordedAt, order: .reverse)]))
     }
 
+    /// The one purchase history, independent of whether advice preceded the purchase.
     public func allPurchases(limit: Int = 100) throws -> [StoredPurchase] {
         var descriptor = FetchDescriptor<StoredPurchase>(
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
@@ -417,6 +514,8 @@ public struct PredictionLog {
         return try context.fetch(descriptor)
     }
 
+    /// Purchases missing a card or an amount — the "finish these" queue. One field each, and no
+    /// statement required, so this is deliberately a different ritual from reconciling.
     public func awaitingCompletion() throws -> [StoredPrediction] {
         Self.awaitingCompletion(from: try allPredictions())
     }
@@ -428,6 +527,11 @@ public struct PredictionLog {
         }
     }
 
+    /// Complete purchases still waiting on a statement — the weekly reconcile queue.
+    ///
+    /// A prediction with no purchase appears in neither queue. That is the point: advice the
+    /// owner never acted on is a real outcome, not an unfinished chore, and dropping it into a
+    /// to-do list would make the queue a measure of walking past shops.
     public func awaitingConfirmation() throws -> [StoredPrediction] {
         Self.awaitingConfirmation(from: try allPredictions())
     }
@@ -439,6 +543,7 @@ public struct PredictionLog {
         }
     }
 
+    /// Complete or incomplete purchases recorded in the log, newest first.
     public func recentPurchases(limit: Int = 20) throws -> [StoredPrediction] {
         Self.recentPurchases(from: try allPredictions(), limit: limit)
     }
@@ -448,6 +553,12 @@ public struct PredictionLog {
         return Array(purchases.prefix(limit))
     }
 
+    /// Everything the home screen needs, from one fetch.
+    ///
+    /// The four accessors below stay — they are the readable unit and every test asserts against
+    /// them — but calling all four in sequence runs three unfiltered fetches and filters each in
+    /// memory. That was fine against a 30-row target; ambient capture exists to raise the row
+    /// count, and a third record type with relationships to walk makes every pass heavier.
     public struct LogSnapshot {
         public let valueRecovered: ValueRecovered
         public let awaitingCompletion: [StoredPrediction]
@@ -486,6 +597,12 @@ public struct PredictionLog {
                                  arithmeticCorrectCount: verdicts.filter { $0 == .matches }.count)
     }
 
+    /// Value recovered, split by whether a statement has backed it up yet.
+    ///
+    /// Reporting one number would force a choice between honest and motivating. Requiring
+    /// reconciliation is the honest reading — until the statement lands, "it coded as grocery"
+    /// is an assumption — but it would hold the scoreboard at $0 for weeks on a feature whose
+    /// whole job is getting purchases logged. Two labelled numbers keep the strong claim strong.
     public struct ValueRecovered: Equatable, Sendable {
         public let confirmedCad: Double
         public let pendingCad: Double
@@ -508,11 +625,26 @@ public struct PredictionLog {
         return ValueRecovered(confirmedCad: confirmed, pendingCad: pending)
     }
 
+    /// What taking the advice was actually worth on this purchase, or nil when the question does
+    /// not apply.
+    ///
+    /// The card check is the one this shipped without, and its absence was not cosmetic: value
+    /// recovered means "I earned more BECAUSE I took the advice", so a purchase paid on the
+    /// habitual default card recovered nothing, however large the advantage on offer was.
+    ///
+    /// The advantage is scaled from the scored amount to the real one. `winnerValueCad` and
+    /// `defaultCardValueCad` are absolute figures the engine computed against whatever amount it
+    /// was given, so a $50 preset standing in for a $47.83 charge overstates by 4.5%. Scaling
+    /// assumes reward rates are linear in amount, which is true away from cap boundaries and
+    /// approximate at them — better than multiplying through a button the owner tapped, and the
+    /// residual error is bounded by how close the purchase sat to a cap.
     private static func advantageRealised(_ prediction: StoredPrediction,
                                           _ purchase: StoredPurchase) -> Double? {
         guard purchase.cardUsedId == prediction.winnerCardId,
               let actualAmount = purchase.amountCad,
               let defaultCardValueCad = prediction.defaultCardValueCad,
+              // No scored amount means the engine priced a category estimate. There is no
+              // per-dollar advantage to rescale, so the row is excluded rather than guessed at.
               let scoredAmount = prediction.scoredAmountCad, scoredAmount > 0 else { return nil }
         let advantagePerDollar = (prediction.winnerValueCad - defaultCardValueCad) / scoredAmount
         return advantagePerDollar * actualAmount
