@@ -35,6 +35,7 @@ public enum PurchaseRouteAcquisitionResolver {
     ) -> [PurchaseRouteAcquisitionCandidate] {
         guard let requiredMCC = route.acquisitionMcc else { return [] }
         let ownerEvidence = MerchantMCCGraphEvidenceBuilder.evidence(from: purchases) + rewardEvidence
+        let allInventoryEvidence = inventoryEvidence + CommunityGiftCardInventoryCacheStore().evidence(now: now)
 
         return places.compactMap { place -> PurchaseRouteAcquisitionCandidate? in
             guard let seed = MerchantMCCSeedCatalogue.match(merchantName: place.name) else {
@@ -65,7 +66,7 @@ public enum PurchaseRouteAcquisitionResolver {
                 longitude: place.hasMonitorableLocation ? place.longitude : nil,
                 instrumentKey: route.instrumentLabel)
             let inventory = GiftCardInventoryGraph.predict(for: inventoryQuery,
-                                                           evidence: inventoryEvidence,
+                                                           evidence: allInventoryEvidence,
                                                            now: now)
             // A fresh, confident miss is stronger evidence than a generic MCC-compatible route.
             // Because negative inventory evidence decays in days, a temporary stockout does not
