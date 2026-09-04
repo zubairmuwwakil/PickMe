@@ -114,8 +114,9 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
     ///
     /// Brand-level idempotency is scoped to non-sensitive facts already retained by the graph
     /// (source + canonical merchant + UTC day + MCC + network). Safely joined rows instead dedupe on
-    /// the opaque local purchase UUID, so two real purchases at two locations can each contribute
-    /// one direct observation without putting amount/card data into the fingerprint.
+    /// the opaque local purchase UUID. If that purchase already has the same literal MCC in its
+    /// StoredObservation, both paths intentionally share the observation evidence ID so composing
+    /// history + imports cannot turn one transaction into two independent direct observations.
     @discardableResult
     public func importCSV(_ data: Data,
                           source: MerchantMCCExactImportSource = .genericCSV,
@@ -196,9 +197,21 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
                     cardNetworksByID: normalizedCardNetworks) {
                 let joinedNetwork = network
                     ?? purchase.cardUsedId.flatMap { normalizedCardNetworks[$0] }
-                let reference = "issuerJoin:\(source.rawValue):\(purchase.id.uuidString.lowercased()):\(mcc):\(joinedNetwork ?? "unknown")"
+                let joinReference = "issuerJoin:\(source.rawValue):\(purchase.id.uuidString.lowercased()):\(mcc):\(joinedNetwork ?? "unknown")"
+                let evidenceID: String
+                if let observation = purchase.observation,
+                   observation.observedMerchantCategoryCode == mcc {
+                    // Same transaction + same literal MCC is corroboration, not a second independent
+                    // observation. Share the existing evidence-builder ID so graph composition
+                    // dedupes it even though the importer keeps its own local ledger.
+                    evidenceID = "observation:\(observation.id.uuidString)"
+                } else {
+                    // A conflicting literal MCC remains distinct so the graph sees the conflict
+                    // rather than silently overwriting either source.
+                    evidenceID = joinReference
+                }
                 imported.append(MerchantMCCEvidence(
-                    id: reference,
+                    id: evidenceID,
                     merchantKey: match.merchant.name,
                     latitude: purchase.merchantLatitude,
                     longitude: purchase.merchantLongitude,
@@ -208,7 +221,7 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
                     kind: .directOwnerMcc,
                     sourceConfidence: 1,
                     observedAt: purchase.createdAt,
-                    sourceReference: reference))
+                    sourceReference: joinReference))
                 continue
             }
 
