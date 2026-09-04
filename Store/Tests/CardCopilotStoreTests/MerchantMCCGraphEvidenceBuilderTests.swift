@@ -52,4 +52,34 @@ final class MerchantMCCGraphEvidenceBuilderTests: XCTestCase {
         XCTAssertEqual(Set(evidence.compactMap(\.mcc)), Set([5812, 5814]))
         XCTAssertEqual(evidence.count, 2)
     }
+
+    func testLearnedAliasJoinsReconciledMccBackToCanonicalMerchant() throws {
+        let suite = "MerchantMCCGraphEvidenceBuilderTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let identityStore = MerchantMCCIdentityLearningStore(defaults: defaults, storageKey: "identity")
+        let alias = "MART #1234"
+
+        XCTAssertTrue(identityStore.record(alias: alias, merchantID: "walmart",
+                                           sourceFingerprint: "wallet:event-1"))
+        XCTAssertTrue(identityStore.record(alias: alias, merchantID: "walmart",
+                                           sourceFingerprint: "wallet:event-2"))
+
+        let purchase = StoredPurchase(merchantLabel: alias,
+                                      merchantLatitude: 43.65,
+                                      merchantLongitude: -79.38)
+        purchase.observation = StoredObservation(observedCategory: "grocery",
+                                                 observedMerchantCategoryCode: 5411)
+
+        let evidence = MerchantMCCGraphEvidenceBuilder.evidence(
+            from: [purchase], identityStore: identityStore)
+        XCTAssertEqual(evidence.first?.merchantKey, "walmart")
+
+        let prediction = MerchantMCCGraph.predict(
+            for: MerchantMCCQuery(merchantKey: "Walmart"),
+            seedMCC: 5311,
+            evidence: evidence)
+        XCTAssertEqual(prediction.bestMCC, 5411,
+                       "direct owner evidence learned under an alias must overpower the seed prior")
+    }
 }
