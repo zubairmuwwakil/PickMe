@@ -31,6 +31,20 @@ jobs:
           fi
           echo "ECOSYSTEM.md is current with MoneyTalks main"
 
+  # Belongs here rather than in ci.yml on purpose. The schema gate in the catalogue-release job
+  # asks whether a source was cited when a row was written; it never asks again. Acceptance moves
+  # without announcement, and a merchant that STARTS taking Amex breaks nothing a test can see —
+  # the row decodes, the pack validates, and the app keeps telling the owner to leave their best
+  # card in their pocket. A row ageing past the bar is a prompt to re-read a page, not a reason to
+  # block an unrelated merge, which is what the weekly cron is for.
+  acceptance-freshness:
+    name: acceptance-freshness (advisory)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Narrowed merchant rows were verified within the last year
+        run: python3 scripts/check-acceptance-freshness.py
+
   fleet-freshness:
     name: fleet-freshness (advisory)
     runs-on: ubuntu-latest

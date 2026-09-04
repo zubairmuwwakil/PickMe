@@ -61,10 +61,30 @@ PAIRS = [
 ]
 
 
-def format_path(error) -> str:
+def format_path(error, instance=None) -> str:
     if not error.absolute_path:
         return "$"
-    return "$." + ".".join(str(p) for p in error.absolute_path)
+    parts = []
+    cursor = instance
+    for step in error.absolute_path:
+        # An array index tells a curator nothing. Every record in these files carries a stable
+        # human key ("costco-wholesale", "amex-cobalt"), and the whole value of this script is
+        # that the person who broke a rule can find the row they broke it in.
+        label = str(step)
+        if isinstance(step, int) and isinstance(cursor, list) and step < len(cursor):
+            record = cursor[step]
+            if isinstance(record, dict):
+                for key in ("id", "cardId", "merchantId", "ruleId", "programId", "caseId"):
+                    if isinstance(record.get(key), str):
+                        label = f"{step}({record[key]})"
+                        break
+        parts.append(label)
+        if cursor is not None:
+            try:
+                cursor = cursor[step]
+            except (KeyError, IndexError, TypeError):
+                cursor = None
+    return "$." + ".".join(parts)
 
 
 def validate_pair(data_name: str, schema_name: str) -> int:
@@ -84,7 +104,7 @@ def validate_pair(data_name: str, schema_name: str) -> int:
 
     print(f"FAIL  {data_name} against {schema_name}: {len(errors)} error(s)")
     for error in errors:
-        print(f"  {format_path(error)}: {error.message}")
+        print(f"  {format_path(error, instance)}: {error.message}")
     return len(errors)
 
 

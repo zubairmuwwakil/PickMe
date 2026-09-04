@@ -2,6 +2,36 @@
 
 One entry per catalogue/fixture change (spec §3). Newest first.
 
+## 2026-09-04 — merchant-pack 1.1: a narrowing needs a source
+
+**Additive schema field; one editorial correction.** `acceptedNetworks` treated both directions as
+the same claim, and they are not. The open `[amex, visa, mastercard]` default is a non-claim: if it
+is wrong the owner taps a second card at the till and sees it happen. Removing a network is an
+affirmative negative claim the app renders as text ("does not accept American Express") and which
+silently withholds a card the owner may never discover they should have used — nothing they can
+observe contradicts it. All 151 rows carried the same evidentiary bar for both, which was none.
+
+- New optional `acceptanceProvenance` (`sourceType`, `sources`, `lastVerifiedAt`) — the same
+  vocabulary `card-catalogue.schema.json` already uses per rule, and documentation-only in the same
+  way: no Swift or Kotlin decoder reads it. It gates the curator, not the engine.
+- `merchant-pack.schema.json` now **requires** it on any row narrower than the open default, via an
+  `if/then/else` on "contains all three networks". `inferred` is deliberately not a legal
+  `sourceType` here: the point of the gate is that a narrowing rests on something a reviewer can
+  open. All 17 existing narrowed rows are backfilled from each merchant's own published
+  payment-methods page, verified 2026-09-04.
+- `matchKeys` correction on narrowed rows. A needle that is an ordinary English word or a common
+  surname resolves unrelated businesses into a grocery banner and produces exactly the false
+  negative claim above: `superstore` (→ "Superstore Liquidation"), `fortino` and `zehr` (surnames)
+  are removed. Each row keeps a specific key. `dominion` and `no frills` survive only because a row
+  must also be reachable from its own `displayName`; narrowing those needs the displayName narrowed,
+  and `PreIndexedMerchant.id` derives from it and is persisted — a migration, not an edit.
+- `scripts/check-acceptance-freshness.py` makes the gate standing rather than one-time: a narrowed
+  row whose `lastVerifiedAt` passes 365 days fails `document-freshness.yml` (advisory, weekly cron),
+  not `ci.yml`. A merchant that *starts* taking a network is the failure nothing else here can see —
+  the row decodes, the pack validates, and the app keeps withholding a card that would now work.
+- **MINOR 1.0 → 1.1.** Purely additive; `SeedLoader.validate(packVersion:)` gates on MAJOR only, and
+  the field is absent from every decoder, so consumers on 1.0 are unaffected.
+
 ## 2026-08-31 — card-catalogue 2.16 & purchase-categories 1.1: hierarchy and merchant dimensions
 
 **Additive taxonomy metadata; no scoring change.** Category definitions may now name a broader
