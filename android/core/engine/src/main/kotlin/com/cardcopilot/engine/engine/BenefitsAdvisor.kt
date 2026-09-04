@@ -36,7 +36,8 @@ enum class BenefitContextKind(val rawValue: String) {
     CAR_RENTAL("carRental"),
     ELECTRONICS("electronics"),
     MOBILE_DEVICE("mobileDevice"),
-    APPLIANCE_FURNITURE("applianceFurniture")
+    APPLIANCE_FURNITURE("applianceFurniture"),
+    OTHER("other")
 }
 
 data class BenefitContext(
@@ -63,6 +64,7 @@ data class BenefitContext(
                     BenefitKind.EXTENDED_WARRANTY,
                     BenefitKind.MOBILE_DEVICE_INSURANCE
                 )
+                BenefitContextKind.OTHER -> return emptyList()
             }
             return if (abroad) base + listOf(BenefitKind.TRAVEL_MEDICAL) else base
         }
