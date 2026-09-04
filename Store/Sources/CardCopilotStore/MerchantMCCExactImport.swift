@@ -20,6 +20,7 @@ public enum MerchantMCCExactImportSource: String, Codable, Sendable, CaseIterabl
 public struct MerchantMCCExactImportSummary: Equatable, Sendable {
     public let totalRows: Int
     public let importedRows: Int
+    public let locationJoinedRows: Int
     public let duplicateRows: Int
     public let missingMCCRows: Int
     public let invalidMCCRows: Int
@@ -30,11 +31,12 @@ public struct MerchantMCCExactImportSummary: Equatable, Sendable {
         duplicateRows + missingMCCRows + invalidMCCRows + missingDateRows + unrecognizedMerchantRows
     }
 
-    public init(totalRows: Int, importedRows: Int, duplicateRows: Int,
-                missingMCCRows: Int, invalidMCCRows: Int, missingDateRows: Int,
-                unrecognizedMerchantRows: Int) {
+    public init(totalRows: Int, importedRows: Int, locationJoinedRows: Int = 0,
+                duplicateRows: Int, missingMCCRows: Int, invalidMCCRows: Int,
+                missingDateRows: Int, unrecognizedMerchantRows: Int) {
         self.totalRows = totalRows
         self.importedRows = importedRows
+        self.locationJoinedRows = locationJoinedRows
         self.duplicateRows = duplicateRows
         self.missingMCCRows = missingMCCRows
         self.invalidMCCRows = invalidMCCRows
@@ -61,6 +63,8 @@ public enum MerchantMCCExactImportError: Error, Equatable, LocalizedError {
 public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
     public static let shared = MerchantMCCImportedEvidenceStore()
 
+    private enum DateKind { case transaction, posting }
+
     private static let maximumRows = 5_000
     private let defaults: UserDefaults
     private let storageKey: String
@@ -73,7 +77,11 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
         self.storageKey = storageKey
         if let data = defaults.data(forKey: storageKey),
            let decoded = try? JSONDecoder().decode([MerchantMCCEvidence].self, from: data) {
-            self.evidenceRows = decoded.filter { $0.kind == .ownerImportedMcc }
+            // Direct rows in this ledger are not arbitrary direct evidence: they are issuer-file
+            // rows that this store itself safely joined to one local, located purchase.
+            self.evidenceRows = decoded.filter {
+                $0.kind == .ownerImportedMcc || $0.kind == .directOwnerMcc
+            }
         } else {
             self.evidenceRows = []
         }
@@ -92,14 +100,23 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
     }
 
     /// Imports only normalized evidence. Raw CSV rows, amounts, account/card numbers and filenames
-    /// are never persisted. Idempotency is scoped to the non-sensitive facts already retained by
-    /// the graph (source + canonical merchant + UTC day + MCC + network), so unrelated CSV fields
-    /// never leak even indirectly through a whole-row fingerprint. Multiple identical merchant/MCC
-    /// transactions on one day intentionally contribute one brand-level import unit rather than
-    /// letting purchase frequency masquerade as independent corroboration.
+    /// are never persisted.
+    ///
+    /// When `localPurchases` is supplied, amount/card-network values are used only while this call
+    /// is executing to attempt a conservative location join. A row becomes `directOwnerMcc` only
+    /// when exactly one located purchase matches the same deterministic merchant, date window,
+    /// amount, and (when the import knows it) card network. Zero or multiple matches fail closed to
+    /// brand-level `ownerImportedMcc` evidence.
+    ///
+    /// Brand-level idempotency is scoped to non-sensitive facts already retained by the graph
+    /// (source + canonical merchant + UTC day + MCC + network). Safely joined rows instead dedupe on
+    /// the opaque local purchase UUID, so two real purchases at two locations can each contribute
+    /// one direct observation without putting amount/card data into the fingerprint.
     @discardableResult
     public func importCSV(_ data: Data,
-                          source: MerchantMCCExactImportSource = .genericCSV) throws
+                          source: MerchantMCCExactImportSource = .genericCSV,
+                          localPurchases: [StoredPurchase] = [],
+                          cardNetworksByID: [String: String] = [:]) throws
         -> MerchantMCCExactImportSummary {
         guard !data.isEmpty else { throw MerchantMCCExactImportError.emptyFile }
         guard var text = String(data: data, encoding: .utf8) else {
@@ -122,8 +139,16 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
 
         let networkIndex = Self.firstIndex(in: normalizedHeader,
                                            aliases: ["network", "cardnetwork", "paymentnetwork"])
+        let amountIndex = Self.firstIndex(in: normalizedHeader,
+                                          aliases: ["billingamount", "transactionamount", "purchaseamount", "amount"])
+        let dateKind: DateKind = ["postingdate", "posteddate"].contains(normalizedHeader[dateIndex])
+            ? .posting : .transaction
+        let normalizedCardNetworks = cardNetworksByID.reduce(into: [String: String]()) { result, item in
+            if let network = Self.normalizedNetwork(item.value) { result[item.key] = network }
+        }
 
         var imported: [MerchantMCCEvidence] = []
+        var joinedRows = 0
         var missingMCC = 0
         var invalidMCC = 0
         var missingDate = 0
@@ -150,6 +175,36 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
 
             let networkRaw = networkIndex.map { Self.value(row, at: $0) }
             let network = Self.normalizedNetwork(networkRaw) ?? source.defaultNetwork
+            let amount = amountIndex.flatMap { Self.parseAmount(Self.value(row, at: $0)) }
+
+            if let purchase = Self.uniqueLocatedPurchaseMatch(
+                importedMerchantRaw: merchantRaw,
+                canonicalMerchantID: match.merchant.id,
+                observedAt: observedAt,
+                dateKind: dateKind,
+                amount: amount,
+                network: network,
+                localPurchases: localPurchases,
+                cardNetworksByID: normalizedCardNetworks) {
+                let joinedNetwork = network
+                    ?? purchase.cardUsedId.flatMap { normalizedCardNetworks[$0] }
+                let reference = "issuerJoin:\(source.rawValue):\(purchase.id.uuidString.lowercased()):\(mcc):\(joinedNetwork ?? "unknown")"
+                imported.append(MerchantMCCEvidence(
+                    id: reference,
+                    merchantKey: match.merchant.name,
+                    latitude: purchase.merchantLatitude,
+                    longitude: purchase.merchantLongitude,
+                    channel: .inStore,
+                    network: joinedNetwork,
+                    mcc: mcc,
+                    kind: .directOwnerMcc,
+                    sourceConfidence: 1,
+                    observedAt: purchase.createdAt,
+                    sourceReference: reference))
+                joinedRows += 1
+                continue
+            }
+
             let canonicalKey = MerchantMCCQuery(merchantKey: match.merchant.name).merchantKey
             let day = Self.utcDay(observedAt)
             let reference = "issuerFile:\(source.rawValue):\(canonicalKey):\(day):\(mcc):\(network ?? "unknown")"
@@ -169,10 +224,12 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
         var existingIDs = Set(evidenceRows.map(\.id))
         var duplicates = 0
         var accepted = 0
+        var acceptedJoined = 0
         for evidence in imported {
             guard existingIDs.insert(evidence.id).inserted else { duplicates += 1; continue }
             evidenceRows.append(evidence)
             accepted += 1
+            if evidence.kind == .directOwnerMcc { acceptedJoined += 1 }
         }
         if evidenceRows.count > Self.maximumRows {
             evidenceRows = Array(evidenceRows.sorted { $0.observedAt > $1.observedAt }
@@ -180,9 +237,13 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
         }
         persistLocked()
 
+        // `joinedRows` is deliberately not returned: a re-import of the same joined purchase is a
+        // duplicate, not a newly joined observation. Report only direct rows actually accepted.
+        _ = joinedRows
         return MerchantMCCExactImportSummary(
             totalRows: bodyRows.count,
             importedRows: accepted,
+            locationJoinedRows: acceptedJoined,
             duplicateRows: duplicates,
             missingMCCRows: missingMCC,
             invalidMCCRows: invalidMCC,
@@ -199,6 +260,60 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
     private func persistLocked() {
         guard let data = try? JSONEncoder().encode(evidenceRows) else { return }
         defaults.set(data, forKey: storageKey)
+    }
+
+    private static func uniqueLocatedPurchaseMatch(
+        importedMerchantRaw: String,
+        canonicalMerchantID: String,
+        observedAt: Date,
+        dateKind: DateKind,
+        amount: Double?,
+        network: String?,
+        localPurchases: [StoredPurchase],
+        cardNetworksByID: [String: String]
+    ) -> StoredPurchase? {
+        // Amount is the strongest non-identity transaction join available in today's local model.
+        // Without it, one merchant visit on a date is too easy to mis-bind to a statement row.
+        guard let amount, amount.isFinite else { return nil }
+        guard MerchantMCCSeedCatalogue.canonicalMatch(merchantName: importedMerchantRaw)?.merchant.id
+                == canonicalMerchantID else { return nil }
+
+        let maxDayDistance = dateKind == .posting ? 4 : 1
+        let candidates = localPurchases.filter { purchase in
+            guard let latitude = purchase.merchantLatitude, latitude.isFinite,
+                  let longitude = purchase.merchantLongitude, longitude.isFinite
+            else { return false }
+            guard canonicalMerchantIDForPurchase(purchase) == canonicalMerchantID else { return false }
+            guard dayDistance(purchase.createdAt, observedAt) <= maxDayDistance else { return false }
+            guard let localAmount = purchase.amountCad, localAmount.isFinite,
+                  abs(localAmount - amount) <= 0.01 else { return false }
+
+            if let network {
+                guard let cardID = purchase.cardUsedId,
+                      cardNetworksByID[cardID] == network else { return false }
+            }
+            return true
+        }
+
+        return candidates.count == 1 ? candidates[0] : nil
+    }
+
+    private static func canonicalMerchantIDForPurchase(_ purchase: StoredPurchase) -> String? {
+        for value in [purchase.merchantKey, purchase.merchantLabel, purchase.prediction?.merchantName] {
+            guard let value else { continue }
+            if let canonical = MerchantMCCSeedCatalogue.canonicalMatch(merchantName: value) {
+                return canonical.merchant.id
+            }
+        }
+        return nil
+    }
+
+    private static func dayDistance(_ lhs: Date, _ rhs: Date) -> Int {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let start = calendar.startOfDay(for: lhs)
+        let end = calendar.startOfDay(for: rhs)
+        return abs(calendar.dateComponents([.day], from: start, to: end).day ?? Int.max)
     }
 
     private static func value(_ row: [String], at index: Int) -> String {
@@ -223,6 +338,16 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
         if normalized.contains("amex") || normalized.contains("americanexpress") { return "amex" }
         if normalized.contains("discover") { return "discover" }
         return nil
+    }
+
+    private static func parseAmount(_ value: String) -> Double? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let negativeByParentheses = trimmed.contains("(") && trimmed.contains(")")
+        let numeric = trimmed.filter { $0.isNumber || $0 == "." || $0 == "-" }
+        guard !numeric.isEmpty, var amount = Double(numeric) else { return nil }
+        if negativeByParentheses { amount = -abs(amount) }
+        return amount
     }
 
     private static func parseDate(_ value: String) -> Date? {
