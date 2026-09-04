@@ -11,7 +11,8 @@ let package = Package(
     dependencies: [.package(path: "../Engine")],
     targets: [
         .target(name: "CardCopilotStore",
-                dependencies: [.product(name: "CardCopilotEngine", package: "Engine")]),
+                dependencies: [.product(name: "CardCopilotEngine", package: "Engine")],
+                resources: [.process("Resources")]),
         .target(name: "CardCopilotCapture",
                 dependencies: [.product(name: "CardCopilotEngine", package: "Engine")]),
         .testTarget(name: "CardCopilotStoreTests", dependencies: ["CardCopilotStore"]),

@@ -1,0 +1,45 @@
+{
+  "graphVersion": "1.0",
+  "generatedAt": "2026-09-04",
+  "_provenance": {
+    "purpose": "Initial Canada seed priors for PickMe's learning merchant-MCC graph.",
+    "rule": "Seed MCCs are editorial hypotheses, never observed network MCCs. Runtime observations must override priors as evidence accumulates.",
+    "merchantScope": "Exactly the 500 merchants from pickme_canada_500_merchant_seed(1).xlsx.",
+    "taxonomySource": {
+      "name": "Adyen DABstep MCC taxonomy",
+      "license": "CC-BY-4.0",
+      "url": "https://huggingface.co/datasets/adyen/DABstep/blob/main/data/context/merchant_category_codes.csv"
+    },
+    "communitySource": {
+      "name": "MCC-Codes.com Canada",
+      "url": "https://www.mcc-codes.com/Canada",
+      "use": "Location-level low-confidence evidence only; directory disclaims accuracy and changes without notice."
+    }
+  },
+  "categories": {
+    "grocery_food": "Grocery & Food Retail",
+    "dining": "Restaurants, Cafés & QSR",
+    "gas_convenience": "Gas & Convenience",
+    "health_beauty": "Pharmacy, Beauty & Health",
+    "home_electronics_telecom": "Home, Electronics & Telecom",
+    "apparel_sport": "Apparel, Footwear & Sporting Goods",
+    "entertainment_travel_online": "Entertainment, Travel, Delivery & Online",
+    "auto_pet_liquor_specialty": "Auto, Pet, Liquor & Specialty"
+  },
+  "files": {
+    "profiles": "profiles.json",
+    "merchantShards": [
+      "merchants-001-050.json",
+      "merchants-051-100.json",
+      "merchants-101-150.json",
+      "merchants-151-200.json",
+      "merchants-201-250.json",
+      "merchants-251-300.json",
+      "merchants-301-350.json",
+      "merchants-351-400.json",
+      "merchants-401-450.json",
+      "merchants-451-500.json"
+    ],
+    "observations": "observations.json"
+  }
+}
