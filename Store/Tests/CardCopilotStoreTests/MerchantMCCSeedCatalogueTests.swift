@@ -23,7 +23,7 @@ final class MerchantMCCSeedCatalogueTests: XCTestCase {
             NearbyPlace(id: "rexall", name: "Rexall", poiCategoryRaw: nil,
                         latitude: 43.0, longitude: -79.0, distanceMeters: 80),
             NearbyPlace(id: "sobeys", name: "Sobeys", poiCategoryRaw: nil,
-                        latitude: 43.0, longitude: -79.0, distanceMeters: 300),
+                        latitude: 43.01, longitude: -79.01, distanceMeters: 300),
             NearbyPlace(id: "metro", name: "Metro", poiCategoryRaw: nil,
                         latitude: 43.0, longitude: -79.0, distanceMeters: 120)
         ]
@@ -32,6 +32,7 @@ final class MerchantMCCSeedCatalogueTests: XCTestCase {
         XCTAssertEqual(candidates.map(\.place.name), ["Metro", "Sobeys"])
         XCTAssertTrue(candidates.allSatisfy { $0.mcc == 5411 })
         XCTAssertTrue(candidates.allSatisfy { $0.confidence > 0 && $0.confidence < 0.8 })
+        XCTAssertTrue(candidates.allSatisfy { $0.inventoryPrediction.state == .unknown })
     }
 
     func testResolvedRouteUsesActualMerchantAcceptance() throws {
@@ -46,6 +47,7 @@ final class MerchantMCCSeedCatalogueTests: XCTestCase {
         XCTAssertEqual(resolved.acquisitionMcc, 5411)
         XCTAssertFalse(resolved.acceptedNetworks.contains(.amex),
                        "No Frills route must not recommend an Amex acquisition leg")
+        XCTAssertTrue(resolved.disclosure.contains("inventory has not yet been confirmed"))
     }
 
     func testDirectOwnerEvidenceCanOverrideSeedForRouteEligibility() throws {
@@ -70,5 +72,59 @@ final class MerchantMCCSeedCatalogueTests: XCTestCase {
             for: route, nearby: [place], purchases: [purchase], now: now)
         XCTAssertEqual(candidates.first?.mcc, 5411,
                        "local direct evidence must be allowed to beat a 5300 wholesale seed")
+    }
+
+    func testConfirmedInventoryOutranksCloserUnknownStore() throws {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let route = try XCTUnwrap(PurchaseRouteCatalogue.canadaV1.first)
+        let metro = NearbyPlace(id: "metro", name: "Metro", poiCategoryRaw: nil,
+                                latitude: 43.0, longitude: -79.0, distanceMeters: 80)
+        let sobeys = NearbyPlace(id: "sobeys", name: "Sobeys", poiCategoryRaw: nil,
+                                 latitude: 43.01, longitude: -79.01, distanceMeters: 350)
+        let inventory = GiftCardInventoryObservation(
+            id: "sobeys-found",
+            merchantKey: "Sobeys",
+            latitude: 43.01,
+            longitude: -79.01,
+            instrumentKey: route.instrumentLabel,
+            availability: .available,
+            source: .ownerConfirmed,
+            observedAt: now)
+
+        let candidates = PurchaseRouteAcquisitionResolver.candidates(
+            for: route,
+            nearby: [metro, sobeys],
+            inventoryEvidence: [inventory],
+            now: now)
+
+        XCTAssertEqual(candidates.first?.place.name, "Sobeys")
+        XCTAssertTrue(candidates.first?.hasActionableInventory == true)
+    }
+
+    func testFreshNotHereObservationSuppressesLocation() throws {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let route = try XCTUnwrap(PurchaseRouteCatalogue.canadaV1.first)
+        let metro = NearbyPlace(id: "metro", name: "Metro", poiCategoryRaw: nil,
+                                latitude: 43.0, longitude: -79.0, distanceMeters: 80)
+        let sobeys = NearbyPlace(id: "sobeys", name: "Sobeys", poiCategoryRaw: nil,
+                                 latitude: 43.01, longitude: -79.01, distanceMeters: 350)
+        let inventory = GiftCardInventoryObservation(
+            id: "metro-miss",
+            merchantKey: "Metro",
+            latitude: 43.0,
+            longitude: -79.0,
+            instrumentKey: route.instrumentLabel,
+            availability: .unavailable,
+            source: .ownerConfirmed,
+            observedAt: now)
+
+        let candidates = PurchaseRouteAcquisitionResolver.candidates(
+            for: route,
+            nearby: [metro, sobeys],
+            inventoryEvidence: [inventory],
+            now: now)
+
+        XCTAssertFalse(candidates.contains { $0.place.name == "Metro" })
+        XCTAssertEqual(candidates.first?.place.name, "Sobeys")
     }
 }
