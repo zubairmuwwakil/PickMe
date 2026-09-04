@@ -14,7 +14,9 @@ struct RecommendationView: View {
     /// replaces the generic "eligible grocery store" template. Nil is also meaningful after a
     /// successful nearby scan: it means there was no actionable route around this location.
     @State private var resolvedRouteEvaluation: PurchaseRouteEvaluation?
+    @State private var resolvedRouteCandidate: PurchaseRouteAcquisitionCandidate?
     @State private var didResolveNearbyRoute = false
+    @State private var inventoryFeedbackMessage: String?
     @Environment(CopilotEnvironment.self) private var environment
     @Environment(CopilotSession.self) private var session
     @Environment(CheckoutRouter.self) private var router
@@ -150,13 +152,13 @@ struct RecommendationView: View {
 
             if didResolveNearbyRoute {
                 if let route = resolvedRouteEvaluation {
-                    routeOpportunityView(route, graph: graph)
+                    routeOpportunityView(route, candidate: resolvedRouteCandidate, graph: graph)
                 }
             } else if let route = routeEvaluation(for: recommendation, graph: graph) {
                 // Keep the existing generic opportunity visible while a nearby lookup runs or when
                 // location is unavailable. A successful scan with no qualifying merchant removes
                 // the generic suggestion rather than pretending a nearby route exists.
-                routeOpportunityView(route, graph: graph)
+                routeOpportunityView(route, candidate: nil, graph: graph)
             }
 
             // Dopamine Callout: Instant micro-gain over default card
@@ -304,6 +306,7 @@ struct RecommendationView: View {
 
     @ViewBuilder
     private func routeOpportunityView(_ evaluation: PurchaseRouteEvaluation,
+                                      candidate: PurchaseRouteAcquisitionCandidate?,
                                       graph: DependencyGraph) -> some View {
         let route = evaluation.route
         let acquisitionCard = cardName(evaluation.acquisitionRecommendation.winner.cardId, graph: graph)
@@ -364,6 +367,69 @@ struct RecommendationView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+
+            if let candidate {
+                Divider().opacity(0.5)
+
+                HStack(spacing: 7) {
+                    Image(systemName: candidate.hasActionableInventory
+                          ? "checkmark.circle.fill" : "questionmark.circle")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(candidate.hasActionableInventory ? .green : .secondary)
+                    Text(candidate.hasActionableInventory
+                         ? "Gift card recently found at this location"
+                         : "Gift-card availability is not confirmed here yet")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(candidate.hasActionableInventory ? .green : .secondary)
+                }
+
+                if canRecordInventory(for: candidate) {
+                    HStack(spacing: 8) {
+                        Button {
+                            Task {
+                                await recordInventory(.available,
+                                                      candidate: candidate,
+                                                      instrumentKey: route.instrumentLabel,
+                                                      graph: graph)
+                            }
+                        } label: {
+                            Label("Found it", systemImage: "checkmark")
+                                .font(.system(size: 12, weight: .bold, design: .rounded))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 9)
+                                .background(Color.green.opacity(0.14))
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.green)
+
+                        Button {
+                            Task {
+                                await recordInventory(.unavailable,
+                                                      candidate: candidate,
+                                                      instrumentKey: route.instrumentLabel,
+                                                      graph: graph)
+                            }
+                        } label: {
+                            Label("Not here", systemImage: "xmark")
+                                .font(.system(size: 12, weight: .bold, design: .rounded))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 9)
+                                .background(Color.secondary.opacity(0.10))
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                    }
+                }
+
+                if let inventoryFeedbackMessage {
+                    Text(inventoryFeedbackMessage)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
         }
         .padding(14)
         .background(
@@ -399,11 +465,12 @@ struct RecommendationView: View {
 
     /// Resolves the generic acquisition requirement against the actual nearby MapKit scan, then
     /// runs every qualifying physical merchant through the same route/card scorer. A reconciled
-    /// owner MCC observation participates in the graph and can override the seed; a seed by itself
-    /// remains a prediction and is disclosed as such.
+    /// owner MCC observation participates in the graph and can override the seed; gift-card
+    /// inventory is evaluated independently and can promote or temporarily suppress an exact store.
     @MainActor
     private func resolveNearbyRoute(using graph: DependencyGraph) async {
         resolvedRouteEvaluation = nil
+        resolvedRouteCandidate = nil
         didResolveNearbyRoute = false
 
         guard case .single(let directRecommendation) = result.outcome,
@@ -418,35 +485,50 @@ struct RecommendationView: View {
                 longitude: result.merchant.longitude)
             guard !Task.isCancelled else { return }
 
+            let inventoryEvidence = await GiftCardInventoryObservationStore.shared.observations()
+            guard !Task.isCancelled else { return }
+
             let candidates = PurchaseRouteAcquisitionResolver.candidates(
                 for: template,
                 nearby: nearby,
-                purchases: session.purchaseHistory)
+                purchases: session.purchaseHistory,
+                inventoryEvidence: inventoryEvidence)
             let routeEngine = RecommendationEngine(catalogue: graph.catalogue,
                                                    ownerState: graph.ownerState,
                                                    includeCheckoutCredits: false)
             let destination = routeDestinationContext()
             let today = Date().formatted(.iso8601.year().month().day())
 
-            let evaluations = candidates.compactMap { candidate -> PurchaseRouteEvaluation? in
+            let scored = candidates.compactMap {
+                candidate -> (candidate: PurchaseRouteAcquisitionCandidate,
+                              evaluation: PurchaseRouteEvaluation)? in
                 let resolved = PurchaseRouteAcquisitionResolver.resolvedRoute(
                     from: template, candidate: candidate)
-                return PurchaseRouteAdvisor.bestAlternative(
+                guard let evaluation = PurchaseRouteAdvisor.bestAlternative(
                     directRecommendation: directRecommendation,
                     destination: destination,
                     destinationMerchantName: result.merchant.name,
                     routes: [resolved],
                     engine: routeEngine,
-                    asOf: today)
+                    asOf: today) else { return nil }
+                return (candidate, evaluation)
             }
 
             guard !Task.isCancelled else { return }
-            resolvedRouteEvaluation = evaluations.max { lhs, rhs in
-                if lhs.advantageCad != rhs.advantageCad {
-                    return lhs.advantageCad < rhs.advantageCad
+            let best = scored.max { lhs, rhs in
+                if lhs.candidate.hasActionableInventory != rhs.candidate.hasActionableInventory {
+                    return !lhs.candidate.hasActionableInventory
                 }
-                return lhs.route.routeId > rhs.route.routeId
+                if lhs.evaluation.advantageCad != rhs.evaluation.advantageCad {
+                    return lhs.evaluation.advantageCad < rhs.evaluation.advantageCad
+                }
+                let lhsDistance = lhs.candidate.distanceMeters ?? .greatestFiniteMagnitude
+                let rhsDistance = rhs.candidate.distanceMeters ?? .greatestFiniteMagnitude
+                if lhsDistance != rhsDistance { return lhsDistance > rhsDistance }
+                return lhs.evaluation.route.routeId > rhs.evaluation.route.routeId
             }
+            resolvedRouteEvaluation = best?.evaluation
+            resolvedRouteCandidate = best?.candidate
             // A completed scan is authoritative for whether an actionable nearby route exists. If
             // none clears the route threshold, suppress the generic placeholder rather than imply
             // that the user should go hunting for an unspecified store.
@@ -456,6 +538,30 @@ struct RecommendationView: View {
             // opportunity in place instead of turning transient lookup failure into a false "none".
             didResolveNearbyRoute = false
         }
+    }
+
+    @MainActor
+    private func recordInventory(_ availability: GiftCardInventoryAvailability,
+                                 candidate: PurchaseRouteAcquisitionCandidate,
+                                 instrumentKey: String,
+                                 graph: DependencyGraph) async {
+        let hasCoordinates = candidate.place.hasMonitorableLocation
+        _ = await GiftCardInventoryObservationStore.shared.record(
+            merchantKey: candidate.seed.merchant.name,
+            placeID: candidate.place.placeID,
+            latitude: hasCoordinates ? candidate.place.latitude : nil,
+            longitude: hasCoordinates ? candidate.place.longitude : nil,
+            instrumentKey: instrumentKey,
+            availability: availability)
+
+        inventoryFeedbackMessage = availability == .available
+            ? "Saved. PickMe will prioritize this exact location while the sighting is fresh."
+            : "Saved. PickMe will temporarily avoid this location; the miss decays quickly in case it was only out of stock."
+        await resolveNearbyRoute(using: graph)
+    }
+
+    private func canRecordInventory(for candidate: PurchaseRouteAcquisitionCandidate) -> Bool {
+        candidate.place.placeID != nil || candidate.place.hasMonitorableLocation
     }
 
     private func routeDestinationContext() -> PurchaseContext {
