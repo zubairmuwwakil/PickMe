@@ -75,4 +75,23 @@ class PurchaseDecisionAdvisorTest {
         assertTrue(result.relevantKinds.contains(BenefitKind.PURCHASE_PROTECTION))
         assertTrue(result.relevantKinds.contains(BenefitKind.EXTENDED_WARRANTY))
     }
+
+    @Test
+    fun `declared other context means known no modelled protection context`() {
+        val fixture = fixture(500.0)
+        val context = BenefitContext(BenefitContextKind.OTHER)
+
+        assertTrue(context.relevantKinds.isEmpty())
+
+        val result = PurchaseDecisionAdvisor.assess(
+            rewardRecommendation = fixture.recommendation,
+            purchase = fixture.purchase,
+            wallet = fixture.ownerCardIds,
+            benefits = SeedLoader.loadBenefitsCatalogue(),
+            declaredContext = context
+        )
+
+        assertEquals(PurchaseDecisionVerdict.REWARD_LEADER, result.verdict)
+        assertTrue(result.relevantKinds.isEmpty())
+    }
 }
