@@ -64,11 +64,15 @@ public enum PurchaseDecisionAdvisor {
         declaredContext: BenefitContext? = nil
     ) -> PurchaseDecisionAssessment {
         let rewardCardId = rewardRecommendation.winner.cardId
+        let trustedWallet = wallet.filter { cardId in
+            guard let card = benefits.card(cardId) else { return false }
+            return card.certificate.verificationStatus != .stub
+        }
 
         if let declaredContext {
             let comparison = BenefitsAdvisor.comparison(
                 context: declaredContext,
-                wallet: wallet,
+                wallet: trustedWallet,
                 catalogue: benefits)
             let kinds = comparison.relevantKinds
 
@@ -106,9 +110,8 @@ public enum PurchaseDecisionAdvisor {
                                               rewardCardId: rewardCardId)
         }
 
-        let walletHasTrustedShoppingProtection = wallet.contains { cardId in
-            guard let card = benefits.card(cardId),
-                  card.certificate.verificationStatus != .stub else { return false }
+        let walletHasTrustedShoppingProtection = trustedWallet.contains { cardId in
+            guard let card = benefits.card(cardId) else { return false }
             return card.benefits.contains { benefit in
                 benefit.knownFamily == .shopping
                     && benefit.knownKind.map { shoppingKinds.contains($0) } == true
