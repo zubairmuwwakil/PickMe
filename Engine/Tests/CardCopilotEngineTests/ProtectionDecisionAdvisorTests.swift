@@ -70,6 +70,18 @@ final class ProtectionDecisionAdvisorTests: XCTestCase {
         XCTAssertEqual(assessment.relevantKinds, [.purchaseProtection, .extendedWarranty])
     }
 
+    func testDeclaredOtherContextClearsUnknownRouteProtectionState() {
+        let assessment = ProtectionDecisionAdvisor.alternateFundingAssessment(
+            directCardId: "direct-card",
+            purchase: PurchaseContext(amountCad: 500, category: "drugStore"),
+            benefits: catalogue(),
+            declaredContext: BenefitContext(kind: .other))
+
+        XCTAssertEqual(assessment.status, .notRelevant)
+        XCTAssertTrue(assessment.relevantKinds.isEmpty)
+        XCTAssertEqual(assessment.verification, .issuerPage)
+    }
+
     func testStubBenefitFactsNeverInfluenceDecision() {
         let assessment = ProtectionDecisionAdvisor.alternateFundingAssessment(
             directCardId: "direct-card",
