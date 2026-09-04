@@ -3,12 +3,15 @@ package com.cardcopilot.engine
 import com.cardcopilot.engine.engine.PurchaseRouteAdvisor
 import com.cardcopilot.engine.engine.PurchaseRouteCatalogue
 import com.cardcopilot.engine.engine.PurchaseRouteEvidenceLevel
+import com.cardcopilot.engine.engine.PurchaseRouteVerdict
+import com.cardcopilot.engine.engine.ProtectionDecisionStatus
 import com.cardcopilot.engine.engine.RecommendationEngine
 import com.cardcopilot.engine.loading.SeedLoader
 import com.cardcopilot.engine.models.PurchaseContext
 import com.cardcopilot.engine.models.RecommendationOutcome
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -46,6 +49,33 @@ class PurchaseRouteAdvisorTest {
         assertTrue(result.advantageCad >= 1.0)
         assertTrue(result.advantagePercentagePoints >= 1.0)
         assertEquals(PurchaseRouteEvidenceLevel.COMMUNITY_OBSERVED, result.route.evidenceLevel)
+    }
+
+    @Test
+    fun `material gift card route keeps reward gain separate from protection tradeoff`() {
+        val engine = engine()
+        val benefits = SeedLoader.loadBenefitsCatalogue()
+        val directContext = PurchaseContext(
+            amountCad = 500.0,
+            category = "drugStore",
+            mcc = 5912,
+            merchantBrand = "shoppers-drug-mart"
+        )
+        val direct = (engine.recommend(directContext, "2026-09-04") as RecommendationOutcome.Advised).recommendation
+
+        val result = PurchaseRouteAdvisor.bestAlternative(
+            directRecommendation = direct,
+            destination = directContext,
+            destinationMerchantName = "Shoppers Drug Mart",
+            engine = engine,
+            asOf = "2026-09-04",
+            benefits = benefits
+        )!!
+
+        assertTrue(result.advantageCad > 0.0)
+        assertEquals(PurchaseRouteVerdict.REWARD_PROTECTION_TRADEOFF, result.verdict)
+        assertNotEquals(ProtectionDecisionStatus.NOT_RELEVANT, result.protectionAssessment.status)
+        assertEquals(result.routeValueCad - result.directValueCad, result.advantageCad, 0.000001)
     }
 
     @Test
