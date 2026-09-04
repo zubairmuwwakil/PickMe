@@ -27,20 +27,25 @@ public func merchantMCCGraphPrediction(for merchant: NearbyPlace,
     }
     guard let top = rankedCategories.first else { return nil }
 
+    // Exact-MCC ambiguity is not necessarily category ambiguity. A grocery outcome deliberately
+    // spreads one vote across 5411/5422/5441/etc.; those candidates should reinforce grocery
+    // together rather than make the category look conflicted merely because no exact MCC wins.
+    let categoryMargin = rankedCategories.count > 1 ? top.value - rankedCategories[1].value : top.value
+    let categoryConflicted = rankedCategories.count > 1 && categoryMargin <= 0.20
+
     let score: Double
-    switch posterior.state {
-    case .strongLearned, .locationLearned:
-        score = posterior.confidence
-    case .conflicted:
-        score = min(0.55, posterior.confidence)
-    case .priorOnly:
-        // A prior-only single-candidate distribution normalizes to 1.0, which does NOT make the
-        // underlying evidence certain. Use the seed's external/editorial confidence until real
-        // feedback arrives; once it does, let that evidence improve the score without crossing the
-        // strong-learned band prematurely.
-        score = posterior.evidenceCount == 0
-            ? min(seed.confidence, 0.60)
-            : min(0.89, max(seed.confidence, posterior.confidence * 0.90))
+    if posterior.evidenceCount == 0 {
+        score = min(seed.confidence, 0.60)
+    } else if categoryConflicted {
+        score = min(0.55, top.value)
+    } else if posterior.evidenceCount >= 3, top.value >= 0.90 {
+        score = min(0.97, top.value)
+    } else if posterior.evidenceCount >= 2, top.value >= 0.80 {
+        score = min(0.94, top.value)
+    } else {
+        // One low-friction reward outcome may improve a seed, but it cannot jump directly into the
+        // repeated/strong band. Additional independent purchases are what earn that promotion.
+        score = min(0.89, max(seed.confidence, top.value * 0.90))
     }
 
     return CategoryPrediction(category: top.key,
