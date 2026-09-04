@@ -43,6 +43,21 @@ final class MerchantMCCExactImportTests: XCTestCase {
         XCTAssertEqual(store.evidence().count, 1)
     }
 
+    func testSameMerchantMCCDayDoesNotGainWeightFromAmountOrCardDifferences() throws {
+        let csv = """
+        Merchant,MCC,Transaction Date,Billing Amount,Card Account Number
+        Metro,5411,09/01/2026,10.00,4111111111111111
+        Metro,5411,09/01/2026,85.40,4999999999999999
+        """
+
+        let summary = try store.importCSV(Data(csv.utf8), source: .visaBusinessReporting)
+
+        XCTAssertEqual(summary.importedRows, 1)
+        XCTAssertEqual(summary.duplicateRows, 1)
+        XCTAssertEqual(store.evidence().count, 1,
+                       "transaction frequency and sensitive fields must not inflate corroboration")
+    }
+
     func testCategoryOnlyCSVIsRejectedInsteadOfFabricatingAnMCC() {
         let csv = "Merchant,Category,Transaction Date\nMetro,Grocery,09/01/2026\n"
 
