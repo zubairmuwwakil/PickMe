@@ -45,11 +45,11 @@ Existing automation remains under `scripts/`:
 
 - `sync-contracts-into-{engine,android}.sh` copies canonical card-contract bytes.
 - `sync-merchant-mcc-graph-into-store.sh` packages canonical MCC-graph seed bytes for offline Store runtime use.
+- `validate-merchant-mcc-graph.py` verifies the 500-row MCC graph, profile weights, merchant identities, confidence bounds, and scoped evidence invariants; CI runs it on every change.
 - `release-catalogue.sh` stamps an immutable content-addressed release;
   `publish-catalogue.sh` performs the separate external publication.
-- `validate-catalogue-schema.py`, `check-id-permanence.sh`,
-  `check-raw-source-policy.sh`, and `validate-catalogue-schema.py` verify
-  release/catalogue invariants.
+- `validate-catalogue-schema.py`, `check-id-permanence.sh`, and
+  `check-raw-source-policy.sh` verify release/catalogue invariants.
 - `generate_*` scripts produce App Store or catalogue artifacts; outputs belong in
   the mapped artifact directory, not beside the script.
 
