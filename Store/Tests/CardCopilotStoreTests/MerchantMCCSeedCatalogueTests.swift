@@ -74,6 +74,37 @@ final class MerchantMCCSeedCatalogueTests: XCTestCase {
                        "local direct evidence must be allowed to beat a 5300 wholesale seed")
     }
 
+    func testImportedOwnerMCCCanAffectRouteWithoutClaimingTerminalTruth() throws {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let route = try XCTUnwrap(PurchaseRouteCatalogue.canadaV1.first)
+        let place = NearbyPlace(id: "costco", name: "Costco Wholesale", poiCategoryRaw: nil,
+                                latitude: 43.1, longitude: -79.1, distanceMeters: 100)
+        let imported = MerchantMCCEvidence(
+            id: "issuer-import-costco-5411",
+            merchantKey: "Costco Wholesale",
+            channel: .unknown,
+            mcc: 5411,
+            kind: .ownerImportedMcc,
+            sourceConfidence: 1,
+            observedAt: now,
+            sourceReference: "issuer-import-costco-5411")
+
+        let candidates = PurchaseRouteAcquisitionResolver.candidates(
+            for: route,
+            nearby: [place],
+            rewardEvidence: [],
+            importedMCCEvidence: [imported],
+            communityMCCEvidence: [],
+            now: now)
+
+        let candidate = try XCTUnwrap(candidates.first)
+        XCTAssertEqual(candidate.mcc, 5411,
+                       "Purchase Routes must consume the same imported owner evidence as checkout")
+        XCTAssertFalse(candidate.prediction.isObserved,
+                       "unlocated issuer imports may improve a route but cannot claim terminal truth")
+        XCTAssertFalse(candidate.prediction.isTrusted)
+    }
+
     func testConfirmedInventoryOutranksCloserUnknownStore() throws {
         let now = Date(timeIntervalSince1970: 1_800_000_000)
         let route = try XCTUnwrap(PurchaseRouteCatalogue.canadaV1.first)
