@@ -113,6 +113,12 @@ benefit context such as `electronics` solely from merchant category.
 
 If purchase context is needed, return `purchaseContextNeeded`. Do not force a winner.
 
+Unknown is distinct from an explicit owner declaration that none of the currently modelled
+protection-sensitive contexts apply. V1 represents that declaration as `BenefitContextKind.other`,
+whose `relevantKinds` is empty. This lets an ordinary purchase resolve back to `rewardLeader`
+without pretending the item was electronics/phone/appliance and without leaving the decision stuck
+as unknown.
+
 ### D5 — A trade-off is not a negative dollar amount
 
 If the reward leader and protection evidence disagree, return a trade-off verdict. Do not subtract
@@ -127,9 +133,9 @@ learning interpretable without pretending the issuer contract changed.
 
 ### D7 — Declared purchase type is checkout context, not merchant truth
 
-A user's temporary selection such as `electronics`, `mobileDevice`, or `applianceFurniture` is an
-input to the current purchase decision only. It must not mutate the merchant MCC/category, train the
-merchant graph, or be promoted into a merchant-wide fact.
+A user's temporary selection such as `electronics`, `mobileDevice`, `applianceFurniture`, or
+`other` is an input to the current purchase decision only. It must not mutate the merchant
+MCC/category, train the merchant graph, or be promoted into a merchant-wide fact.
 
 V1 stores the selection only in `RecommendationView` state. It survives amount refinements and
 nearby Purchase Route refreshes for the active answer screen, but is not written to purchase
@@ -164,6 +170,8 @@ than introducing a second magic number.
 
 When context is missing, V1 is intentionally conservative: a material purchase with trusted
 shopping protection asks what the owner is buying instead of inferring the item from the merchant.
+When the owner explicitly chooses `other`, V1 treats that as known context with no modelled relevant
+benefit kinds, not as missing context.
 
 ## Protection comparison once context is known
 
@@ -180,6 +188,12 @@ even when there are too few numeric fields for Pareto dominance to name it.
 If multiple cards remain Pareto-maximal, the final decision is explicitly unresolved rather than
 silently applying an undocumented preference weight.
 
+`BenefitContextKind.other` deliberately has no relevant protection kinds. It exists to resolve the
+checkout decision, not to create a useful protection-lens scenario. The dedicated protection lens
+therefore keeps its existing scenario picker focused on flight/trip/rental/electronics/phone/
+appliance contexts; `.other` is handled defensively for compile/runtime completeness but is not
+surfaced as a lens scenario.
+
 ## Checkout UX
 
 The checkout answer always keeps the reward economics visible, but it no longer uses reward copy to
@@ -192,6 +206,12 @@ an inline **What are you buying?** selector:
 - Electronics
 - Phone
 - Appliance
+- Everyday / other
+
+The fourth option is important: `nil` remains **unknown**, while **Everyday / other** is an explicit
+answer that none of the modelled shopping-protection contexts apply. This prevents users buying
+ordinary groceries, medicine, cosmetics, or other everyday goods from having to misclassify the
+item simply to finish checkout.
 
 The selection is owned by `RecommendationView` as ephemeral `@State`. One selection drives **both**:
 
@@ -207,10 +227,13 @@ After context is selected, checkout can show:
 - **Rewards + protection align** when the reward card also leads the trusted protection comparison;
 - **Reward / protection trade-off** when another card leads on relevant protection facts;
 - **Protection trade-off** when no unique protection winner exists; or
-- **Rewards lead** when no material trusted protection conflict remains for that context.
+- **Rewards lead** when no material trusted protection conflict remains for that context, including
+  an explicit Everyday / other declaration.
 
-The existing protection lens remains available as the deeper comparison surface. Inline selection
-finishes the decision; the lens shows the certificate-backed details and provenance behind it.
+The existing protection lens remains available as the deeper comparison surface for modelled
+protection-sensitive contexts. Everyday / other does not open the lens because it has no relevant
+protection kinds. `BenefitsDisclosureSection` remains a separate facts-only surface so checkout asks
+for purchase type in one place only.
 
 Copy rules:
 
@@ -246,7 +269,8 @@ unambiguously better.
 
 When the inline purchase type is known, that same `BenefitContext` is passed into route assessment.
 The UI may still show extra reward dollars, but those dollars are explicitly labelled **extra
-rewards**, not total value.
+rewards**, not total value. An explicit `.other` context has no relevant benefit kinds, so it can
+clear a route's unknown protection warning without inventing a protection loss.
 
 ## What V1 deliberately does not do
 
@@ -344,6 +368,7 @@ Current semantic tests cover:
 - small purchases remain reward-only;
 - material purchases request item context instead of inferring purchase type from merchant category;
 - declared electronics context produces a protection decision;
+- declared `other` context is distinct from unknown and resolves with zero relevant protection kinds;
 - stub benefits do not influence final verdicts;
 - alternate-funding protection trade-offs are represented separately from reward advantage;
 - declared route context turns an unknown route assessment into an explicit protection trade-off;
