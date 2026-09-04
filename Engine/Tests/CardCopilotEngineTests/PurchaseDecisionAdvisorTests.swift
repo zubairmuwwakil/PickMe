@@ -51,4 +51,21 @@ final class PurchaseDecisionAdvisorTests: XCTestCase {
         XCTAssertTrue(result.relevantKinds.contains(.purchaseProtection))
         XCTAssertTrue(result.relevantKinds.contains(.extendedWarranty))
     }
+
+    func testDeclaredOtherContextMeansKnownNoModelledProtectionContext() throws {
+        let (recommendation, purchase, owner, benefits) = try fixture(amountCad: 500)
+        let context = BenefitContext(kind: .other)
+
+        XCTAssertTrue(context.relevantKinds.isEmpty)
+
+        let result = PurchaseDecisionAdvisor.assess(
+            rewardRecommendation: recommendation,
+            purchase: purchase,
+            wallet: owner.ownedCardIds,
+            benefits: benefits,
+            declaredContext: context)
+
+        XCTAssertEqual(result.verdict, .rewardLeader)
+        XCTAssertTrue(result.relevantKinds.isEmpty)
+    }
 }
