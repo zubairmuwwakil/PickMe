@@ -33,14 +33,14 @@ final class MerchantMCCExactImportTests: XCTestCase {
         XCTAssertFalse(evidence.sourceReference?.contains("411111") == true)
     }
 
-    func testUniqueMerchantDateAmountNetworkAndLocationPromotesToDirectOwnerEvidence() throws {
+    func testUniqueMerchantDateCADAmountNetworkAndLocationPromotesToDirectOwnerEvidence() throws {
         let purchase = locatedPurchase(merchant: "Metro", amount: 42.17,
                                        cardID: "visa-card",
                                        date: "2026-09-01T16:00:00Z",
                                        latitude: 43.653, longitude: -79.383)
         let csv = """
-        Merchant,MCC,Transaction Date,Billing Amount,Network
-        Metro,5411,09/01/2026,42.17,Visa
+        Merchant,MCC,Transaction Date,Billing Amount,Billing Currency Code,Network
+        Metro,5411,09/01/2026,42.17,CAD,Visa
         """
 
         let summary = try store.importCSV(
@@ -68,6 +68,37 @@ final class MerchantMCCExactImportTests: XCTestCase {
         XCTAssertEqual(prediction.directObservationCount, 1)
     }
 
+    func testNonCADAmountCannotLocationJoinEvenWhenNumericAmountMatches() throws {
+        let purchase = locatedPurchase(merchant: "Metro", amount: 42.17,
+                                       cardID: "visa-card",
+                                       date: "2026-09-01T16:00:00Z",
+                                       latitude: 43.653, longitude: -79.383)
+        let csv = """
+        Merchant,MCC,Transaction Date,Billing Amount,Billing Currency Code,Network
+        Metro,5411,09/01/2026,42.17,USD,Visa
+        """
+
+        let summary = try store.importCSV(Data(csv.utf8), localPurchases: [purchase],
+                                          cardNetworksByID: ["visa-card": "visa"])
+
+        XCTAssertEqual(summary.locationJoinedRows, 0)
+        XCTAssertEqual(store.evidence().first?.kind, .ownerImportedMcc)
+    }
+
+    func testUnknownCurrencyCannotLocationJoinEvenWhenNumericAmountMatches() throws {
+        let purchase = locatedPurchase(merchant: "Metro", amount: 42.17,
+                                       cardID: "visa-card",
+                                       date: "2026-09-01T16:00:00Z",
+                                       latitude: 43.653, longitude: -79.383)
+        let csv = "Merchant,MCC,Transaction Date,Billing Amount,Network\nMetro,5411,09/01/2026,42.17,Visa\n"
+
+        let summary = try store.importCSV(Data(csv.utf8), localPurchases: [purchase],
+                                          cardNetworksByID: ["visa-card": "visa"])
+
+        XCTAssertEqual(summary.locationJoinedRows, 0)
+        XCTAssertEqual(store.evidence().first?.kind, .ownerImportedMcc)
+    }
+
     func testAmbiguousLocalPurchasesFailClosedToUnlocatedEvidence() throws {
         let first = locatedPurchase(merchant: "Metro", amount: 42.17, cardID: "visa-card",
                                     date: "2026-09-01T15:00:00Z",
@@ -75,7 +106,7 @@ final class MerchantMCCExactImportTests: XCTestCase {
         let second = locatedPurchase(merchant: "Metro", amount: 42.17, cardID: "visa-card",
                                      date: "2026-09-01T20:00:00Z",
                                      latitude: 43.700, longitude: -79.400)
-        let csv = "Merchant,MCC,Transaction Date,Billing Amount,Network\nMetro,5411,09/01/2026,42.17,Visa\n"
+        let csv = "Merchant,MCC,Transaction Date,Billing Amount,Currency,Network\nMetro,5411,09/01/2026,42.17,CAD,Visa\n"
 
         let summary = try store.importCSV(Data(csv.utf8), localPurchases: [first, second],
                                           cardNetworksByID: ["visa-card": "visa"])
@@ -92,7 +123,7 @@ final class MerchantMCCExactImportTests: XCTestCase {
                                        cardID: "mastercard-card",
                                        date: "2026-09-01T16:00:00Z",
                                        latitude: 43.653, longitude: -79.383)
-        let csv = "Merchant,MCC,Transaction Date,Billing Amount,Network\nMetro,5411,09/01/2026,42.17,Visa\n"
+        let csv = "Merchant,MCC,Transaction Date,Billing Amount,Currency,Network\nMetro,5411,09/01/2026,42.17,CAD,Visa\n"
 
         let summary = try store.importCSV(Data(csv.utf8), localPurchases: [purchase],
                                           cardNetworksByID: ["mastercard-card": "mastercard"])
@@ -101,12 +132,12 @@ final class MerchantMCCExactImportTests: XCTestCase {
         XCTAssertEqual(store.evidence().first?.kind, .ownerImportedMcc)
     }
 
-    func testMissingAmountNeverPromotesEvenWhenMerchantDateAndNetworkAreUnique() throws {
+    func testMissingAmountNeverPromotesEvenWhenOtherJoinKeysAreUnique() throws {
         let purchase = locatedPurchase(merchant: "Metro", amount: 42.17,
                                        cardID: "visa-card",
                                        date: "2026-09-01T16:00:00Z",
                                        latitude: 43.653, longitude: -79.383)
-        let csv = "Merchant,MCC,Transaction Date,Network\nMetro,5411,09/01/2026,Visa\n"
+        let csv = "Merchant,MCC,Transaction Date,Currency,Network\nMetro,5411,09/01/2026,CAD,Visa\n"
 
         let summary = try store.importCSV(Data(csv.utf8), localPurchases: [purchase],
                                           cardNetworksByID: ["visa-card": "visa"])
@@ -120,7 +151,7 @@ final class MerchantMCCExactImportTests: XCTestCase {
                                        cardID: "visa-card",
                                        date: "2026-09-01T16:00:00Z",
                                        latitude: 43.653, longitude: -79.383)
-        let csv = "Merchant,MCC,Posting Date,Billing Amount,Network\nMetro,5411,09/04/2026,42.17,Visa\n"
+        let csv = "Merchant,MCC,Posting Date,Billing Amount,Billing Currency Code,Network\nMetro,5411,09/04/2026,42.17,CAD,Visa\n"
 
         let summary = try store.importCSV(Data(csv.utf8), localPurchases: [purchase],
                                           cardNetworksByID: ["visa-card": "visa"])
@@ -163,9 +194,9 @@ final class MerchantMCCExactImportTests: XCTestCase {
                                      date: "2026-09-01T20:00:00Z",
                                      latitude: 43.700, longitude: -79.400)
         let csv = """
-        Merchant,MCC,Transaction Date,Billing Amount,Network
-        Metro,5411,09/01/2026,10.00,Visa
-        Metro,5411,09/01/2026,20.00,Visa
+        Merchant,MCC,Transaction Date,Billing Amount,Currency,Network
+        Metro,5411,09/01/2026,10.00,CAD,Visa
+        Metro,5411,09/01/2026,20.00,CAD,Visa
         """
 
         let summary = try store.importCSV(Data(csv.utf8), localPurchases: [first, second],
