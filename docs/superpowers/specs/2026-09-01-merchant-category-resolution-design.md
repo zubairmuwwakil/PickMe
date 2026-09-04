@@ -351,7 +351,36 @@ produce exactly these; the pack's own curation rule already forbids them.
 ## Addendum (2026-09-03): stable merchant identity, and one correction to this file
 
 `MKMapItem.identifier` is confirmed available at the 18.0 deployment floor
-(`iPhoneOS26.2.sdk` `MKMapItem.h:24`), nullable. The line this spec did not know
+(`iPhoneOS26.2.sdk` `MKMapItem.h:24`), nullable — and confirmed **populated**, which the SDK
+cannot tell you. A probe against live MapKit on 2026-09-03, using the same request type, radius
+and category filter as `LiveMerchantProvider.nearbyScan`, returned 194 places across four
+Canadian high streets:
+
+| Probe | Places | With identifier |
+|---|---|---|
+| Toronto — Yonge & Dundas | 49 | 46 (94%) |
+| Toronto — Bloor & Dufferin | 50 | 50 (100%) |
+| Montreal — Sainte-Catherine | 45 | 29 (64%) |
+| Calgary — 17th Ave SW | 50 | 47 (94%) |
+| **Total** | **194** | **172 (89%)** |
+
+Two consequences, neither of which was visible from the header.
+
+**The weaker rungs are permanent, not transitional.** About one place in nine carries no id, so
+"heals to the strong rung on the next encounter" is true for most merchants and never true for the
+rest. Rungs 2 and 3 carry real traffic forever and must not be retired as migration scaffolding.
+
+**Coverage is not uniform, and it is worst where it matters most.** Montreal sampled 64% against
+Toronto's 94-100%, and the nil-id rows skew toward user-contributed and misspelt records —
+"boulvlevar st geausef", "La polar", "Аптека". That is where an independent merchant lives, which
+is exactly the population the `local:` activity keys serve and the population the pre-index cannot
+name. Worth re-measuring before any decision that assumes place-id coverage.
+
+**No place carried an `alternateIdentifier`** in a fresh query, which is expected — alternates
+accumulate as Apple merges records over time — but it does mean the continuity path is implemented
+and unexercised in the field. It is asserted by test, not by observation.
+
+One sample, four points, one day: treat the ratio as an order of magnitude, not a figure. The line this spec did not know
 about is the next one: `alternateIdentifiers`, Apple's continuity mechanism for a
 place record that was merged or reissued. Matching only the primary id produces a
 second, rarer generation of the same orphan, so `MerchantIdentity` matches against

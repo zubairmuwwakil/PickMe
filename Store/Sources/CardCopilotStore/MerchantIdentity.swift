@@ -27,6 +27,20 @@ public enum MerchantIdentity {
 
     /// Which rung answered. Returned rather than logged so the caller can decide what to do with
     /// it — `.placeID` needs no backfill, the weaker two do.
+    ///
+    /// Measured against live MapKit, 2026-09-03: of 194 places returned for 100 m sweeps at four
+    /// Canadian high streets, 172 carried an `identifier` — about 89%, and none carried an
+    /// alternate. Two things follow.
+    ///
+    /// The weaker rungs are permanent, not transitional. Roughly one place in nine has no id at
+    /// all, so "it heals to rung 1 next time the owner is there" is true for most merchants and
+    /// never true for the rest; rungs 2 and 3 carry real traffic forever and must not be treated
+    /// as migration scaffolding to be removed later.
+    ///
+    /// Coverage is not uniform. Toronto sampled 94-100%, Montreal 64%. The nil-id places skew
+    /// toward user-contributed and misspelt records, which is where an independent merchant lives —
+    /// exactly the population `local:` activity keys serve. One sample at four points on one day,
+    /// so treat the ratio as an order of magnitude rather than a figure.
     public enum MatchRung: String, Sendable, Equatable {
         /// Apple's persistent place identifier agreed. Survives pin revisions by construction.
         case placeID
