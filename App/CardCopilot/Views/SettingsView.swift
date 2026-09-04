@@ -41,6 +41,21 @@ struct SettingsView: View {
         return "\(count) (\(Int((Double(count) / Double(total) * 100).rounded()))%)"
     }
 
+    #if FIELD_DIAGNOSTICS
+    /// `MerchantIdentity.MatchRung` raw values, said in words. Not localized, unlike the owner
+    /// copy above it: these are instrumentation labels for whoever is reading the measurement, and
+    /// registering four developer strings would put them in the catalogue an owner's language is
+    /// drawn from and into every translator's queue.
+    private static func identityRungLabel(_ rawValue: String) -> String {
+        switch rawValue {
+        case "placeID": return "Apple place id"
+        case "legacyIdentifier": return "Saved id"
+        case "nameAndProximity": return "Same name nearby"
+        default: return rawValue
+        }
+    }
+    #endif
+
     /// The published policy, served without authentication so it resolves for a signed-out
     /// reviewer. Same URL as the one given to App Store Connect; keep the two in step.
     private static let privacyPolicyURL = URL(string: "https://moneytalks.zubairmuwwakil.com/privacy")!
@@ -120,6 +135,45 @@ struct SettingsView: View {
             } footer: {
                 Text("How often PickMe could name what a purchase was. Counted on this iPhone only — no merchant, amount, or place is recorded here, and none of it is sent anywhere. Erasing this iPhone's history clears these too.")
             }
+
+            // Separated from the section above, deliberately. Every row up there answers something
+            // the owner can hold — could PickMe name my purchases, and if not, why not — and the
+            // footer's privacy promise is credible because a reader can check it against rows they
+            // understand. Which rung of the identity ladder answered is a question about Apple's
+            // place data and this app's migration, not about the owner's money. Putting it up
+            // there would spend their attention on a number they cannot act on and dilute the one
+            // property that section has.
+            //
+            // `FIELD_DIAGNOSTICS` is this app's instrumentation switch and is deliberately active
+            // in Release as well as Debug for the current measurement window — verified with
+            // `xcodebuild -showBuildSettings`, not assumed from the name. So this is NOT invisible
+            // to a TestFlight build, and that is the point: the numbers only accrue where real
+            // shopping happens. It does mean the switch is the single lever to flip before an App
+            // Store submission, for this section and for every other `FIELD_DIAGNOSTICS` surface.
+            //
+            // It shares `CategoryResolutionMetricsStore` rather than opening a store of its own:
+            // resolution happens in the app, in the Wallet Capture intent, and on a geofence wake,
+            // and a fifth counter file split across three processes would answer nothing.
+            #if FIELD_DIAGNOSTICS
+            if categoryMetrics.totalIdentityLookups > 0 {
+                Section {
+                    LabeledContent("Merchants looked up",
+                                   value: "\(categoryMetrics.totalIdentityLookups)")
+                    ForEach(categoryMetrics.identityMatchesByRung.sorted(by: { $0.key < $1.key }),
+                            id: \.key) { rung, count in
+                        LabeledContent(Self.identityRungLabel(rung), value: "\(count)")
+                    }
+                    if categoryMetrics.identityMisses > 0 {
+                        LabeledContent("Not recognised",
+                                       value: "\(categoryMetrics.identityMisses)")
+                    }
+                } header: {
+                    Text("Merchant identity (instrumentation)")
+                } footer: {
+                    Text("Which rung recognised a merchant already on this iPhone. \"Apple place id\" is the stable one; \"saved id\" is a row written before place ids and not yet re-seen; \"same name nearby\" means the pin moved and proximity rescued it. A rising share of the last two says recognition is drifting.")
+                }
+            }
+            #endif
 
             // Ahead of the destructive sections so Danger zone stays last for App Review, and
             // outside the isSignedIn branch: the policy describes the on-device store too, which

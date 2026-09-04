@@ -213,6 +213,14 @@ public struct CheckoutService {
         }
         metrics.record(.resolved(rung: prediction.confidenceSource,
                                  forked: prediction.candidates.count > 1))
+        // Recorded beside the category rung, never instead of it. A checkout that falls back on
+        // category having recognised the merchant is a classification gap; one that falls back
+        // having recognised nothing is a first visit. Same row in the log until now.
+        if let known {
+            metrics.record(.merchantIdentified(rung: known.rung))
+        } else {
+            metrics.record(.merchantUnrecognised)
+        }
         let brand = canonicalEngineBrand(merchant.name)
         let effectiveAmount = amountCad
             ?? categoryAmountEstimates[prediction.category]
@@ -527,6 +535,7 @@ public struct CheckoutService {
     /// id it was matched by (or newly given) is recorded on the way past.
     private func upsertMerchant(_ merchant: NearbyPlace) throws {
         if let match = MerchantIdentity.match(merchant, in: try knownMerchants()) {
+            metrics.record(.merchantIdentified(rung: match.rung))
             let found = match.merchant
             MerchantIdentity.backfill(found, from: merchant)
             found.lastSeenAt = Date()
@@ -534,6 +543,7 @@ public struct CheckoutService {
             found.rawCategory = merchant.poiCategoryRaw
             found.merchantCategoryCode = merchant.merchantCategoryCode
         } else {
+            metrics.record(.merchantUnrecognised)
             context.insert(StoredMerchant(name: merchant.name, identifier: merchant.id,
                                           placeID: merchant.placeID,
                                           poiCategoryRaw: merchant.poiCategoryRaw,

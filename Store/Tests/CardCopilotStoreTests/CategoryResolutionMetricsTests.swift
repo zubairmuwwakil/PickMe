@@ -190,4 +190,68 @@ final class CategoryResolutionMetricsTests: XCTestCase {
         XCTAssertEqual(store.snapshot, CategoryResolutionMetrics(),
                        "counters must not survive an erase")
     }
+
+    // MARK: - The identity ladder
+
+    /// A second ladder, counted separately on purpose. `resolutionsByRung` answers "did we know
+    /// what kind of spending this was"; this answers "did we recognise the shop at all". A
+    /// `.fallback` category with an identity hit is a classification gap; the same category with
+    /// an identity miss is a first visit. They need opposite fixes, and until now they shared a row.
+    func testCountsWhichIdentityRungRecognisedTheMerchant() {
+        store.record(.merchantIdentified(rung: .placeID))
+        store.record(.merchantIdentified(rung: .placeID))
+        store.record(.merchantIdentified(rung: .nameAndProximity))
+        store.record(.merchantUnrecognised)
+
+        let snapshot = store.snapshot
+        XCTAssertEqual(snapshot.identityMatchesByRung, ["placeID": 2, "nameAndProximity": 1])
+        XCTAssertEqual(snapshot.identityMisses, 1)
+        XCTAssertEqual(snapshot.totalIdentityLookups, 4)
+    }
+
+    func testTheTwoLaddersAreCountedIndependently() {
+        store.record(.resolved(rung: .fallback, forked: false))
+        store.record(.merchantIdentified(rung: .legacyIdentifier))
+
+        let snapshot = store.snapshot
+        XCTAssertEqual(snapshot.totalResolutions, 1)
+        XCTAssertEqual(snapshot.unresolved, 1, "the category ladder found nothing")
+        XCTAssertEqual(snapshot.identityMisses, 0, "but the merchant was recognised")
+    }
+
+    // MARK: - Decoding
+
+    /// The hazard this type was one field away from shipping.
+    ///
+    /// Swift's synthesized decoder does not fall back to a property's default value: a key absent
+    /// from the stored JSON throws `keyNotFound`, `snapshot` swallows it with `try?`, and the owner
+    /// silently starts from zero on the first launch after the update — with nothing logged, which
+    /// is the same class of silent loss the identity work exists to remove. Adding
+    /// `identityMatchesByRung` on the synthesized decoder would have done exactly that to every
+    /// counter already accumulated on every device.
+    func testASnapshotWrittenBeforeTheIdentityCountersExistedSurvives() {
+        let legacy = "{\"resolutionsByRung\":{\"brandPrior\":7},\"forkedResolutions\":2,"
+            + "\"walletEnrichmentAttempts\":3,\"walletEnrichmentMatches\":1,"
+            + "\"walletEnrichmentSkippedWithoutLocation\":4}"
+        defaults.set(Data(legacy.utf8), forKey: "test.v1")
+
+        let snapshot = store.snapshot
+        XCTAssertEqual(snapshot.resolutionsByRung, ["brandPrior": 7],
+                       "an owner's accumulated counters must not reset on update")
+        XCTAssertEqual(snapshot.forkedResolutions, 2)
+        XCTAssertEqual(snapshot.walletEnrichmentSkippedWithoutLocation, 4)
+        XCTAssertEqual(snapshot.identityMatchesByRung, [:], "the new field decodes as empty")
+        XCTAssertEqual(snapshot.identityMisses, 0)
+    }
+
+    /// And the round trip still works, so the tolerant decoder did not quietly break encoding.
+    func testANewSnapshotRoundTripsThroughTheStore() {
+        store.record(.resolved(rung: .observedMcc, forked: false))
+        store.record(.merchantIdentified(rung: .placeID))
+
+        let reread = CategoryResolutionMetricsStore(defaults: defaults, key: "test.v1").snapshot
+        XCTAssertEqual(reread.resolutionsByRung, ["observedMcc": 1])
+        XCTAssertEqual(reread.identityMatchesByRung, ["placeID": 1])
+    }
 }
+

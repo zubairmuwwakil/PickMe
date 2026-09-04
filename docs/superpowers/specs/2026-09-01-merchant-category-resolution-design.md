@@ -331,9 +331,11 @@ Deliberately **not** done, and why:
   wired where it belongs anyway — `AutoCaptureLog.record`, at ingest — so the
   "could never look" population is already counted. What is missing is only the
   attempt count for captures that *do* carry a fix.
-- **No diagnostics surface yet.** The counters are recorded and readable via
-  `CategoryResolutionMetricsStore().snapshot`; nothing displays them. Ship, let
-  them accumulate on a real device, then read them — that ordering is the point.
+- ~~**No diagnostics surface yet.**~~ **Superseded 2026-09-03.** Settings now has a
+  "Category diagnostics" section rendering this store, owner-facing and ungated,
+  plus a separate `FIELD_DIAGNOSTICS` section for the merchant-identity rungs. The
+  ordering the note argued for still held: the counters shipped first and the
+  surface followed once there was something to read.
 - **Two edits sit uncommitted in another session's files.**
   `HomeView.swift:785` (`NearbyMerchant(preIndexed:)`) and
   `HomeAnswerSubject.swift:62` (`resolveCategory(for:)`) are both required for the
@@ -380,7 +382,38 @@ name. Worth re-measuring before any decision that assumes place-id coverage.
 accumulate as Apple merges records over time — but it does mean the continuity path is implemented
 and unexercised in the field. It is asserted by test, not by observation.
 
-One sample, four points, one day: treat the ratio as an order of magnitude, not a figure. The line this spec did not know
+One sample, four points, one day: treat the ratio as an order of magnitude, not a figure.
+
+### Two ladders, counted apart
+
+`CategoryResolutionMetrics` now carries `identityMatchesByRung` and `identityMisses`
+beside `resolutionsByRung`, because the two answer different questions and a single
+number could not separate them. A checkout landing on `.fallback` for its category
+means one of two opposite things — a merchant we hold and cannot classify, or one we
+have never met — and those need opposite fixes. That is the same shape of blindness
+this store was created to end, one level up.
+
+They are rendered in their own `FIELD_DIAGNOSTICS` section rather than the
+owner-facing one. Every row of the owner section answers something an owner can
+hold, and its privacy footer is credible precisely because a reader can check it
+against rows they understand; a rung histogram is a question about Apple's place
+data, not about the owner's money.
+
+Note for whoever ships this: **`FIELD_DIAGNOSTICS` is active in Release**, not only
+Debug — confirmed with `xcodebuild -showBuildSettings`, for both configurations of
+the `CardCopilot` scheme. That is deliberate for the current measurement window,
+since counters only accrue where real shopping happens, but it means the switch is
+the single lever to flip before an App Store submission, for every
+`FIELD_DIAGNOSTICS` surface in the app and not just this one.
+
+Adding those two fields also surfaced a latent hazard in the type. Swift's
+synthesized `Codable` decoder does **not** fall back to a property's default value:
+a key absent from the stored JSON throws `keyNotFound`, `snapshot` swallows it with
+`try?`, and the owner silently restarts from zero on the first launch after the
+update, with nothing logged. Adding any field to `CategoryResolutionMetrics` on the
+synthesized decoder would have erased every counter already accumulated on every
+device. `init(from:)` is now hand-written with `decodeIfPresent` throughout, and
+`CategoryResolutionMetricsTests` pins a pre-identity snapshot decoding intact. The line this spec did not know
 about is the next one: `alternateIdentifiers`, Apple's continuity mechanism for a
 place record that was merged or reissued. Matching only the primary id produces a
 second, rarer generation of the same orphan, so `MerchantIdentity` matches against

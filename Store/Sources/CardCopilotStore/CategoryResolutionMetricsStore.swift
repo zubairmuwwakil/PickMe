@@ -25,8 +25,42 @@ public struct CategoryResolutionMetrics: Codable, Equatable, Sendable {
     /// "we looked and found nothing" from "we were never able to look", which are different
     /// problems with different owners.
     public var walletEnrichmentSkippedWithoutLocation = 0
+    /// `MerchantIdentity.MatchRung.rawValue` -> how many times that rung recognised a merchant the
+    /// owner already has. A second ladder from `resolutionsByRung`, answering a different question:
+    /// that one asks whether we knew what kind of spending this was, this one asks whether we
+    /// recognised the shop at all. A `.fallback` category with an identity hit and a `.fallback`
+    /// category with an identity miss are opposite problems — one is a merchant we have and cannot
+    /// classify, the other is a merchant we have never met — and they were indistinguishable.
+    public var identityMatchesByRung: [String: Int] = [:]
+    /// Encounters where no stored merchant matched. Expected and healthy for a first visit; only
+    /// interesting beside the rung counts, where a rising share says recognition is degrading.
+    public var identityMisses = 0
 
     public init() {}
+
+    /// Hand-written so a missing key decodes as zero rather than throwing.
+    ///
+    /// Swift's synthesized decoder does NOT fall back to a property's default value — a key absent
+    /// from the JSON throws `keyNotFound`. `CategoryResolutionMetricsStore.snapshot` swallows that
+    /// with `try?` and returns a fresh empty struct, so adding a field to this type on the
+    /// synthesized decoder would silently reset every counter an owner had accumulated, on first
+    /// launch after the update, with nothing logged. `decodeIfPresent` throughout is what makes
+    /// adding the next field safe.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        resolutionsByRung = try container.decodeIfPresent([String: Int].self,
+                                                          forKey: .resolutionsByRung) ?? [:]
+        forkedResolutions = try container.decodeIfPresent(Int.self, forKey: .forkedResolutions) ?? 0
+        walletEnrichmentAttempts = try container.decodeIfPresent(
+            Int.self, forKey: .walletEnrichmentAttempts) ?? 0
+        walletEnrichmentMatches = try container.decodeIfPresent(
+            Int.self, forKey: .walletEnrichmentMatches) ?? 0
+        walletEnrichmentSkippedWithoutLocation = try container.decodeIfPresent(
+            Int.self, forKey: .walletEnrichmentSkippedWithoutLocation) ?? 0
+        identityMatchesByRung = try container.decodeIfPresent(
+            [String: Int].self, forKey: .identityMatchesByRung) ?? [:]
+        identityMisses = try container.decodeIfPresent(Int.self, forKey: .identityMisses) ?? 0
+    }
 
     public var totalResolutions: Int { resolutionsByRung.values.reduce(0, +) }
 
@@ -40,6 +74,11 @@ public struct CategoryResolutionMetrics: Codable, Equatable, Sendable {
         guard total > 0 else { return nil }
         return Double(unresolved) / Double(total)
     }
+
+    /// Every merchant encounter the identity ladder was asked about, recognised or not.
+    public var totalIdentityLookups: Int {
+        identityMatchesByRung.values.reduce(0, +) + identityMisses
+    }
 }
 
 public final class CategoryResolutionMetricsStore: @unchecked Sendable {
@@ -48,6 +87,10 @@ public final class CategoryResolutionMetricsStore: @unchecked Sendable {
         case walletEnrichmentAttempted
         case walletEnrichmentMatched
         case walletEnrichmentSkippedWithoutLocation
+        /// A stored merchant was recognised, and by which rung.
+        case merchantIdentified(rung: MerchantIdentity.MatchRung)
+        /// Nothing matched — a first visit, or a recognition the ladder could not make.
+        case merchantUnrecognised
     }
 
     private let defaults: UserDefaults
@@ -81,6 +124,10 @@ public final class CategoryResolutionMetricsStore: @unchecked Sendable {
             metrics.walletEnrichmentMatches += 1
         case .walletEnrichmentSkippedWithoutLocation:
             metrics.walletEnrichmentSkippedWithoutLocation += 1
+        case .merchantIdentified(let rung):
+            metrics.identityMatchesByRung[rung.rawValue, default: 0] += 1
+        case .merchantUnrecognised:
+            metrics.identityMisses += 1
         }
         guard let data = try? JSONEncoder().encode(metrics) else { return }
         defaults.set(data, forKey: key)
