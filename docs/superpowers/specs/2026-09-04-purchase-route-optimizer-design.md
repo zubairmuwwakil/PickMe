@@ -1,6 +1,6 @@
 # Purchase Route Optimizer — design
 
-**Status:** V1 semantic core + nearby MCC-graph checkout UI implemented 2026-09-04.
+**Status:** V1 semantic core + nearby MCC graph + local gift-card inventory learning implemented 2026-09-04.
 
 ## Problem
 
@@ -70,6 +70,9 @@ editorial prior, public directory observations are low-confidence external evide
 owner MCC observations can override those priors. A route never upgrades seed data into observed
 terminal truth merely because it used the graph.
 
+Gift-card inventory is a third evidence axis, independent from both route provenance and MCC. It is
+resolved by `GiftCardInventoryGraph` from location-specific observations only.
+
 ## Checkout UI
 
 For a single checkout recommendation, PickMe first evaluates the generic route, then asynchronously
@@ -87,6 +90,16 @@ The recommendation screen then replaces the generic instruction with the best ne
 including its distance and MCC-confidence disclosure. Reconciled owner MCC history participates in
 that lookup. If a successful nearby scan finds no qualifying route, the generic placeholder is
 suppressed instead of implying that the user should hunt for an unspecified store.
+
+A physical route card also shows inventory state and two feedback controls:
+
+- **Found it** records an owner-confirmed `available` observation for that exact location and gift
+  card;
+- **Not here** records an owner-confirmed `unavailable` observation for that exact location and gift
+  card.
+
+The observation is persisted locally and the route list is re-ranked immediately. Rapid duplicate
+taps of the same answer are deduplicated so UI noise cannot inflate confidence.
 
 The direct-card recommendation remains unchanged. Ambiguous/forked merchant outcomes do not surface
 an alternate route in V1 because the destination coding has not settled.
@@ -108,28 +121,51 @@ seed prior + public evidence + reconciled owner MCC evidence
 MerchantMCCGraph prediction + confidence
                           |
                           v
+location-specific gift-card inventory evidence
+                          |
+                          v
 actual merchant network acceptance -> RecommendationEngine
 ```
 
-Canonical graph data remains under `contracts/merchant-mcc-graph/`. Store packages byte-identical
-runtime copies through `scripts/sync-merchant-mcc-graph-into-store.sh`; a test fails if those copies
-drift.
+Canonical MCC graph data remains under `contracts/merchant-mcc-graph/`. Store packages
+byte-identical runtime copies through `scripts/sync-merchant-mcc-graph-into-store.sh`; a test fails
+if those copies drift.
 
-## Inventory boundary
+## Inventory graph
 
-MCC qualification is **not** gift-card inventory evidence. V1 can say that a nearby Metro/Sobeys/etc.
-is a plausible MCC-5411 acquisition merchant, but it does not claim that a particular location
-currently has a Shoppers gift card in stock. The route disclosure explicitly requires availability
-to be confirmed.
+MCC qualification is **not** gift-card inventory evidence. `GiftCardInventoryGraph` therefore
+requires physical identity: an exact Apple place id when both sides have one, or a close coordinate
+match as fallback. Brand-only observations are ignored.
 
-Gift-card inventory should become its own evidence edge later, with source, location, confidence,
-and freshness. It must not be inferred from MCC or chain identity.
+Evidence fields include:
+
+- merchant/location identity;
+- target gift-card/instrument key;
+- `available` / `unavailable`;
+- source (`ownerConfirmed`, `retailerConfirmed`, `communityObserved`);
+- source confidence;
+- observation timestamp and optional source reference.
+
+Inventory is volatile, so freshness is asymmetric:
+
+- a positive sighting decays over weeks (30-day half-life);
+- a negative sighting decays quickly (3-day half-life), because "not here" may be a temporary
+  stockout rather than a permanent merchandising decision.
+
+A recent actionable positive sighting outranks a closer store with unknown inventory. A sufficiently
+strong recent negative observation temporarily suppresses that exact location. Neither changes the
+merchant's MCC prediction.
+
+Owner feedback is kept in a small versioned local append-only envelope rather than changing the
+SwiftData purchase schema. This avoids a migration of durable financial history for volatile rack
+inventory, while keeping the observation shape ready for a future opt-in, de-identified community
+aggregator. Community upload is **not implemented yet**.
 
 ## Expansion path
 
 The same model should later support:
 
-1. **Gift-card inventory evidence** — location-specific observations with freshness/confidence.
+1. **Opt-in community inventory aggregation** — de-identified location/instrument observations.
 2. **Cashback portals** — portal -> merchant -> card.
 3. **Payment intermediaries** — intermediary fee vs incremental card value.
 4. **Promotions / issuer offers** — activate or route through an offer before checkout.
@@ -149,7 +185,9 @@ Store graph/runtime composition:
 - `Store/Sources/CardCopilotStore/MerchantMCCGraph.swift`
 - `Store/Sources/CardCopilotStore/MerchantMCCGraphEvidenceBuilder.swift`
 - `Store/Sources/CardCopilotStore/MerchantMCCSeedCatalogue.swift`
+- `Store/Sources/CardCopilotStore/GiftCardInventoryGraph.swift`
 - `Store/Sources/CardCopilotStore/PurchaseRouteAcquisitionResolver.swift`
+- `Store/Tests/CardCopilotStoreTests/GiftCardInventoryGraphTests.swift`
 - `Store/Tests/CardCopilotStoreTests/MerchantMCCSeedCatalogueTests.swift`
 - `Store/Tests/CardCopilotStoreTests/MerchantMCCSeedResourceSyncTests.swift`
 
@@ -164,6 +202,6 @@ Checkout UI:
 
 ## Next product slice
 
-Add a location-specific **gift-card inventory evidence edge** so a route can distinguish
-"nearby merchant likely codes 5411" from "this exact location recently had the target gift card in
-stock." Keep inventory confidence/freshness separate from MCC confidence.
+Add a de-identified, opt-in community aggregation service for inventory observations so confirmed
+availability can improve routes across devices/users while preserving location-level freshness and
+keeping account/card/purchase data out of the payload.
