@@ -1,5 +1,6 @@
 package com.cardcopilot.engine.engine
 
+import com.cardcopilot.engine.models.BenefitsCatalogue
 import com.cardcopilot.engine.models.Network
 import com.cardcopilot.engine.models.PurchaseContext
 import com.cardcopilot.engine.models.Recommendation
@@ -9,6 +10,16 @@ enum class PurchaseRouteEvidenceLevel {
     RETAILER_CONFIRMED,
     COMMUNITY_OBSERVED,
     EXPERIMENTAL
+}
+
+enum class PurchaseRouteProtectionEffect {
+    PRESERVES_DESTINATION_CARD_CHARGE,
+    REPLACES_DESTINATION_CARD_CHARGE
+}
+
+enum class PurchaseRouteVerdict {
+    REWARD_ADVANTAGE,
+    REWARD_PROTECTION_TRADEOFF
 }
 
 data class AlternativePurchaseRoute(
@@ -23,6 +34,7 @@ data class AlternativePurchaseRoute(
     val fixedFeeCad: Double = 0.0,
     val estimatedFrictionCad: Double = 0.0,
     val evidenceLevel: PurchaseRouteEvidenceLevel,
+    val protectionEffect: PurchaseRouteProtectionEffect = PurchaseRouteProtectionEffect.PRESERVES_DESTINATION_CARD_CHARGE,
     val disclosure: String
 ) {
     fun matches(destinationMerchantName: String): Boolean {
@@ -54,7 +66,9 @@ data class PurchaseRouteEvaluation(
     val directValueCad: Double,
     val routeValueCad: Double,
     val advantageCad: Double,
-    val advantagePercentagePoints: Double
+    val advantagePercentagePoints: Double,
+    val protectionAssessment: ProtectionDecisionAssessment,
+    val verdict: PurchaseRouteVerdict
 )
 
 object PurchaseRouteAdvisor {
@@ -65,7 +79,9 @@ object PurchaseRouteAdvisor {
         routes: List<AlternativePurchaseRoute> = PurchaseRouteCatalogue.canadaV1,
         engine: RecommendationEngine,
         asOf: String,
-        threshold: PurchaseRouteThreshold = PurchaseRouteThreshold.SHIPPED
+        threshold: PurchaseRouteThreshold = PurchaseRouteThreshold.SHIPPED,
+        benefits: BenefitsCatalogue? = null,
+        declaredBenefitContext: BenefitContext? = null
     ): PurchaseRouteEvaluation? {
         if (destination.amountCad <= 0.0) return null
 
@@ -99,13 +115,37 @@ object PurchaseRouteAdvisor {
                 advantagePP < threshold.minAdvantagePercentagePoints
             ) continue
 
+            val protectionAssessment = if (
+                route.protectionEffect == PurchaseRouteProtectionEffect.REPLACES_DESTINATION_CARD_CHARGE &&
+                benefits != null
+            ) {
+                ProtectionDecisionAdvisor.alternateFundingAssessment(
+                    directCardId = directRecommendation.winner.cardId,
+                    purchase = destination,
+                    benefits = benefits,
+                    declaredContext = declaredBenefitContext
+                )
+            } else {
+                ProtectionDecisionAssessment(
+                    status = ProtectionDecisionStatus.NOT_RELEVANT,
+                    directCardId = directRecommendation.winner.cardId
+                )
+            }
+            val verdict = if (protectionAssessment.status == ProtectionDecisionStatus.NOT_RELEVANT) {
+                PurchaseRouteVerdict.REWARD_ADVANTAGE
+            } else {
+                PurchaseRouteVerdict.REWARD_PROTECTION_TRADEOFF
+            }
+
             eligible += PurchaseRouteEvaluation(
                 route = route,
                 acquisitionRecommendation = recommendation,
                 directValueCad = directValue,
                 routeValueCad = routeValue,
                 advantageCad = advantage,
-                advantagePercentagePoints = advantagePP
+                advantagePercentagePoints = advantagePP,
+                protectionAssessment = protectionAssessment,
+                verdict = verdict
             )
         }
 
@@ -123,6 +163,7 @@ object PurchaseRouteCatalogue {
             acquisitionCategory = "grocery",
             acquisitionMcc = 5411,
             evidenceLevel = PurchaseRouteEvidenceLevel.COMMUNITY_OBSERVED,
+            protectionEffect = PurchaseRouteProtectionEffect.REPLACES_DESTINATION_CARD_CHARGE,
             disclosure = "Gift-card inventory and issuer reward treatment can vary by store and transaction. Confirm availability before relying on this route."
         )
     )
