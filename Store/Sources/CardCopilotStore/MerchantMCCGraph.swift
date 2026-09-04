@@ -4,8 +4,11 @@ import Foundation
 /// A category confirmation can improve recommendation confidence, but it must never be promoted
 /// into a literal 4-digit MCC unless a source actually supplied that MCC.
 public enum MerchantMCCEvidenceKind: String, Codable, Sendable, CaseIterable {
-    /// MCC explicitly observed by the owner (for example from an issuer transaction detail).
+    /// MCC explicitly observed by the owner at a purchase/location that PickMe can anchor.
     case directOwnerMcc
+    /// Literal MCC read from the owner's issuer/export data without a trustworthy store-location
+    /// join. Strong owner evidence, but deliberately unable to create terminal/location trust.
+    case ownerImportedMcc
     /// Location-specific public/community report with an explicit MCC.
     case externalLocationReport
     /// Editorial/researched seed used only to bootstrap coverage.
@@ -19,6 +22,7 @@ public enum MerchantMCCEvidenceKind: String, Codable, Sendable, CaseIterable {
     var defaultWeight: Double {
         switch self {
         case .directOwnerMcc: return 1.0
+        case .ownerImportedMcc: return 0.90
         case .externalLocationReport: return 0.65
         case .researchedSeed: return 0.40
         case .rewardOutcomeInference: return 0.55
@@ -131,7 +135,8 @@ public struct MerchantMCCPrediction: Equatable, Sendable {
     public let externalObservationCount: Int
     public let categoryEvidenceCount: Int
 
-    /// True only when the winning MCC has at least one explicit owner MCC observation.
+    /// True only when the winning MCC has at least one explicit owner MCC observation anchored to
+    /// the purchase/location. Unlocated issuer-file imports deliberately do not satisfy this.
     public var isObserved: Bool { bestMCC != nil && directObservationCount > 0 }
 
     /// Two independent direct observations plus a strong aggregate score is the first point at
@@ -203,7 +208,7 @@ public enum MerchantMCCGraph {
                 directCounts[mcc, default: 0] += 1
             case .externalLocationReport:
                 externalCounts[mcc, default: 0] += 1
-            case .researchedSeed, .categoryOutcome, .rewardOutcomeInference:
+            case .ownerImportedMcc, .researchedSeed, .categoryOutcome, .rewardOutcomeInference:
                 break
             }
         }
