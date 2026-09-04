@@ -57,7 +57,26 @@ final class LiveMerchantProvider: MerchantProviding {
     func nearby(latitude: Double, longitude: Double) async throws -> [NearbyPlace] {
         let places = try await nearbyScan(latitude: latitude, longitude: longitude).places
         await refreshCommunityGiftCardInventory(nearby: places)
+        await refreshCommunityMerchantMCC(nearby: places)
         return places
+    }
+
+    /// Shared MCC evidence is separately consented and opportunistic. It never changes the MapKit
+    /// candidate list and a network/server failure must never make local merchant discovery fail.
+    private func refreshCommunityMerchantMCC(nearby places: [NearbyPlace]) async {
+        let settings = CommunityMerchantMCCSettingsStore()
+        let cache = CommunityMerchantMCCCacheStore()
+        guard settings.isEnabled else {
+            cache.replace([])
+            return
+        }
+        guard let baseURL = MoneyTalksConfiguration.apiBaseURL else { return }
+        do {
+            let client = CommunityMerchantMCCClient(baseURL: baseURL)
+            cache.replace(try await client.evidence(nearby: places))
+        } catch {
+            // Keep a still-fresh cache. Community evidence is never required for checkout.
+        }
     }
 
     /// Community inventory is a separately consented network feature. The normal MapKit result is
