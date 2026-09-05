@@ -1,224 +1,127 @@
-# PickMe — TestFlight Runbook & Distribution Guide
+# PickMe TestFlight runbook
 
-**Target Version:** `0.2 (1)`  
-**Bundle Identifier:** `ca.pickme.cardcopilot`  
-**Display Name:** `PickMe`  
-**App Store Listing Name:** `PickMe: Card Copilot` (per Decision Record D1)  
-**Parent Strategy:** Phase 4 Launch Spec (`docs/plans/2026-08-16-phase4-launch-spec.md` chunk 4f)  
+**Target Version:** `2.1 (43)`
 
----
+**Verified against source:** 5 September 2026
 
-## 1. Release Architecture & Gating Overview
+**Bundle identifier:** `ca.pickme.cardcopilot`
 
-PickMe follows a two-tier TestFlight rollout:
-1. **Tier 1 (Internal Group — Immediate):** Deployed instantly to the owner and internal team upon build upload. No Apple review required. Used to run the **Phase-3 Dogfood Week**.
-2. **Tier 2 (External Group — Strictly Gated):** Distributed to waitlist testers **ONLY AFTER** the Phase-3 Dogfood Week gate criteria are verified. Requires Apple Beta App Review.
+The version above is read from `App/Configuration/Versioning.xcconfig`. The documentation check in
+`scripts/check-testflight-docs.py` fails CI when this runbook or the beta notes stop matching that
+source of truth.
 
-```mermaid
-graph TD
-    A[Xcode Build & Archive 0.2] --> B[Upload to App Store Connect]
-    B --> C[Internal Testing Group: Core Team]
-    C --> D[Phase-3 Dogfood Week: 30 Physical Checkouts]
-    D --> E{Dogfood Gate Passed?}
-    E -- No: Fix Issues --> A
-    E -- Yes: 85%+ Accuracy & Stable --> F[Submit to Apple Beta App Review]
-    F --> G[External Testing Group: Waitlist Testers]
-```
+## Release state
 
-> [!IMPORTANT]
-> **THE DOGFOOD-WEEK GATE IS A HARD STOP.**
-> Do not invite external testers until the owner has completed **30 physical checkouts** with the app, verified that ambient notifications *interrupt* according to Rule A3 (advantage > threshold, merchant confidence high, not muted) and that quieter arrivals still appear as silent Live Activities, and confirmed that the local SwiftData store maintains zero data-loss bugs.
+| Boundary | Evidence for 2.1 (43) | Status |
+|---|---|---|
+| Swift report envelope and redaction | Store unit tests | Verified |
+| iOS report, status, and delete screens | App target compiled and targeted Xcode tests passed | Verified |
+| Authenticated report API and reviewer inbox | MoneyTalks unit and route tests | Verified |
+| Neon schema | Production migration applied | Verified |
+| Installed TestFlight build | Physical-device TestFlight session | Required before inviting external testers |
+| Arrival delivery while the app is closed | Physical arrivals recorded on a TestFlight build | Required before claiming it works in the field |
 
----
+Passing source tests proves the report pipeline and app compile. It does not prove App Store
+processing, installation, notification delivery, or Core Location relaunch behaviour on a physical
+device.
 
-## 2. Owner Prerequisites & Account Setup
+## Before archiving
 
-### 2.1 Apple Developer Program Enrollment (Individual)
-- **Account Type:** **Individual** (per chunk 4f / Decision Record D2; organizational enrollment with D-U-N-S is deferred to Phase 5 public launch).
-- **Cost:** $99 USD/year.
-- **Process:**
-  1. Open the [Apple Developer App](https://apps.apple.com/app/apple-developer/id640199958) on an iPhone/iPad or go to [developer.apple.com/programs/enroll](https://developer.apple.com/programs/enroll/).
-  2. Sign in with the owner Apple ID (`zmuwwakil18@icloud.com`).
-  3. Complete identity verification (photo ID upload + biometric selfie).
-  4. Complete payment and accept the Apple Developer Program License Agreement.
+1. Run the repository gate:
 
-### 2.2 Account Roles & Certificates
-- Xcode will automatically manage signing certificates under the Development Team (`MC8XJ6GXBM` / Zubair Muwwakil).
-- Automatic code signing is enabled in `App/CardCopilot.xcodeproj` for both Debug and Release configurations.
+   ```bash
+   (cd Engine && swift test) && (cd ../android && ./gradlew :core:engine:test)
+   python3 scripts/check-testflight-docs.py
+   ```
 
----
+2. Confirm the build metadata and catalogue directly from source:
 
-## 3. App Store Connect App Registration
+   ```bash
+   cat App/Configuration/Versioning.xcconfig
+   jq '{catalogueVersion, cards: (.cards | length)}' contracts/card-catalogue.json
+   ```
 
-1. Log in to [App Store Connect](https://appstoreconnect.apple.com).
-2. Go to **Apps** → click **"+"** → **New App**.
-3. Fill in the required fields:
-   - **Platforms:** `iOS`
-   - **Name:** `PickMe: Card Copilot`  
-     *(Compound form required per Decision Record D1 for ASO clarity and App Store name uniqueness against overseas ride-hailing apps)*
-   - **Primary Language:** `English (Canada)` or `French (Canada)`
-   - **Bundle ID:** Select `ca.pickme.cardcopilot` (if not listed, create it under Certificates, Identifiers & Profiles → Identifiers → App IDs with capabilities: *Associated Domains* for Clerk, and *Push Notifications / Background Modes*).
-   - **SKU:** `ca.pickme.cardcopilot.ios` (or `pickme-ios-001`)
-   - **User Access:** `Full Access`
-4. Click **Create**.
+3. Confirm `https://inunity.ca/support`, `https://inunity.ca/privacy`, and the authenticated
+   reviewer inbox at `https://inunity.ca/admin/tester-reports` are reachable.
+4. Use an active demo account in App Store Connect. Core recommendations work signed out; sign-in
+   is needed to exercise report delivery, report status, and optional account sync.
+5. `FIELD_DIAGNOSTICS` is intentionally enabled for this TestFlight build. It exposes an opt-in
+   detailed arrival-log attachment that can contain precise locations, merchant names, candidate
+   cards, and arrival times. Remove the flag before a public App Store build unless this diagnostic
+   surface is still deliberately part of that release.
 
----
+## Archive and upload
 
-## 4. Archiving and Uploading the Build
-
-### 4.1 Automated Build Configuration Verification
-Before archiving, verify the project build settings:
-- **Display Name (`CFBundleDisplayName`):** `PickMe` (configured via `INFOPLIST_KEY_CFBundleDisplayName` and `InfoPlist.xcstrings`).
-- **Bundle ID (`PRODUCT_BUNDLE_IDENTIFIER`):** `ca.pickme.cardcopilot`
-- **Marketing Version (`MARKETING_VERSION`):** `0.2`
-- **Build Number (`CURRENT_PROJECT_VERSION`):** `1` (increment by 1 for each successive upload)
-- **Export Compliance (`ITSAppUsesNonExemptEncryption`):** `false` (included in `Info.plist` to bypass manual export compliance forms on upload)
-- **Background Modes:** `location` (for `CLMonitor` / region geofencing arrival alerts)
-
-### 4.2 Building and Archiving via Command Line
-
-Run from the repository root:
+Increment `APP_BUILD_NUMBER` before each uploaded archive. The CardCopilot scheme also increments it
+for Archive actions, so check the resulting number before you update App Store Connect notes.
 
 ```bash
-# 1. Clean previous build products
-rm -rf build/CardCopilot.xcarchive
-
-# 2. Archive the app
 xcodebuild archive \
   -project App/CardCopilot.xcodeproj \
   -scheme CardCopilot \
   -destination "generic/platform=iOS" \
-  -archivePath build/CardCopilot.xcarchive
-
-# 3. Verify archive contents
-ls -la build/CardCopilot.xcarchive/Products/Applications/
+  -archivePath "build/CardCopilot-2.1-43.xcarchive"
 ```
 
-### 4.3 Uploading to App Store Connect
+Open Xcode **Window → Organizer**, select the archive, then choose **Distribute App → TestFlight &
+App Store → Upload**. Let Xcode manage signing for team `MC8XJ6GXBM`. Upload the archive through
+Organizer; an `.app` inside the archive is not an App Store upload package.
 
-#### Option A: Xcode GUI Organizer (Recommended for First Upload)
-1. In Xcode, select **Window** → **Organizer** (or `Cmd + Option + Shift + O`).
-2. Select the latest `CardCopilot` archive under **Archives**.
-3. Click **Distribute App** → Select **TestFlight & App Store** (or **Custom** → **App Store Connect**).
-4. Distribution options:
-   - Select **Upload**.
-   - Check **Manage Version and Build Number** (or keep automatic).
-   - Automatically manage signing with Team `MC8XJ6GXBM`.
-5. Click **Upload**. Processing typically takes 5–15 minutes.
+After processing, copy Part A and Part B from
+[`docs/compliance/testflight-beta-notes.md`](docs/compliance/testflight-beta-notes.md) into the
+matching App Store Connect fields.
 
-#### Option B: Command Line (altool / notarytool)
-Using an App Store Connect API Key (generated in App Store Connect → Users and Access → Integrations → App Store Connect API):
+## Internal test pass
 
-```bash
-xcrun altool --upload-app \
-  -f build/CardCopilot.xcarchive/Products/Applications/CardCopilot.app \
-  -t ios \
-  --apiKey <KEY_ID> \
-  --apiIssuer <ISSUER_UUID>
-```
+Use an internal group first. On a physical iPhone, install the exact build shown above and record
+the installed version from PickMe's report preview.
 
----
+Exercise these stories:
 
-## 5. Export Compliance & Encryption Resolution
+1. Complete wallet setup, including conditions, default card, drawer cards, and valuations.
+2. Compare checkout recommendations across grocery, dining, gas, pharmacy, transit, travel, and a
+   merchant whose network acceptance excludes one of the cards.
+3. Try an uncatalogued card and confirm the issuer-sourced request path appears; no open rule editor
+   should appear.
+4. Exercise a Wallet Shortcut capture and inspect its delivery stages.
+5. Enable arrival alerts, then test real region entry and exit with the app foregrounded,
+   backgrounded, and terminated. Record whether iOS accepted the request and whether the alert or
+   Lock Screen card was actually visible.
+6. Open **Account & Settings → Report a problem**. Enter expected versus actual behaviour, preview
+   the complete JSON, and submit it while signed in. Confirm its reference and review status appear
+   in the app.
+7. Repeat while signed out. Save or share the JSON file privately, import it in the reviewer inbox,
+   and confirm the report states that sharing alone does not submit it.
+8. In `https://inunity.ca/admin/tester-reports`, triage the report, add review notes, attach an HTTPS
+   issue URL when applicable, and record the build containing the resolution. Refresh status in the
+   app, then delete the submitted report and confirm it disappears.
 
-PickMe sets `<key>ITSAppUsesNonExemptEncryption</key><false/>` in `App/Info.plist`.
+The report automatically includes app version, build, iOS version, and catalogue version. Category
+counts, a redacted Wallet diagnostic, and the detailed arrival log are separate opt-ins. The Wallet
+diagnostic excludes merchant, amount, card, and coordinates. Reports submitted to In Unity expire
+after 30 days and can be deleted earlier by the tester or reviewer.
 
-- **Why:** The app uses HTTPS for Clerk authentication and optional backend sync (`moneytalks.zubairmuwwakil.com`), which qualifies as exempt encryption under Category 5, Part 2 of the U.S. Export Administration Regulations (EAR).
-- **Result:** App Store Connect automatically clears the export compliance step on processing. No manual compliance document upload is required.
+Also monitor TestFlight feedback, screenshots, sessions, crashes, and termination data in App Store
+Connect. Link every actionable report to one issue, keep reviewer notes factual, and set **Resolved
+in build** only after the fix is present in an uploaded build.
 
----
+## External test gate
 
-## 6. TestFlight Configuration & Review Submission
+Invite external testers only after the internal physical-device pass has no unresolved data-loss or
+crash issue and the tested report can move from submission through review to a visible resolution.
+The first external build may require Beta App Review. TestFlight builds expire after 90 days, so do
+not use build availability as a permanent record of a finding.
 
-### 6.1 TestFlight Beta App Review Information
-In App Store Connect → **Apps** → **PickMe** → **TestFlight** tab → **App Review Information** (left sidebar):
+Use a small named external group first. Keep the public-link limit aligned with the number of people
+you can support and review promptly.
 
-1. **Beta App Review Notes:**  
-   Copy the complete text from [`docs/compliance/testflight-beta-notes.md`](docs/compliance/testflight-beta-notes.md) (Part A).  
-   *Summary of points covered: ambient calculator scope, no money management / banking access, on-device SwiftData architecture, optional Apple Wallet Shortcut capture, background location justification for geofencing, and reviewer walkthrough.*
+## Common blockers
 
-2. **Sign-In Information (Guideline 2.1(a)):**
-   - Check **"Sign-in required"**
-   - **User Name / Email:** Provide active demo user (e.g. `reviewer@zubairmuwwakil.com`)
-   - **Password:** Provide demo password
-   - **Notes:** *"The core recommendation and local checkout flows work 100% signed out without an account. Demo credentials are provided to test optional backend account sync."*
-
-3. **Contact Information:**
-   - **First Name / Last Name:** Zubair Muwwakil
-   - **Email Address:** `zmuwwakil18@icloud.com`
-   - **Phone Number:** Owner direct contact phone
-
-4. **Backend Status Check:**
-   - Confirm backend at `https://moneytalks.zubairmuwwakil.com` is live and reachable before submitting.
-
-### 6.2 "What to Test" Release Notes
-In App Store Connect → TestFlight → Build `0.2 (1)` → **What to Test**:
-
-Copy the bilingual release notes from [`docs/compliance/testflight-beta-notes.md`](docs/compliance/testflight-beta-notes.md) (Part B):
-- **English (en-CA / en-US):** Onboarding catalogue picker, checkout calculations, ambient arrival alerts, and settings deletion paths.
-- **French (fr-CA):** Configuration du portefeuille, recommandations, alertes ambiantes et paramètres.
-
----
-
-## 7. Testing Groups & Rollout Sequence
-
-### Step 7.1: Internal Testing Group ("Core Team")
-1. In TestFlight → **Internal Testing** → click **"+"** → Create group: `Core Team`.
-2. Add the owner Apple ID (`zmuwwakil18@icloud.com`) and any internal collaborators.
-3. Under **Builds**, add Build `0.2 (1)`.
-4. **Status:** Available immediately upon upload (no Apple review needed).
-5. Install via the TestFlight app on the owner's iPhone.
-
----
-
-### Step 7.2: The Phase-3 Dogfood-Week Gate (CRITICAL GATE)
-
-Run the **Phase-3 Dogfood Week** on the owner device before opening external testing:
-
-| Metric / Objective | Target Bar | Verification Method |
-| :--- | :--- | :--- |
-| **Physical Checkouts** | 30 real-world store visits | Run checkout recommendations across grocery, dining, gas, pharmacy, etc. |
-| **Recommendation Accuracy** | ≥ 85% category precision | Compare recommended card vs truth graph actual earn rate |
-| **Ambient Firing Rule (A3)** | Governs *interruption*, not visibility. PickMe is visible on every arrival it can speak to; it interrupts only when advantage > threshold & confidence high & not muted. A muted store gets nothing at all. | Verify geofence pings fire at saved spots and do not spam; verify a default-card win still shows a silent Lock Screen card |
-| **Exit Dwell Capture** | Dwell > 2 min triggers exit amount prompt | Confirm exit capture notification attaches to arrival visit |
-| **Local Data Integrity** | Zero crashes, zero SwiftData data loss | Check prediction logs, wallet setup state, and sync status |
-
----
-
-### Step 7.3: External Testing Group ("Waitlist Alpha")
-*Only proceed after Step 7.2 is fully satisfied and signed off.*
-
-1. In TestFlight → **External Testing** → click **"+"** → Create group: `Waitlist Alpha`.
-2. Select Build `0.2 (1)` → Click **Submit for Beta App Review**.
-3. Wait for Apple Beta Review approval (typically 24–48 hours for the initial build).
-4. Once approved:
-   - **Option A (Email Invite):** Add emails from the Phase 4d waitlist table (`WaitlistEntry`). Testers receive an email with an install link.
-   - **Option B (Public Link):** Enable Public Link, set tester limit (e.g. 25 testers), and share with selected waitlist applicants.
-
----
-
-## 8. Tester Onboarding & Feedback Expectations
-
-### 8.1 First-Run Onboarding Flow (Chunk 4e)
-When a tester installs the app:
-1. **Wallet Selection:** Tester chooses their cards from the 10-card catalogue.
-2. **Card Conditions:** Sets condition toggles (e.g., Rogers Mastercard 2% with Shaw/Rogers service).
-3. **Default Card & Threshold:** Sets fallback card and switch threshold (default 0.5% / $0.25).
-4. **Optional Account Sign-in:** Tester can use Clerk authentication or test fully offline.
-
-### 8.2 Feedback Collection & Monitoring
-- **TestFlight In-App Feedback:** Testers take a screenshot, annotate issues, and submit directly through TestFlight.
-- **Crash Reporting:** Monitor crashes in App Store Connect → TestFlight → **Crashes**.
-- **Issue Tracking:** Log reported card discrepancies, missing Canadian merchants, or notification timing bugs directly into repo issues / Phase 5 backlog.
-
----
-
-## 9. Troubleshooting & Common Blockers
-
-| Issue / Symptom | Cause | Solution |
-| :--- | :--- | :--- |
-| **Missing Code Signing Identity** | Development certificate not installed locally | In Xcode Settings → Accounts → Download Manual Profiles or select "Automatically manage signing". |
-| **Export Compliance Prompt in App Store Connect** | `ITSAppUsesNonExemptEncryption` missing in `Info.plist` | Verify `<key>ITSAppUsesNonExemptEncryption</key><false/>` is in `App/Info.plist`. |
-| **Notification Sender reads "CardCopilot" instead of "PickMe"** | `INFOPLIST_KEY_CFBundleDisplayName` missing from project target | Ensure `INFOPLIST_KEY_CFBundleDisplayName = "PickMe"` is set on both Debug and Release configs in `project.pbxproj`. |
-| **Reviewer Rejection: Guideline 2.1(a) Login** | Backend down or credentials invalid | Verify `moneytalks.zubairmuwwakil.com` is up and test demo credentials before submitting. |
-| **Reviewer Query: Guideline 2.5.4 Background Location** | Location background mode scrutinized | Refer reviewer to section in Beta Review Notes explaining `CLMonitor` region arrival alerts. |
+| Symptom | Check |
+|---|---|
+| Sign-in or report submission fails | Confirm the production origin, Clerk configuration, demo account, and `/api/v1/tester-reports` deployment. |
+| Report appears sent but is absent in review | Use its reference ID; confirm the reviewer is allowlisted and the production migration is current. |
+| Arrival did not appear | Read the local arrival explanation first. iOS accepting a request does not prove it was displayed. |
+| Review asks about background location | Explain that PickMe uses region and significant-change monitoring, requests Always only for the optional arrival feature, and does not declare continuous-location background mode. |
+| Export compliance prompt appears | Confirm `ITSAppUsesNonExemptEncryption` remains `false` in `App/Info.plist`. |
+| Archive already exists | Choose a new archive path containing the new build number. Do not delete an older archive until its upload and symbols are confirmed. |

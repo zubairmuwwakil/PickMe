@@ -10,7 +10,7 @@
 > **[verified]** = quoted from an Apple primary source with URL and date checked ·
 > **[inference]** = reasoning from those sources · **[uncertain]** = genuinely unresolved.
 
-> ## 🔴 REWRITTEN 2026-08-17 — the answer has flipped
+> ## 🔴 UPDATED 2026-09-05 — tester reports added
 >
 > **Draft v1 (2026-08-15) declared "Data Not Collected". That is now false and must not be
 > submitted.** It described an app with no accounts, no server, and no outbound traffic except
@@ -21,13 +21,15 @@
 >    feedback from.
 > 3. **Apple Wallet transaction capture** — a Shortcut that POSTs merchant, amount, card, time
 >    **and precise coordinates** to that backend, where the coordinates are *retained*.
+> 4. **Tester reports** — expected/actual text and build metadata, with optional redacted delivery
+>    diagnostics or an explicitly selected detailed arrival log, retained for 30 days.
 >
 > v1's own §6 listed exactly these as the changes that would flip Q1 to "Yes". They did.
 >
 > The reasoning in §4 (tracking) and §6 (MapKit) survives largely intact and is retained. §1, §2,
 > §3 and §8 are rewritten.
 
-**Status:** draft v2, 2026-08-17 · **App:** PickMe for iPhone (bundle `ca.pickme.cardcopilot`)
+**Status:** draft v3, 2026-09-05 · **App:** PickMe for iPhone (bundle `ca.pickme.cardcopilot`)
 **Sources checked 2026-08-15, re-checked 2026-08-17:**
 [App privacy details on the App Store](https://developer.apple.com/app-store/app-privacy-details/) ·
 [User privacy and data use](https://developer.apple.com/app-store/user-privacy-and-data-use/) ·
@@ -96,6 +98,17 @@ Tracking**. §3 and §4 justify the last two columns.
 | **Purchase History** | Captured Wallet transactions: merchant, amount, currency, card, timestamp | Wallet Shortcut |
 | **Location → Precise Location** | Coordinates and accuracy captured at transaction time, **retained** on the event | Wallet Shortcut |
 | **Other Financial Info** | Cap usage; selected card products; default/drawer choices; reward conditions and categories; account-anniversary or reset settings; cap estimates; switching thresholds; point and reward valuations | Sync |
+| **User Content → Other User Content** | Expected and actual behaviour plus optional reproduction steps entered in Report a problem | Tester report |
+| **Diagnostics → Other Diagnostic Data** | App/build/iOS/catalogue metadata; optional category counts, redacted Wallet delivery stages/errors, and detailed arrival log | Tester report |
+
+The detailed arrival log can contain precise location, merchant names, candidate cards, and arrival
+times. Precise Location and Other Financial Info are already declared above; this additional route
+must be included when answering the questionnaire for the version that ships Report a problem.
+Reports sent while signed in are linked to the tester's account. A signed-out JSON file reaches the
+publisher only if the tester privately shares it and an authorized reviewer imports it; an imported
+report has no account relation but may still contain identifying free text or optional diagnostic
+details, so it must not be treated as anonymous. All tester reports expire after 30 days and can be
+deleted earlier.
 
 ### 2.1 Precise Location deserves its own paragraph
 
@@ -137,8 +150,6 @@ owner paid there — no amount, no card, no coordinate, no time-of-day. It lives
 Group `UserDefaults` suite, is written from the Wallet capture path, is pruned to a rolling 90-day
 window on every write, and is read to decide whether an arrival earns a notification at the
 owner's own threshold instead of a doubled one (see [`privacy-policy.md`](privacy-policy.md) §2(i)
-for the full description).
-
 It never leaves the device — it is not part of the account sync payload and the server never
 receives it — so under Apple's on-device definition (§1 above) it is correctly excluded from the
 label, exactly like the discovery cache. It is called out by name here, rather than silently

@@ -159,6 +159,19 @@ in section 2 work fully without one.
 - **Your bonus-cap usage** — how much you have spent toward each card's limits.
 - **Card-catalogue requests you submit** — the issuer, product name, and optional note you entered.
 
+**If you use Report a problem, the report is prepared on your iPhone first and shown to you in
+full.** It contains the expected and actual behaviour you type, optional reproduction steps, and
+the app version, build, iOS version, and catalogue version. You can separately choose to include
+aggregate category-resolution counts, a Wallet delivery diagnostic with merchant, amount, card,
+and coordinates removed, or a detailed arrival log. The detailed arrival log can contain precise
+locations, merchant names, candidate cards, and arrival times, and the app names those contents
+before you include it.
+
+If you are signed in and tap Send report, the report is attached to your account and sent to the
+review inbox. If you are signed out, PickMe only creates a JSON file for you to inspect, save, or
+share; creating or sharing the file does not submit it automatically. A reviewer can import a file
+you privately share, in which case the report is stored without an account link.
+
 **If you additionally set up the Apple Wallet capture shortcut, we also receive, for each
 transaction it captures:**
 
@@ -242,6 +255,12 @@ merchant-visit record (section 2(i)) ages out 90 days after that day, per mercha
 erases your account and everything we hold for you, including captured transactions and their
 locations. You are asked separately whether to also erase your iPhone's local history, and the
 default is to keep it — deleting your account does not require destroying your own records.
+
+**Tester reports are the exception to that general server-retention rule.** They expire after 30
+days. A signed-in tester can delete a submitted report earlier from Report a problem, and a reviewer
+can delete it from the review inbox. Deleting an account also deletes reports linked to that
+account. A report imported from a signed-out JSON file has no account link, so it is removed by its
+30-day expiry or by the reviewer.
 
 **One thing to be aware of:** if you back up your iPhone, that backup may include the app's data,
 as it does for other apps. Those backups are controlled by your own iOS and iCloud settings and by

@@ -49,6 +49,9 @@ jobs:
       - name: Block uncleared raw-source material
         run: scripts/check-raw-source-policy.sh
 
+      - name: TestFlight instructions match the shipping source
+        run: python3 scripts/check-testflight-docs.py
+
       # Merchant facts move independently from card-rate releases, so the pack stays out of
       # RELEASE.json's digest and carries its own packVersion. Until 2026-09-01 its gate asked
       # "does this JSON match the Swift array it was generated from"; the pack is now the source

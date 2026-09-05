@@ -414,6 +414,16 @@
         }
       }
     },
+    "%lld of %lld changed-winner decisions with an exact MCC" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld changed-winner decisions with an exact MCC"
+          }
+        }
+      }
+    },
     "%lld of %lld checks used all 20 places" : {
       "localizations" : {
         "en" : {
@@ -906,6 +916,9 @@
           }
         }
       }
+    },
+    "All figures are aggregate-only on this iPhone. No merchant, MCC, category, card, coordinate, or timestamp is kept for this diagnostic. Erasing local history clears it." : {
+
     },
     "All indexed sources checked within the last year" : {
 
@@ -1417,6 +1430,9 @@
         }
       }
     },
+    "App, build, iOS and catalogue versions are included automatically. You can review the complete report before sending or sharing it." : {
+
+    },
     "Apple requires users to configure Personal Automations inside the Apple Shortcuts app. This visual walkthrough guides you through the 4 steps in under 60 seconds." : {
 
     },
@@ -1749,6 +1765,9 @@
 
     },
     "Caps updated: %@" : {
+
+    },
+    "Capture event" : {
 
     },
     "Captured" : {
@@ -2405,6 +2424,9 @@
     "days" : {
 
     },
+    "Decision quality" : {
+
+    },
     "Decision Strategy" : {
 
     },
@@ -2487,6 +2509,12 @@
     "Delete Purchase" : {
 
     },
+    "Delete report" : {
+
+    },
+    "Delete submitted report" : {
+
+    },
     "Delete Submitted Report" : {
 
     },
@@ -2494,6 +2522,9 @@
 
     },
     "Delete this purchase?" : {
+
+    },
+    "Delete this submitted report?" : {
 
     },
     "Delete Unsent" : {
@@ -2564,6 +2595,9 @@
 
     },
     "Delivery State" : {
+
+    },
+    "Describe the problem" : {
 
     },
     "Detected" : {
@@ -2642,6 +2676,9 @@
         }
       }
     },
+    "Early signal — more exact-MCC outcomes will make this rate more representative." : {
+
+    },
     "Earn Multipliers" : {
 
     },
@@ -2704,6 +2741,9 @@
           }
         }
       }
+    },
+    "Edit report" : {
+
     },
     "Edit wallet" : {
       "extractionState" : "stale",
@@ -2942,6 +2982,15 @@
         }
       }
     },
+    "Exact MCC (optional)" : {
+
+    },
+    "Exact MCC validated a learned card change" : {
+
+    },
+    "Exact MCCs from reconciliation or a safely joined issuer export validate the classification premise of a changed recommendation. They do not claim to verify every issuer posting or card benefit." : {
+
+    },
     "Exclusions (per certificate)" : {
       "localizations" : {
         "fr-CA" : {
@@ -2990,6 +3039,9 @@
 
     },
     "Expires %@" : {
+
+    },
+    "Expires %@. Review progress appears below." : {
 
     },
     "Expiring card credits" : {
@@ -3103,6 +3155,9 @@
     "Fix Setup" : {
 
     },
+    "Fixed in %@" : {
+
+    },
     "Flight" : {
       "localizations" : {
         "fr-CA" : {
@@ -3120,6 +3175,9 @@
 
     },
     "Found it" : {
+
+    },
+    "Four-digit MCC" : {
 
     },
     "Frequent Store: %@" : {
@@ -3182,6 +3240,9 @@
 
     },
     "GOOD THRU" : {
+
+    },
+    "Graph-backed checkout decisions" : {
 
     },
     "Grocery" : {
@@ -3301,6 +3362,9 @@
     "If you leave 'Run After Confirmation' selected, Apple will ask you to confirm the automation on every payment, defeating automatic tap tracking." : {
 
     },
+    "If your issuer export shows the four-digit MCC, enter it here. It validates whether learned MCC evidence correctly changed PickMe's recommendation. A category label alone cannot do that." : {
+
+    },
     "Import issuer MCC CSV" : {
 
     },
@@ -3340,6 +3404,18 @@
     "Include a city or street to find the right branch. Search works without location permission." : {
 
     },
+    "Include a Wallet Capture diagnostic" : {
+
+    },
+    "Include category diagnostic counts" : {
+
+    },
+    "Include detailed arrival log" : {
+
+    },
+    "Include the approximate time if relevant. Do not enter card numbers, passwords or other secrets. Each answer can contain up to 4,000 characters." : {
+
+    },
     "Include Transaction Metadata" : {
 
     },
@@ -3347,6 +3423,9 @@
 
     },
     "Included Statement Credits" : {
+
+    },
+    "Includes delivery stages and errors. Merchant, amount, card and coordinates are excluded." : {
 
     },
     "Income profile" : {
@@ -3554,6 +3633,9 @@
 
     },
     "Last check in this shopping area" : {
+
+    },
+    "Last exact-MCC import" : {
 
     },
     "Last invocation %@" : {
@@ -3800,6 +3882,9 @@
 
     },
     "Maximized rewards on this purchase" : {
+
+    },
+    "MCC Evidence Quality" : {
 
     },
     "Meeting a published income minimum does not mean the issuer will approve an application. Credit history and unpublished underwriting criteria are not scored." : {
@@ -4122,9 +4207,6 @@
     "No results for \"%@\"" : {
 
     },
-    "No scans recorded yet. Tap Radar while standing in a store." : {
-
-    },
     "No setup needed — pre-registered" : {
 
     },
@@ -4154,6 +4236,12 @@
           }
         }
       }
+    },
+    "No submitted reports loaded." : {
+
+    },
+    "No successful Apple Maps response has been recorded yet. Failure counts above still apply." : {
+
     },
     "No wallet cards have policy data for this scenario category." : {
 
@@ -4205,6 +4293,9 @@
     "Not compared" : {
 
     },
+    "Not enough data yet" : {
+
+    },
     "Not here" : {
 
     },
@@ -4219,6 +4310,9 @@
       }
     },
     "Not recognised" : {
+
+    },
+    "Not scoreable yet" : {
 
     },
     "Not shipped to the App Store. Changes take effect on the next arrival and are recorded on every field-log record, so an export says which policy produced it." : {
@@ -4456,6 +4550,9 @@
       }
     },
     "Optional and local. PickMe accepts only explicit four-digit MCC rows. Amount and card network may be used transiently to match exactly one purchase already on this iPhone; they are not retained by the MCC learner. Ambiguous matches stay unlocated instead of being guessed." : {
+
+    },
+    "Optional evidence" : {
 
     },
     "Optional multi-device power tools" : {
@@ -4759,6 +4856,9 @@
     "PickMe monitors up to 20 shopping areas at a time, including saved stores and places it discovers nearby, then suggests a card before you pay." : {
 
     },
+    "PickMe needs a changed-winner checkout later matched to an exact MCC. Unavailable is not the same as 0%." : {
+
+    },
     "PickMe only recommends cards you add here." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4890,6 +4990,9 @@
     "Prepare export" : {
 
     },
+    "Preview report" : {
+
+    },
     "Previous Quip" : {
 
     },
@@ -5012,7 +5115,10 @@
     "Radar query radius" : {
 
     },
-    "Radar scans" : {
+    "Radar reliability" : {
+
+    },
+    "Radar scan results" : {
 
     },
     "Ranked by recurring net value" : {
@@ -5137,7 +5243,13 @@
     "Reference" : {
 
     },
+    "Reference: %@" : {
+
+    },
     "Refresh nearby monitoring" : {
+
+    },
+    "Refresh review status" : {
 
     },
     "Relink This iPhone" : {
@@ -5188,6 +5300,9 @@
         }
       }
     },
+    "Removes its evidence and review notes from the server. Copies you shared elsewhere are unaffected." : {
+
+    },
     "Removing this card will deactivate it for future transactions." : {
 
     },
@@ -5212,6 +5327,15 @@
           }
         }
       }
+    },
+    "Report a problem" : {
+
+    },
+    "Report received" : {
+
+    },
+    "Reports sent to In Unity are available to authorized reviewers for 30 days. You can delete a sent report below. Copies shared through other apps must be deleted there separately." : {
+
     },
     "Request a Missing Card" : {
 
@@ -5262,6 +5386,9 @@
     "Retest" : {
 
     },
+    "Retries the nearby merchant search" : {
+
+    },
     "Retry" : {
 
     },
@@ -5272,6 +5399,9 @@
 
     },
     "Return here and tap **Check Logs** to confirm PickMe received the event." : {
+
+    },
+    "Review before sharing" : {
 
     },
     "Review issuer sources, import your own certificates, and keep claim instructions close at hand." : {
@@ -5516,6 +5646,9 @@
     "See All (%lld)" : {
 
     },
+    "Seed-only decisions" : {
+
+    },
     "Select Card" : {
 
     },
@@ -5554,7 +5687,13 @@
     "Send Diagnostic Report" : {
 
     },
+    "Send feedback or check a report" : {
+
+    },
     "Send queued purchases, then disable" : {
+
+    },
+    "Send report" : {
 
     },
     "Send test notification" : {
@@ -5636,7 +5775,13 @@
     "Share Policy Link" : {
 
     },
+    "Share report file" : {
+
+    },
     "Share Rewards Proof" : {
+
+    },
+    "Share this file privately with the person who invited you to test PickMe. You can also save it to Files and send it later. Preparing or sharing a file does not submit it to the review inbox." : {
 
     },
     "Share Transaction" : {
@@ -5838,6 +5983,9 @@
     "Standard (2.5%)" : {
 
     },
+    "Start another report" : {
+
+    },
     "Start claim" : {
 
     },
@@ -5883,6 +6031,9 @@
           }
         }
       }
+    },
+    "Steps to reproduce (optional)" : {
+
     },
     "Store name, street or city" : {
 
@@ -6187,6 +6338,9 @@
     "These areas are registered with iOS. One area can cover several stores, including stores whose alerts are off. Nearby places share 20 slots and update as you move. Monitoring does not guarantee an alert on every visit." : {
 
     },
+    "These counters stay on this iPhone. They identify which stage failed without recording a location or merchant name." : {
+
+    },
     "These published benchmarks are starting points. PickMe assumes the cents-per-point values above; recommendations disclose when the answer flips." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6255,6 +6409,9 @@
       }
     },
     "This location is muted from a notification. Save an enabled alert choice below to unmute it." : {
+
+    },
+    "This log includes precise locations, merchant names, candidate cards and arrival times from recent visits. Only include it if you want the reviewer to see those details." : {
 
     },
     "This merchant location may code differently depending on the register terminal. Reconcile this purchase once posted to lock in the exact terminal rule." : {
@@ -6438,6 +6595,9 @@
 
     },
     "UNRECORDED" : {
+
+    },
+    "Unscoreable MCC forks" : {
 
     },
     "Unverified" : {
@@ -6693,6 +6853,9 @@
     "Welcome to PickMe" : {
 
     },
+    "What actually happened?" : {
+
+    },
     "What actually posted" : {
       "localizations" : {
         "fr-CA" : {
@@ -6713,6 +6876,9 @@
         }
       }
     },
+    "What did you expect?" : {
+
+    },
     "What is not in the number" : {
       "localizations" : {
         "fr-CA" : {
@@ -6732,6 +6898,9 @@
           }
         }
       }
+    },
+    "What PickMe observed" : {
+
     },
     "What the app recommended" : {
       "localizations" : {
@@ -6777,6 +6946,12 @@
         }
       }
     },
+    "When an issuer makes a monthly CSV with an explicit MCC column available, import it here. PickMe will remember only the successful import date, not the statement." : {
+
+    },
+    "When better evidence changes a card decision" : {
+
+    },
     "When I tap any card or pass" : {
 
     },
@@ -6789,6 +6964,9 @@
           }
         }
       }
+    },
+    "Where did it happen?" : {
+
     },
     "Which card did you tap?" : {
       "localizations" : {
@@ -6845,6 +7023,9 @@
       }
     },
     "Winner: %@" : {
+
+    },
+    "Working…" : {
 
     },
     "Yes" : {
@@ -6964,6 +7145,9 @@
     "Your last tap arrived without merchant info. Tap to view the variable mapping guide." : {
 
     },
+    "Your next statement may be ready. Import it here when you have an issuer CSV with an explicit MCC column." : {
+
+    },
     "Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected." : {
       "comment" : "human review before public launch",
       "extractionState" : "stale",
@@ -6993,6 +7177,9 @@
           }
         }
       }
+    },
+    "Your submitted reports" : {
+
     },
     "Your Wallet Cards" : {
 
