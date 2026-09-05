@@ -15,7 +15,7 @@ room = "2.8.4"
 kotlinxSerialization = "1.11.0"
 kotlinxCoroutines = "1.9.0"
 ksp = "2.3.11"
-playServicesLocation = "21.3.0"
+playServicesLocation = "21.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
