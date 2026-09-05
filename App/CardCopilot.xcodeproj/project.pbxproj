@@ -1536,7 +1536,7 @@
 			repositoryURL = "https://github.com/clerk/clerk-ios";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.3.9;
+				minimumVersion = 1.5.3;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
