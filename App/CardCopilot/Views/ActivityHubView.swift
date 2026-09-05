@@ -1450,6 +1450,7 @@ struct ActivityHubView: View {
     private func deletePurchase(_ purchase: StoredPurchase) {
         if let graph = environment.graph {
             session.deletePurchase(purchase, using: graph)
+            sync.refreshWalletFeedbackAfterDeletion()
         }
     }
 

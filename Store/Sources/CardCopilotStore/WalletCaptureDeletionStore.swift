@@ -21,6 +21,11 @@ public final class WalletCaptureDeletionStore {
         eventIDs.contains(eventID)
     }
 
+    public func retainingUndeleted(_ feedback: [WalletFeedback]) -> [WalletFeedback] {
+        let deletedIDs = eventIDs
+        return feedback.filter { !deletedIDs.contains($0.eventId) }
+    }
+
     public func recordDeletion(eventID: String) {
         guard !eventID.isEmpty else { return }
         var ids = eventIDs

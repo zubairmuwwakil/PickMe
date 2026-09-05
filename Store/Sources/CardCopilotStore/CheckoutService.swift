@@ -483,7 +483,7 @@ public struct CheckoutService {
         // Feedback is an account-level source of truth, while Activity deletion is an explicitly
         // local choice. Filter before matching as well as auto-logging: otherwise deleting a
         // matched checkout would let the same event attach to its now-open prediction again.
-        let visibleFeedback = feedback.filter { !walletCaptureDeletionStore.contains(eventID: $0.eventId) }
+        let visibleFeedback = walletCaptureDeletionStore.retainingUndeleted(feedback)
         let predictions = try log.allPredictions()
         let predictionsByID = Dictionary(uniqueKeysWithValues: predictions.map { ($0.id, $0) })
         let feedbackByID = Dictionary(grouping: visibleFeedback, by: \.eventId)

@@ -286,6 +286,14 @@ final class CheckoutServiceTests: XCTestCase {
                       "A server feedback replay must respect the owner's local Activity deletion.")
         XCTAssertTrue(try deletionAwareService.log.allPurchases().isEmpty)
 
+        let reopenedService = CheckoutService(
+            catalogue: try SeedLoader.loadCatalogue(), ownerState: try SeedLoader.loadOwnerState(),
+            context: ModelContext(container),
+            walletCaptureDeletionStore: WalletCaptureDeletionStore(
+                defaults: try XCTUnwrap(UserDefaults(suiteName: suiteName))))
+        XCTAssertTrue(try reopenedService.ingestAutomaticCaptures(from: [feedback]).isEmpty)
+        XCTAssertTrue(try reopenedService.log.allPurchases().isEmpty)
+
         try LocalDataEraser(context: ModelContext(container),
                              walletCaptureDeletionStore: deletionStore).eraseLocalHistory()
         XCTAssertFalse(deletionStore.contains(eventID: feedback.eventId),

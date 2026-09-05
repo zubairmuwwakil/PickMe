@@ -17,7 +17,14 @@ public final class SyncCoordinator {
     public var isPreparingAccount = false
     public var readySyncUserID: String?
     public var accountSetupUserID: String?
-    public var walletFeedback: [WalletFeedback] = []
+    private var downloadedWalletFeedback: [WalletFeedback] = []
+    /// All local consumers, including Sync's feedback list and Finish Purchase proposals, must
+    /// respect Activity deletions. Filtering only during import left these other surfaces stale.
+    public var walletFeedback: [WalletFeedback] {
+        get { walletCaptureDeletionStore.retainingUndeleted(downloadedWalletFeedback) }
+        set { downloadedWalletFeedback = newValue }
+    }
+    private let walletCaptureDeletionStore: WalletCaptureDeletionStore
     public var walletInstallations: [WalletInstallation] = []
     public let peerSyncService: PeerSyncService
 
@@ -33,7 +40,8 @@ public final class SyncCoordinator {
         ownerStateUploadQueue: OwnerStateUploadQueue = OwnerStateUploadQueue(),
         syncMetadataStore: SyncMetadataStore = SyncMetadataStore(),
         cardRequestQueue: CardRequestQueue = CardRequestQueue(),
-        peerSyncService: PeerSyncService = PeerSyncService()
+        peerSyncService: PeerSyncService = PeerSyncService(),
+        walletCaptureDeletionStore: WalletCaptureDeletionStore = WalletCaptureDeletionStore()
     ) {
         self.ownerStateLocalStore = ownerStateLocalStore
         self.accountOwnerStateStore = accountOwnerStateStore
@@ -41,6 +49,13 @@ public final class SyncCoordinator {
         self.syncMetadataStore = syncMetadataStore
         self.cardRequestQueue = cardRequestQueue
         self.peerSyncService = peerSyncService
+        self.walletCaptureDeletionStore = walletCaptureDeletionStore
+    }
+
+    /// Refresh observers immediately after a successful local deletion, including while a sync
+    /// request is in flight. The getter also filters any subsequent server response.
+    func refreshWalletFeedbackAfterDeletion() {
+        downloadedWalletFeedback = walletFeedback
     }
 
     /// Automatically syncs if signed in, configured, and last synced longer than `maxAge` ago.

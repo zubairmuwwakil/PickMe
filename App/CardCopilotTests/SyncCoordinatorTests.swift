@@ -6,6 +6,35 @@ import CardCopilotCapture
 
 @MainActor
 final class SyncCoordinatorTests: XCTestCase {
+    func testDeletedCaptureStaysOutOfFeedbackAfterReplayAndCoordinatorRecreation() throws {
+        let suite = "ca.pickme.tests.deleted-feedback-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let deleted = WalletFeedback(eventId: "deleted", capturedAt: Date(),
+                                     merchantRaw: "Cafe", amountMinor: 500, currency: "CAD",
+                                     cardRaw: "Cobalt", resolvedCardId: "amex-cobalt",
+                                     verdict: "best", warning: nil)
+        let kept = WalletFeedback(eventId: "kept", capturedAt: Date(),
+                                  merchantRaw: "Cafe", amountMinor: 500, currency: "CAD",
+                                  cardRaw: "Cobalt", resolvedCardId: "amex-cobalt",
+                                  verdict: "best", warning: nil)
+        let sync = SyncCoordinator(walletCaptureDeletionStore: WalletCaptureDeletionStore(defaults: defaults))
+        sync.walletFeedback = [deleted, kept]
+        XCTAssertEqual(sync.walletFeedback.count, 2)
+
+        // Activity writes through a separate store instance, as the real CheckoutService does.
+        WalletCaptureDeletionStore(defaults: defaults).recordDeletion(eventID: deleted.eventId)
+        sync.refreshWalletFeedbackAfterDeletion()
+        XCTAssertEqual(sync.walletFeedback.map(\.eventId), ["kept"])
+        sync.walletFeedback = [deleted, kept] // A response that was already in flight at deletion.
+        XCTAssertEqual(sync.walletFeedback.map(\.eventId), ["kept"])
+
+        let reopened = SyncCoordinator(walletCaptureDeletionStore: WalletCaptureDeletionStore(
+            defaults: try XCTUnwrap(UserDefaults(suiteName: suite))))
+        reopened.walletFeedback = [deleted, kept]
+        XCTAssertEqual(reopened.walletFeedback.map(\.eventId), ["kept"])
+    }
+
     func testInitialState() {
         let coordinator = SyncCoordinator()
         XCTAssertNil(coordinator.lastSyncedAt)
