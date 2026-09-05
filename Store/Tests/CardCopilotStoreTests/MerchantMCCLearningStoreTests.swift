@@ -71,7 +71,7 @@ final class MerchantMCCLearningStoreTests: XCTestCase {
         let merchant = NearbyPlace(id: "walmart-123", name: "Walmart #123",
                                    poiCategoryRaw: "store",
                                    latitude: 43.6532, longitude: -79.3832,
-                                   distanceMeters: nil)
+                                   distanceMeters: nil, countryCode: "CA")
         let prediction = try XCTUnwrap(merchantMCCGraphPrediction(for: merchant,
                                                                  feedbackStore: store))
         XCTAssertEqual(prediction.category, "grocery")

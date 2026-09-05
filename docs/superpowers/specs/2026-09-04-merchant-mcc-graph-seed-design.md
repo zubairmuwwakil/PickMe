@@ -28,7 +28,9 @@ merchant identity
         -> confidence-aware purchase decision
 ```
 
-The initial 500 Canadian merchants are a bootstrap prior so PickMe works on day one. They are never treated as payment-network truth merely because they are bundled with the app.
+The initial 500 Canadian merchants, followed by an additive cited 50-merchant US tranche, are
+bootstrap priors so PickMe works on day one in both supported markets. They are never treated as
+payment-network truth merely because they are bundled with the app.
 
 The runtime now has one Store-side `MerchantMCCGraph`. Both normal checkout category resolution and Purchase Routes consume that graph. Earlier experimental Engine-side MCC posterior/runtime code was removed rather than allowing two independent truth systems to diverge.
 
@@ -98,15 +100,23 @@ MerchantMCCGraph
 
 `contracts/merchant-mcc-graph/` is the only canonical home for seed data. Store resource files are packaging copies and must not be independently authored.
 
-The CI gate runs `scripts/validate-merchant-mcc-graph.py`, which protects the 500-row shape, IDs, profile references, candidate/weight validity, confidence bounds, and location-scoped public evidence rules.
+The CI gate runs `scripts/validate-merchant-mcc-graph.py`, which protects the 50-row shard shape,
+IDs, country-scoped display identity, US citations, profile references, candidate/weight validity,
+confidence bounds, and location-scoped public evidence rules.
 
 ## Seed design
 
 ### Merchant scope
 
-The initial graph covers exactly the 500 Canadian merchants supplied in `pickme_canada_500_merchant_seed(1).xlsx`.
+The graph began with the 500 Canadian merchants supplied in
+`pickme_canada_500_merchant_seed(1).xlsx`. It now adds a cited 50-merchant US shard without
+renumbering, replacing, or reusing any Canadian ID.
 
-This list is the bootstrap coverage set, **not** a permanent product limit. A future agent may expand beyond 500 merchants, but should preserve stable merchant IDs and migrate the seed contract deliberately rather than quietly replacing identities.
+This list is the bootstrap coverage set, **not** a permanent product limit. A future agent may
+expand beyond 550 merchants, but should preserve stable merchant IDs and migrate the seed contract
+deliberately rather than quietly replacing identities. Country is part of canonical identity: when
+a same-named cross-border brand is separately seeded, country-aware resolution selects it from the
+physical merchant location and unknown-country matches fail closed.
 
 ### MCC taxonomy
 
@@ -125,7 +135,7 @@ This matters because uncertainty in the source data should remain uncertainty in
 Identity resolution uses two complementary systems:
 
 - `contracts/merchant-pack.json` / `MerchantRecognizer` for curated statement/brand aliases;
-- the 500-row seed catalogue for canonical merchant IDs and MCC profiles.
+- the country-scoped seed catalogue for canonical merchant IDs and MCC profiles.
 
 The seed fallback supports safe normalized matching, including common descriptor suffixes for multi-word merchant names, while avoiding raw substring behavior such as matching `Metro` inside `Metropolitan Hotel`.
 

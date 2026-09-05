@@ -45,7 +45,8 @@ func merchantMCCGraphRuntimeSnapshot(
     importedStore: MerchantMCCImportedEvidenceStore = .shared,
     communityStore: CommunityMerchantMCCCacheStore = CommunityMerchantMCCCacheStore()
 ) -> MerchantMCCGraphRuntimeSnapshot? {
-    guard let seed = MerchantMCCSeedCatalogue.match(merchantName: merchant.name) else { return nil }
+    guard let seed = MerchantMCCSeedCatalogue.match(merchantName: merchant.name,
+                                                     countryCode: merchant.countryCode) else { return nil }
 
     let query = MerchantMCCQuery(
         merchantKey: seed.merchant.name,

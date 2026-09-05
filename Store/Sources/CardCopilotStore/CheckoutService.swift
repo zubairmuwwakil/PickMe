@@ -60,6 +60,7 @@ public func ambientPurchaseContext(merchant: NearbyPlace, category: String,
                            category: category,
                            mcc: mcc,
                            merchantBrand: brand,
+                           country: merchant.countryCode ?? "CA",
                            acceptedNetworks: knownAcceptedNetworks(for: brand, merchantName: merchant.name))
 }
 

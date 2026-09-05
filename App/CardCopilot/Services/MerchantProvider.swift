@@ -278,7 +278,8 @@ final class LiveMerchantProvider: MerchantProviding {
             latitude: coordinate.latitude,
             longitude: coordinate.longitude,
             distanceMeters: distance,
-            locationDescription: address.isEmpty ? nil : address)
+            locationDescription: address.isEmpty ? nil : address,
+            countryCode: mapItem.placemark.isoCountryCode)
     }
 
     /// The identity string every existing keyspace is already built on, and therefore frozen.

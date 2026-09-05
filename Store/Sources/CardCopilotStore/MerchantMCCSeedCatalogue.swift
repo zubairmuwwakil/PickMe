@@ -1,7 +1,7 @@
 import Foundation
 import CardCopilotEngine
 
-/// Runtime view of the canonical, sharded Canada merchant-MCC seed under `contracts/`.
+/// Runtime view of the canonical, country-scoped merchant-MCC seed under `contracts/`.
 ///
 /// The files bundled into Store are byte-identical copies maintained by
 /// `scripts/sync-merchant-mcc-graph-into-store.sh`. Seed values are editorial priors only: they
@@ -17,6 +17,7 @@ public struct MerchantMCCSeedProfile: Codable, Equatable, Sendable {
 public struct MerchantMCCSeedMerchant: Codable, Equatable, Sendable, Identifiable {
     public let id: String
     public let name: String
+    public let country: String
     public let tier: String
     public let category: String
     public let profile: String
@@ -58,7 +59,7 @@ public enum MerchantMCCSeedCatalogue {
         decodeResource("merchant-mcc-profiles")
     private static let observations: [SeedObservation] = decodeResource("merchant-mcc-observations")
 
-    /// All 500 canonical Canada seed merchants, decoded once at process startup.
+    /// All canonical seed merchants, decoded once at process startup.
     public static let merchants: [MerchantMCCSeedMerchant] = {
         manifest.files.merchantShards.flatMap { filename -> [MerchantMCCSeedMerchant] in
             let stem = filename.hasSuffix(".json") ? String(filename.dropLast(5)) : filename
@@ -68,10 +69,8 @@ public enum MerchantMCCSeedCatalogue {
 
     public static var graphVersion: String { manifest.graphVersion }
 
-    private static let merchantByNormalizedName: [String: MerchantMCCSeedMerchant] = {
-        var result: [String: MerchantMCCSeedMerchant] = [:]
-        for merchant in merchants { result[normalized(merchant.name)] = merchant }
-        return result
+    private static let merchantsByNormalizedName: [String: [MerchantMCCSeedMerchant]] = {
+        Dictionary(grouping: merchants, by: { normalized($0.name) })
     }()
 
     private static let merchantByID: [String: MerchantMCCSeedMerchant] =
@@ -90,25 +89,28 @@ public enum MerchantMCCSeedCatalogue {
     /// Resolves a MapKit/Wallet merchant name through deterministic catalogue evidence first. If
     /// that fails, an exact alias learned from repeated real Wallet-to-checkout joins may resolve
     /// it. Learned aliases never participate in fuzzy matching and never override curated data.
-    public static func match(merchantName: String) -> MerchantMCCSeedMatch? {
-        canonicalMatch(merchantName: merchantName)
+    /// The pre-country seed was Canada-only, so old persisted aliases and callers retain CA as
+    /// their explicit compatibility scope. Live place resolution always passes its optional
+    /// physical country; a passed `nil` therefore remains fail-closed for duplicate brands.
+    public static func match(merchantName: String, countryCode: String? = "CA") -> MerchantMCCSeedMatch? {
+        canonicalMatch(merchantName: merchantName, countryCode: countryCode)
             ?? MerchantMCCIdentityLearningStore.shared.match(merchantName: merchantName)
     }
 
     /// Deterministic resolver with no learned state. The identity learner uses this to anchor new
     /// aliases without recursively consulting itself.
-    public static func canonicalMatch(merchantName: String) -> MerchantMCCSeedMatch? {
+    public static func canonicalMatch(merchantName: String, countryCode: String? = "CA") -> MerchantMCCSeedMatch? {
         let recognized = MerchantRecognizer.recognise(merchantName)
         let canonicalName = recognized?.name ?? merchantName
 
-        if let merchant = merchantByNormalizedName[normalized(canonicalName)],
+        if let merchant = unambiguousMerchant(named: canonicalName, countryCode: countryCode),
            let profile = profiles[merchant.profile] {
             return MerchantMCCSeedMatch(merchant: merchant, profile: profile,
-                                        recognizedMerchant: recognized)
+                                        recognizedMerchant: merchant.country == "CA" ? recognized : nil)
         }
 
         guard recognized == nil,
-              let merchant = descriptorMatch(merchantName),
+              let merchant = descriptorMatch(merchantName, countryCode: countryCode),
               let profile = profiles[merchant.profile] else { return nil }
         return MerchantMCCSeedMatch(merchant: merchant, profile: profile,
                                     recognizedMerchant: nil)
@@ -150,13 +152,14 @@ public enum MerchantMCCSeedCatalogue {
         }
     }
 
-    private static func descriptorMatch(_ value: String) -> MerchantMCCSeedMerchant? {
+    private static func descriptorMatch(_ value: String, countryCode: String?) -> MerchantMCCSeedMerchant? {
         let haystack = tokens(value)
         guard !haystack.isEmpty else { return nil }
 
         var best: (merchant: MerchantMCCSeedMerchant, length: Int)?
         var tiedAtBestLength = false
-        for entry in descriptorTokenIndex where contains(haystack, entry.tokens) {
+        for entry in descriptorTokenIndex
+        where contains(haystack, entry.tokens) && countryMatches(entry.merchant, countryCode: countryCode) {
             if best == nil || entry.tokens.count > best!.length {
                 best = (entry.merchant, entry.tokens.count)
                 tiedAtBestLength = false
@@ -167,6 +170,25 @@ public enum MerchantMCCSeedCatalogue {
         }
         guard !tiedAtBestLength else { return nil }
         return best?.merchant
+    }
+
+    /// An unspecified country is safe only when a display name maps to one canonical entity.
+    /// Once a brand has country-specific seed entries, guessing would merge learned evidence from
+    /// different merchant accounts; return nil until the caller supplies a physical place country.
+    private static func unambiguousMerchant(named name: String,
+                                             countryCode: String?) -> MerchantMCCSeedMerchant? {
+        let candidates = merchantsByNormalizedName[normalized(name)] ?? []
+        let scoped = candidates.filter { countryMatches($0, countryCode: countryCode) }
+        guard scoped.count == 1 else { return nil }
+        return scoped[0]
+    }
+
+    private static func countryMatches(_ merchant: MerchantMCCSeedMerchant,
+                                       countryCode: String?) -> Bool {
+        guard let countryCode = countryCode?.uppercased(), !countryCode.isEmpty else {
+            return merchantsByNormalizedName[normalized(merchant.name)]?.count == 1
+        }
+        return merchant.country == countryCode
     }
 
     private static var generatedDate: Date {

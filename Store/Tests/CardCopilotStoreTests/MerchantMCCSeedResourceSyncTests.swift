@@ -19,11 +19,14 @@ final class MerchantMCCSeedResourceSyncTests: XCTestCase {
             ("profiles.json", "merchant-mcc-profiles.json"),
             ("observations.json", "merchant-mcc-observations.json")
         ]
-        copies += stride(from: 1, through: 451, by: 50).map { start in
-            let end = start + 49
-            let shard = String(format: "merchants-%03d-%03d.json", start, end)
-            return (shard, "merchant-mcc-\(shard)")
+        struct Manifest: Decodable {
+            struct Files: Decodable { let merchantShards: [String] }
+            let files: Files
         }
+        let manifest = try JSONDecoder().decode(
+            Manifest.self,
+            from: Data(contentsOf: canonical.appendingPathComponent("manifest.json")))
+        copies += manifest.files.merchantShards.map { ($0, "merchant-mcc-\($0)") }
 
         for pair in copies {
             let source = canonical.appendingPathComponent(pair.canonical)

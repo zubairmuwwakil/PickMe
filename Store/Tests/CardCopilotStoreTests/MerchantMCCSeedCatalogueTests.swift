@@ -3,9 +3,20 @@ import CardCopilotEngine
 @testable import CardCopilotStore
 
 final class MerchantMCCSeedCatalogueTests: XCTestCase {
-    func testBundledSeedContainsAll500Merchants() {
-        XCTAssertEqual(MerchantMCCSeedCatalogue.graphVersion, "1.0")
-        XCTAssertEqual(MerchantMCCSeedCatalogue.merchants.count, 500)
+    func testBundledSeedContainsCanadaAndCitedUnitedStatesTranche() {
+        XCTAssertEqual(MerchantMCCSeedCatalogue.graphVersion, "1.1")
+        XCTAssertEqual(MerchantMCCSeedCatalogue.merchants.count, 550)
+        XCTAssertEqual(MerchantMCCSeedCatalogue.merchants.filter { $0.country == "CA" }.count, 500)
+        XCTAssertEqual(MerchantMCCSeedCatalogue.merchants.filter { $0.country == "US" }.count, 50)
+    }
+
+    func testCountryDisambiguatesCrossBorderSeedNames() throws {
+        let canada = try XCTUnwrap(MerchantMCCSeedCatalogue.match(merchantName: "Walmart", countryCode: "CA"))
+        let unitedStates = try XCTUnwrap(MerchantMCCSeedCatalogue.match(merchantName: "Walmart", countryCode: "US"))
+        XCTAssertEqual(canada.merchant.id, "walmart")
+        XCTAssertEqual(unitedStates.merchant.id, "walmart-us")
+        XCTAssertNil(MerchantMCCSeedCatalogue.match(merchantName: "Walmart", countryCode: nil),
+                     "An unknown physical country must not blend country-specific evidence.")
     }
 
     func testMetroResolvesToGrocery5411WithoutSubstringGuessing() throws {

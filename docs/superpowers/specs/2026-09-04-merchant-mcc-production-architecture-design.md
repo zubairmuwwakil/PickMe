@@ -40,7 +40,9 @@ MerchantMCCGraph
 
 There is still only **one MCC resolver**. The system is local-first: community/network failure cannot make PickMe unable to recommend a card.
 
-The initial 500-merchant Canada graph is a cold-start prior, not a product ceiling and not payment-network truth.
+The seed is a cold-start prior, not a product ceiling and not payment-network truth. It began
+with 500 Canadian merchants and now has an additive, cited 50-merchant US tranche; existing
+Canadian canonical IDs remain unchanged.
 
 ## Current end-to-end flow
 
@@ -216,9 +218,12 @@ These are not bugs to hide; they are decision inputs for future work.
 
 Evidence weights and confidence math are policy defaults. They should be tuned from field outcomes rather than defended because they shipped first.
 
-### Initial merchant coverage is 500 Canadian merchants
+### Initial merchant coverage is Canada plus an initial US tranche
 
-The seed is useful but finite. Expansion should preserve stable canonical IDs so existing observations continue to join correctly.
+The seed is useful but finite. Expansion must preserve stable canonical IDs so existing observations
+continue to join correctly. Country is now part of seed identity: same-named brands whose US and
+Canadian merchant accounts may code differently use distinct canonical IDs and the resolver uses
+the physical place country. Unknown-country matching fails closed for those duplicates.
 
 ### Local lightweight persistence has a scale ceiling
 

@@ -1,10 +1,10 @@
 {
-  "graphVersion": "1.0",
+  "graphVersion": "1.1",
   "generatedAt": "2026-09-04",
   "_provenance": {
-    "purpose": "Initial Canada seed priors for PickMe's learning merchant-MCC graph.",
+    "purpose": "Canada and United States seed priors for PickMe's learning merchant-MCC graph.",
     "rule": "Seed MCCs are editorial hypotheses, never observed network MCCs. Runtime observations must override priors as evidence accumulates.",
-    "merchantScope": "Exactly the 500 merchants from pickme_canada_500_merchant_seed(1).xlsx.",
+    "merchantScope": "500 Canadian merchants plus an additive, cited 50-merchant United States tranche. Existing Canadian IDs are immutable; cross-market brands receive distinct IDs only when country-scoped evidence can differ.",
     "taxonomySource": {
       "name": "Adyen DABstep MCC taxonomy",
       "license": "CC-BY-4.0",
@@ -38,7 +38,8 @@
       "merchants-301-350.json",
       "merchants-351-400.json",
       "merchants-401-450.json",
-      "merchants-451-500.json"
+      "merchants-451-500.json",
+      "merchants-501-550.json"
     ],
     "observations": "observations.json"
   }

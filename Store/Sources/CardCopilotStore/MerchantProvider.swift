@@ -25,11 +25,14 @@ public struct NearbyPlace: Equatable, Sendable, Identifiable {
     public let longitude: Double
     public let distanceMeters: Double?
     public let locationDescription: String?
+    /// ISO 3166-1 alpha-2 country supplied by the place provider. Country is part of the MCC
+    /// seed identity: a cross-border brand can settle under a different acquiring arrangement.
+    public let countryCode: String?
 
     public init(id: String, placeID: String? = nil, alternatePlaceIDs: [String] = [],
                 name: String, poiCategoryRaw: String?, merchantCategoryCode: Int? = nil,
                 latitude: Double, longitude: Double, distanceMeters: Double?,
-                locationDescription: String? = nil) {
+                locationDescription: String? = nil, countryCode: String? = nil) {
         self.id = id
         self.placeID = placeID
         self.alternatePlaceIDs = alternatePlaceIDs
@@ -40,6 +43,7 @@ public struct NearbyPlace: Equatable, Sendable, Identifiable {
         self.longitude = longitude
         self.distanceMeters = distanceMeters
         self.locationDescription = locationDescription
+        self.countryCode = countryCode?.uppercased()
     }
 
     /// Every identifier Apple currently considers this place to be, primary first. Empty when

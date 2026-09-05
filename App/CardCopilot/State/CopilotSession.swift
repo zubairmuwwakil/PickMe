@@ -720,7 +720,8 @@ final class CopilotSession {
                 merchantCategoryCode: merchant.merchantCategoryCode,
                 latitude: merchant.latitude, longitude: merchant.longitude,
                 distanceMeters: origin.distance(from: CLLocation(latitude: merchant.latitude,
-                                                                  longitude: merchant.longitude)))
+                                                                  longitude: merchant.longitude)),
+                countryCode: merchant.countryCode)
         }
         return .found(rankNearbyPlaces(rebased))
     }

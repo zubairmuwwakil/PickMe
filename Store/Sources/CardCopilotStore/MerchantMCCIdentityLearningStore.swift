@@ -1,7 +1,7 @@
 import Foundation
 
 /// One local observation that a Wallet/processor descriptor refers to a canonical merchant in the
-/// 500-row MCC seed. The raw transaction, amount and card are deliberately not duplicated here;
+/// country-scoped MCC seed. The raw transaction, amount and card are deliberately not duplicated here;
 /// only the normalized alias and a source fingerprint are needed to learn identity.
 public struct MerchantMCCIdentityObservation: Codable, Equatable, Sendable {
     public let aliasKey: String

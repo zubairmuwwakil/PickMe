@@ -2,7 +2,7 @@
 """Validate PickMe's merchant MCC graph seed invariants.
 
 Uses only the Python standard library. The graph is intentionally sharded so the
-500-merchant seed stays reviewable; manifest.json defines the shard set.
+seed stays reviewable in 50-merchant shards; manifest.json defines the shard set.
 """
 from __future__ import annotations
 
@@ -38,8 +38,8 @@ def main() -> None:
     observations = load_json(GRAPH_DIR / files["observations"])
 
     shard_names = files.get("merchantShards", [])
-    if len(shard_names) != 10:
-        fail(f"expected 10 merchant shards, found {len(shard_names)}")
+    if not shard_names:
+        fail("expected at least one merchant shard")
 
     merchants = []
     for shard_name in shard_names:
@@ -48,22 +48,28 @@ def main() -> None:
             fail(f"{shard_name} must contain exactly 50 merchants")
         merchants.extend(shard)
 
-    if len(merchants) != 500:
-        fail(f"expected exactly 500 seed merchants, found {len(merchants)}")
+    if len(merchants) != len(shard_names) * 50:
+        fail(f"expected {len(shard_names) * 50} seed merchants, found {len(merchants)}")
 
     ids = [m["id"] for m in merchants]
     if len(ids) != len(set(ids)):
         fail("merchant ids are not unique")
 
-    names = [m["name"].casefold() for m in merchants]
+    names = [(m["country"], m["name"].casefold()) for m in merchants]
     if len(names) != len(set(names)):
-        fail("merchant display names are not unique case-insensitively")
+        fail("merchant display names are not unique within a country")
 
     for merchant in merchants:
         if merchant["category"] not in categories:
             fail(f"{merchant['id']} references unknown category {merchant['category']!r}")
         if merchant["profile"] not in profiles:
             fail(f"{merchant['id']} references unknown profile {merchant['profile']!r}")
+        if merchant["country"] == "US":
+            for field in ("sourceUrl", "sourceMcc", "sourceChecked"):
+                if not merchant.get(field):
+                    fail(f"{merchant['id']} needs cited US MCC field {field}")
+            if merchant["sourceMcc"] != profiles[merchant["profile"]]["primaryMcc"]:
+                fail(f"{merchant['id']} cited MCC must match its profile primary MCC")
 
     for profile_id, profile in profiles.items():
         mccs = profile["candidateMccs"]
