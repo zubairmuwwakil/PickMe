@@ -10,6 +10,13 @@ supersedes*, below — several ratified rules must be edited, not quietly ignore
 and `2026-09-04-purchase-decision-architecture-design.md` disagree, and the older one is still the
 one the code implements.
 
+**Research result 2026-09-04 — RED.** The public-source feasibility study
+([`card-benefit-claim-outcome-sources`](../../research/2026-09-04-card-benefit-claim-outcome-sources.md))
+found **zero issuer-attributable shopping-benefit claim outcomes** in Canadian institutional
+sources. Layer 5 cannot be cold-started from public data. Layers 0–4 are unaffected; Layers 5–6 now
+sit behind a data gate rather than a position in the build order. The study also changed the
+conditioning variable — see *Layer 5*.
+
 ## Thesis
 
 PickMe's protection advice is currently unfalsifiable. It tells the owner a card *has* purchase
@@ -26,9 +33,13 @@ recommendation → purchase → receipt → item identity → loss → claim →
 ```
 
 Once outcomes come back, protection has a measured dollar value instead of a modelled one. That is
-the product: PickMe becomes the only thing that knows *which issuers actually pay*, not which
+the product: PickMe becomes the only thing that knows *which adjudicators actually pay*, not which
 issuers promise to. No issuer publishes it. Every comparison site infers it from certificate prose,
 which describes what is owed, not what is paid.
+
+**This is a multi-year bet earned from first-party claims, not a launch capability.** The 2026-09-04
+research established that no public dataset can seed it. Layers 1–4 must therefore be worth building
+on their own merits — they are — and Layer 5 is what they compound into if the app lasts.
 
 Coverage records are a step on the way, not the destination.
 
@@ -169,22 +180,52 @@ And every claim writes the record this whole design exists for:
 
 | Captured | Why |
 |---|---|
-| card, benefit, item class, purchase amount | the conditioning variables |
+| **adjudicator** — underwriter and claims administrator | the real conditioning variable; see Layer 5 |
+| card, benefit, item class, purchase amount | secondary conditioning; the card selects the adjudicator |
 | filed date, loss date | timeliness, and whether notice windows are the real killer |
 | outcome: approved / partial / denied / abandoned | the label |
 | amount paid, days to settle | payout ratio and friction |
-| denial reason, structured + verbatim | the most useful field in the schema — it says which clause issuers actually enforce |
+| denial reason, structured + verbatim | valuable when it arrives, but see the caution below |
 
-`abandoned` matters as much as `denied`. A claim the owner gave up on is a real cost of that card's
-process, and only this app can see it.
+**Friction is the near-term signal, not approval rate.** Every claim produces a settlement time and
+an abandonment flag; only denials produce a denial reason, and only many denials in one cell produce
+an approval rate. The research found reported settlement ranging from next-business-day to a cheque
+roughly three months later, and at least one Amex extended-warranty claim abandoned mid-process
+(*"In the end I gave up"*). A benefit the owner abandons is worth zero regardless of whether it would
+have been approved — so time-to-settle and abandonment rate become useful at far lower sample sizes
+than approval rate, and nobody else publishes them.
+
+`abandoned` therefore matters more than `denied`, not merely as much.
+
+**Caution on denial reasons.** The research assessed the public record as narrative and procedural
+rather than clause-citing — *"clause-level precision is usually absent."* First-party final-position
+letters may be better, since the owner receives the insurer's actual written decision, but do not
+assume a clean clause-to-exclusion mapping will materialise. Design the field to hold verbatim text
+first and structure second.
 
 ## Layer 5 — expected protection value
 
 With outcomes, protection becomes money. The formulation that matters:
 
 ```text
-E[protection] = P(claim | item class) × P(approved | card, benefit, item class) × E[payout | approved]
+E[protection] = P(claim | item class) × P(approved | adjudicator, benefit, item class) × E[payout | approved]
 ```
+
+**Condition on the adjudicator, not the card.** This is the most useful thing the 2026-09-04 research
+produced. Claims are decided by underwriters and administrators, not by banks — TD purchase security
+is underwritten by TD Home and Auto with Global Excel adjudicating, BMO uses CUMIS with Allianz,
+Amex Canada uses Belair, and Scotiabank states outright that it is not an insurer. Administrators are
+**shared across issuers**, so claim behaviour clusters by adjudicator.
+
+Two consequences. First, a per-card prior would be the wrong model even with unlimited data. Second,
+and more usefully, pooling by adjudicator collapses the catalogue's ~145 products into roughly
+8–12 deciding entities, cutting the sample size Layer 5 needs by close to an order of magnitude. It
+is the single change that moves Layer 5 from implausible to merely distant.
+
+This makes **underwriter and claims administrator per card a required catalogue field.**
+`CertificateProvenance.underwriter` already exists and is unpopulated; a sibling `claimsAdministrator`
+is needed. Both are printed in the certificates Layer 1 already parses, so this is nearly free if
+captured during that pass — and expensive to backfill later. Capture it in Layer 1.
 
 Note what this deliberately is **not**: it is not `P(loss)`. You cannot observe losses — you observe
 claims. Trying to estimate loss frequency would reintroduce exactly the invented number the current
@@ -260,29 +301,43 @@ and the owner's contribution to derived priors. Hard delete, not soft. See *Priv
 
 Non-negotiable and unaffected by everything above.
 
-## The binding constraint: cold start
+## The binding constraint: cold start — settled, and it is RED
 
-No rule change fixes this, and it is the reason to be sceptical of the whole design.
+This was the gating question. It has been answered and the answer is no. Full study:
+[`2026-09-04-card-benefit-claim-outcome-sources.md`](../../research/2026-09-04-card-benefit-claim-outcome-sources.md).
 
-One user generates roughly zero claims per year. The outcome model needs hundreds across cards
-before any cell is meaningful, and you cannot recommend your way to volume. Layers 1–4 are useful on
-their own; **Layer 5 — the actual prize — is gated on data that does not exist and will not exist
-for a long time.**
+**Zero issuer-attributable purchase-protection or extended-warranty outcomes were located in
+Canadian institutional sources** across OBSI, GIO, OLHI, AMF, FCAC, CanLII and OSFI filings. Layer 5
+has no public cold start.
 
-The realistic path is to bootstrap priors from public sources rather than users:
+Three findings matter more than the headline count:
 
-- **OBSI** (Ombudsman for Banking Services and Investments) publishes case summaries of Canadian
-  banking complaints, including card-benefit denials, with the bank named.
-- Years of Canadian cardholder forum and subreddit posts describe specific denials on specific cards
-  with the reason given.
-- Provincial small-claims filings against insurers are public.
+1. **OBSI was the wrong door, and the right door is structurally closed.** A denied card-benefit
+   claim is a dispute with the *insurer* named in the certificate, not the bank; OBSI's Terms of
+   Reference exclude affiliates whose main business is insurance. The bodies that do see the merits —
+   GIO and OLHI — anonymise the carrier. GIO has precisely the case this design would want, a card
+   cell-phone claim denied on notice timing and reversed on documents, and identifies the carrier
+   only as "the Insurer." **The process that produces the useful narrative is the process that strips
+   the conditioning variable.** More searching does not fix that.
+2. **Denial reasons fail independently of volume.** The public record is narrative and procedural
+   rather than clause-citing, so even a large anecdote corpus would leave the richest intended field
+   mostly null. Both kill criteria fired.
+3. **The legal gate and the statistical gate agree, so do not fight the legal one.** Reddit holds the
+   densest attributable anecdotes and its terms bar systematic collection without agreement. Pursuing
+   permission is not worth it: a corpus of voluntary posts is selection-biased in exactly the
+   direction that matters. Even lawfully obtained, it would mislead.
 
-These are weak, biased evidence — people post when denied — and must be marked as a different
-provenance tier from observed outcomes, with correspondingly wide intervals. But they establish a
-prior that real outcomes then update, and they make Layer 5 shippable before there is a user base.
+**Consequence for the build.** Layers 5 and 6 leave the numbered sequence and sit behind a **data
+gate**: no expected-value model, and no dollar figure shown, until observed first-party outcomes
+clear the minimum cell size under I6 and I7 — counted **per adjudicator**, which is what makes the
+threshold reachable at all. Until then Layer 4 accumulates, and the app ships Layers 0–4 on their own
+merits.
 
-**Test this before building Layers 4 and 5.** A day spent finding out whether OBSI summaries name
-enough cards and benefits to seed anything is the highest-value work in this document.
+**The one path that could flip this to amber** is not a search — it is a request. Ask GIO and OLHI
+directly whether they can supply de-identified records that *retain* insurer, benefit type, outcome
+and reason. That targets the anonymisation problem head-on and costs an email. It is an
+owner-initiated outward request, not agent work. Direct underwriter requests (Belair, Allianz,
+Global Excel, CUMIS) are the same shape and much likelier to be declined.
 
 ## Privacy and legal — the assumed cost
 
@@ -325,23 +380,31 @@ on device. Claim assembly and outcome capture are online-only and that is fine.
 
 0. **Erasure path and retention job.** Before any ingestion. (I9)
 1. **Structured certificate predicates** for the 27 cards, quote-backed, in `contracts/`, twinned,
-   fixture-gated. Useful immediately — it upgrades today's protection lens from prose to evaluated
-   verdicts with no new personal data at all.
+   fixture-gated — **and capture underwriter plus claims administrator in the same pass.** Useful
+   immediately: it upgrades today's protection lens from prose to evaluated verdicts with no new
+   personal data at all, and the adjudicator fields are nearly free now and expensive to backfill.
 2. **The ratified-document edits** listed above. Do these before shipping code that contradicts them.
 3. **Receipt → item identity**, on top of In Unity's existing ingestion.
 4. **Coverage records + reprocess-on-contract-change**, reusing the `email-fact-reprocess` pattern.
-5. **Claim assembly and outcome capture.**
-6. **Priors, cold-start-seeded, with intervals.**
-7. **New decision policy version** that spends protection dollars in the score, old policy retained
-   as fallback.
+5. **Claim assembly and outcome capture**, capturing adjudicator, settlement time and abandonment
+   from the first claim onward.
+
+Then stop. The remaining two are **gated on data, not on sequence**, and may wait years:
+
+- **Priors per adjudicator**, with intervals, once cell sizes clear I6 and I7.
+- **New decision policy version** that spends protection dollars in the score, old policy retained
+  as fallback.
 
 Step 1 is worth doing even if the owner later abandons everything after step 3 — it makes the
-existing shipped protection lens better on its own terms.
+existing shipped protection lens better on its own terms. Under the RED verdict that is no longer a
+hedge but the likely near-term reality.
 
 ## What would still make this fail
 
-1. **Cold start never resolves.** Layer 5 sits unbuilt behind a dataset that never arrives, and the
-   product is a good coverage tracker with an unfulfilled thesis.
+1. **Cold start never resolves — now the live case, not a hypothetical.** The public seed is
+   confirmed unavailable, so Layer 5 depends entirely on first-party volume the app does not yet
+   have. The realistic outcome is a good coverage-and-claims tracker with an unfulfilled thesis.
+   Everything downstream should be judged on whether Layers 1–4 justify themselves alone.
 2. **Receipt coverage is thin.** Item identity requires the receipt. If most purchases never produce
    an ingestible receipt — in-store, cash-adjacent, no email — then `indeterminate` becomes the
    normal answer and the screen is mostly blank.
@@ -356,7 +419,9 @@ existing shipped protection lens better on its own terms.
 
 ## Unsettled
 
-1. Whether OBSI and public sources can seed priors at all — the gating experiment.
+1. ~~Whether public sources can seed priors~~ — **answered 2026-09-04: no.** See the cold-start
+   section. What remains open is whether a direct de-identified data request to GIO or OLHI can
+   return records retaining insurer, benefit, outcome and reason.
 2. Whether structured predicates belong in `benefits-catalogue.json` or a sibling
    `certificate-predicates.json`. Leaning sibling: different provenance cadence, different review
    process, and the benefits catalogue stays readable.
