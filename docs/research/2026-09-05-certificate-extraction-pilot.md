@@ -158,6 +158,20 @@ shows three worked shapes.
 **Note on tooling:** these PDFs do not parse through page-fetch tools. Download them and extract
 text with `pypdf` (installed), then locate sections by keyword. Budget one card at a time.
 
+**Already done — do not redo:** `amex-platinum`, `td-aeroplan-visa-infinite`,
+`bmo-cashback-world-elite` (this pilot); `amex-cobalt`, `amex-bonvoy`, `mbna-rewards-we`,
+`scotia-momentum-vi-plus`, `tangerine-moneyback-world`, `rogers-red-we`
+(`2026-09-05-certificate-extraction-batch-02.md`). **Skip entirely:** `cryptocom-royal-indigo` and
+`comenity-aaa-daily-advantage-visa-signature` — both are `stub` with no located certificate, so
+there is nothing to read. That leaves **44 cards**. Work in catalogue order and skip any card in
+the lists above; "resume after the last card" is not sufficient, because completed cards are not
+contiguous.
+
+**Quotes are short anchors, not transcripts.** One sentence per field plus a page locator.
+`catalogue-pipeline/RAW_SOURCE_POLICY.md` keeps uncleared third-party expression out of this public
+repo and committed files persist in tagged source archives, so name exclusion categories with
+locators rather than reproducing full clause lists. Batch 02 got this right.
+
 **Batch size: 6 cards per session, maximum.** These certificates run 50–80 pages each and the
 extracted text is large. Attempting the full 52 in one pass will exhaust context and produce
 degraded extraction on the later cards, which is worse than fewer cards done properly. Finish a

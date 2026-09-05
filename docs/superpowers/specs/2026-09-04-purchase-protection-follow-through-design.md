@@ -277,6 +277,14 @@ Structured conditions are machine-readable claims about a legal document. Every 
 sentence it came from, and an unquoted or `stub` predicate produces no coverage verdict and no
 expected value.
 
+**Refined 2026-09-05.** "Quote" means a **short, field-level anchor plus a page locator** — the one
+sentence that establishes that field — not wholesale reproduction of a certificate's clause lists.
+`catalogue-pipeline/RAW_SOURCE_POLICY.md` keeps uncleared third-party expression out of this public
+repo, and anything committed persists in tagged source archives. Reproducing every exclusion across
+55 cards would be bulk reproduction of issuer expression; a sentence per field, attributed to a
+public issuer URL, is not. A predicate may therefore name an exclusion category (`jewellery`,
+`used-or-refurbished`) with a locator, provided a human can verify it against the cited page.
+
 ### I2 — Coverage verdicts carry their contract version and are reprocessed, never left stale
 
 A stored `covered` that outlived the certificate it was derived from is the one failure mode that
