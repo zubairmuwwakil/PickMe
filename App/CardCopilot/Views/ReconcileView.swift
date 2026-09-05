@@ -14,6 +14,10 @@ struct ReconcileEntry {
     let observedRewardUnits: Double?
     let missClass: MissClass?
     let note: String?
+    /// Optional literal network MCC from an issuer export or statement. It is distinct from the
+    /// owner-selected category label: only a four-digit MCC can validate an MCC graph decision.
+    let observedMerchantCategoryCode: Int?
+    let rewardOutcomeCategory: String?
 }
 
 /// The weekly ritual: every prediction still waiting on a statement.
@@ -180,7 +184,9 @@ struct ReconcileView: View {
             observedCategory: prediction.predictedCategory,
             observedRewardUnits: nil,
             missClass: nil,
-            note: nil
+            note: nil,
+            observedMerchantCategoryCode: nil,
+            rewardOutcomeCategory: nil
         )
         onConfirm(prediction, entry)
     }
@@ -217,6 +223,7 @@ struct ReconcileEntryView: View {
     @State private var missClass: MissClass?
     @State private var note: String = ""
     @State private var rewardOutcomeCategory: String?
+    @State private var merchantCategoryCodeText: String = ""
 
     init(prediction: StoredPrediction, cards: [CardProduct], categories: [String],
          onConfirm: @escaping (ReconcileEntry) -> Void, onCancel: @escaping () -> Void) {
@@ -331,6 +338,16 @@ struct ReconcileEntryView: View {
                 }
             }
 
+            if isMCCOutcomeEligible {
+                Section("Exact MCC (optional)") {
+                    TextField("Four-digit MCC", text: $merchantCategoryCodeText)
+                        .keyboardType(.numberPad)
+                    Text("If your issuer export shows the four-digit MCC, enter it here. It validates whether learned MCC evidence correctly changed PickMe's recommendation. A category label alone cannot do that.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section {
                 Button {
                     saveObservation()
@@ -340,7 +357,7 @@ struct ReconcileEntryView: View {
                         .frame(maxWidth: .infinity)
                         .foregroundStyle(.blue)
                 }
-                .disabled(!unitsAreValid || !amountIsValid)
+                .disabled(!unitsAreValid || !amountIsValid || !merchantCategoryCodeIsValid)
             } footer: {
                 Text("This permanently logs your statement observation and, when you explicitly provide reward-category feedback, trains the local Merchant MCC Graph for next time.")
             }
@@ -366,11 +383,20 @@ struct ReconcileEntryView: View {
         return MerchantMCCRewardFeedback.shouldPrompt(for: purchase)
     }
 
+    private var isMCCOutcomeEligible: Bool {
+        guard let data = prediction.frozenInputs,
+              let snapshot = try? JSONDecoder().decode(ScoredRuleSnapshot.self, from: data)
+        else { return false }
+        return snapshot.mccRuntimeEvidenceChangedWinner == true
+    }
+
+    private var merchantCategoryCodeIsValid: Bool {
+        let trimmed = merchantCategoryCodeText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty || (trimmed.count == 4 && trimmed.allSatisfy(\.isNumber))
+    }
+
     private func saveObservation() {
         onConfirm(entry)
-        guard let rewardOutcomeCategory,
-              let purchase = prediction.purchase else { return }
-        MerchantMCCRewardFeedback.record(category: rewardOutcomeCategory, for: purchase)
     }
 
     private var entry: ReconcileEntry {
@@ -382,7 +408,9 @@ struct ReconcileEntryView: View {
                 observedCategory: prediction.predictedCategory,
                 observedRewardUnits: Double(unitsText.trimmingCharacters(in: .whitespaces)),
                 missClass: nil,
-                note: trimmedNote.isEmpty ? nil : trimmedNote
+                note: trimmedNote.isEmpty ? nil : trimmedNote,
+                observedMerchantCategoryCode: parsedMerchantCategoryCode,
+                rewardOutcomeCategory: rewardOutcomeCategory
             )
         } else {
             return ReconcileEntry(
@@ -391,9 +419,15 @@ struct ReconcileEntryView: View {
                 observedCategory: observedCategory,
                 observedRewardUnits: Double(unitsText.trimmingCharacters(in: .whitespaces)),
                 missClass: missClass,
-                note: trimmedNote.isEmpty ? nil : trimmedNote
+                note: trimmedNote.isEmpty ? nil : trimmedNote,
+                observedMerchantCategoryCode: parsedMerchantCategoryCode,
+                rewardOutcomeCategory: rewardOutcomeCategory
             )
         }
+    }
+
+    private var parsedMerchantCategoryCode: Int? {
+        Int(merchantCategoryCodeText.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
     /// Nil rather than zero when blank or unparseable — an unstated charge is unknown, and a

@@ -145,6 +145,9 @@ public struct CheckoutService {
     let explainer: RecommendationExplainer
     public let log: PredictionLog
     private let context: ModelContext
+    /// Event ids removed from local Activity. Remote feedback is intentionally preserved, but it
+    /// must not be allowed to recreate a purchase the owner deleted on this device.
+    private let walletCaptureDeletionStore: WalletCaptureDeletionStore
     /// Counts which rung of the resolution ladder answered. Injected so a test can observe it
     /// without writing to the owner's real App Group counters.
     private let metrics: CategoryResolutionMetricsStore
@@ -168,8 +171,10 @@ public struct CheckoutService {
     private let programCentsPerPoint: [String: Double]
 
     public init(catalogue: Catalogue, ownerState: OwnerState, context: ModelContext,
-                metrics: CategoryResolutionMetricsStore = CategoryResolutionMetricsStore()) {
+                metrics: CategoryResolutionMetricsStore = CategoryResolutionMetricsStore(),
+                walletCaptureDeletionStore: WalletCaptureDeletionStore = WalletCaptureDeletionStore()) {
         self.metrics = metrics
+        self.walletCaptureDeletionStore = walletCaptureDeletionStore
         self.engine = RecommendationEngine(catalogue: catalogue, ownerState: ownerState)
         self.explainer = RecommendationExplainer(catalogue: catalogue)
         self.log = PredictionLog(context: context)
@@ -188,6 +193,19 @@ public struct CheckoutService {
                 else { return nil }
                 return (card.program.programId, cpp)
             }, uniquingKeysWith: { first, _ in first })
+    }
+
+    /// Records the strongest honest MCC outcome available after a checkout: a later literal MCC
+    /// either matches the learned MCC that changed the winner or it does not. The aggregate
+    /// metrics store receives only that Boolean, never the purchase, MCC, card, or time.
+    public func recordMCCDecisionQualityOutcome(for prediction: StoredPrediction,
+                                                observedMerchantCategoryCode: Int) {
+        guard let matchesLearnedMCC = MerchantMCCDecisionQuality.runtimeEvidenceWinnerWasValidated(
+            prediction: prediction,
+            observedMerchantCategoryCode: observedMerchantCategoryCode)
+        else { return }
+        metrics.record(.mccRuntimeEvidenceWinnerExactMCCValidated(
+            matchesLearnedMCC: matchesLearnedMCC))
     }
 
     public func recommend(merchant: NearbyPlace, amountCad: Double?,
@@ -275,6 +293,7 @@ public struct CheckoutService {
         // Evaluate only explicit PickMe checkout decisions. Arrival-alert scoring reuses this
         // service but can repeat in the background; counting those would overweight frequently
         // visited merchants and distort the product question this denominator is meant to answer.
+        var runtimeEvidenceChangedWinner: Bool?
         if purchaseSource == .pickMeCheckout,
            prediction.rawCategory?.hasPrefix("merchantMccGraph:") == true,
            let snapshot = merchantMCCGraphRuntimeSnapshot(for: merchant) {
@@ -310,6 +329,7 @@ public struct CheckoutService {
                 metrics.record(.mccRuntimeEvidenceEvaluated(
                     changedTopMCC: quality.runtimeEvidenceChangedTopMCC,
                     changedWinner: quality.runtimeEvidenceChangedWinner))
+                runtimeEvidenceChangedWinner = quality.runtimeEvidenceChangedWinner
             }
         }
 
@@ -323,7 +343,8 @@ public struct CheckoutService {
             ScoredRuleSnapshot.capture(score: primary.winner, card: card, asOf: asOf,
                                        programId: card.program.programId,
                                        unit: card.program.unit,
-                                       centsPerPoint: programCentsPerPoint[card.program.programId])
+                                       centsPerPoint: programCentsPerPoint[card.program.programId],
+                                       mccRuntimeEvidenceChangedWinner: runtimeEvidenceChangedWinner)
         }
         let stored = try log.record(StoredPrediction(
             merchantName: merchant.name,
@@ -458,10 +479,14 @@ public struct CheckoutService {
     /// Purchases and the finish queue refresh together.
     @discardableResult
     public func ingestAutomaticCaptures(from feedback: [WalletFeedback]) throws -> [StoredPurchase] {
+        // Feedback is an account-level source of truth, while Activity deletion is an explicitly
+        // local choice. Filter before matching as well as auto-logging: otherwise deleting a
+        // matched checkout would let the same event attach to its now-open prediction again.
+        let visibleFeedback = feedback.filter { !walletCaptureDeletionStore.contains(eventID: $0.eventId) }
         let predictions = try log.allPredictions()
         let predictionsByID = Dictionary(uniqueKeysWithValues: predictions.map { ($0.id, $0) })
-        let feedbackByID = Dictionary(grouping: feedback, by: \.eventId)
-        var purchases = try CaptureMatcher.automaticProposals(for: predictions, from: feedback)
+        let feedbackByID = Dictionary(grouping: visibleFeedback, by: \.eventId)
+        var purchases = try CaptureMatcher.automaticProposals(for: predictions, from: visibleFeedback)
             .compactMap { proposal -> StoredPurchase? in
                 guard let prediction = predictionsByID[proposal.predictionId],
                       let matchingFeedback = feedbackByID[proposal.eventId],
@@ -475,7 +500,7 @@ public struct CheckoutService {
         // checkout must still be classified as claimed during this ingest; event-id deduplication
         // provides the second guard against creating a standalone duplicate.
         purchases += try AutoCaptureLog(context: context, metrics: metrics)
-            .ingest(feedback: feedback, openPredictions: predictions)
+            .ingest(feedback: visibleFeedback, openPredictions: predictions)
         for purchase in purchases {
             try assessPurchase(purchase, evaluatedAt: purchase.createdAt)
             if let merchantKey = purchase.merchantKey {
@@ -485,6 +510,16 @@ public struct CheckoutService {
             }
         }
         return purchases
+    }
+
+    /// Removes an Activity row and, when it came from Wallet Capture, remembers that local
+    /// deletion before the next account feedback refresh can offer the event again.
+    public func deletePurchase(_ purchase: StoredPurchase) throws {
+        let walletEventID = purchase.walletEventId
+        try log.deletePurchase(purchase)
+        if let walletEventID {
+            walletCaptureDeletionStore.recordDeletion(eventID: walletEventID)
+        }
     }
 
     /// Applies a high-confidence MapKit resolution to an automatic Wallet capture.

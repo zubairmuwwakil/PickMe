@@ -191,6 +191,16 @@ final class CategoryResolutionMetricsTests: XCTestCase {
                        "counters must not survive an erase")
     }
 
+    func testV2EraseAlsoRemovesTheRetiredDoubleCountedAggregate() {
+        let migrationStore = CategoryResolutionMetricsStore(defaults: defaults)
+        defaults.set(Data("{\"mccRuntimeEvidenceEvaluations\":9}".utf8),
+                     forKey: "ca.pickme.category-resolution-metrics.v1")
+
+        migrationStore.forgetAll()
+
+        XCTAssertNil(defaults.data(forKey: "ca.pickme.category-resolution-metrics.v1"))
+    }
+
     // MARK: - The identity ladder
 
     /// A second ladder, counted separately on purpose. `resolutionsByRung` answers "did we know
@@ -254,4 +264,3 @@ final class CategoryResolutionMetricsTests: XCTestCase {
         XCTAssertEqual(reread.identityMatchesByRung, ["placeID": 1])
     }
 }
-

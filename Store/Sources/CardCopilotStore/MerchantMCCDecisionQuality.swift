@@ -1,4 +1,5 @@
 import Foundation
+import CardCopilotEngine
 
 /// Aggregate-only answer to the two product questions the MCC graph exists to improve:
 ///
@@ -58,5 +59,27 @@ enum MerchantMCCDecisionQuality {
             hasRuntimeEvidence: snapshot.hasRuntimeEvidence,
             runtimeEvidenceChangedTopMCC: changedTop,
             runtimeEvidenceChangedWinner: changedWinner)
+    }
+
+    /// Returns a classification-validated outcome for a decision whose learned MCC evidence
+    /// changed the winning card. `nil` deliberately means that this observation cannot answer
+    /// that question: it may predate provenance, lack an exact MCC, or be a decision where
+    /// learning did not change the winner.
+    ///
+    /// This validates the MCC premise of the recommendation, not every fact that affects the
+    /// card's value (for example an issuer posting adjustment or a benefit the owner did not
+    /// use). It is the strongest outcome this local MCC signal can honestly establish.
+    static func runtimeEvidenceWinnerWasValidated(
+        prediction: StoredPrediction,
+        observedMerchantCategoryCode: Int
+    ) -> Bool? {
+        guard prediction.rawCategory?.hasPrefix("merchantMccGraph:") == true,
+              let predictedMCC = prediction.merchantCategoryCode,
+              let data = prediction.frozenInputs,
+              let snapshot = try? JSONDecoder().decode(ScoredRuleSnapshot.self, from: data),
+              snapshot.mccRuntimeEvidenceChangedWinner == true
+        else { return nil }
+
+        return predictedMCC == observedMerchantCategoryCode
     }
 }

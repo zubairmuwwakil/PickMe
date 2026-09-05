@@ -272,11 +272,15 @@ public struct PredictionLog {
         if !hasBoth { purchase.completedAt = nil }
     }
 
+    @discardableResult
     public func confirm(_ purchase: StoredPurchase,
                         observedCategory: String, observedRewardUnits: Double? = nil,
                         missClass: MissClass?,
                         note: String?, confirmedAt: Date = Date(),
-                        observedMerchantCategoryCode: Int? = nil) throws {
+                        observedMerchantCategoryCode: Int? = nil) throws -> Bool {
+        // A purchase owns one statement observation. Besides matching the data model, this makes
+        // outcome metrics and community evidence idempotent if a view retries its save action.
+        guard purchase.observation == nil else { return false }
         let rawObservedCategory = observedCategory
         let observedCategory = CategoryTaxonomy.canonicalID(observedCategory)
         let observation = StoredObservation(observedCategory: observedCategory,
@@ -294,6 +298,7 @@ public struct PredictionLog {
         // A community upload is queued only when the owner opted in and supplied a literal MCC.
         // Category-only feedback and reward inference still cannot be turned into a shared MCC.
         CommunityMerchantMCCPendingStore.shared.enqueue(purchase: purchase)
+        return true
     }
 
     /// Terminal-level promotion, never brand-wide. The dossier (§6) is explicit: the owner's

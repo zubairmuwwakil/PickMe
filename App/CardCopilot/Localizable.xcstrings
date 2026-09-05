@@ -2852,6 +2852,9 @@
         }
       }
     },
+    "Erases your prediction log, confirmations, saved merchant locations, and local MCC learning/imports from this iPhone. Your account and anything already synced to PickMe are not affected." : {
+
+    },
     "Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to Inunity are not affected." : {
       "comment" : "human review before public launch",
       "extractionState" : "stale",
@@ -2863,9 +2866,6 @@
           }
         }
       }
-    },
-    "Erases your prediction log, your confirmations, and saved merchant locations from this iPhone. Your account and anything already synced to PickMe are not affected." : {
-
     },
     "Estimated · Tap to enter exact amount & currency" : {
 
@@ -3299,6 +3299,9 @@
       }
     },
     "If you leave 'Run After Confirmation' selected, Apple will ask you to confirm the automation on every payment, defeating automatic tap tracking." : {
+
+    },
+    "Import issuer MCC CSV" : {
 
     },
     "Import my document" : {
@@ -3832,6 +3835,9 @@
 
     },
     "Merchant identity (instrumentation)" : {
+
+    },
+    "Merchant MCC learning" : {
 
     },
     "Merchants looked up" : {
@@ -4448,6 +4454,9 @@
           }
         }
       }
+    },
+    "Optional and local. PickMe accepts only explicit four-digit MCC rows. Amount and card network may be used transiently to match exactly one purchase already on this iPhone; they are not retained by the MCC learner. Ambiguous matches stay unlocated instead of being guessed." : {
+
     },
     "Optional multi-device power tools" : {
 
@@ -6957,6 +6966,7 @@
     },
     "Your prediction log, confirmations, and saved merchant locations are deleted from this iPhone. This cannot be undone. Your account is not affected." : {
       "comment" : "human review before public launch",
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {
@@ -6966,8 +6976,15 @@
         }
       }
     },
+    "Your prediction log, confirmations, saved merchant locations, and local MCC learning are deleted from this iPhone. This cannot be undone. Your account is not affected." : {
+
+    },
+    "Your prediction log, confirmations, saved merchant locations, and local MCC learning are stored only on this iPhone. They were never uploaded as account data, so deleting your account does not touch them unless you choose Erase." : {
+
+    },
     "Your prediction log, your confirmations, and saved merchant locations are stored only on this iPhone — they were never uploaded, so deleting your account does not touch them. Choose what happens to them." : {
       "comment" : "human review before public launch",
+      "extractionState" : "stale",
       "localizations" : {
         "fr-CA" : {
           "stringUnit" : {

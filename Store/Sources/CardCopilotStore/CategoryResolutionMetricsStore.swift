@@ -1,6 +1,96 @@
 import Foundation
 import CardCopilotEngine
 
+/// The intentional public surface for MCC decision-quality diagnostics.
+///
+/// This summary contains aggregate counts and optional rates only. It cannot identify a merchant,
+/// MCC, category, card, coordinate, or time. In particular, a `nil` rate means that the relevant
+/// comparison could not be scored; it must not be rendered as 0%.
+public struct MerchantMCCDecisionQualitySummary: Equatable, Sendable {
+    /// PickMe checkout decisions where the MCC graph supplied the category.
+    public let graphDecisionCount: Int
+    /// Those decisions that also had learned evidence beyond the shipped seed.
+    public let runtimeEvidenceDecisionCount: Int
+    /// Learned-evidence decisions where the most likely MCC moved.
+    public let runtimeEvidenceTopMCCChangeCount: Int
+    /// MCC-uncertain decisions for which at least two branches could be scored.
+    public let scoreableMCCUncertaintyDecisionCount: Int
+    /// Scoreable MCC-uncertain decisions whose plausible branches chose different cards.
+    public let mccUncertaintyWinnerChangeCount: Int
+    /// MCC-uncertain decisions that could not be scored because their branches lacked taxonomy
+    /// coverage. This is deliberately separate from a stable winner.
+    public let unscoreableMCCUncertaintyDecisionCount: Int
+    /// Learned-evidence decisions where both the seed and learned winner could be scored.
+    public let scoreableRuntimeEvidenceWinnerComparisonCount: Int
+    /// Scoreable learned-evidence comparisons where the recommended card changed.
+    public let runtimeEvidenceWinnerChangeCount: Int
+    /// Changed-winner decisions later joined to an exact, observed MCC.
+    public let exactMCCWinnerValidationCount: Int
+    /// Validated changed-winner decisions where the learned top MCC matched that exact MCC.
+    public let exactMCCValidatedWinnerChangeCount: Int
+
+    public init(graphDecisionCount: Int,
+                runtimeEvidenceDecisionCount: Int,
+                runtimeEvidenceTopMCCChangeCount: Int,
+                scoreableMCCUncertaintyDecisionCount: Int,
+                mccUncertaintyWinnerChangeCount: Int,
+                unscoreableMCCUncertaintyDecisionCount: Int,
+                scoreableRuntimeEvidenceWinnerComparisonCount: Int,
+                runtimeEvidenceWinnerChangeCount: Int,
+                exactMCCWinnerValidationCount: Int,
+                exactMCCValidatedWinnerChangeCount: Int) {
+        self.graphDecisionCount = graphDecisionCount
+        self.runtimeEvidenceDecisionCount = runtimeEvidenceDecisionCount
+        self.runtimeEvidenceTopMCCChangeCount = runtimeEvidenceTopMCCChangeCount
+        self.scoreableMCCUncertaintyDecisionCount = scoreableMCCUncertaintyDecisionCount
+        self.mccUncertaintyWinnerChangeCount = mccUncertaintyWinnerChangeCount
+        self.unscoreableMCCUncertaintyDecisionCount = unscoreableMCCUncertaintyDecisionCount
+        self.scoreableRuntimeEvidenceWinnerComparisonCount = scoreableRuntimeEvidenceWinnerComparisonCount
+        self.runtimeEvidenceWinnerChangeCount = runtimeEvidenceWinnerChangeCount
+        self.exactMCCWinnerValidationCount = exactMCCWinnerValidationCount
+        self.exactMCCValidatedWinnerChangeCount = exactMCCValidatedWinnerChangeCount
+    }
+
+    /// Graph decisions that still used the shipped seed alone.
+    public var seedOnlyDecisionCount: Int {
+        max(0, graphDecisionCount - runtimeEvidenceDecisionCount)
+    }
+
+    /// How often graph-backed decisions had learned evidence available.
+    public var runtimeEvidenceCoverageShare: Double? {
+        guard graphDecisionCount > 0 else { return nil }
+        return Double(runtimeEvidenceDecisionCount) / Double(graphDecisionCount)
+    }
+
+    /// How often a scoreable MCC fork selected different winning cards.
+    public var mccUncertaintyWinnerChangeShare: Double? {
+        guard scoreableMCCUncertaintyDecisionCount > 0 else { return nil }
+        return Double(mccUncertaintyWinnerChangeCount) / Double(scoreableMCCUncertaintyDecisionCount)
+    }
+
+    /// How often learned evidence moved the top MCC.
+    public var runtimeEvidenceTopMCCChangeShare: Double? {
+        guard runtimeEvidenceDecisionCount > 0 else { return nil }
+        return Double(runtimeEvidenceTopMCCChangeCount) / Double(runtimeEvidenceDecisionCount)
+    }
+
+    /// The headline metric: how often scoreable learned evidence changed the winning card.
+    public var runtimeEvidenceWinnerChangeShare: Double? {
+        guard scoreableRuntimeEvidenceWinnerComparisonCount > 0 else { return nil }
+        return Double(runtimeEvidenceWinnerChangeCount)
+            / Double(scoreableRuntimeEvidenceWinnerComparisonCount)
+    }
+
+    /// The outcome-backed headline: of changed-winner decisions with an exact observed MCC,
+    /// how often did the learned MCC match the later observation? `nil` is not 0%; it means no
+    /// decision has yet been validated this way.
+    public var exactMCCValidatedWinnerChangeShare: Double? {
+        guard exactMCCWinnerValidationCount > 0 else { return nil }
+        return Double(exactMCCValidatedWinnerChangeCount)
+            / Double(exactMCCWinnerValidationCount)
+    }
+}
+
 /// Which rung of the resolution ladder actually answers, counted on device.
 ///
 /// Deliberately holds no merchant, no category, no coordinate and no timestamp — only how often
@@ -61,6 +151,11 @@ public struct CategoryResolutionMetrics: Codable, Equatable, Sendable {
     public var mccRuntimeEvidenceWinnerComparisons = 0
     /// Winner comparisons where learning actually changed the card recommendation.
     public var mccRuntimeEvidenceChangedWinner = 0
+    /// Changed-winner decisions later connected to a literal MCC observed by the owner or safely
+    /// joined from an issuer export. The metric store keeps only this count, never the MCC.
+    public var mccRuntimeEvidenceWinnerExactMCCValidations = 0
+    /// Exact-MCC validations where learned evidence's selected MCC matched the observed MCC.
+    public var mccRuntimeEvidenceWinnerValidatedChanges = 0
 
     public init() {}
 
@@ -95,6 +190,8 @@ public struct CategoryResolutionMetrics: Codable, Equatable, Sendable {
         mccRuntimeEvidenceChangedTopMCC = try count(.mccRuntimeEvidenceChangedTopMCC)
         mccRuntimeEvidenceWinnerComparisons = try count(.mccRuntimeEvidenceWinnerComparisons)
         mccRuntimeEvidenceChangedWinner = try count(.mccRuntimeEvidenceChangedWinner)
+        mccRuntimeEvidenceWinnerExactMCCValidations = try count(.mccRuntimeEvidenceWinnerExactMCCValidations)
+        mccRuntimeEvidenceWinnerValidatedChanges = try count(.mccRuntimeEvidenceWinnerValidatedChanges)
     }
 
     public var totalResolutions: Int { resolutionsByRung.values.reduce(0, +) }
@@ -128,9 +225,39 @@ public struct CategoryResolutionMetrics: Codable, Equatable, Sendable {
         guard mccRuntimeEvidenceWinnerComparisons > 0 else { return nil }
         return Double(mccRuntimeEvidenceChangedWinner) / Double(mccRuntimeEvidenceWinnerComparisons)
     }
+
+    /// Of changed-winner decisions that later received a literal MCC, how often did learned
+    /// evidence select that MCC? Nil means no literal-MCC outcome has been observed.
+    public var mccRuntimeEvidenceWinnerExactMCCValidationShare: Double? {
+        guard mccRuntimeEvidenceWinnerExactMCCValidations > 0 else { return nil }
+        return Double(mccRuntimeEvidenceWinnerValidatedChanges)
+            / Double(mccRuntimeEvidenceWinnerExactMCCValidations)
+    }
+
+    /// Deliberate app-facing projection of the MCC counters. Keep new UI fields here rather than
+    /// exposing assessment internals or teaching each view which counters form a denominator.
+    public var merchantMCCDecisionQualitySummary: MerchantMCCDecisionQualitySummary {
+        MerchantMCCDecisionQualitySummary(
+            graphDecisionCount: mccGraphDecisionEvaluations,
+            runtimeEvidenceDecisionCount: mccRuntimeEvidenceEvaluations,
+            runtimeEvidenceTopMCCChangeCount: mccRuntimeEvidenceChangedTopMCC,
+            scoreableMCCUncertaintyDecisionCount:
+                mccGraphStableWinnerAcrossMCCs + mccGraphSensitiveWinnerAcrossMCCs,
+            mccUncertaintyWinnerChangeCount: mccGraphSensitiveWinnerAcrossMCCs,
+            unscoreableMCCUncertaintyDecisionCount: mccGraphInsufficientScoreableBranches,
+            scoreableRuntimeEvidenceWinnerComparisonCount: mccRuntimeEvidenceWinnerComparisons,
+            runtimeEvidenceWinnerChangeCount: mccRuntimeEvidenceChangedWinner,
+            exactMCCWinnerValidationCount: mccRuntimeEvidenceWinnerExactMCCValidations,
+            exactMCCValidatedWinnerChangeCount: mccRuntimeEvidenceWinnerValidatedChanges)
+    }
 }
 
 public final class CategoryResolutionMetricsStore: @unchecked Sendable {
+    private static let currentKey = "ca.pickme.category-resolution-metrics.v2"
+    /// v1 double-counted runtime-evidence evaluations for PickMe checkout. It is not read after
+    /// the v2 migration, but history erasure must still remove the retired aggregate.
+    private static let retiredKeys = ["ca.pickme.category-resolution-metrics.v1"]
+
     public enum Event {
         case resolved(rung: ConfidenceSource, forked: Bool)
         case walletEnrichmentAttempted
@@ -146,6 +273,8 @@ public final class CategoryResolutionMetricsStore: @unchecked Sendable {
         /// One graph checkout carrying evidence collected after the shipped/static baseline.
         case mccRuntimeEvidenceEvaluated(changedTopMCC: Bool,
                                          changedWinner: Bool?)
+        /// A literal MCC later validated (or contradicted) a changed-winner decision.
+        case mccRuntimeEvidenceWinnerExactMCCValidated(matchesLearnedMCC: Bool)
     }
 
     private let defaults: UserDefaults
@@ -155,7 +284,7 @@ public final class CategoryResolutionMetricsStore: @unchecked Sendable {
     /// happens in the app, in the Wallet Capture App Intent, and on a geofence wake, and a counter
     /// split across three process-local stores would answer nothing.
     public init(defaults: UserDefaults = OwnerStateLocalStore.sharedDefaults,
-                key: String = "ca.pickme.category-resolution-metrics.v1") {
+                key: String = "ca.pickme.category-resolution-metrics.v2") {
         self.defaults = defaults
         self.key = key
     }
@@ -202,6 +331,9 @@ public final class CategoryResolutionMetricsStore: @unchecked Sendable {
                 metrics.mccRuntimeEvidenceWinnerComparisons += 1
                 if changedWinner { metrics.mccRuntimeEvidenceChangedWinner += 1 }
             }
+        case .mccRuntimeEvidenceWinnerExactMCCValidated(let matchesLearnedMCC):
+            metrics.mccRuntimeEvidenceWinnerExactMCCValidations += 1
+            if matchesLearnedMCC { metrics.mccRuntimeEvidenceWinnerValidatedChanges += 1 }
         }
         guard let data = try? JSONEncoder().encode(metrics) else { return }
         defaults.set(data, forKey: key)
@@ -211,5 +343,8 @@ public final class CategoryResolutionMetricsStore: @unchecked Sendable {
     /// standing would keep describing activity the owner asked to be forgotten.
     public func forgetAll() {
         defaults.removeObject(forKey: key)
+        if key == Self.currentKey {
+            Self.retiredKeys.forEach(defaults.removeObject(forKey:))
+        }
     }
 }

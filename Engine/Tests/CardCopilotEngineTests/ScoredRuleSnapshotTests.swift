@@ -103,4 +103,22 @@ final class ScoredRuleSnapshotTests: XCTestCase {
 
         XCTAssertEqual(snapshot.snapshotVersion, ScoredRuleSnapshot.currentVersion)
     }
+
+    func testDecodesPreMCCDecisionQualitySnapshot() throws {
+        let rule = sampleRule()
+        let snapshot = ScoredRuleSnapshot.capture(
+            score: sampleScore(ruleId: rule.ruleId), card: sampleCard(rule: rule),
+            asOf: "2026-08-26", programId: "amexMembershipRewards",
+            unit: "point", centsPerPoint: 2.0)
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(snapshot))
+            as? [String: Any])
+        object.removeValue(forKey: "mccRuntimeEvidenceChangedWinner")
+        object["snapshotVersion"] = 1
+        let legacy = try JSONSerialization.data(withJSONObject: object)
+
+        let decoded = try JSONDecoder().decode(ScoredRuleSnapshot.self, from: legacy)
+
+        XCTAssertNil(decoded.mccRuntimeEvidenceChangedWinner)
+        XCTAssertEqual(decoded.snapshotVersion, 1)
+    }
 }

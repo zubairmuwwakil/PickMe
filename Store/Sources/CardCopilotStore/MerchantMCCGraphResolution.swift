@@ -94,25 +94,19 @@ func merchantMCCGraphRuntimeSnapshot(
 /// location-anchored `directOwnerMcc`; when that direct evidence wins at the queried location, the
 /// projection may therefore use `.observedMcc`. Community evidence can never create that state.
 ///
-/// `metrics` remains aggregate-only and on device. It records whether runtime evidence moved the
-/// top MCC, never which merchant/MCC/category caused the move.
+/// This resolver deliberately does not record decision-quality metrics. Prediction can be reused
+/// by arrival and capture flows, but only `CheckoutService` knows an explicit checkout decision
+/// and can score both winning cards. Recording here used to double-count checkout evidence.
 public func merchantMCCGraphPrediction(
     for merchant: NearbyPlace,
     feedbackStore: MerchantMCCRewardFeedbackStore = .shared,
     importedStore: MerchantMCCImportedEvidenceStore = .shared,
-    communityStore: CommunityMerchantMCCCacheStore = CommunityMerchantMCCCacheStore(),
-    metrics: CategoryResolutionMetricsStore = CategoryResolutionMetricsStore()
+    communityStore: CommunityMerchantMCCCacheStore = CommunityMerchantMCCCacheStore()
 ) -> CategoryPrediction? {
     guard let snapshot = merchantMCCGraphRuntimeSnapshot(
         for: merchant, feedbackStore: feedbackStore, importedStore: importedStore,
         communityStore: communityStore)
     else { return nil }
-
-    if snapshot.hasRuntimeEvidence {
-        metrics.record(.mccRuntimeEvidenceEvaluated(
-            changedTopMCC: snapshot.baseline.bestMCC != snapshot.graph.bestMCC,
-            changedWinner: nil))
-    }
 
     let graph = snapshot.graph
     var categoryProbability: [String: Double] = [:]

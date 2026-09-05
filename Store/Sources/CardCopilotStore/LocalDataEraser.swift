@@ -21,15 +21,18 @@ public struct LocalDataEraser {
     private let metrics: CategoryResolutionMetricsStore
     private let rewardFeedbackStore: MerchantMCCRewardFeedbackStore
     private let importedEvidenceStore: MerchantMCCImportedEvidenceStore
+    private let walletCaptureDeletionStore: WalletCaptureDeletionStore
 
     public init(context: ModelContext,
                 metrics: CategoryResolutionMetricsStore = CategoryResolutionMetricsStore(),
                 rewardFeedbackStore: MerchantMCCRewardFeedbackStore = .shared,
-                importedEvidenceStore: MerchantMCCImportedEvidenceStore = .shared) {
+                importedEvidenceStore: MerchantMCCImportedEvidenceStore = .shared,
+                walletCaptureDeletionStore: WalletCaptureDeletionStore = WalletCaptureDeletionStore()) {
         self.context = context
         self.metrics = metrics
         self.rewardFeedbackStore = rewardFeedbackStore
         self.importedEvidenceStore = importedEvidenceStore
+        self.walletCaptureDeletionStore = walletCaptureDeletionStore
     }
 
     public func eraseLocalHistory() throws {
@@ -46,6 +49,7 @@ public struct LocalDataEraser {
         metrics.forgetAll()
         rewardFeedbackStore.forgetAll()
         importedEvidenceStore.forgetAll()
+        walletCaptureDeletionStore.forgetAll()
         try context.save()
     }
 }

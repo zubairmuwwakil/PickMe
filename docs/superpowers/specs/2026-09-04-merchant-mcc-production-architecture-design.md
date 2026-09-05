@@ -183,6 +183,25 @@ question belong to the [MoneyTalks decision record](../../../../MoneyTalks/docs/
 PickMe consumes its returned evidence under the semantic invariants above rather
 than duplicating a second server policy here.
 
+### Community evidence — deliberate deferral
+
+**Do not invest further in the community layer yet.** The authoritative
+[MoneyTalks decision](../../../../MoneyTalks/docs/decisions/2026-09-04-community-merchant-mcc.md#explicit-decision--do-not-invest-further-in-community-evidence-yet)
+records the full reasoning and server-side deferrals. Its three-distinct-UTC-day
+publication threshold combines with PickMe's weaker-than-direct-owner
+`externalLocationReport` consumption such that a single contributor gets no
+user-visible value: after three separate visits, they already hold stronger
+direct owner evidence.
+
+Reopen community work only when privacy-safe client telemetry shows multiple
+opted-in users contributing to or receiving published evidence that changes or
+could change recommendations, or when abuse is observed. That does not make the
+anonymous service a proof of independent contributors. Until then, defer
+spatial-bucket changes, abuse hardening, threshold/cap tuning, network-specific
+aggregation, rollups/materialized aggregates, and retention tuning. The
+high-ROI work meanwhile is **not** community tuning; it is statement import
+that acquires exact owner MCC.
+
 ### No mandatory bank linking
 
 **Why:** PickMe remains useful with Wallet/reconciliation and avoids onboarding friction plus provider dependence.

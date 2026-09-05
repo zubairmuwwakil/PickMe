@@ -16,9 +16,15 @@ import Foundation
 public struct ScoredRuleSnapshot: Codable, Equatable, Sendable {
 
     /// Bump when fields are added. Decoders must tolerate reading an older version.
-    public static let currentVersion = 1
+    public static let currentVersion = 2
 
     public var snapshotVersion: Int
+    /// Whether post-shipped MCC evidence selected a different winner than the shipped baseline.
+    ///
+    /// This is decision provenance, not a scoring input. It is optional so snapshots written
+    /// before MCC decision-quality measurement remain readable and are never treated as a
+    /// negative outcome.
+    public var mccRuntimeEvidenceChangedWinner: Bool?
     /// The date the rules were resolved against — the same `asOf` handed to
     /// `RecommendationEngine.recommend(_:asOf:)`.
     public var asOf: String
@@ -49,12 +55,14 @@ public struct ScoredRuleSnapshot: Codable, Equatable, Sendable {
     public var exclusionReason: String?
 
     public init(snapshotVersion: Int = ScoredRuleSnapshot.currentVersion,
+                mccRuntimeEvidenceChangedWinner: Bool? = nil,
                 asOf: String, cardId: String, appliedRule: EarnRule?,
                 programId: String, unit: String, centsPerPoint: Double?,
                 rewardUnits: Double, grossRewardCad: Double, fxCostCad: Double,
                 netValueCad: Double, floorNetValueCad: Double, aspirationalNetValueCad: Double,
                 warnings: [Warning], excluded: Bool, exclusionReason: String?) {
         self.snapshotVersion = snapshotVersion
+        self.mccRuntimeEvidenceChangedWinner = mccRuntimeEvidenceChangedWinner
         self.asOf = asOf
         self.cardId = cardId
         self.appliedRule = appliedRule
@@ -78,11 +86,13 @@ public struct ScoredRuleSnapshot: Codable, Equatable, Sendable {
     /// the frozen rule is always the one the catalogue actually held for that id at this moment.
     public static func capture(score: CandidateScore, card: CardProduct, asOf: String,
                                programId: String, unit: String,
-                               centsPerPoint: Double?) -> ScoredRuleSnapshot {
+                               centsPerPoint: Double?,
+                               mccRuntimeEvidenceChangedWinner: Bool? = nil) -> ScoredRuleSnapshot {
         let rule = score.appliedRuleId.flatMap { id in
             card.earnRules.first { $0.ruleId == id }
         }
         return ScoredRuleSnapshot(
+            mccRuntimeEvidenceChangedWinner: mccRuntimeEvidenceChangedWinner,
             asOf: asOf, cardId: score.cardId, appliedRule: rule,
             programId: programId, unit: unit, centsPerPoint: centsPerPoint,
             rewardUnits: score.rewardUnits, grossRewardCad: score.grossRewardCad,

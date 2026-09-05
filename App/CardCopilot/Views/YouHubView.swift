@@ -266,6 +266,23 @@ struct YouHubView: View {
 
                 rowDivider
 
+                // MCC evidence quality is an occasional diagnostic, not a dashboard. It is one
+                // tap behind Account & Settings beside the local learning controls that affect it.
+                Button {
+                    triggerHaptic()
+                    router.push(.merchantMCCDecisionQuality)
+                } label: {
+                    settingsRow(
+                        icon: "chart.bar.xaxis",
+                        iconBackground: .teal,
+                        title: "MCC Evidence Quality",
+                        subtitle: "When better evidence changes a card decision"
+                    )
+                }
+                .buttonStyle(SettingsRowPressStyle())
+
+                rowDivider
+
                 // Sync & Wallet Capture
                 Button {
                     triggerHaptic()

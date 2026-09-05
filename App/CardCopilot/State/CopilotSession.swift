@@ -341,11 +341,23 @@ final class CopilotSession {
             if let amount = entry.actualAmountCad {
                 try graph.service.log.recordAmount(amount, source: .recalledLater, on: purchase)
             }
-            try graph.service.log.confirm(purchase,
-                                          observedCategory: entry.observedCategory,
-                                          observedRewardUnits: entry.observedRewardUnits,
-                                          missClass: entry.missClass,
-                                          note: entry.note)
+            let insertedObservation = try graph.service.log.confirm(
+                purchase,
+                observedCategory: entry.observedCategory,
+                observedRewardUnits: entry.observedRewardUnits,
+                missClass: entry.missClass,
+                note: entry.note,
+                observedMerchantCategoryCode: entry.observedMerchantCategoryCode)
+            if insertedObservation,
+               let rewardOutcomeCategory = entry.rewardOutcomeCategory {
+                MerchantMCCRewardFeedback.record(category: rewardOutcomeCategory, for: purchase)
+            }
+            if insertedObservation,
+               let observedMerchantCategoryCode = entry.observedMerchantCategoryCode {
+                graph.service.recordMCCDecisionQualityOutcome(
+                    for: prediction,
+                    observedMerchantCategoryCode: observedMerchantCategoryCode)
+            }
             try graph.service.assessPurchase(purchase)
             recordPatronage(purchase)
             refresh(using: graph)
@@ -884,7 +896,7 @@ final class CopilotSession {
     /// Deletes a purchase record from history.
     func deletePurchase(_ purchase: StoredPurchase, using graph: DependencyGraph) {
         do {
-            try graph.service.log.deletePurchase(purchase)
+            try graph.service.deletePurchase(purchase)
             refresh(using: graph)
         } catch {
             report(FlowError(error))

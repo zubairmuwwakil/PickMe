@@ -36,6 +36,7 @@ struct SettingsView: View {
     @State private var didErase = false
     @State private var mccImportIsPresented = false
     @State private var mccImportStatus: String?
+    @State private var mccLastSuccessfulImportAt: Date?
     /// Snapshotted rather than observed: these counters change while the owner is out shopping,
     /// not while this screen is open, and a live binding would only add churn.
     @State private var categoryMetrics = CategoryResolutionMetrics()
@@ -104,6 +105,20 @@ struct SettingsView: View {
                 Button("Import issuer MCC CSV") {
                     mccImportStatus = nil
                     mccImportIsPresented = true
+                }
+                if let mccLastSuccessfulImportAt {
+                    LabeledContent("Last exact-MCC import",
+                                   value: mccLastSuccessfulImportAt.formatted(date: .abbreviated,
+                                                                              time: .omitted))
+                    if MerchantMCCImportedEvidenceStore.shared.isMonthlyImportDue() {
+                        Text("Your next statement may be ready. Import it here when you have an issuer CSV with an explicit MCC column.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    Text("When an issuer makes a monthly CSV with an explicit MCC column available, import it here. PickMe will remember only the successful import date, not the statement.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
                 if let mccImportStatus {
                     Text(mccImportStatus)
@@ -260,7 +275,10 @@ struct SettingsView: View {
                       allowsMultipleSelection: false) { result in
             importMCCCSV(result)
         }
-        .onAppear { categoryMetrics = CategoryResolutionMetricsStore().snapshot }
+        .onAppear {
+            categoryMetrics = CategoryResolutionMetricsStore().snapshot
+            mccLastSuccessfulImportAt = MerchantMCCImportedEvidenceStore.shared.lastSuccessfulImportAt
+        }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: onDone).font(.headline) } }
@@ -295,14 +313,30 @@ struct SettingsView: View {
                 localPurchases: localPurchases,
                 cardNetworksByID: cardNetworksByID)
             var parts = ["Imported \(summary.importedRows) MCC observation\(summary.importedRows == 1 ? "" : "s")."]
+            if summary.newlyResolvedMerchants > 0 {
+                parts.append("\(summary.newlyResolvedMerchants) merchant\(summary.newlyResolvedMerchants == 1 ? "" : "s") learned from issuer evidence for the first time.")
+            }
+            if summary.correctedSeedMCCs > 0 {
+                parts.append("\(summary.correctedSeedMCCs) literal MCC\(summary.correctedSeedMCCs == 1 ? "" : "s") differed from PickMe’s prior estimate.")
+            }
             if summary.locationJoinedRows > 0 {
                 parts.append("\(summary.locationJoinedRows) matched safely to an exact local purchase/location.")
             }
             if summary.duplicateRows > 0 { parts.append("\(summary.duplicateRows) already imported.") }
-            let rejected = summary.missingMCCRows + summary.invalidMCCRows
-                + summary.missingDateRows + summary.unrecognizedMerchantRows
-            if rejected > 0 { parts.append("\(rejected) row\(rejected == 1 ? "" : "s") skipped safely.") }
+            if summary.missingMCCRows > 0 {
+                parts.append("\(summary.missingMCCRows) skipped: no explicit MCC.")
+            }
+            if summary.invalidMCCRows > 0 {
+                parts.append("\(summary.invalidMCCRows) skipped: MCC was not four digits.")
+            }
+            if summary.missingDateRows > 0 {
+                parts.append("\(summary.missingDateRows) skipped: no usable transaction or posting date.")
+            }
+            if summary.unrecognizedMerchantRows > 0 {
+                parts.append("\(summary.unrecognizedMerchantRows) skipped: merchant was not recognised safely.")
+            }
             mccImportStatus = parts.joined(separator: " ")
+            mccLastSuccessfulImportAt = MerchantMCCImportedEvidenceStore.shared.lastSuccessfulImportAt
         } catch {
             mccImportStatus = "Import failed: \(error.localizedDescription)"
         }

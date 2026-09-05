@@ -427,6 +427,8 @@ struct CheckoutFlowView: View {
                               onSetup: { router.pop() })
         case .learnedMerchants:
             LearnedMerchantsView(onDone: { router.pop() })
+        case .merchantMCCDecisionQuality:
+            MerchantMCCDecisionQualityView(onDone: { router.pop() })
         }
     }
 

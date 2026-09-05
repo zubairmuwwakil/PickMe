@@ -33,5 +33,6 @@ final class MerchantMCCLearningEraseTests: XCTestCase {
 
         XCTAssertTrue(rewardStore.evidence().isEmpty)
         XCTAssertTrue(importedStore.evidence().isEmpty)
+        XCTAssertNil(importedStore.lastSuccessfulImportAt)
     }
 }

@@ -20,6 +20,12 @@ public enum MerchantMCCExactImportSource: String, Codable, Sendable, CaseIterabl
 public struct MerchantMCCExactImportSummary: Equatable, Sendable {
     public let totalRows: Int
     public let importedRows: Int
+    /// Distinct canonical merchants receiving their first retained issuer-MCC observation.
+    /// This is intentionally not a claim that PickMe had no seed/category prior for the merchant.
+    public let newlyResolvedMerchants: Int
+    /// Distinct accepted merchant/MCC pairs whose literal MCC differs from the shipped seed prior.
+    /// A seed is an editorial guess, so this is useful correction feedback, not an error count.
+    public let correctedSeedMCCs: Int
     public let locationJoinedRows: Int
     public let duplicateRows: Int
     public let missingMCCRows: Int
@@ -31,11 +37,14 @@ public struct MerchantMCCExactImportSummary: Equatable, Sendable {
         duplicateRows + missingMCCRows + invalidMCCRows + missingDateRows + unrecognizedMerchantRows
     }
 
-    public init(totalRows: Int, importedRows: Int, locationJoinedRows: Int = 0,
+    public init(totalRows: Int, importedRows: Int, newlyResolvedMerchants: Int = 0,
+                correctedSeedMCCs: Int = 0, locationJoinedRows: Int = 0,
                 duplicateRows: Int, missingMCCRows: Int, invalidMCCRows: Int,
                 missingDateRows: Int, unrecognizedMerchantRows: Int) {
         self.totalRows = totalRows
         self.importedRows = importedRows
+        self.newlyResolvedMerchants = newlyResolvedMerchants
+        self.correctedSeedMCCs = correctedSeedMCCs
         self.locationJoinedRows = locationJoinedRows
         self.duplicateRows = duplicateRows
         self.missingMCCRows = missingMCCRows
@@ -68,13 +77,18 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
     private static let maximumRows = 5_000
     private let defaults: UserDefaults
     private let storageKey: String
+    private let lastSuccessfulImportKey: String
+    private let metrics: CategoryResolutionMetricsStore
     private let lock = NSLock()
     private var evidenceRows: [MerchantMCCEvidence]
 
     public init(defaults: UserDefaults = UserDefaults(suiteName: "group.ca.inunity.pickme") ?? .standard,
-                storageKey: String = "merchant-mcc-exact-import-v1") {
+                storageKey: String = "merchant-mcc-exact-import-v1",
+                metrics: CategoryResolutionMetricsStore = CategoryResolutionMetricsStore()) {
         self.defaults = defaults
         self.storageKey = storageKey
+        self.lastSuccessfulImportKey = "\(storageKey).last-successful-import"
+        self.metrics = metrics
         if let data = defaults.data(forKey: storageKey),
            let decoded = try? JSONDecoder().decode([MerchantMCCEvidence].self, from: data) {
             // Direct rows in this ledger are not arbitrary direct evidence: they are issuer-file
@@ -97,6 +111,20 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
         let key = MerchantMCCQuery(merchantKey: match.merchant.name).merchantKey
         lock.lock(); defer { lock.unlock() }
         return evidenceRows.filter { $0.merchantKey == key }
+    }
+
+    /// The only import-habit metadata retained. It is not tied to a file, statement, merchant,
+    /// account, or amount, and local-history deletion removes it with the evidence ledger.
+    public var lastSuccessfulImportAt: Date? {
+        lock.lock(); defer { lock.unlock() }
+        return defaults.object(forKey: lastSuccessfulImportKey) as? Date
+    }
+
+    /// Statements are usually monthly. This deliberately supports a passive Settings reminder
+    /// rather than a notification or a background check against an issuer account.
+    public func isMonthlyImportDue(asOf date: Date = Date()) -> Bool {
+        guard let lastSuccessfulImportAt else { return false }
+        return date.timeIntervalSince(lastSuccessfulImportAt) >= 25 * 24 * 60 * 60
     }
 
     /// Imports only normalized evidence. Raw CSV rows, amounts, account/card numbers and filenames
@@ -156,6 +184,9 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
         }
 
         var imported: [MerchantMCCEvidence] = []
+        // Used only during this call. Once a safely joined row is accepted, the metrics store
+        // receives a Boolean outcome—not this purchase, MCC, or import row.
+        var joinedOutcomeCandidates: [(evidenceID: String, purchase: StoredPurchase, mcc: Int)] = []
         var missingMCC = 0
         var invalidMCC = 0
         var missingDate = 0
@@ -222,6 +253,7 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
                     sourceConfidence: 1,
                     observedAt: purchase.createdAt,
                     sourceReference: joinReference))
+                joinedOutcomeCandidates.append((evidenceID, purchase, mcc))
                 continue
             }
 
@@ -242,24 +274,53 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
 
         lock.lock(); defer { lock.unlock() }
         var existingIDs = Set(evidenceRows.map(\.id))
+        let existingMerchantKeys = Set(evidenceRows.map(\.merchantKey))
         var duplicates = 0
         var accepted = 0
         var acceptedJoined = 0
+        var acceptedEvidenceIDs = Set<String>()
+        var newlyResolvedMerchantKeys = Set<String>()
+        var correctedSeedPairs = Set<String>()
         for evidence in imported {
             guard existingIDs.insert(evidence.id).inserted else { duplicates += 1; continue }
             evidenceRows.append(evidence)
             accepted += 1
+            acceptedEvidenceIDs.insert(evidence.id)
             if evidence.kind == .directOwnerMcc { acceptedJoined += 1 }
+            if !existingMerchantKeys.contains(evidence.merchantKey) {
+                newlyResolvedMerchantKeys.insert(evidence.merchantKey)
+            }
+            if let mcc = evidence.mcc,
+               let seedMCC = MerchantMCCSeedCatalogue.seedMCC(for: evidence.merchantKey),
+               seedMCC != mcc {
+                correctedSeedPairs.insert("\(evidence.merchantKey):\(mcc)")
+            }
         }
         if evidenceRows.count > Self.maximumRows {
             evidenceRows = Array(evidenceRows.sorted { $0.observedAt > $1.observedAt }
                 .prefix(Self.maximumRows))
         }
         persistLocked()
+        if accepted > 0 { defaults.set(Date(), forKey: lastSuccessfulImportKey) }
+
+        for candidate in joinedOutcomeCandidates where acceptedEvidenceIDs.contains(candidate.evidenceID) {
+            // A reconciled literal MCC already supplied this outcome. An import that corroborates
+            // it is not a second independent result.
+            guard candidate.purchase.observation?.observedMerchantCategoryCode != candidate.mcc,
+                  let prediction = candidate.purchase.prediction,
+                  let matchesLearnedMCC = MerchantMCCDecisionQuality.runtimeEvidenceWinnerWasValidated(
+                    prediction: prediction,
+                    observedMerchantCategoryCode: candidate.mcc)
+            else { continue }
+            metrics.record(.mccRuntimeEvidenceWinnerExactMCCValidated(
+                matchesLearnedMCC: matchesLearnedMCC))
+        }
 
         return MerchantMCCExactImportSummary(
             totalRows: bodyRows.count,
             importedRows: accepted,
+            newlyResolvedMerchants: newlyResolvedMerchantKeys.count,
+            correctedSeedMCCs: correctedSeedPairs.count,
             locationJoinedRows: acceptedJoined,
             duplicateRows: duplicates,
             missingMCCRows: missingMCC,
@@ -272,6 +333,7 @@ public final class MerchantMCCImportedEvidenceStore: @unchecked Sendable {
         lock.lock(); defer { lock.unlock() }
         evidenceRows.removeAll()
         defaults.removeObject(forKey: storageKey)
+        defaults.removeObject(forKey: lastSuccessfulImportKey)
     }
 
     private func persistLocked() {

@@ -24,6 +24,7 @@ enum Destination: Hashable {
     case ambientSetup
     case arrivalPlaces
     case learnedMerchants
+    case merchantMCCDecisionQuality
 }
 
 /// Where the owner is in the act of paying for something.

@@ -1,5 +1,6 @@
 import XCTest
 @testable import CardCopilotStore
+import CardCopilotEngine
 
 final class MerchantMCCExactImportTests: XCTestCase {
     private var defaults: UserDefaults!
@@ -22,7 +23,9 @@ final class MerchantMCCExactImportTests: XCTestCase {
 
         XCTAssertEqual(summary.totalRows, 1)
         XCTAssertEqual(summary.importedRows, 1)
+        XCTAssertEqual(summary.newlyResolvedMerchants, 1)
         XCTAssertEqual(summary.locationJoinedRows, 0)
+        XCTAssertNotNil(store.lastSuccessfulImportAt)
         let evidence = try XCTUnwrap(store.evidence().first)
         XCTAssertEqual(evidence.kind, .ownerImportedMcc)
         XCTAssertEqual(evidence.mcc, 5411)
@@ -66,6 +69,40 @@ final class MerchantMCCExactImportTests: XCTestCase {
             now: ISO8601DateFormatter().date(from: "2026-09-04T12:00:00Z")!)
         XCTAssertTrue(prediction.isObserved)
         XCTAssertEqual(prediction.directObservationCount, 1)
+    }
+
+    func testSafelyJoinedIssuerMCCValidatesEligibleChangedWinnerOnce() throws {
+        let metricsSuite = "MerchantMCCExactImportMetrics.\(UUID().uuidString)"
+        let metricsDefaults = try XCTUnwrap(UserDefaults(suiteName: metricsSuite))
+        defer { metricsDefaults.removePersistentDomain(forName: metricsSuite) }
+        let metrics = CategoryResolutionMetricsStore(defaults: metricsDefaults, key: "metrics")
+        let importing = MerchantMCCImportedEvidenceStore(
+            defaults: defaults, storageKey: "outcome-imports", metrics: metrics)
+        let purchase = locatedPurchase(merchant: "Metro", amount: 42.17,
+                                       cardID: "visa-card", date: "2026-09-01T16:00:00Z",
+                                       latitude: 43.653, longitude: -79.383)
+        let snapshot = ScoredRuleSnapshot(
+            mccRuntimeEvidenceChangedWinner: true,
+            asOf: "2026-09-01", cardId: "learned-card", appliedRule: nil,
+            programId: "program", unit: "point", centsPerPoint: nil,
+            rewardUnits: 1, grossRewardCad: 1, fxCostCad: 0, netValueCad: 1,
+            floorNetValueCad: 1, aspirationalNetValueCad: 1, warnings: [], excluded: false,
+            exclusionReason: nil)
+        let prediction = StoredPrediction(
+            merchantName: "Metro", predictedCategory: "grocery", confidenceSource: .brandPrior,
+            winnerCardId: "learned-card", winnerValueCad: 1,
+            frozenInputs: try JSONEncoder().encode(snapshot), rawCategory: "merchantMccGraph:learned",
+            merchantCategoryCode: 5411, headline: "")
+        purchase.prediction = prediction
+        let csv = "Merchant,MCC,Transaction Date,Billing Amount,Currency,Network\nMetro,5411,09/01/2026,42.17,CAD,Visa\n"
+
+        _ = try importing.importCSV(Data(csv.utf8), localPurchases: [purchase],
+                                     cardNetworksByID: ["visa-card": "visa"])
+        _ = try importing.importCSV(Data(csv.utf8), localPurchases: [purchase],
+                                     cardNetworksByID: ["visa-card": "visa"])
+
+        XCTAssertEqual(metrics.snapshot.mccRuntimeEvidenceWinnerExactMCCValidations, 1)
+        XCTAssertEqual(metrics.snapshot.mccRuntimeEvidenceWinnerValidatedChanges, 1)
     }
 
     func testNonCADAmountCannotLocationJoinEvenWhenNumericAmountMatches() throws {
@@ -169,6 +206,28 @@ final class MerchantMCCExactImportTests: XCTestCase {
         XCTAssertEqual(second.importedRows, 0)
         XCTAssertEqual(second.duplicateRows, 1)
         XCTAssertEqual(store.evidence().count, 1)
+    }
+
+    func testSummaryReportsNewMerchantsAndLiteralMCCCorrectionsWithoutPersistingStatementData() throws {
+        let csv = "Merchant,MCC,Transaction Date\nMetro,5999,09/01/2026\n"
+
+        let summary = try store.importCSV(Data(csv.utf8))
+
+        XCTAssertEqual(summary.newlyResolvedMerchants, 1)
+        XCTAssertEqual(summary.correctedSeedMCCs, 1,
+                       "Metro's shipped primary MCC is 5411, so literal 5999 corrects that prior")
+        XCTAssertEqual(summary.skippedRows, 0)
+    }
+
+    func testMonthlyPromptDateIsLocalOnlyAndHistoryEraseClearsIt() throws {
+        _ = try store.importCSV(Data("Merchant,MCC,Transaction Date\nMetro,5411,09/01/2026\n".utf8))
+        let importedAt = try XCTUnwrap(store.lastSuccessfulImportAt)
+
+        XCTAssertFalse(store.isMonthlyImportDue(asOf: importedAt.addingTimeInterval(24 * 60 * 60)))
+        XCTAssertTrue(store.isMonthlyImportDue(asOf: importedAt.addingTimeInterval(25 * 24 * 60 * 60)))
+
+        store.forgetAll()
+        XCTAssertNil(store.lastSuccessfulImportAt)
     }
 
     func testSameMerchantMCCDayDoesNotGainWeightFromAmountOrCardDifferencesWhenUnjoined() throws {
