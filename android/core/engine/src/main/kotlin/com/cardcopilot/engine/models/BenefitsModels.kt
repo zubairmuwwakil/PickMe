@@ -44,6 +44,8 @@ data class BenefitCoverage(
     val maxPerOccurrenceCad: Double? = null,
     val maxAnnualCad: Double? = null,
     val extraYears: Int? = null,
+    /** See BenefitCoverage.warrantyExtensionRule in Swift: extraYears is a cap, not a flat add. */
+    val warrantyExtensionRule: String? = null,
     val maxOriginalWarrantyYears: Int? = null,
     val maxCad: Double? = null,
     val deductibleCad: Double? = null,

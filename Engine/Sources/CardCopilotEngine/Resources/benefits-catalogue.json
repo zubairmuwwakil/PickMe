@@ -1,6 +1,6 @@
 {
-  "benefitsCatalogueVersion": "1.3",
-  "_provenance": "Official issuer and underwriter document research refreshed 2026-08-29 for all 27 current wallet cards. Each card now has a document index; public issuer sources remain issuerPage evidence and certificateVerified is reserved for matching the owner\u2019s own issued documents. Crypto.com Royal Indigo now has its official prepaid-card agreement, but no public insurance certificate was located, so its benefits remain stubbed.",
+  "benefitsCatalogueVersion": "1.4",
+  "_provenance": "Official issuer and underwriter document research refreshed 2026-08-29 for all 27 current wallet cards. Each card now has a document index; public issuer sources remain issuerPage evidence and certificateVerified is reserved for matching the owner\u2019s own issued documents. Crypto.com Royal Indigo now has its official prepaid-card agreement, but no public insurance certificate was located, so its benefits remain stubbed. Catalogue 1.4 (2026-09-05): nine cards' extended-warranty records were re-read against their own certificates and carry warrantyExtensionRule=matchesOriginalCapped. extraYears was being published as a flat addition when every certificate read so far grants the lesser of the original manufacturer warranty and that cap, which overstated coverage for warranties shorter than the cap. The remaining extendedWarranty records are unverified for this rule and deliberately leave warrantyExtensionRule null rather than assuming it. Sources: docs/research/2026-09-05-certificate-extraction-pilot.md and docs/research/2026-09-05-certificate-extraction-batch-02.md.",
   "triggers": {
     "bigTicketThresholdCad": 150,
     "consumableCategories": [
@@ -46,6 +46,7 @@
           "kind": "extendedWarranty",
           "coverage": {
             "extraYears": 1,
+            "warrantyExtensionRule": "matchesOriginalCapped",
             "maxOriginalWarrantyYears": 5
           },
           "conditions": [
@@ -229,6 +230,7 @@
           "kind": "extendedWarranty",
           "coverage": {
             "extraYears": 1,
+            "warrantyExtensionRule": "matchesOriginalCapped",
             "maxOriginalWarrantyYears": 5
           },
           "conditions": [
@@ -399,6 +401,7 @@
           "kind": "extendedWarranty",
           "coverage": {
             "extraYears": 1,
+            "warrantyExtensionRule": "matchesOriginalCapped",
             "maxOriginalWarrantyYears": 5
           },
           "conditions": [
@@ -537,6 +540,7 @@
           "kind": "extendedWarranty",
           "coverage": {
             "extraYears": 1,
+            "warrantyExtensionRule": "matchesOriginalCapped",
             "maxOriginalWarrantyYears": null
           },
           "conditions": [
@@ -710,6 +714,7 @@
           "kind": "extendedWarranty",
           "coverage": {
             "extraYears": 1,
+            "warrantyExtensionRule": "matchesOriginalCapped",
             "maxOriginalWarrantyYears": null
           },
           "conditions": [
@@ -911,6 +916,7 @@
           "kind": "extendedWarranty",
           "coverage": {
             "extraYears": 1,
+            "warrantyExtensionRule": "matchesOriginalCapped",
             "maxOriginalWarrantyYears": null
           },
           "conditions": [
@@ -1021,6 +1027,7 @@
           "kind": "extendedWarranty",
           "coverage": {
             "extraYears": 1,
+            "warrantyExtensionRule": "matchesOriginalCapped",
             "maxOriginalWarrantyYears": null
           },
           "conditions": [
@@ -1708,6 +1715,7 @@
           "kind": "extendedWarranty",
           "coverage": {
             "extraYears": 1,
+            "warrantyExtensionRule": "matchesOriginalCapped",
             "maxOriginalWarrantyYears": 5
           },
           "conditions": [
@@ -4862,6 +4870,7 @@
           "kind": "extendedWarranty",
           "coverage": {
             "extraYears": 1,
+            "warrantyExtensionRule": "matchesOriginalCapped",
             "maxOriginalWarrantyYears": 5
           },
           "conditions": [

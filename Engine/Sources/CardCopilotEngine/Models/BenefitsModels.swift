@@ -30,6 +30,17 @@ public struct BenefitCoverage: Codable, Equatable, Sendable {
     public var maxPerOccurrenceCad: Double?
     public var maxAnnualCad: Double?
     public var extraYears: Int?
+    /// How the extension length is computed, when a certificate has been read and states it.
+    ///
+    /// `extraYears` alone is a CAP, not a flat addition. Every certificate read so far grants the
+    /// lesser of the original manufacturer warranty and that cap, so a six-month original warranty
+    /// is extended by six months. Publishing `extraYears` without this qualifier overstated
+    /// coverage for every warranty shorter than the cap.
+    ///
+    /// `nil` means not yet verified against the certificate — NOT that the extension is flat.
+    /// Display must stay non-committal in that case. Not a magnitude, so it never enters the
+    /// Pareto comparison in `BenefitsAdvisor.fieldSpecs`.
+    public var warrantyExtensionRule: String?
     public var maxOriginalWarrantyYears: Int?
     public var maxCad: Double?
     public var deductibleCad: Double?

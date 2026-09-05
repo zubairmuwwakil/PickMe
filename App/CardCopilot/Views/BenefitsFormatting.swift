@@ -34,7 +34,16 @@ enum BenefitsFormatting {
         var parts: [String] = []
         if let hours = coverage.delayHours { parts.append("\(hours) h+ delay") }
         if let days = coverage.windowDays { parts.append("\(days) days") }
-        if let years = coverage.extraYears { parts.append("+\(years) yr warranty") }
+        if let years = coverage.extraYears {
+            // `extraYears` is a ceiling, never a flat addition — see BenefitCoverage. Rendering it
+            // as "+1 yr warranty" promised an extra year to owners whose manufacturer warranty was
+            // shorter than the cap. A verified certificate can say how it is actually computed; an
+            // unverified one must stay non-committal rather than defaulting to the old claim.
+            switch coverage.warrantyExtensionRule {
+            case "matchesOriginalCapped": parts.append("doubles warranty, max +\(years) yr")
+            default: parts.append("up to +\(years) yr warranty")
+            }
+        }
         if let years = coverage.maxOriginalWarrantyYears { parts.append("originals ≤ \(years) yr") }
         if let max = coverage.maxPerOccurrenceCad { parts.append("up to \(cad(max))") }
         if let max = coverage.maxCad { parts.append("up to \(cad(max))") }

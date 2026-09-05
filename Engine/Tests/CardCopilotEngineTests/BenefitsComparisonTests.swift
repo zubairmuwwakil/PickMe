@@ -162,6 +162,46 @@ final class BenefitsComparisonTests: XCTestCase {
                      "cards differing only on the warranty ceiling must tie, not badge")
     }
 
+    func testWarrantyExtensionRuleDoesNotDecideDominance() {
+        // warrantyExtensionRule qualifies how extraYears should be READ; it is a string, not a
+        // magnitude, so it cannot be ranked and must never vote. Two cards with the same cap and
+        // different verification states describe the same coverage ceiling and must tie.
+        let verified = card("verified", benefits: [
+            benefit("v-ew", family: "shopping", kind: "extendedWarranty") {
+                $0.extraYears = 1; $0.warrantyExtensionRule = "matchesOriginalCapped" }])
+        let unverified = card("unverified", benefits: [
+            benefit("u2-ew", family: "shopping", kind: "extendedWarranty") {
+                $0.extraYears = 1 }])
+        let comparison = BenefitsAdvisor.comparison(context: BenefitContext(kind: .electronics),
+                                                    wallet: ["verified", "unverified"],
+                                                    catalogue: catalogue([verified, unverified]))
+        XCTAssertNil(comparison.dominantCardId,
+                     "the extension rule describes how to read the cap, so it must not badge")
+    }
+
+    func testShippedCatalogueMarksVerifiedExtendedWarrantiesAsCapped() throws {
+        // The nine cards re-read against their own certificates in the 2026-09-05 extraction all
+        // grant the LESSER of the original manufacturer warranty and the cap. Publishing
+        // extraYears alone claimed a flat extra year, which overstated every warranty shorter
+        // than the cap. Pins the corrected records so a future edit cannot silently drop them.
+        let verifiedIds: Set<String> = [
+            "platinum-extended-warranty", "cobalt-extended-warranty", "bonvoy-extended-warranty",
+            "mbna-extended-warranty", "scotia-extended-warranty", "tangerine-extended-warranty",
+            "rogers-extended-warranty", "td-aeroplan-extended-warranty",
+            "bmo-cashback-we-extended-warranty",
+        ]
+        let shipped = try SeedLoader.loadBenefitsCatalogue()
+        var seen: Set<String> = []
+        for card in shipped.cards {
+            for benefit in card.benefits where verifiedIds.contains(benefit.benefitId) {
+                seen.insert(benefit.benefitId)
+                XCTAssertEqual(benefit.coverage.warrantyExtensionRule, "matchesOriginalCapped",
+                               "\(benefit.benefitId) was verified against its certificate")
+            }
+        }
+        XCTAssertEqual(seen, verifiedIds, "a verified extended-warranty record went missing")
+    }
+
     func testAnnualMaximumStillDecidesDominance() {
         // The mirror of the test above: maxAnnualCad IS a magnitude (higher is plainly better)
         // and is now rendered by factsLine, so it keeps its vote. Pins that the B7 fix removed

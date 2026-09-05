@@ -233,8 +233,14 @@
         "extraYears": {
           "type": ["integer", "null"],
           "minimum": 0,
-          "x-display": "rendered as \"+<n> yr warranty\"",
-          "description": "Additional years the card adds to the manufacturer warranty."
+          "x-display": "rendered as \"up to +<n> yr warranty\", or \"doubles warranty, max +<n> yr\" when warrantyExtensionRule is matchesOriginalCapped",
+          "description": "Ceiling on the additional warranty the card adds. It is a CAP, not a flat addition \u2014 read it with warrantyExtensionRule, which says how the extension is actually computed. Published as a flat addition until catalogue 1.4, which overstated every manufacturer warranty shorter than the cap. Still votes in dominance: comparing caps is meaningful, since a 2-year cap beats a 1-year cap."
+        },
+        "warrantyExtensionRule": {
+          "type": ["string", "null"],
+          "enum": ["matchesOriginalCapped", null],
+          "x-display": "changes how extraYears renders; DISPLAY-ONLY \u2014 does not vote in dominance",
+          "description": "How the extension length is computed, where a certificate has been read and states it. \"matchesOriginalCapped\" means the extension equals the original manufacturer warranty duration, capped at extraYears \u2014 so a six-month original warranty is extended by six months, not by extraYears. Null means NOT YET VERIFIED against the certificate, never \"the extension is flat\"; display must stay non-committal there rather than keeping the pre-1.4 claim. A qualifier rather than a magnitude, so it is excluded from the Pareto comparison under x-dominance-direction, the same treatment maxOriginalWarrantyYears gets and for the same reason. Pinned by BenefitsComparisonTests.testWarrantyExtensionRuleDoesNotDecideDominance."
         },
         "maxOriginalWarrantyYears": {
           "type": ["integer", "null"],
