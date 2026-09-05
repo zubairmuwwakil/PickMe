@@ -218,14 +218,37 @@ Amex Canada uses Belair, and Scotiabank states outright that it is not an insure
 **shared across issuers**, so claim behaviour clusters by adjudicator.
 
 Two consequences. First, a per-card prior would be the wrong model even with unlimited data. Second,
-and more usefully, pooling by adjudicator collapses the catalogue's ~145 products into roughly
-8–12 deciding entities, cutting the sample size Layer 5 needs by close to an order of magnitude. It
-is the single change that moves Layer 5 from implausible to merely distant.
+and more usefully, pooling by adjudicator collapses the catalogue's 145 products into a much smaller
+set of deciding entities — the 55 benefit-bearing cards already resolve to roughly 20 distinct
+insurer strings before normalization, and fewer after — cutting the sample size Layer 5 needs by
+close to an order of magnitude. It is the single change that moves Layer 5 from implausible to
+merely distant.
 
-This makes **underwriter and claims administrator per card a required catalogue field.**
-`CertificateProvenance.underwriter` already exists and is unpopulated; a sibling `claimsAdministrator`
-is needed. Both are printed in the certificates Layer 1 already parses, so this is nearly free if
-captured during that pass — and expensive to backfill later. Capture it in Layer 1.
+This makes **a normalized adjudicator identity a required catalogue field.** Corrected 2026-09-05
+after inspecting the data: `CertificateProvenance.underwriter` is **already populated for 53 of 55
+cards** at `issuerPage` provenance. The gap is not collection, it is structure:
+
+- It is a **free-text display blob, not an identity.** `First North American Insurance Company
+  (FNAIC)`, `First North American Insurance Company`, and `First North American Insurance Company
+  (Manulife)` are three spellings of one insurer across three cards. Grouping by this string is
+  broken today.
+- **Separators are inconsistent** — `;` and `/` are used interchangeably, sometimes both in one
+  value: `BMO Life Assurance Company; First North American Insurance Company (FNAIC) / Allianz
+  Global Risks US Insurance Company`.
+- It **conflates insurer with administrator.** In `CUMIS General Insurance Company / Allianz Global
+  Assistance`, CUMIS underwrites and Allianz adjudicates. Layer 5 needs the second one.
+- It is attached **per card, but adjudication is per benefit.** A card listing TD Life, TD Home and
+  Auto and ABIC almost certainly splits those across creditor, P&C and travel families.
+
+So the work splits in two, and only the first is a refactor:
+
+**A — normalize (no new facts).** A stable `insurerId` vocabulary derived entirely from strings
+already in the contract at `issuerPage`. Makes grouping possible and catches the spelling drift. No
+new claim about any card.
+
+**B — per-benefit adjudicator (research, D3).** Which entity actually decides a purchase-protection
+claim on this card. Requires reading certificates, so it routes through `catalogue-pipeline/` with
+issuer-confirmed sources, not a refactor.
 
 Note what this deliberately is **not**: it is not `P(loss)`. You cannot observe losses — you observe
 claims. Trying to estimate loss frequency would reintroduce exactly the invented number the current
@@ -379,10 +402,12 @@ on device. Claim assembly and outcome capture are online-only and that is fine.
 ## Build order
 
 0. **Erasure path and retention job.** Before any ingestion. (I9)
-1. **Structured certificate predicates** for the 27 cards, quote-backed, in `contracts/`, twinned,
-   fixture-gated — **and capture underwriter plus claims administrator in the same pass.** Useful
+1. **Structured certificate predicates** for the **55** cards in the benefits catalogue (the card
+   catalogue itself holds 145 products at `catalogueVersion` 2.21), quote-backed, in `contracts/`,
+   twinned, fixture-gated — **and resolve the adjudicator in the same certificate pass.** Useful
    immediately: it upgrades today's protection lens from prose to evaluated verdicts with no new
-   personal data at all, and the adjudicator fields are nearly free now and expensive to backfill.
+   personal data at all. Split as A (normalize existing underwriter strings, a refactor) and B
+   (per-benefit adjudicator, a D3 research pass) per *Layer 5*.
 2. **The ratified-document edits** listed above. Do these before shipping code that contradicts them.
 3. **Receipt → item identity**, on top of In Unity's existing ingestion.
 4. **Coverage records + reprocess-on-contract-change**, reusing the `email-fact-reprocess` pattern.
