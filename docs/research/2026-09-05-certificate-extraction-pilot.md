@@ -158,6 +158,11 @@ shows three worked shapes.
 **Note on tooling:** these PDFs do not parse through page-fetch tools. Download them and extract
 text with `pypdf` (installed), then locate sections by keyword. Budget one card at a time.
 
+**Batch size: 6 cards per session, maximum.** These certificates run 50–80 pages each and the
+extracted text is large. Attempting the full 52 in one pass will exhaust context and produce
+degraded extraction on the later cards, which is worse than fewer cards done properly. Finish a
+batch, write its file, stop. A later session picks up the next six.
+
 For each card, for every benefit in the `shopping` family (`purchaseProtection`,
 `extendedWarranty`, `mobileDeviceInsurance`), produce:
 
