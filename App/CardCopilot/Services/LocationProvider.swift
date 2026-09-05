@@ -74,15 +74,22 @@ protocol CheckoutLocationProviding: AnyObject {
 /// launch preflight samples once and stops, preserving the app's no-continuous-tracking posture.
 @MainActor
 final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate, CheckoutLocationProviding {
+    private static let prefetchTimeout: Duration = .seconds(3)
+    private static let userInitiatedTimeout: Duration = .seconds(10)
+    private static let retryDelay: Duration = .milliseconds(300)
+
     private lazy var manager: CLLocationManager = {
         let manager = CLLocationManager()
         manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
         return manager
     }()
 
     private var authorizationContinuation: CheckedContinuation<CLAuthorizationStatus, Never>?
     private var locationContinuation: CheckedContinuation<CheckoutLocationFix, Error>?
     private var locationTimeoutTask: Task<Void, Never>?
+    private var locationRetryTask: Task<Void, Never>?
+    private var receivedUnusableFix = false
 
     func requestLocation() async throws -> CheckoutLocationFix {
         let status = manager.authorizationStatus
@@ -90,7 +97,7 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate, Ch
 
         switch resolvedStatus {
         case .authorizedWhenInUse, .authorizedAlways:
-            return try await fetchOneShotLocation()
+            return try await fetchOneShotLocation(timeout: Self.userInitiatedTimeout)
         case .restricted:
             throw LocationUnavailable.permissionRestricted
         case .denied, .notDetermined:
@@ -105,7 +112,7 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate, Ch
     func requestLocationIfAuthorized() async throws -> CheckoutLocationFix? {
         switch manager.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
-            return try await fetchOneShotLocation()
+            return try await fetchOneShotLocation(timeout: Self.prefetchTimeout)
         case .notDetermined:
             return nil
         case .restricted:
@@ -124,19 +131,38 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate, Ch
         }
     }
 
-    private func fetchOneShotLocation() async throws -> CheckoutLocationFix {
+    private func fetchOneShotLocation(timeout: Duration) async throws -> CheckoutLocationFix {
         if let warm = manager.location.map(CheckoutLocationFix.init), warm.isUsable() {
             return warm
         }
 
         return try await withCheckedThrowingContinuation { continuation in
             locationContinuation = continuation
+            receivedUnusableFix = false
             locationTimeoutTask?.cancel()
             locationTimeoutTask = Task { @MainActor [weak self] in
-                try? await Task.sleep(for: .seconds(3))
+                try? await Task.sleep(for: timeout)
                 guard !Task.isCancelled else { return }
-                self?.finishLocation(.failure(LocationUnavailable.timedOut))
+                guard let self else { return }
+                let failure: LocationUnavailable = receivedUnusableFix
+                    ? .fixFailed("no recent accurate fix")
+                    : .timedOut
+                finishLocation(.failure(failure))
             }
+            manager.requestLocation()
+        }
+    }
+
+    /// Core Location can briefly report `locationUnknown`, or return only a cached fix that does
+    /// not meet checkout's age/accuracy bar. Neither means location is unavailable. Keep sampling
+    /// inside the existing deadline instead of turning the first transient callback into a hard
+    /// failure; the one outstanding continuation still guarantees exactly one final result.
+    private func retryLocationWithinDeadline() {
+        guard locationContinuation != nil, locationRetryTask == nil else { return }
+        locationRetryTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: Self.retryDelay)
+            guard !Task.isCancelled, let self, locationContinuation != nil else { return }
+            locationRetryTask = nil
             manager.requestLocation()
         }
     }
@@ -146,6 +172,9 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate, Ch
         locationContinuation = nil
         locationTimeoutTask?.cancel()
         locationTimeoutTask = nil
+        locationRetryTask?.cancel()
+        locationRetryTask = nil
+        receivedUnusableFix = false
         manager.stopUpdatingLocation()
         continuation.resume(with: result)
     }
@@ -177,13 +206,19 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate, Ch
         guard let fix = locations.map(CheckoutLocationFix.init)
             .filter({ $0.isUsable() })
             .max(by: { $0.capturedAt < $1.capturedAt }) else {
-            finishLocation(.failure(LocationUnavailable.fixFailed("no recent accurate fix")))
+            receivedUnusableFix = true
+            retryLocationWithinDeadline()
             return
         }
         finishLocation(.success(fix))
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        finishLocation(.failure(error))
+        if let coreLocationError = error as? CLError,
+           coreLocationError.code == .locationUnknown {
+            retryLocationWithinDeadline()
+            return
+        }
+        finishLocation(.failure(LocationUnavailable.fixFailed(error.localizedDescription)))
     }
 }

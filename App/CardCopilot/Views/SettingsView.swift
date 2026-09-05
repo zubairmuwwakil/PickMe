@@ -35,6 +35,7 @@ struct SettingsView: View {
     @State private var signOutIsPresented = false
     @State private var didErase = false
     @State private var mccImportIsPresented = false
+    @State private var reportIsPresented = false
     @State private var mccImportStatus: String?
     @State private var mccLastSuccessfulImportAt: Date?
     /// Snapshotted rather than observed: these counters change while the owner is out shopping,
@@ -216,6 +217,7 @@ struct SettingsView: View {
             // outside the isSignedIn branch: the policy describes the on-device store too, which
             // exists whether or not an account does.
             Section {
+                Button("Report a problem") { reportIsPresented = true }
                 Link("Privacy Policy", destination: Self.privacyPolicyURL)
             } header: {
                 Text("About")
@@ -280,6 +282,9 @@ struct SettingsView: View {
             mccLastSuccessfulImportAt = MerchantMCCImportedEvidenceStore.shared.lastSuccessfulImportAt
         }
         .navigationTitle("Settings")
+        .sheet(isPresented: $reportIsPresented) {
+            NavigationStack { TesterReportView() }
+        }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done", action: onDone).font(.headline) } }
         .sheet(isPresented: $deleteIsPresented) {

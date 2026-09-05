@@ -224,21 +224,22 @@ struct HomeView: View {
     /// are gone: the answer card names the place it found and how old the fix is, so the pill
     /// repeating it was the third rendering of one fact. A ready-but-empty scan still speaks,
     /// because in that case there is no card to say anything.
-    private var radarStatus: (text: String, icon: String, color: Color)? {
+    private var radarStatus: (text: String, icon: String, color: Color, retries: Bool)? {
         if session.locationDenied {
-            return ("Location access disabled · Search still works", "location.slash", .secondary)
+            return ("Location access disabled · Search still works", "location.slash", .secondary,
+                    false)
         }
         switch session.nearbyPreparationState {
         case .permissionRequired:
-            return ("Tap Radar to allow location", "hand.tap", .blue)
+            return ("Tap Radar to allow location", "hand.tap", .blue, false)
         case .preparing:
-            return ("Preparing nearby merchants…", "location.magnifyingglass", .blue)
+            return ("Preparing nearby merchants…", "location.magnifyingglass", .blue, false)
         case .ready(let count):
             return count == 0 && answerSubjects.isEmpty
-                ? ("Radar ready · No places within 100 m", "checkmark.circle", .secondary)
+                ? ("Radar ready · No places within 100 m", "checkmark.circle", .secondary, false)
                 : nil
-        case .unavailable:
-            return ("Radar couldn't prepare · Tap to retry", "arrow.clockwise", .orange)
+        case .unavailable(let reason):
+            return (reason.retryStatusText, "arrow.clockwise", .orange, true)
         case .idle:
             return nil
         }
@@ -688,15 +689,18 @@ struct HomeView: View {
 
             // Radar Status Pill / Tip
             if let radarStatus {
-                HStack(spacing: 5) {
-                    Image(systemName: radarStatus.icon)
-                        .font(.caption2.weight(.semibold))
-                    Text(radarStatus.text)
-                        .font(.caption2.weight(.medium))
+                if radarStatus.retries {
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        refreshNearby()
+                    } label: {
+                        radarStatusLabel(radarStatus)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Retries the nearby merchant search")
+                } else {
+                    radarStatusLabel(radarStatus)
                 }
-                .foregroundStyle(radarStatus.color)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 6)
             }
 
             // The single answer surface: Radar results and remembered places, one card, one
@@ -882,6 +886,21 @@ struct HomeView: View {
     private func refreshNearby() {
         guard let graph = environment.graph else { return }
         Task { await session.rescanNearby(using: graph) }
+    }
+
+    private func radarStatusLabel(
+        _ status: (text: String, icon: String, color: Color, retries: Bool)
+    ) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: status.icon)
+                .font(.caption2.weight(.semibold))
+            Text(status.text)
+                .font(.caption2.weight(.medium))
+        }
+        .foregroundStyle(status.color)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .padding(.leading, 6)
     }
 
     /// Points the answer card at a place instead of navigating to it.

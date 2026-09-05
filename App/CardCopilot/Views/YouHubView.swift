@@ -18,6 +18,7 @@ struct YouHubView: View {
     @State private var eraseIsPresented = false
     @State private var didErase = false
     @State private var shortcutsTutorialIsPresented = false
+    @State private var reportIsPresented = false
 
     private static let privacyPolicyURL = URL(string: "https://moneytalks.zubairmuwwakil.com/privacy")!
 
@@ -50,6 +51,14 @@ struct YouHubView: View {
             VStack(spacing: 20) {
                 // Section 1: Profile & Cloud Identity Hero
                 profileHero
+
+                groupedContainer {
+                    Button { reportIsPresented = true } label: {
+                        settingsRow(icon: "bubble.left.and.exclamationmark.bubble.right", iconBackground: .indigo,
+                                    title: "Report a problem", subtitle: "Send feedback or check a report")
+                    }
+                    .buttonStyle(SettingsRowPressStyle())
+                }
 
                 // Section 2: Intelligence & Automation
                 intelligenceSection
@@ -93,6 +102,9 @@ struct YouHubView: View {
         }
         .sheet(isPresented: $shortcutsTutorialIsPresented) {
             ShortcutsSetupTutorialView()
+        }
+        .sheet(isPresented: $reportIsPresented) {
+            NavigationStack { TesterReportView() }
         }
         .confirmationDialog("Erase this iPhone's history?", isPresented: $eraseIsPresented, titleVisibility: .visible) {
             Button("Erase On-Device History", role: .destructive) {

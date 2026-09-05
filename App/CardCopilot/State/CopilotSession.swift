@@ -41,12 +41,40 @@ struct CachedLocation: Equatable {
     }
 }
 
+enum NearbyPreparationFailure: Equatable {
+    case locationTimedOut
+    case locationFixUnavailable
+    case merchantTimedOut
+    case locationFailed
+    case merchantFailed
+
+    var message: String {
+        switch self {
+        case .locationTimedOut: return "Location took too long to respond."
+        case .locationFixUnavailable: return "Couldn't get an accurate location."
+        case .merchantTimedOut: return "Apple Maps took too long to respond."
+        case .locationFailed: return "Location is temporarily unavailable."
+        case .merchantFailed: return "Apple Maps couldn't load nearby places."
+        }
+    }
+
+    var retryStatusText: String {
+        switch self {
+        case .locationTimedOut: return "Location took too long · Tap to retry"
+        case .locationFixUnavailable: return "Couldn't get an accurate location · Tap to retry"
+        case .merchantTimedOut: return "Apple Maps took too long · Tap to retry"
+        case .locationFailed: return "Location is temporarily unavailable · Tap to retry"
+        case .merchantFailed: return "Apple Maps couldn't load nearby places · Tap to retry"
+        }
+    }
+}
+
 enum NearbyPreparationState: Equatable {
     case idle
     case permissionRequired
     case preparing
     case ready(merchantCount: Int)
-    case unavailable
+    case unavailable(NearbyPreparationFailure)
 }
 
 private enum NearbyLookupFailure: LocalizedError {
@@ -232,6 +260,8 @@ final class CopilotSession {
 
     private let locationProvider: any CheckoutLocationProviding
     private let nearbyMetricsStore: NearbyLookupMetricsStore
+    private let nearbyPrefetchTimeout: Duration
+    private let nearbyTapTimeout: Duration
     /// The same log `AmbientLocationService` writes arrivals to — same defaults, same key.
     ///
     /// Deliberately one log and not two. The question worth asking of a record is which
@@ -255,15 +285,21 @@ final class CopilotSession {
         let metricsStore = NearbyLookupMetricsStore()
         locationProvider = LocationProvider()
         nearbyMetricsStore = metricsStore
+        nearbyPrefetchTimeout = .seconds(4)
+        nearbyTapTimeout = .seconds(8)
         fieldLogStore = ArrivalFieldLogStore()
         nearbyMetrics = metricsStore.snapshot
     }
 
     init(locationProvider: any CheckoutLocationProviding,
          nearbyMetricsStore: NearbyLookupMetricsStore,
-         fieldLogStore: ArrivalFieldLogStore = ArrivalFieldLogStore()) {
+         fieldLogStore: ArrivalFieldLogStore = ArrivalFieldLogStore(),
+         nearbyPrefetchTimeout: Duration = .seconds(4),
+         nearbyTapTimeout: Duration = .seconds(8)) {
         self.locationProvider = locationProvider
         self.nearbyMetricsStore = nearbyMetricsStore
+        self.nearbyPrefetchTimeout = nearbyPrefetchTimeout
+        self.nearbyTapTimeout = nearbyTapTimeout
         self.fieldLogStore = fieldLogStore
         nearbyMetrics = nearbyMetricsStore.snapshot
     }
@@ -505,6 +541,9 @@ final class CopilotSession {
     private func loadNearby(promptForAuthorization: Bool,
                             using graph: DependencyGraph,
                             generation: Int) async -> FlowOutcome? {
+        enum Stage { case location, merchant }
+        var stage = Stage.location
+
         do {
             let fix: CheckoutLocationFix
             if promptForAuthorization {
@@ -533,8 +572,12 @@ final class CopilotSession {
                 return outcome
             }
 
-            let scan = try await nearbyScan(latitude: fix.latitude, longitude: fix.longitude,
-                                             using: graph.provider)
+            stage = .merchant
+            let scan = try await nearbyScan(
+                latitude: fix.latitude,
+                longitude: fix.longitude,
+                timeout: promptForAuthorization ? nearbyTapTimeout : nearbyPrefetchTimeout,
+                using: graph.provider)
             let places = rankNearbyPlaces(scan.places)
             guard generation == nearbyPreparationGeneration else { return nil }
             recordNearbyMetric(.radarEligibility(
@@ -561,37 +604,44 @@ final class CopilotSession {
                 return .locationDenied
             case .timedOut:
                 recordNearbyMetric(.locationTimeout)
-                nearbyPreparationState = .unavailable
-                return promptForAuthorization ? .failed(unavailable.localizedDescription) : nil
+                return preparationFailure(.locationTimedOut,
+                                          shownAfterOwnerRequest: promptForAuthorization)
             case .fixFailed:
-                recordNearbyMetric(.failure)
-                nearbyPreparationState = .unavailable
-                return promptForAuthorization ? .failed(unavailable.localizedDescription) : nil
+                recordNearbyMetric(.locationFailure)
+                return preparationFailure(.locationFixUnavailable,
+                                          shownAfterOwnerRequest: promptForAuthorization)
             }
         } catch is NearbyLookupFailure {
             guard generation == nearbyPreparationGeneration else { return nil }
             recordNearbyMetric(.merchantTimeout)
-            nearbyPreparationState = .unavailable
-            return promptForAuthorization
-                ? .failed(NearbyLookupFailure.nearbyTimedOut.localizedDescription) : nil
+            return preparationFailure(.merchantTimedOut,
+                                      shownAfterOwnerRequest: promptForAuthorization)
         } catch {
             guard generation == nearbyPreparationGeneration else { return nil }
             // Background prefetch is best effort. A tap retries instead of surfacing an error
             // caused before the owner asked for nearby results.
-            recordNearbyMetric(.failure)
-            nearbyPreparationState = .unavailable
-            return promptForAuthorization ? .failed(error.localizedDescription) : nil
+            let reason: NearbyPreparationFailure
+            switch stage {
+            case .location:
+                recordNearbyMetric(.locationFailure)
+                reason = .locationFailed
+            case .merchant:
+                recordNearbyMetric(.merchantFailure)
+                reason = .merchantFailed
+            }
+            return preparationFailure(reason, shownAfterOwnerRequest: promptForAuthorization)
         }
     }
 
     private func nearbyScan(latitude: Double, longitude: Double,
+                            timeout: Duration,
                             using provider: any MerchantProviding) async throws -> NearbyScan {
         try await withThrowingTaskGroup(of: NearbyScan.self) { group in
             group.addTask {
                 try await provider.nearbyScan(latitude: latitude, longitude: longitude)
             }
             group.addTask {
-                try await Task.sleep(for: .seconds(4))
+                try await Task.sleep(for: timeout)
                 throw NearbyLookupFailure.nearbyTimedOut
             }
             defer { group.cancelAll() }
@@ -600,6 +650,29 @@ final class CopilotSession {
             }
             return result
         }
+    }
+
+    /// Launch prefetch is opportunistic. Its failure is useful diagnostic evidence, but it must
+    /// not put Home into an orange error state before the owner has asked Radar to do anything.
+    /// An explicit tap keeps the typed reason so Home can explain which stage needs a retry.
+    private func preparationFailure(_ reason: NearbyPreparationFailure,
+                                    shownAfterOwnerRequest: Bool) -> FlowOutcome? {
+        if shownAfterOwnerRequest {
+            nearbyPreparationState = .unavailable(reason)
+            return .failed(reason.message)
+        }
+
+        if let preparedNearbyOutcome {
+            let count = if case .found(let merchants) = preparedNearbyOutcome {
+                merchants.count
+            } else {
+                0
+            }
+            nearbyPreparationState = .ready(merchantCount: count)
+        } else {
+            nearbyPreparationState = .idle
+        }
+        return nil
     }
 
     /// One record per Radar query, dev-only.

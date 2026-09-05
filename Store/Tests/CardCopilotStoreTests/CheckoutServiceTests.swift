@@ -300,6 +300,34 @@ final class CheckoutServiceTests: XCTestCase {
                        "A local-history wipe must remove its capture suppressions too.")
     }
 
+    func testDeletingWalletMatchedCheckoutDoesNotReimportAsStandalonePurchase() throws {
+        let suite = "WalletMatchedDeletion.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let context = ModelContext(container)
+        let checkout = CheckoutService(
+            catalogue: try SeedLoader.loadCatalogue(), ownerState: try SeedLoader.loadOwnerState(),
+            context: context, walletCaptureDeletionStore: WalletCaptureDeletionStore(defaults: defaults))
+        _ = try checkout.recommend(merchant: merchant("Loblaws", poi: "MKPOICategoryFoodMarket"),
+                                   amountCad: nil, asOf: asOf)
+        let prediction = try XCTUnwrap(checkout.log.allPredictions().first)
+        let feedback = WalletFeedback(
+            eventId: "matched-deleted", capturedAt: prediction.recordedAt.addingTimeInterval(60),
+            merchantRaw: "Loblaws", amountMinor: 4210, currency: "CAD",
+            cardRaw: "Cobalt", resolvedCardId: "amex-cobalt", verdict: "best", warning: nil)
+        let purchase = try XCTUnwrap(checkout.ingestAutomaticCaptures(from: [feedback]).first)
+        XCTAssertEqual(purchase.prediction?.id, prediction.id)
+        try checkout.deletePurchase(purchase)
+
+        let reopened = CheckoutService(
+            catalogue: try SeedLoader.loadCatalogue(), ownerState: try SeedLoader.loadOwnerState(),
+            context: ModelContext(container),
+            walletCaptureDeletionStore: WalletCaptureDeletionStore(defaults: defaults))
+        XCTAssertTrue(try reopened.ingestAutomaticCaptures(from: [feedback]).isEmpty)
+        XCTAssertTrue(try reopened.log.allPurchases().isEmpty)
+        XCTAssertTrue(try reopened.log.awaitingCompletion().isEmpty)
+    }
+
     func testPartialWalletMatchStaysInFinishPurchases() throws {
         _ = try service.recommend(merchant: merchant("Loblaws", poi: "MKPOICategoryFoodMarket"),
                                   amountCad: nil, asOf: asOf)

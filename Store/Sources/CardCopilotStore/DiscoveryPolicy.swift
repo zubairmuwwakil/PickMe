@@ -217,9 +217,9 @@ public let maximumMonitoredRegions: Int = 20
 /// how a charge codes, and proves nothing about whether the owner will be there this week.
 /// Repeated payment proves exactly the latter, and a geofence slot is a bet on the latter.
 ///
-/// This priority is a TIEBREAK today, not a ranking: `allocateRegionBudget` still lets distance
-/// decide, because that is what the app ships and an instrument that measures a policy the app
-/// does not run answers no question. The tiers earn their keep in the eviction report.
+/// Tiers with standing (`frequentedMerchant` and `confirmedMerchant`) within `standingProximityHorizonMeters`
+/// are prioritized by `allocateRegionBudget` ahead of unvisited discovered areas, protecting proven
+/// merchants from drive-by evictions during commutes.
 public enum AmbientRegionTier: String, Codable, CaseIterable, Sendable {
     /// A merchant the owner has paid at on `patronageVisitDaysRequired` separate days.
     case frequentedMerchant
@@ -284,27 +284,47 @@ public struct RegionAllocation: Equatable, Sendable {
     public var isAtCapacity: Bool { granted.count == limit }
 }
 
-/// Spends the region budget, and reports what the budget cost.
+/// How far away a merchant with standing can sit and still claim a prioritized geofence slot.
+/// At 30 km (~18.6 miles), it covers a typical metropolitan commute while stopping vacation spots
+/// or cross-country visits from permanently holding a slot.
+public let standingProximityHorizonMeters: Double = 30_000
+
+/// Spends the region budget, prioritizing places with standing before nearby discovered areas.
 ///
-/// Distance decides, exactly as `rotateRegions` has always decided, so the counters describe the
-/// shipping policy rather than an aspirational one. What changes is that the ordering is now
-/// TOTAL — distance, then tier, then id. `Array.sorted` is introsort and is not stable, so the
-/// previous "confirmed merchants were appended first" tiebreak was never a guarantee: two
-/// rotations over an unchanged world could disagree about the last slot and tear down a region
-/// that had not moved.
+/// Places with standing (`frequentedMerchant` and `confirmedMerchant`) within `standingProximityHorizonMeters`
+/// are granted slots first (ranked by standing tier, then distance), protecting frequented and confirmed
+/// merchants from being evicted by drive-by plazas during a commute. The remaining slots are filled by
+/// the closest candidates (saved merchants and discovered areas, ranked by distance, then tier).
+/// The ordering is TOTAL and stable — tiebreaks end on `id`.
 public func allocateRegionBudget(_ candidates: [RegionCandidate],
                                  limit: Int = maximumMonitoredRegions) -> RegionAllocation {
     guard limit > 0 else {
         return RegionAllocation(granted: [], evicted: candidates, limit: max(limit, 0))
     }
     let ordered = candidates.sorted { left, right in
-        if left.distanceMeters != right.distanceMeters {
-            return left.distanceMeters < right.distanceMeters
+        let leftHasStanding = left.tier.carriesStanding && left.distanceMeters <= standingProximityHorizonMeters
+        let rightHasStanding = right.tier.carriesStanding && right.distanceMeters <= standingProximityHorizonMeters
+
+        if leftHasStanding != rightHasStanding {
+            return leftHasStanding
         }
-        if left.tier.slotPriority != right.tier.slotPriority {
-            return left.tier.slotPriority > right.tier.slotPriority
+        if leftHasStanding {
+            if left.tier.slotPriority != right.tier.slotPriority {
+                return left.tier.slotPriority > right.tier.slotPriority
+            }
+            if left.distanceMeters != right.distanceMeters {
+                return left.distanceMeters < right.distanceMeters
+            }
+            return left.id < right.id
+        } else {
+            if left.distanceMeters != right.distanceMeters {
+                return left.distanceMeters < right.distanceMeters
+            }
+            if left.tier.slotPriority != right.tier.slotPriority {
+                return left.tier.slotPriority > right.tier.slotPriority
+            }
+            return left.id < right.id
         }
-        return left.id < right.id
     }
     return RegionAllocation(granted: Array(ordered.prefix(limit)),
                             evicted: Array(ordered.dropFirst(limit)),

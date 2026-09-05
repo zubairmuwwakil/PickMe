@@ -98,6 +98,21 @@ final class RadarMetricsTests: XCTestCase {
         XCTAssertEqual(store.snapshot.radarScansWhereTopRankedMissedAChain, 3)
     }
 
+    func testOperationalFailuresAreSeparatedByStageAndKeepTheLegacyTotal() {
+        let store = makeStore()
+
+        store.record(.locationTimeout)
+        store.record(.merchantTimeout)
+        store.record(.locationFailure)
+        store.record(.merchantFailure)
+
+        XCTAssertEqual(store.snapshot.locationTimeouts, 1)
+        XCTAssertEqual(store.snapshot.merchantTimeouts, 1)
+        XCTAssertEqual(store.snapshot.locationFailures, 1)
+        XCTAssertEqual(store.snapshot.merchantFailures, 1)
+        XCTAssertEqual(store.snapshot.failures, 2)
+    }
+
     // MARK: - Migration
 
     /// **The counter is only interpretable against the weeks before it existed.** This blob is a
@@ -117,6 +132,8 @@ final class RadarMetricsTests: XCTestCase {
 
         XCTAssertEqual(metrics.prefetchAttempts, 12)
         XCTAssertEqual(metrics.emptyResults, 2)
+        XCTAssertEqual(metrics.locationFailures, 0)
+        XCTAssertEqual(metrics.merchantFailures, 0)
         XCTAssertEqual(metrics.maximumTapLatencyMilliseconds, 900)
         XCTAssertEqual(metrics.radarScans, 0)
         XCTAssertTrue(metrics.radarRawResultBuckets.isEmpty)
@@ -156,7 +173,8 @@ final class RadarMetricsTests: XCTestCase {
 
         XCTAssertEqual(keys, [
             "prefetchAttempts", "movementCacheHits", "preparedTaps", "tapLookups",
-            "locationTimeouts", "merchantTimeouts", "emptyResults", "failures",
+            "locationTimeouts", "merchantTimeouts", "locationFailures", "merchantFailures",
+            "emptyResults", "failures",
             "totalTapLatencyMilliseconds", "maximumTapLatencyMilliseconds",
             "radarScans", "radarRawResultBuckets", "radarDedupedResultBuckets",
             "radarScansWithARecognisedChain", "radarScansWhereTopRankedMissedAChain",

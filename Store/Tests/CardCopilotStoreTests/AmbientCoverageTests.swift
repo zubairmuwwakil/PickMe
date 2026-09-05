@@ -40,19 +40,38 @@ final class RegionBudgetTests: XCTestCase {
                        ["area20", "area21", "area22", "area23", "area24"])
     }
 
-    /// This test exists to pin the CURRENT shipping policy, not a better one. `rotateRegions`
-    /// sorts purely by distance, so a plaza the owner has never entered outranks a weekly grocery
-    /// run that is further away. Measuring a policy the app does not run would produce a week of
-    /// data describing nothing, so the instrument has to reproduce this exactly.
-    func testDistanceOutranksTierToday() {
+    /// Places with standing (`frequentedMerchant` and `confirmedMerchant`) within the commute
+    /// horizon (30 km) are granted slots ahead of anonymous discovered areas, protecting
+    /// habitual/confirmed destinations from being evicted by drive-by strip malls.
+    func testStandingOutranksNearbyDiscoveredAreaWithinHorizon() {
         let allocation = allocateRegionBudget([
             candidate("weekly-grocery", .frequentedMerchant, 400),
             candidate("never-entered-plaza", .discoveredArea, 200),
         ], limit: 1)
 
-        XCTAssertEqual(allocation.granted.map(\.id), ["never-entered-plaza"])
-        XCTAssertEqual(allocation.evicted.map(\.id), ["weekly-grocery"])
-        XCTAssertEqual(allocation.evicted.map(\.tier), [.frequentedMerchant])
+        XCTAssertEqual(allocation.granted.map(\.id), ["weekly-grocery"])
+        XCTAssertEqual(allocation.evicted.map(\.id), ["never-entered-plaza"])
+        XCTAssertEqual(allocation.evicted.map(\.tier), [.discoveredArea])
+    }
+
+    func testStandingBeyondHorizonLosesToNearbyDiscoveredArea() {
+        let allocation = allocateRegionBudget([
+            candidate("distant-vacation-store", .frequentedMerchant, standingProximityHorizonMeters + 1_000),
+            candidate("local-plaza", .discoveredArea, 200),
+        ], limit: 1)
+
+        XCTAssertEqual(allocation.granted.map(\.id), ["local-plaza"])
+        XCTAssertEqual(allocation.evicted.map(\.id), ["distant-vacation-store"])
+    }
+
+    func testFrequentedOutranksConfirmedWhenBothHaveStanding() {
+        let allocation = allocateRegionBudget([
+            candidate("confirmed", .confirmedMerchant, 1_000),
+            candidate("frequented", .frequentedMerchant, 2_000),
+        ], limit: 1)
+
+        XCTAssertEqual(allocation.granted.map(\.id), ["frequented"])
+        XCTAssertEqual(allocation.evicted.map(\.id), ["confirmed"])
     }
 
     /// Tier breaks exact ties, which is what the adapter's "confirmed merchants were appended
@@ -151,10 +170,10 @@ final class AmbientCoverageLogTests: XCTestCase {
     func testEvictionsAreCountedByTheTierThatLostTheSlot() {
         var log = AmbientCoverageLog()
         log.record(allocateRegionBudget([
-            candidate("near-plaza", .discoveredArea, 10),
-            candidate("grocery", .frequentedMerchant, 900),
-            candidate("pharmacy", .confirmedMerchant, 800),
-            candidate("other-grocery", .frequentedMerchant, 950),
+            candidate("top-grocery", .frequentedMerchant, 100),
+            candidate("other-grocery", .frequentedMerchant, 200),
+            candidate("third-grocery", .frequentedMerchant, 300),
+            candidate("pharmacy", .confirmedMerchant, 400),
         ], limit: 1))
 
         XCTAssertEqual(log.rotations, 1)
@@ -183,13 +202,13 @@ final class AmbientCoverageLogTests: XCTestCase {
     func testMergeIsAdditiveAcrossEveryCounter() {
         var first = AmbientCoverageLog()
         first.record(allocateRegionBudget([
-            candidate("a", .discoveredArea, 10), candidate("b", .frequentedMerchant, 20),
+            candidate("a", .frequentedMerchant, 10), candidate("b", .frequentedMerchant, 20),
         ], limit: 1))
         first.recordArrival(.resolved)
 
         var second = AmbientCoverageLog()
         second.record(allocateRegionBudget([
-            candidate("c", .discoveredArea, 10), candidate("d", .frequentedMerchant, 20),
+            candidate("c", .frequentedMerchant, 10), candidate("d", .frequentedMerchant, 20),
         ], limit: 1))
         second.recordArrival(.unresolved)
 
@@ -205,7 +224,7 @@ final class AmbientCoverageLogTests: XCTestCase {
     func testItSurvivesACodableRoundTrip() throws {
         var log = AmbientCoverageLog()
         log.record(allocateRegionBudget([
-            candidate("a", .discoveredArea, 10), candidate("b", .confirmedMerchant, 20),
+            candidate("a", .confirmedMerchant, 10), candidate("b", .confirmedMerchant, 20),
         ], limit: 1))
         log.recordArrival(.notAdvised)
 
@@ -221,14 +240,15 @@ final class AmbientCoverageLogTests: XCTestCase {
     func testEvictedPatronageIsReadableWithoutSummingTiersAtTheCallSite() {
         var log = AmbientCoverageLog()
         log.record(allocateRegionBudget([
-            candidate("plaza", .discoveredArea, 10),
-            candidate("grocery", .frequentedMerchant, 900),
-            candidate("pharmacy", .confirmedMerchant, 800),
-            candidate("saved", .savedMerchant, 700),
+            candidate("grocery", .frequentedMerchant, 100),
+            candidate("other-grocery", .frequentedMerchant, 200),
+            candidate("pharmacy", .confirmedMerchant, 300),
+            candidate("saved", .savedMerchant, 400),
+            candidate("plaza", .discoveredArea, 500),
         ], limit: 1))
 
         XCTAssertEqual(log.evictedWithStanding, 2)
-        XCTAssertEqual(log.evicted, 3)
+        XCTAssertEqual(log.evicted, 4)
     }
 }
 

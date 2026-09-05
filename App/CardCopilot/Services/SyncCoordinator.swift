@@ -462,6 +462,23 @@ public final class SyncCoordinator {
         }.submit(report)
     }
 
+    private func testerReportClient() throws -> TesterReportHTTPClient {
+        guard let baseURL = MoneyTalksConfiguration.apiBaseURL else { throw MoneyTalksAPIError.unavailableConfiguration }
+        return TesterReportHTTPClient(baseURL: baseURL) { try await ClerkSession.token() }
+    }
+
+    public func submitTesterReport(_ report: TesterReport) async throws -> SubmittedTesterReport {
+        try await testerReportClient().submit(report)
+    }
+
+    public func listTesterReports() async throws -> [SubmittedTesterReport] {
+        try await testerReportClient().list()
+    }
+
+    public func deleteTesterReport(id: String) async throws {
+        try await testerReportClient().delete(id: id)
+    }
+
     public func deleteSubmittedDiagnostic(id: String) async throws {
         guard let baseURL = MoneyTalksConfiguration.apiBaseURL else { throw MoneyTalksAPIError.unavailableConfiguration }
         try await WalletCaptureDiagnosticsHTTPClient(baseURL: baseURL) {

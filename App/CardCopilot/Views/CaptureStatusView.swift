@@ -1107,9 +1107,13 @@ private struct DiagnosticReportPreview: View {
 
                         Button("Delete Submitted Report", role: .destructive) {
                             Task {
-                                try? await onDeleteSubmission(sent.id)
-                                self.sent = nil
-                                message = "Diagnostic report deleted from server."
+                                do {
+                                    try await onDeleteSubmission(sent.id)
+                                    self.sent = nil
+                                    message = "Diagnostic report deleted from server."
+                                } catch {
+                                    message = "The report was not deleted. \(error.localizedDescription)"
+                                }
                             }
                         }
                     } else {

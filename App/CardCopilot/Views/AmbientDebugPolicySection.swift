@@ -257,11 +257,39 @@ struct AmbientDebugPolicySection: View {
     @ViewBuilder
     private var radarCounters: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Radar scans")
+            Text("Radar reliability")
+                .font(.subheadline.weight(.semibold))
+
+            counterRow("Launch prefetches", "\(radarMetrics.prefetchAttempts)")
+            counterRow("Radar taps", "\(radarMetrics.preparedTaps + radarMetrics.tapLookups)")
+            counterRow("Instant prepared taps", "\(radarMetrics.preparedTaps)")
+            counterRow("Movement cache hits", "\(radarMetrics.movementCacheHits)")
+            counterRow("Location timeouts", "\(radarMetrics.locationTimeouts)",
+                       tint: radarMetrics.locationTimeouts > 0 ? .orange : nil)
+            counterRow("Apple Maps timeouts", "\(radarMetrics.merchantTimeouts)",
+                       tint: radarMetrics.merchantTimeouts > 0 ? .orange : nil)
+            counterRow("Other location failures", "\(radarMetrics.locationFailures)",
+                       tint: radarMetrics.locationFailures > 0 ? .orange : nil)
+            counterRow("Other Apple Maps failures", "\(radarMetrics.merchantFailures)",
+                       tint: radarMetrics.merchantFailures > 0 ? .orange : nil)
+            counterRow("Empty results", "\(radarMetrics.emptyResults)")
+
+            if let average = radarMetrics.averageTapLatencyMilliseconds {
+                counterRow("Average tap latency", "\(average) ms")
+                counterRow("Slowest tap", "\(radarMetrics.maximumTapLatencyMilliseconds) ms")
+            }
+
+            Text("These counters stay on this iPhone. They identify which stage failed without recording a location or merchant name.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+
+            Divider()
+
+            Text("Radar scan results")
                 .font(.subheadline.weight(.semibold))
 
             if radarMetrics.radarScans == 0 {
-                Text("No scans recorded yet. Tap Radar while standing in a store.")
+                Text("No successful Apple Maps response has been recorded yet. Failure counts above still apply.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {

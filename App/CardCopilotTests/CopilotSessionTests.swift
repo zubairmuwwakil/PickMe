@@ -12,16 +12,20 @@ final class CopilotSessionTests: XCTestCase {
         var authorizedLocation: CheckoutLocationFix?
         var promptedLocation = CheckoutLocationFix(latitude: 43.6532, longitude: -79.3832,
                                                     horizontalAccuracyMeters: 10)
+        var authorizedError: Error?
+        var promptedError: Error?
         private(set) var authorizedRequestCount = 0
         private(set) var promptedRequestCount = 0
 
         func requestLocation() async throws -> CheckoutLocationFix {
             promptedRequestCount += 1
+            if let promptedError { throw promptedError }
             return promptedLocation
         }
 
         func requestLocationIfAuthorized() async throws -> CheckoutLocationFix? {
             authorizedRequestCount += 1
+            if let authorizedError { throw authorizedError }
             return authorizedLocation
         }
     }
@@ -29,16 +33,19 @@ final class CopilotSessionTests: XCTestCase {
     private actor StubMerchantProvider: MerchantProviding {
         var nearbyResult: [NearbyPlace]
         var delay: Duration?
+        var nearbyError: Error?
         private(set) var nearbyRequestCount = 0
 
-        init(nearbyResult: [NearbyPlace], delay: Duration? = nil) {
+        init(nearbyResult: [NearbyPlace], delay: Duration? = nil, nearbyError: Error? = nil) {
             self.nearbyResult = nearbyResult
             self.delay = delay
+            self.nearbyError = nearbyError
         }
 
         func nearby(latitude: Double, longitude: Double) async throws -> [NearbyPlace] {
             nearbyRequestCount += 1
             if let delay { try await Task.sleep(for: delay) }
+            if let nearbyError { throw nearbyError }
             return nearbyResult
         }
 
@@ -57,6 +64,23 @@ final class CopilotSessionTests: XCTestCase {
     private func makeMetricsStore() -> NearbyLookupMetricsStore {
         let defaults = UserDefaults(suiteName: "CopilotSessionNearby.\(UUID().uuidString)")!
         return NearbyLookupMetricsStore(defaults: defaults)
+    }
+
+    private struct StubFailure: LocalizedError {
+        var errorDescription: String? { "stub failure" }
+    }
+
+    func testEveryRadarFailureProvidesSpecificOwnerFacingCopy() {
+        XCTAssertEqual(NearbyPreparationFailure.locationTimedOut.retryStatusText,
+                       "Location took too long · Tap to retry")
+        XCTAssertEqual(NearbyPreparationFailure.locationFixUnavailable.retryStatusText,
+                       "Couldn't get an accurate location · Tap to retry")
+        XCTAssertEqual(NearbyPreparationFailure.merchantTimedOut.retryStatusText,
+                       "Apple Maps took too long · Tap to retry")
+        XCTAssertEqual(NearbyPreparationFailure.locationFailed.retryStatusText,
+                       "Location is temporarily unavailable · Tap to retry")
+        XCTAssertEqual(NearbyPreparationFailure.merchantFailed.retryStatusText,
+                       "Apple Maps couldn't load nearby places · Tap to retry")
     }
 
     private func makeGraph(context: ModelContext,
@@ -259,14 +283,93 @@ final class CopilotSessionTests: XCTestCase {
         let provider = StubMerchantProvider(nearbyResult: [], delay: .seconds(10))
         let graph = try makeGraph(context: makeContext(), provider: provider)
         let session = CopilotSession(locationProvider: location,
-                                     nearbyMetricsStore: makeMetricsStore())
+                                     nearbyMetricsStore: makeMetricsStore(),
+                                     nearbyTapTimeout: .milliseconds(20))
 
         let outcome = await session.findNearby(using: graph)
 
         guard case .failed(let message) = outcome else { return XCTFail("expected timeout") }
         XCTAssertTrue(message.contains("too long"), "got: \(message)")
         XCTAssertEqual(session.nearbyMetrics.merchantTimeouts, 1)
-        XCTAssertEqual(session.nearbyPreparationState, .unavailable)
+        XCTAssertEqual(session.nearbyPreparationState, .unavailable(.merchantTimedOut))
+    }
+
+    func testLocationTimeoutExplainsFailureAndAnExplicitRetryCanRecover() async throws {
+        let location = StubLocationProvider()
+        location.promptedError = LocationUnavailable.timedOut
+        let merchant = NearbyPlace(id: "nearby", name: "Nearby", poiCategoryRaw: nil,
+                                   latitude: 43.6532, longitude: -79.3832, distanceMeters: 5)
+        let graph = try makeGraph(context: makeContext(),
+                                  provider: StubMerchantProvider(nearbyResult: [merchant]))
+        let session = CopilotSession(locationProvider: location,
+                                     nearbyMetricsStore: makeMetricsStore())
+
+        let failed = await session.findNearby(using: graph)
+
+        XCTAssertEqual(failed, .failed("Location took too long to respond."))
+        XCTAssertEqual(session.nearbyPreparationState, .unavailable(.locationTimedOut))
+        XCTAssertEqual(session.nearbyMetrics.locationTimeouts, 1)
+
+        location.promptedError = nil
+        let recovered = await session.findNearby(using: graph)
+
+        XCTAssertEqual(recovered, .found([merchant]))
+        XCTAssertEqual(location.promptedRequestCount, 2)
+        XCTAssertEqual(session.nearbyPreparationState, .ready(merchantCount: 1))
+    }
+
+    func testAnUnusableLocationFixHasItsOwnFailureCounterAndReason() async throws {
+        let location = StubLocationProvider()
+        location.promptedError = LocationUnavailable.fixFailed("no recent accurate fix")
+        let graph = try makeGraph(context: makeContext(),
+                                  provider: StubMerchantProvider(nearbyResult: []))
+        let session = CopilotSession(locationProvider: location,
+                                     nearbyMetricsStore: makeMetricsStore())
+
+        let outcome = await session.findNearby(using: graph)
+
+        XCTAssertEqual(outcome, .failed("Couldn't get an accurate location."))
+        XCTAssertEqual(session.nearbyPreparationState, .unavailable(.locationFixUnavailable))
+        XCTAssertEqual(session.nearbyMetrics.locationFailures, 1)
+        XCTAssertEqual(session.nearbyMetrics.merchantFailures, 0)
+    }
+
+    func testOtherLocationAndAppleMapsFailuresAreCountedByStage() async throws {
+        let location = StubLocationProvider()
+        location.promptedError = StubFailure()
+        let graph = try makeGraph(context: makeContext(),
+                                  provider: StubMerchantProvider(nearbyResult: []))
+        let session = CopilotSession(locationProvider: location,
+                                     nearbyMetricsStore: makeMetricsStore())
+
+        let locationFailure = await session.findNearby(using: graph)
+        XCTAssertEqual(locationFailure, .failed("Location is temporarily unavailable."))
+        XCTAssertEqual(session.nearbyPreparationState, .unavailable(.locationFailed))
+        XCTAssertEqual(session.nearbyMetrics.locationFailures, 1)
+
+        location.promptedError = nil
+        let failingProvider = StubMerchantProvider(nearbyResult: [], nearbyError: StubFailure())
+        let failingGraph = try makeGraph(context: makeContext(), provider: failingProvider)
+
+        let merchantFailure = await session.findNearby(using: failingGraph)
+        XCTAssertEqual(merchantFailure, .failed("Apple Maps couldn't load nearby places."))
+        XCTAssertEqual(session.nearbyPreparationState, .unavailable(.merchantFailed))
+        XCTAssertEqual(session.nearbyMetrics.merchantFailures, 1)
+        XCTAssertEqual(session.nearbyMetrics.failures, 2)
+    }
+
+    func testSilentPrefetchRecordsFailureWithoutShowingAnErrorState() async throws {
+        let location = StubLocationProvider()
+        location.authorizedError = LocationUnavailable.timedOut
+        let graph = try makeGraph(context: makeContext(),
+                                  provider: StubMerchantProvider(nearbyResult: []))
+        let session = CopilotSession(locationProvider: location,
+                                     nearbyMetricsStore: makeMetricsStore())
+
+        await session.prefetchNearby(using: graph)
+
+        XCTAssertEqual(session.nearbyPreparationState, .idle)
+        XCTAssertEqual(session.nearbyMetrics.locationTimeouts, 1)
     }
 
     func testLocationFixRejectsStaleAndInaccurateSamples() {

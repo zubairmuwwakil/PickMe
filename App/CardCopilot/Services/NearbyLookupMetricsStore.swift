@@ -39,7 +39,10 @@ struct NearbyLookupMetrics: Codable, Equatable {
     var tapLookups = 0
     var locationTimeouts = 0
     var merchantTimeouts = 0
+    var locationFailures = 0
+    var merchantFailures = 0
     var emptyResults = 0
+    /// Kept as the all-stage total for continuity with already recorded field data.
     var failures = 0
     var totalTapLatencyMilliseconds = 0
     var maximumTapLatencyMilliseconds = 0
@@ -92,6 +95,8 @@ struct NearbyLookupMetrics: Codable, Equatable {
         tapLookups = try count(.tapLookups)
         locationTimeouts = try count(.locationTimeouts)
         merchantTimeouts = try count(.merchantTimeouts)
+        locationFailures = try count(.locationFailures)
+        merchantFailures = try count(.merchantFailures)
         emptyResults = try count(.emptyResults)
         failures = try count(.failures)
         totalTapLatencyMilliseconds = try count(.totalTapLatencyMilliseconds)
@@ -119,8 +124,9 @@ final class NearbyLookupMetricsStore {
         case tap(prepared: Bool, durationMilliseconds: Int)
         case locationTimeout
         case merchantTimeout
+        case locationFailure
+        case merchantFailure
         case emptyResult
-        case failure
         case radarEligibility(eligibleResultCount: Int,
                               excludedPublicTransportResultCount: Int,
                               excludedMissingCategoryResultCount: Int,
@@ -165,10 +171,14 @@ final class NearbyLookupMetricsStore {
             metrics.locationTimeouts += 1
         case .merchantTimeout:
             metrics.merchantTimeouts += 1
+        case .locationFailure:
+            metrics.locationFailures += 1
+            metrics.failures += 1
+        case .merchantFailure:
+            metrics.merchantFailures += 1
+            metrics.failures += 1
         case .emptyResult:
             metrics.emptyResults += 1
-        case .failure:
-            metrics.failures += 1
         case .radarEligibility(let eligible, let publicTransport, let missing, let unsupported):
             metrics.radarEligibilityScans += 1
             metrics.radarEligibleResults += max(0, eligible)
