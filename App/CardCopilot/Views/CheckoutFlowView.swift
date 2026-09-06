@@ -434,10 +434,6 @@ struct CheckoutFlowView: View {
 
     private func findNearby() {
         guard let graph = environment?.graph else { return }
-        if let prepared = session.preparedOutcomeForTap() {
-            router.step = CheckoutFlowRouting.step(for: prepared)
-            return
-        }
 
         Task {
             let delayedSpinner = Task { @MainActor in
@@ -445,7 +441,7 @@ struct CheckoutFlowView: View {
                 guard !Task.isCancelled else { return }
                 router.step = .locating
             }
-            let outcome = await session.findNearby(using: graph)
+            let outcome = await session.rescanNearby(using: graph)
             delayedSpinner.cancel()
             router.step = CheckoutFlowRouting.step(for: outcome)
         }
