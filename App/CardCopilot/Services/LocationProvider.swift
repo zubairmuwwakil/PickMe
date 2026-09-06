@@ -90,6 +90,9 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate, Ch
     private var locationTimeoutTask: Task<Void, Never>?
     private var locationRetryTask: Task<Void, Never>?
     private var receivedUnusableFix = false
+    /// Nil for opportunistic launch prefetches. An explicit Radar tap sets a floor so a cached
+    /// CLLocation from before the tap cannot answer "where am I shopping right now?".
+    private var minimumAcceptedFixDate: Date?
 
     func requestLocation() async throws -> CheckoutLocationFix {
         let status = manager.authorizationStatus
@@ -97,7 +100,8 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate, Ch
 
         switch resolvedStatus {
         case .authorizedWhenInUse, .authorizedAlways:
-            return try await fetchOneShotLocation(timeout: Self.userInitiatedTimeout)
+            return try await fetchOneShotLocation(timeout: Self.userInitiatedTimeout,
+                                                  allowWarmStart: false)
         case .restricted:
             throw LocationUnavailable.permissionRestricted
         case .denied, .notDetermined:
@@ -112,7 +116,8 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate, Ch
     func requestLocationIfAuthorized() async throws -> CheckoutLocationFix? {
         switch manager.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
-            return try await fetchOneShotLocation(timeout: Self.prefetchTimeout)
+            return try await fetchOneShotLocation(timeout: Self.prefetchTimeout,
+                                                  allowWarmStart: true)
         case .notDetermined:
             return nil
         case .restricted:
@@ -131,13 +136,22 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate, Ch
         }
     }
 
-    private func fetchOneShotLocation(timeout: Duration) async throws -> CheckoutLocationFix {
-        if let warm = manager.location.map(CheckoutLocationFix.init), warm.isUsable() {
+    private func fetchOneShotLocation(timeout: Duration,
+                                      allowWarmStart: Bool) async throws -> CheckoutLocationFix {
+        if allowWarmStart,
+           let warm = manager.location.map(CheckoutLocationFix.init),
+           warm.isUsable() {
             return warm
         }
 
+        // Core Location may immediately echo its cached `manager.location` through the delegate
+        // after `requestLocation()`. That is useful for launch prefetch, but an explicit Radar tap
+        // is a freshness boundary. One second of slack avoids rejecting a just-produced fix whose
+        // CLLocation timestamp was stamped immediately before this actor resumed.
+        let requestFloor = allowWarmStart ? nil : Date().addingTimeInterval(-1)
         return try await withCheckedThrowingContinuation { continuation in
             locationContinuation = continuation
+            minimumAcceptedFixDate = requestFloor
             receivedUnusableFix = false
             locationTimeoutTask?.cancel()
             locationTimeoutTask = Task { @MainActor [weak self] in
@@ -175,6 +189,7 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate, Ch
         locationRetryTask?.cancel()
         locationRetryTask = nil
         receivedUnusableFix = false
+        minimumAcceptedFixDate = nil
         manager.stopUpdatingLocation()
         continuation.resume(with: result)
     }
@@ -204,7 +219,11 @@ final class LocationProvider: NSObject, @MainActor CLLocationManagerDelegate, Ch
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard locationContinuation != nil else { return }
         guard let fix = locations.map(CheckoutLocationFix.init)
-            .filter({ $0.isUsable() })
+            .filter({ fix in
+                guard fix.isUsable() else { return false }
+                guard let minimumAcceptedFixDate else { return true }
+                return fix.capturedAt >= minimumAcceptedFixDate
+            })
             .max(by: { $0.capturedAt < $1.capturedAt }) else {
             receivedUnusableFix = true
             retryLocationWithinDeadline()
