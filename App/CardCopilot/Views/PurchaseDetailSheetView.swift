@@ -84,7 +84,10 @@ struct PurchaseDetailSheetView: View {
         let catalogueCategories = cards.flatMap { card in
             card.earnRules.flatMap { $0.predicate.categories ?? [] }
         }
-        return Array(Set(catalogueCategories + ["other"]))
+        let categories = Set(catalogueCategories)
+            .union(CategoryTaxonomy.purchaseCategoryIDs)
+            .subtracting(CategoryTaxonomy.ruleSideCategoryIDs)
+        return Array(categories)
             .sorted { CategoryVisuals.meta(for: $0).displayName < CategoryVisuals.meta(for: $1).displayName }
     }
 

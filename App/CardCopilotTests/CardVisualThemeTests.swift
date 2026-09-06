@@ -160,6 +160,11 @@ final class CardVisualThemeTests: XCTestCase {
         XCTAssertEqual(CategoryVisuals.meta(for: "memberships").icon, "person.2.fill")
         XCTAssertEqual(CategoryVisuals.meta(for: "other").icon, "tag.fill")
         XCTAssertEqual(CategoryVisuals.meta(for: "travel").icon, "airplane")
+        XCTAssertEqual(CategoryVisuals.meta(for: "dining").displayName, "Dining & Food")
+        XCTAssertEqual(CategoryVisuals.meta(for: "foodDelivery").displayName, "Food Delivery")
+        XCTAssertEqual(CategoryVisuals.meta(for: "foodDelivery").icon, "takeoutbag.and.cup.and.straw.fill")
+        XCTAssertEqual(CategoryVisuals.meta(for: "furniture").icon, "sofa.fill")
+        XCTAssertEqual(CategoryVisuals.meta(for: "insurance").icon, "shield.fill")
     }
 
     func testCategoryVisualAliasesShareCanonicalMetadata() {

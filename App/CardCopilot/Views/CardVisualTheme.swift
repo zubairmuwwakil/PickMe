@@ -844,8 +844,10 @@ enum CategoryVisuals {
         switch CategoryTaxonomy.canonicalID(category).lowercased() {
         case "grocery":
             return Meta(icon: "cart.fill", color: .green, displayName: "Grocery")
-        case "dining", "fooddelivery":
+        case "dining":
             return Meta(icon: "fork.knife", color: .orange, displayName: "Dining & Food")
+        case "fooddelivery":
+            return Meta(icon: "takeoutbag.and.cup.and.straw.fill", color: .orange, displayName: "Food Delivery")
         case "gasstation":
             return Meta(icon: "fuelpump.fill", color: .blue, displayName: "Gas Station")
         case "transit":
@@ -886,6 +888,10 @@ enum CategoryVisuals {
             return Meta(icon: "crown.fill", color: .brown, displayName: "Marriott Direct")
         case "memberships":
             return Meta(icon: "person.2.fill", color: .teal, displayName: "Memberships")
+        case "furniture":
+            return Meta(icon: "sofa.fill", color: .brown, displayName: "Furniture")
+        case "insurance":
+            return Meta(icon: "shield.fill", color: .blue, displayName: "Insurance")
         case "other":
             return Meta(icon: "tag.fill", color: .gray, displayName: "General Merchandise")
         case "retailshopping":
