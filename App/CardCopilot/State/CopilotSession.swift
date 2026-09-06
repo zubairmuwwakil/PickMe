@@ -451,19 +451,36 @@ final class CopilotSession {
         return preparedNearbyOutcome
     }
 
-    /// Re-runs the scan for an explicit Radar tap and returns nothing, because the owner asked to
-    /// refresh Home rather than to navigate.
+    /// Re-runs Radar as a correctness boundary. The currently published answer stays visible
+    /// while the fresh lookup runs, but neither a prepared result nor the movement cache may
+    /// answer an explicit refresh.
     ///
-    /// The snapshot is dropped first on purpose. It exists to make the *automatic* path instant;
-    /// letting it also short-circuit a deliberate refresh would make the button a no-op for the
-    /// first minute, which is exactly when someone who has just walked somewhere would press it.
-    /// The previously published result stays visible throughout, so the card never blanks.
-    func rescanNearby(using graph: DependencyGraph) async {
+    /// If launch prefetch is already in flight, let it finish instead of cancelling the checked
+    /// Core Location continuation underneath it. Its answer is deliberately discarded; once the
+    /// task has completed we drop the snapshot it may have published and issue a new owner-driven
+    /// location + MapKit lookup.
+    @discardableResult
+    func rescanNearby(using graph: DependencyGraph) async -> FlowOutcome {
+        nearbyExpiryTask?.cancel()
+        nearbyExpiryTask = nil
+        nearbyResultIsStale = false
+
+        if let preparation = nearbyPreparationTask {
+            let preparationGeneration = nearbyPreparationGeneration
+            _ = await preparation.value
+            guard nearbyPreparationGeneration == preparationGeneration else {
+                return await rescanNearby(using: graph)
+            }
+            nearbyPreparationTask = nil
+        }
+
+        // The prefetch above may have published a result after this refresh began. Clear it only
+        // after that task is known to be finished; `findNearby` can then take no prepared or
+        // movement-cache shortcut and must reach the owner-requested path.
         nearbyExpiryTask?.cancel()
         nearbyExpiryTask = nil
         nearbySnapshot = nil
-        nearbyResultIsStale = false
-        _ = await findNearby(using: graph)
+        return await findNearby(using: graph)
     }
 
     #if FIELD_DIAGNOSTICS
@@ -479,7 +496,8 @@ final class CopilotSession {
 
     /// Warms both the one-shot fix and MapKit results as soon as the app becomes active. This
     /// never asks for new permission: first-time owners still make that choice by tapping Radar.
-    /// A shared task lets a tap join an in-flight launch lookup instead of starting a duplicate.
+    /// A shared task prevents duplicate launch work; explicit refreshes wait for it to finish
+    /// cleanly and then issue their own fresh lookup.
     func prefetchNearby(using graph: DependencyGraph) async {
         if let existing = nearbyPreparationTask {
             _ = await existing.value
